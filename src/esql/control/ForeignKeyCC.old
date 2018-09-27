@@ -1,0 +1,65 @@
+/*
+ 	File	:	ForeignKeyController class
+	By		:	© Errorsoft 2002
+	Comment	:	Controller class for foreign key interface
+	Changes	:	24-11-2002	Class created
+*/
+
+package esql.control;
+
+import esql.gui.*;
+import java.sql.*;
+
+public class ForeignKeyCC
+{	private ForeignKeyUI dialog;
+
+	public ForeignKeyCC ( ForeignKeyUI dialog )
+	{	this.dialog = dialog;
+	}
+
+	// Checks if table is InnoDB type
+	public boolean checkTable( String db, String tb )
+	{	try
+		{	ResultSet rs = dialog.getConnectionWindow().getDBAccess().processSystemQuery(db, "SHOW TABLE STATUS");
+			while(rs.next())
+			{	if(rs.getString(1).equalsIgnoreCase(tb) && rs.getString(2).equalsIgnoreCase("innodb"))
+				{	return true;
+				}
+			}
+		}
+		catch(Exception e)
+		{
+		}
+		return false;
+	}
+
+	public boolean createIndex( String db, String table, String field )
+	{	try
+		{	ResultSet rs1 = dialog.getConnectionWindow().getDBAccess().processSystemQuery(db, "SHOW INDEX FROM `" + table + "`");
+			while(rs1.next())
+			{	if( rs1.getString(5).equalsIgnoreCase(field) )
+				{	return true;
+				}
+			}
+
+			dialog.getConnectionWindow().getDBAccess().processSystemQuery(db, "CREATE INDEX " + field + "_index ON `" + table + "`(" + field + ");");
+
+			return true;
+		}
+		catch(Exception e)
+		{	System.out.println(e.getMessage());
+		}
+		return false;
+	}
+
+	public boolean createForeignKeyConstraint(String db, String parentTable, String childTable, String parentField, String childField, String type)
+	{	try
+		{	dialog.getConnectionWindow().getDBAccess().processSystemQuery(db, "ALTER TABLE `" + childTable + "` ADD FOREIGN KEY (" + childField + ") REFERENCES `" + parentTable + "`(" + parentField + ") " + type  + ";");
+			return true;
+		}
+		catch(Exception e)
+		{	System.out.println(e.getMessage());
+		}
+		return false;
+	}
+}

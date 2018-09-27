@@ -1,0 +1,211 @@
+/*
+ 	File	:	ForeignKeyDialog class
+	By		:	© Errorsoft 2002
+	Comment	:	GUI class for foreign key interface
+	Changes	:	24-11-2002	Class created
+*/
+
+package esql.gui;
+
+import esql.domain.*;
+import esql.control.*;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.tree.*;
+import java.awt.event.*;
+
+public class ForeignKeyUI extends JDialog implements MouseListener
+{	private ConnectionWindow cw;
+	private ESQLManagerUI jm;
+
+	private String database;
+
+	private JTree parent;
+	private JTree child;
+	private DefaultMutableTreeNode pRoot;
+	private DefaultMutableTreeNode cRoot;
+
+	private JRadioButton delete = new JRadioButton("On delete cascade");
+	private JRadioButton setnull = new JRadioButton("On delete nullify");
+	private ButtonGroup bg = new ButtonGroup();
+
+	private JButton create = new JButton("Create constraint");
+	private JButton exit = new JButton("Cancel");
+
+	private ForeignKeyCC control;
+
+	public ForeignKeyUI ( ESQLManagerUI jm, ConnectionWindow cw, String database )
+	{	super((JFrame)jm, true);
+
+		this.cw = cw;
+		this.jm = jm;
+		this.database = database;
+
+		this.control = new ForeignKeyCC( this );
+
+		this.setResizable(false);
+		this.setSize(390,290);
+		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		this.setLocation(jm.getLocation().x + (int)((jm.getSize().width - this.getSize().width) / 2), jm.getLocation().y + (int)((jm.getSize().height - this.getSize().height) / 2));
+		this.getContentPane().setLayout(null);
+		this.setTitle("Create foreign keys on `" + database + "`");
+
+		TitledBorder parchil = new TitledBorder(new EtchedBorder(BevelBorder.LOWERED), "Create foreign key constraints");
+
+		JPanel jp = new JPanel();
+		jp.setBounds(5,0,375,225);
+		jp.setBorder(parchil);
+
+		pRoot = new DefaultMutableTreeNode(new TreeObject("Parent table ", true,false,false,false,false));
+		pRoot.add(new DefaultMutableTreeNode(new TreeObject(database, false,true,false,false,false)));
+		parent = new JTree(pRoot);
+		parent.setCellRenderer(new DBTreeCellRenderer(jm.getImageLoader()));
+		parent.addMouseListener(this);
+
+		JScrollPane jsp1 = new JScrollPane(parent);
+		jsp1.setBounds(10,25,175,150);
+		jp.add(jsp1);
+
+		cRoot = new DefaultMutableTreeNode(new TreeObject("Child table ", true,false,false,false,false));
+		cRoot.add(new DefaultMutableTreeNode(new TreeObject(database, false,true,false,false,false)));
+		child = new JTree(cRoot);
+		child.setCellRenderer(new DBTreeCellRenderer(jm.getImageLoader()));
+		child.addMouseListener(this);
+
+		JScrollPane jsp2 = new JScrollPane(child);
+		jsp2.setBounds(190,25,175,150);
+		jp.add(jsp2);
+
+		delete.setBounds(10,180,150,15);
+		jp.add(delete);
+		delete.setSelected( true );
+
+		setnull.setBounds(10,200,150,15);
+		jp.add(setnull);
+
+		create.setBounds(120,230,125,20);
+		this.getContentPane().add(create);
+		create.addMouseListener(this);
+
+		exit.setBounds(250, 230, 125,20);
+		this.getContentPane().add(exit);
+		exit.addMouseListener(this);
+
+		bg.add(delete);
+		bg.add(setnull);
+
+		jp.setLayout(null);
+
+		this.getContentPane().add(jp);
+	}
+
+	public ConnectionWindow getConnectionWindow ()
+	{	return cw;
+	}
+
+	public ESQLManagerUI getJMySql ()
+	{	return jm;
+	}
+
+	public void mousePressed(MouseEvent e)
+	{	Object eventSource = e.getSource();
+
+		if( eventSource == parent )
+	  	{	parent.setSelectionRow(parent.getRowForLocation(e.getX(), e.getY()));
+	  	}
+		if( eventSource == child )
+	  	{	child.setSelectionRow(child.getRowForLocation(e.getX(), e.getY()));
+	  	}
+	}
+
+	public void mouseClicked(MouseEvent e)
+	{
+	}
+
+	public void mouseReleased(MouseEvent e)
+	{	DefaultMutableTreeNode pnode = (DefaultMutableTreeNode)parent.getLastSelectedPathComponent();
+		DefaultMutableTreeNode cnode = (DefaultMutableTreeNode)child.getLastSelectedPathComponent();
+		if( e.getSource() == create )
+		{	// Nodes must be selected
+			if(pnode != null && cnode != null)
+			{	TreeObject par = (TreeObject)pnode.getUserObject();
+				TreeObject chl = (TreeObject)cnode.getUserObject();
+
+				// Nodes must be fields
+				if(par.isField() && chl.isField())
+				{	TreeObject par2 = (TreeObject)((DefaultMutableTreeNode)pnode.getParent()).getUserObject();
+					TreeObject chl2 = (TreeObject)((DefaultMutableTreeNode)cnode.getParent()).getUserObject();
+
+					// Are both tables INNODB
+					if(control.checkTable(database, par2.getName()) && control.checkTable(database, chl2.getName()) )
+					{	// Query execution here
+						// First create the indexes
+						if( control.createIndex(database, par2.getName(), par.getName()) &&	control.createIndex(database, chl2.getName(), chl.getName()) )
+						{	String type = "ON DELETE CASCADE";
+							if( setnull.isSelected() )
+								type = "ON DELETE SET NULL";
+							if(control.createForeignKeyConstraint(database, par2.getName(), chl2.getName(),par.getName(), chl.getName(), type ))
+							{	JOptionPane pane = new JOptionPane();
+								pane.setMessageType(JOptionPane.ERROR_MESSAGE);
+								pane.showMessageDialog( jm, "Foreign key constraint succesfully created!", "Error creating constraint", JOptionPane.INFORMATION_MESSAGE  );
+							}
+							else
+							{	JOptionPane pane = new JOptionPane();
+								pane.setMessageType(JOptionPane.ERROR_MESSAGE);
+								pane.showMessageDialog( jm, "Foreign key constraint failed. Please check if the fields used are of the same type and length, and try again.", "Error creating constraint", JOptionPane.INFORMATION_MESSAGE  );
+							}
+						}
+					}
+					else
+					{	JOptionPane pane = new JOptionPane();
+						pane.setMessageType(JOptionPane.ERROR_MESSAGE);
+						pane.showMessageDialog( jm, "The selected fields are not part of an InnoDB table. Please change the table type of your table to InnoDB or select another table.", "Error creating constraint", JOptionPane.INFORMATION_MESSAGE  );
+					}
+				}
+				else
+				{	JOptionPane pane = new JOptionPane();
+					pane.setMessageType(JOptionPane.ERROR_MESSAGE);
+					pane.showMessageDialog( jm, "Incorrect fields highlighted. The fields selected in the trees are incorrect, two fields must be selected.", "Error creating constraint", JOptionPane.INFORMATION_MESSAGE  );
+				}
+			}
+			else
+			{	JOptionPane pane = new JOptionPane();
+				pane.setMessageType(JOptionPane.ERROR_MESSAGE);
+				pane.showMessageDialog( jm, "No parent and child node selected. Please select the parent and child fields to be used in the constraint.", "Error creating constraint", JOptionPane.INFORMATION_MESSAGE  );
+			}
+		}
+		else if ( e.getSource() == exit )
+		{	this.control = null;
+			this.dispose();
+		}
+		else
+		{	if(pnode != null)
+			{	TreeObject selected = (TreeObject)pnode.getUserObject();
+				if(selected.isDatabase())
+				{	cw.getDBAccess().loadTables(parent, pnode);
+				}
+				else if(selected.isTable())
+				{	cw.getDBAccess().loadFields(parent,(DefaultMutableTreeNode)pnode.getParent(), pnode );
+				}
+			}
+			if(cnode != null)
+			{	TreeObject selected = (TreeObject)cnode.getUserObject();
+				if(selected.isDatabase())
+				{	cw.getDBAccess().loadTables(child, cnode);
+				}
+				else if(selected.isTable())
+				{	cw.getDBAccess().loadFields(child,(DefaultMutableTreeNode)cnode.getParent(), cnode );
+				}
+			}
+		}
+	}
+
+	public void mouseEntered(MouseEvent e)
+	{
+	}
+
+	public void mouseExited(MouseEvent e)
+	{
+	}
+}

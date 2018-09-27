@@ -1,0 +1,28 @@
+package esql.control;
+
+import esql.domain.*;
+import esql.gui.*;
+import java.util.Vector;
+
+public class TableManagerCC
+{	private ConnectionWindowCC cwcc;
+
+	public TableManagerCC ( ConnectionWindowCC cwcc )
+	{	this.cwcc = cwcc;
+	}
+	
+	/* 
+	 	List all databases, so user can choose database to create table on
+	*/
+	public Vector getDatabases ()
+	{	try
+		{
+			DatabaseCC dbc = new DatabaseCC(cwcc);
+			return dbc.getDatabases();
+		}
+		catch(Exception e)
+		{	e.printStackTrace();
+			return null;
+		}
+	}	
+}
