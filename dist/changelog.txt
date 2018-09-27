@@ -1,0 +1,117 @@
+
+eSQLManager change history - 1.x
+----------------------------
+
+
+****************************************************************************
+
+PLEASE FOLLOW THESE GUIDELINES FOR CHANGES CLASSES / CHANGELOG:
+
+- Increase the class file version number, and implement changes.
+- Specify what you did? bugfix or functionality change?
+- Specify what class(es) you modified and the old version number.
+- Give a description what you did.
+
+Fixes:
+
+- Main.java (0.12): changed System.oud to System.out.
+
+****************************************************************************
+
+
+> version 1.0 (released scheduled for 01/08/2003) <
+
+Changes (since):
+
+build #64 - RC3
+
+- Added a VM version check, VM`s lower than 1.4 won`t be accepted and an error is thrown.
+- The auto-updater now knows what file (le or pro) to get from the update server.
+- Fixed the build.xml script for ant. 
+- Build in checks for program parts that only work on MySQL.
+- Fixed a bug while receiving indexes on MSSQLServer.
+
+build #63 - RC2
+
+- New directory structure for the application.
+- Fixed a bug in loading the classpath libraries, use a URI for filepaths now!
+- Added LicenseKey tool!
+- Added VIEW`s to table overview.
+- Export data ignores binary files from now on.
+- Created a DynamicLoader class which add jar libraries to the classpath at runtime. By default all the jars in the lib dir are included in the classpath now, this solves the third-party jdbc driver problems.
+- Fixed a little bug in the ConnectionProfileUI, when deleting the last profile the textfields where never cleared.
+- The main window now uses as default size the maximumscreenbounds, no more resizing of the main window when starting eSQLManager.
+- Fixed bug: advanced table data edit opened if a cell of a new row was selected.
+- Added a new splashscreen, the splash class now adds all information to the splashscreen.
+- Added documentation to the help files.
+- FieldProperties and create table are now consistent with each other. Changed the signed in FieldProperties to unsigned. By default all numbers are signed, see documentation in the help.
+- Fixed problems with error handling in Import + Export interfaces. When import or export fails during the process a message is displayed why it failed.
+- Smashed a bug in the indexes interface, unique was never set if an index is unique, fulltext can`t be set via JDBC driver, need to find a solution for this problem.
+- Added status messages to inform the user what esqlmanager is doing.
+- Drop table and drop database now remove the data tab in the ConnectionWindowUI.
+- Edit table now works for all table properties (name, comment, type) except for the tablecolumns.
+- Create table doesn`t allow indexes or keys to be defined anymore, need to create a table first and then add indexes with the indexes manager.
+
+build #61 - beta
+
+- Finished the index manager, eSQLManager Pro is now beta status! Only bugs will be fixed until the 1.0 release.
+- dbcreator uses esql.domain.DataType, removed esqlcreator_sql.xml
+- Removed confirmation message from connectionwindow when no connection to a server could be made.
+- Syntax documents and query window now use the syntax.xml for sql keywords.
+- Removed more old Java files which were no longer needed.
+- Changed the datatypes.xml file and improved the working of the loading of the datatypes in the ServerType class.
+- Changed the connectionprofile startup sequence, now first the profiles are loaded before showing them.
+- Implemented the new DatabaseDriver class. All JDBC driver settings can now be managed with an UI. The driver.xml file contains al settings needed.
+
+build #60
+
+- Cleaned up the project, removed some old java files.
+- Added some new keywords to sql.syn
+- Using JDom beta 9 as of now!
+- Fixed some layout issues in preferences, import/export and fieldproperties interfaces.
+- Changed connection profile behavior: when the profiles.xml file couldn`t be used for whatever reason, the complet program became unusable because the profile manager could not be started. Now when the profiles.xml file isn`t available the profile manager will still be working but without profiles.
+- Fixed a bug in the connection profile. When after deleting a profile the save button was pressed the deleted item reappeared.
+
+build #59
+
+- Added an interface which allows users to manage the JDBC driver settings.
+- Replaced JLabel in eSQLManagerUI statusbar to awt Label to fix repaint problems.
+
+build #58
+
+Fixes:
+
+- Usermanager updated and improved
+- Fixed bug that caused priviliges not to update
+- inserted eSQLDesigner
+- Added toolbar to eSQLDesigner
+- A few minor bugfixes in eSQLDesigner
+
+New:
+
+- New UserManager Interface finished
+- Todo: Export / Import tab
+- eSQLDesigner project inserted into eSQLManager application
+
+
+build #57
+
+Fixes:
+
+- Sorting of tables has been fixed, numbers were not correctly handled
+- Sorting of dates and times has been fixed, by using native translation.
+- Slight adjustment to TableData class to make sorting possible
+
+New:
+
+- New UserManager Interface created and under construction
+
+build #56
+
+Fixes:
+
+- When dropping a database the tree was never refreshed.
+
+New:
+
+- Added a new interface for managing indexes, available through popup menu. 

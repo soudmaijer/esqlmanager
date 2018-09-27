@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<syntax>
+	<keyword>ESQLMANAGER</keyword>
+	<keyword>DATABASES</keyword>
+	<keyword>VARIABLES</keyword>
+	<keyword>DATABASE</keyword>
+	<keyword>BETWEEN</keyword>
+	<keyword>SELECT</keyword>
+	<keyword>UPDATE</keyword>
+	<keyword>INSERT</keyword>
+	<keyword>DELETE</keyword>
+	<keyword>TABLES</keyword>
+	<keyword>FIELDS</keyword>
+	<keyword>CREATE</keyword>
+	<keyword>VALUES</keyword>
+	<keyword>FIELD</keyword>
+	<keyword>ORDER</keyword>
+	<keyword>WHERE</keyword>
+	<keyword>LIMIT</keyword>
+	<keyword>ALTER</keyword>
+	<keyword>TABLE</keyword>
+	<keyword>GRANT</keyword>
+	<keyword>INTO</keyword>
+	<keyword>LIKE</keyword>
+	<keyword>SHOW</keyword>
+	<keyword>FROM</keyword>
+	<keyword>DESC</keyword>
+	<keyword>DROP</keyword>
+	<keyword>ASC</keyword>
+	<keyword>USE</keyword>		
+	<keyword>AND</keyword>
+	<keyword>SET</keyword>
+	<keyword>BY</keyword>
+	<keyword>OR</keyword>
+	<keyword>*</keyword>
+	<keyword>{</keyword>
+	<keyword>}</keyword>
+	<keyword>;</keyword>
+</syntax>

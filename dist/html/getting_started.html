@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+	<head>
+		<style>
+
+		h3
+		{
+			font-family:		Arial;
+			color:				black;
+		}
+
+		div, li
+		{	font-family:		Arial;
+			font-size:			11;
+			color:				black;
+		}
+		a
+		{
+			font-family 	: 	Arial;
+			font-size		: 	11;
+			color				: 	navy;
+		}
+		a:hover
+		{
+			font-family 	: 	Arial;
+			font-size		: 	11;
+			color				: 	red;
+		}
+
+		</style>
+</head>
+<body>
+	<img src="images/logo.gif">
+
+	<table width="98%" align="center" cellspacing="5">
+	<tr>
+		<td height="15" style="border-color: #e6e6e6; border-style: solid; border-width: 1px;" bgcolor="#F5F4F2">
+			<div>
+				<b>Getting started</b> ( <a href='help.html'>help index</a> )
+			</div>
+		</td>
+	</tr>
+	<tr><td></td></tr>
+	<tr>
+		<td bgcolor="#fefefe" style="border-color: #fafafa; border-style: solid; border-width: 1px;">
+		<div>
+			<b>Step-by-step introduction:</b>
+			<br><br>
+			This is a step-by-step tutorial to help you on your way using eSQLManager.
+			<br><br>
+			<b>Step 1 - start the profile manager</b>
+			<br><br>
+			When connecting to a database server connection detail have to be specified about the server you want to connect to.
+			eSQLManager offers a tool, the profile manager, which allows you to store, re-use and manage connection properties in an easy way.
+			The profile manager is automatically started when eSQLManager starts, or when no connection windows are open. The profile manager
+			can be started manually by pressing the button below in the toolbar:
+			<br><br>
+			<img src="./images/connect.gif">
+			<br><br>
+			or by using the Options menu:
+			<br><br>
+			<img src="./images/connect1.gif">
+			<br><br>
+			A screenshot of the profile manager:
+			<br><br>
+			<img src="./images/connectionprofile.gif">
+			<br><br>
+			<b>Step 2 - specify the connection detail</b>
+			<br><br>
+			The profile manager allows the following details to be specified:
+			<br>
+			<br>1. Profile: the name of a connection profile, by which you can recognize it for re-use.
+			<br>2. Server type: the type of database server that you want to connect to: MySQL, MS SQLServer 2000 or higher, PostgreSQL, Oracle.
+			<br>3. Host: this is either the domain name or ip-address of the server that you want to connect to.
+			<br>4. Username: username needed to connect to the server. Default username for MySQL: root, MS SQLServer: sa.
+			<br>5. Password: password needed for authenticating the user.
+			<br>6. Port: the port number of the database server. Default port numbers: MySQL: 3306, MSSQLServer: 1433, PostgreSQL: 5432 , Oracle: 1521.
+			<br>7. Databases: an option where you can specify specific databases you want to connect to.
+			<br>8. Auto-connect: this option is available for one profile only, the selected profile will automatically be used to connect to on startup.
+			<br><br>
+			<b>Step 3 - save profile and connect</b>
+			<br><br>
+			When all the necessary fields are specified the connection details can be saved to a profile for re-use by pressing the Save button. When the profile doesn`t need to
+			be stored for re-use the Connect	button can be pressed to directly connect with the connection details specified.
+			After pressing the Connect button, the main connection window opens. When a succesful connect attemt was made to the specified database server, eSQLManager will
+			show a list with all available databases, or only the databases specified at field 7. This list will
+			be  show on the left of the connection window, see the screenshot below:
+			<br><br>
+			<img width="640" height="480" src="./images/connected.gif">
+			<br><br>
+			You are now succesfully connected and ready to use eSQLManager!
+		</div>
+		</td>
+	</tr>
+	<tr><td></td></tr>
+	<tr>
+		<td height="10" style="border-color: #e6e6e6; border-style: solid; border-width: 1px;" bgcolor="#F5F4F2">
+			<div>
+				<b>© Copyright Errorsoft 2002-2003.</b>
+			</div>
+		</td>
+	</tr>
+	</table>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<h>eSQLManager Credits
+-
+
+
+
+
+<h>Programming & Design
+-
+
+S. Oudmaijer
+J. Walgemoed
+
+
+<h>Special thanks to
+-
+
+<h>R.Matla
+For mirroring our downloads
+
+
+
+
+<h>Tools used
+-
+
+<h>Java[TM] 2 SDK 1.4.2
+http://java.sun.com
+
+<h>mm.mysql jdbc driver
+http://mmmysql.sourceforge.net
+
+<h>Install Anywhere
+http://www.zerog.com
+
+<h>JDOM XML 
+http://www.jdom.org
+
+<h>JCreator
+http://www.jcreator.com
+
+
+
+
+<h>© Copyright
+-
+
+<h>Errorsoft 2002-2003
+http://www.errorsoft.nl
+info@errorsoft.nl

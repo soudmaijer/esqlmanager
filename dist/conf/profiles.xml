@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles>
+	
+<profile><name>MySQL - localhost</name><host>localhost</host><port>3306</port><username>root</username><password /><serverType>0</serverType><databases /><autoConnect>false</autoConnect><lastUsed>false</lastUsed></profile><profile><name>MSSQLServer - localhost</name><host>localhost</host><port>1433</port><username>sa</username><password>10074361</password><serverType>1</serverType><databases /><autoConnect>false</autoConnect><lastUsed>true</lastUsed></profile></profiles>
