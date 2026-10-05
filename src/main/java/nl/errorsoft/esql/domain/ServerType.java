@@ -48,42 +48,6 @@ public class ServerType
 				dataCloseChar = da[i].getDataCloseChar();
 			}
 		}
-/*		else if( type == MY_SQL )
-		{
-			name = "mysql";
-			description = "MySQL Server";
-			connectionURL = "jdbc:mysql://@host:@port/";
-			driverName = "com.mysql.jdbc.Driver";
-			fieldOpenChar = "`";
-			fieldCloseChar = "`";
-			dataOpenChar = "'";
-			dataCloseChar = "'";			
-			defaultPortNumber = "3306";
-		}
-		else if( type == POSTGRES )
-		{
-			name = "postgresql";
-			description = "Postgres SQL";
-			connectionURL = "jdbc:postgresql://@host:@port/@database";
-			driverName = "org.postgresql.Driver";
-			fieldOpenChar = "\"";
-			fieldCloseChar = "\"";
-			dataOpenChar = "'";
-			dataCloseChar = "'";			
-			defaultPortNumber = "5432";
-		}
-		else if( type == ORACLE )
-		{
-			name = "oracle";
-			description = "Oracle";
-			connectionURL = "jdbc:oracle:thin:@@host:@port:@database";
-			driverName = "oracle.jdbc.driver.OracleDriver";
-			fieldOpenChar = "";
-			fieldCloseChar = "";
-			dataOpenChar = "'";
-			dataCloseChar = "'";	
-			defaultPortNumber = "1521";		
-		}		*/
 	}
 	
 	public String getFieldOpenChar()

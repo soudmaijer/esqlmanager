@@ -133,7 +133,9 @@ public class DatabaseDriver
     public void save( Document document ) throws Exception
     {
         XMLOutputter xmloutputter = new XMLOutputter();
-        xmloutputter.output(document, new PrintWriter(new FileOutputStream(new File("conf/driver.xml"))));
+        try( PrintWriter out = new PrintWriter( "conf/driver.xml", java.nio.charset.StandardCharsets.UTF_8 ) )
+        {   xmloutputter.output(document, out);
+        }
     }
 
 	public void setDriverName(String driverName) {

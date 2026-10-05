@@ -125,6 +125,9 @@ public class Export extends Observable implements Runnable
 				pw.println( ");" );
 			}
 			rs.close();
+			
+			for( String statement : dialect.afterDataLoadSql( dbc, table ) )
+				pw.println( statement +";\n" );
 		}
 	}
 	

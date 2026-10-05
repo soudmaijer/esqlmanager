@@ -22,77 +22,25 @@ public class UDData extends Observable
 
 	public void uploadData( Table tb, TableData [] rowData, TableData tc, String file ) throws Exception
 	{
-		String sqlWhere = "";
-		boolean keySearch = false;
-		
-		for( int i=0; i<rowData.length; i++ )
-		{
-			if( rowData[i].getTableColumn().isPrimary() || rowData[i].getTableColumn().hasUniqueIndex() )
-			{
-				if( i<rowData.length-1 && sqlWhere.length() > 0 )
-					sqlWhere += " AND ";				
+		String sqlWhere = tb.rowFilter( rowData );
 
-				sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() ) +"";
-				keySearch = true;
-			}
-			else if( !keySearch )
-			{
-				if( !rowData[i].getTableColumn().isBinary() )
-				{	sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() ) +"";
-				
-					if( i<rowData.length-1 )
-						sqlWhere += " AND ";
-				}
-			}
-		}
-
-		FileInputStream fis = new FileInputStream(new File(file));
-		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-		int aByte;
-		
-		while( (aByte=fis.read()) != -1 )
-			outStream.write( aByte );
-
-		byte [] temp = outStream.toByteArray();
+		byte [] temp = java.nio.file.Files.readAllBytes( new File(file).toPath() );
 		log.debug( "Read {} bytes from {}", temp.length, file );
-		ByteArrayInputStream bai = new ByteArrayInputStream( temp );
 
 		dbc.useDatabase( tb.getDatabase().getName() );
-		java.sql.PreparedStatement pstmt = dbc.getConnection().prepareStatement("UPDATE "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tb.getName() ) +" SET "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tc.getTableColumn().getName() ) +" = ? WHERE "+ sqlWhere );
-		pstmt.setBinaryStream(1, bai, temp.length);
-		pstmt.execute();
-		pstmt.close();
-		fis.close();
-		bai.close();
+		try( ByteArrayInputStream bai = new ByteArrayInputStream( temp );
+			java.sql.PreparedStatement pstmt = dbc.getConnection().prepareStatement("UPDATE "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tb.getName() ) +" SET "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tc.getTableColumn().getName() ) +" = ? WHERE "+ sqlWhere ) )
+		{
+			pstmt.setBinaryStream(1, bai, temp.length);
+			pstmt.execute();
+		}
  		setChanged();
  		notifyObservers( new Integer(100) );		
 	}	
 	
 	public void downloadData( Table tb, TableData [] rowData, TableData tc, String file ) throws Exception
 	{
-		String sqlWhere = "";
-		boolean keySearch = false;
-		
-		for( int i=0; i<rowData.length; i++ )
-		{
-			if( rowData[i].getTableColumn().isPrimary() || rowData[i].getTableColumn().hasUniqueIndex() )
-			{
-				if( i<rowData.length-1 && sqlWhere.length() > 0 )
-					sqlWhere += " AND ";				
-
-				sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() ) +"";
-				keySearch = true;
-			}
-			else if( !keySearch )
-			{
-				if( !rowData[i].getTableColumn().isBinary() )
-				{	sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() ) +"";
-				
-					if( i<rowData.length-1 )
-						sqlWhere += " AND ";
-				}
-			}
-		}
+		String sqlWhere = tb.rowFilter( rowData );
 
 		dbc.useDatabase( tb.getDatabase().getName() );
 		java.sql.ResultSet rs = dbc.executeQuery("SELECT * FROM "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tb.getName() ) +" WHERE "+ sqlWhere );
@@ -104,19 +52,16 @@ public class UDData extends Observable
 		
  		try
  		{
-	    	BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(file)));
-    
-	    	int aByte;
-	    	while ((aByte = bis.read()) != -1) 
-	    	{ bos.write(aByte);
+	    	try( BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(file))) )
+	    	{	bis.transferTo( bos );
 	    	}
-    
-	    	bos.flush();
-	    	bos.close();
-	    	bis.close();
+	    	finally
+	    	{	bis.close();
+	    	}
 	 	}
 	 	catch( Exception e )
 	 	{
+	 		log.error( "Can't save {}: {}", file, e.getMessage(), e );
 	 	}
  		
  		setChanged();

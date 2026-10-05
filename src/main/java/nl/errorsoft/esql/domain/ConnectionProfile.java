@@ -189,7 +189,9 @@ public class ConnectionProfile
 	public void save( org.jdom.Document doc ) throws Exception
 	{
 		org.jdom.output.XMLOutputter xmlout = new org.jdom.output.XMLOutputter();
-		xmlout.output( doc, new PrintWriter( new FileOutputStream( new File("conf/profiles.xml") ) ) );
+		try( PrintWriter out = new PrintWriter( "conf/profiles.xml", java.nio.charset.StandardCharsets.UTF_8 ) )
+		{	xmlout.output( doc, out );
+		}
 	}
 
 	public String getName()

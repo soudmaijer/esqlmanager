@@ -9,7 +9,6 @@ import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.ESQLManager;
 import nl.errorsoft.esql.domain.ServerType;
 import nl.errorsoft.esql.domain.Settings;
-import nl.errorsoft.esql.gui.CheckUpdateUI;
 import nl.errorsoft.esql.gui.ConnectionWindowUI;
 import nl.errorsoft.esql.gui.ESQLManagerUI;
 import nl.errorsoft.esql.gui.ImageLoader;
@@ -38,17 +37,12 @@ public class ESQLManagerCC
 		log.info( "Working directory: {}", System.getProperty("user.dir") );
 		// Show splash.
 		showSplashScreen( 3000 );		
-		jmui.updateStatus( "(C) Copyright 2002-2003 - Errorsoft", false );
+		jmui.updateStatus( "Ready...", false );
 	}
 	
 	public void splashReady()
 	{
-		// 1st Check for updates.
-		jmui.setEnabled( false );
-		checkForUpdates();
-		jmui.setEnabled( true );		
-		
-		// 3th Show connection profile window.
+		// Show connection profile window.
 		ConnectionProfileCC cpcc = new ConnectionProfileCC( this );
 		cpcc.startUI( jmui, true );		
 	}
@@ -58,16 +52,6 @@ public class ESQLManagerCC
 		System.exit(0);
 	}
 	
-	/**
-	 *		Use-case: 	check for updates
-	 *		Requires: 	ESQLManager UI use-case
-	 */	
-	public void checkForUpdates()
-	{
-		// Perform an update check.
-		new CheckUpdateUI( this, jmui );			 	
-	}
-
 	/**
 	 *		Use-case: 	show ESQLManager splash screen
 	 *		Requires: 	ESQLManager UI use-case

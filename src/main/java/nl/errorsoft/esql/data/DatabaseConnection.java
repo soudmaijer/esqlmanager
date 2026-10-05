@@ -114,6 +114,14 @@ public class DatabaseConnection
 		return i;
 	}
 
+	// Runs a statement whose result, if any, is not needed.
+	public void execute( String query ) throws java.sql.SQLException
+	{
+		statement = connection.createStatement();
+		statement.execute( query );
+		log.debug( "Execute: {}", query );
+	}
+
 	// Returns the active database connection.
 	public Connection getConnection()
 	{
@@ -153,11 +161,12 @@ public class DatabaseConnection
 	}
 	
 
+	/** A value as a literal that can safely be put in a statement, escaped the way this server expects. */
 	public String formatFieldValue( String in )
 	{
-		in = in.replaceAll("\\\\", "\\\\\\\\"); 
-		in = in.replaceAll("'", "\\\\'");
-		
-		return this.getConnectionProfile().getServerType().getDataOpenChar() + in + this.getConnectionProfile().getServerType().getDataOpenChar();
-	}	
+		if( in == null )
+			return "NULL";
+
+		return this.getConnectionProfile().getServerType().getDialect().literal( in );
+	}
 }

@@ -172,9 +172,9 @@ public class DBCreator extends JDialog implements MouseListener
 		{	String xml = mv.getModel().getModelXML();
 			try
 			{
-				PrintWriter out = new PrintWriter( new FileWriter(mv.getModel().getFile()) );
-				out.println(xml);
-				out.close();
+				try( PrintWriter out = new PrintWriter( new FileWriter(mv.getModel().getFile()) ) )
+				{	out.println(xml);
+				}
 			}
 			catch( Exception ex )
 			{	log.error( ex.getMessage(), ex );
@@ -204,9 +204,9 @@ public class DBCreator extends JDialog implements MouseListener
 				String xml = mv.getModel().getModelXML();
 				try
 				{
-					PrintWriter out = new PrintWriter( new FileWriter(f) );
-					out.println(xml);
-					out.close();
+					try( PrintWriter out = new PrintWriter( new FileWriter(f) ) )
+					{	out.println(xml);
+					}
 					
 					mv.getModel().setFile( f );
 				}

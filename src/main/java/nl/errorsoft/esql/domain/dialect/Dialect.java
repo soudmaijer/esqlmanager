@@ -53,8 +53,11 @@ public interface Dialect
 	/** The tables and views of the active database. */
 	Vector<Table> listTables( DatabaseConnection dbc, Database db ) throws SQLException;
 
-	/** A query returning one page of a table, or null when the server cannot page in SQL. */
-	String selectPage( String quotedTable, int skip, int show );
+	/**
+	 * A query returning one page of a table, or null when the server cannot page in SQL.
+	 * @param orderBy the quoted columns that give the rows a stable order, empty when there are none.
+	 */
+	String selectPage( String quotedTable, String orderBy, int skip, int show );
 
 	/** Quotes a table, column or index name. */
 	String quote( String identifier );
@@ -101,6 +104,9 @@ public interface Dialect
 
 	/** The statement that makes a database the active one in a script, understood by {@link #useDatabaseSql} consumers such as Import. */
 	String useDatabaseSql( String database );
+
+	/** Statements to run after the rows of a table have been loaded, such as moving auto numbering past the highest value. */
+	List<String> afterDataLoadSql( DatabaseConnection dbc, String table ) throws SQLException;
 
 	/** The CREATE TABLE statement of an existing table. */
 	String createTableDdl( DatabaseConnection dbc, String table ) throws SQLException;

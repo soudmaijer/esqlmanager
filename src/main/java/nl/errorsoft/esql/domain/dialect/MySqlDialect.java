@@ -215,8 +215,8 @@ public class MySqlDialect extends AbstractDialect
 		return tables;
 	}
 
-	public String selectPage( String quotedTable, int skip, int show )
+	public String selectPage( String quotedTable, String orderBy, int skip, int show )
 	{
-		return "SELECT * FROM "+ quotedTable +" LIMIT "+ skip +","+ show;
+		return "SELECT * FROM "+ quotedTable + ( orderBy.length() > 0 ? " ORDER BY "+ orderBy : "" ) +" LIMIT "+ skip +","+ show;
 	}
 }

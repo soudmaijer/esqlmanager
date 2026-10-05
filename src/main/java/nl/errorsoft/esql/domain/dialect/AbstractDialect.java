@@ -45,7 +45,7 @@ public abstract class AbstractDialect implements Dialect
 		return listTablesFromMetaData( dbc, db, db.getName(), getSchema( dbc ), new String[] { "TABLE", "VIEW" } );
 	}
 
-	public String selectPage( String quotedTable, int skip, int show )
+	public String selectPage( String quotedTable, String orderBy, int skip, int show )
 	{
 		return null;
 	}
@@ -166,6 +166,11 @@ public abstract class AbstractDialect implements Dialect
 		List<String> statements = new ArrayList<String>( dropIndexSql( dbc, table, name ) );
 		statements.addAll( addIndexSql( table, name, type, columns ) );
 		return statements;
+	}
+
+	public List<String> afterDataLoadSql( DatabaseConnection dbc, String table ) throws SQLException
+	{
+		return new ArrayList<String>();
 	}
 
 	public String createDatabaseSql( String database )

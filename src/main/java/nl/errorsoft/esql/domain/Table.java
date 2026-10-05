@@ -216,7 +216,11 @@ public class Table
 		
 		// Let the server do the paging when the dialect can, otherwise skip rows in the result set.
 		String quotedTable = quote( tb.getName() );
-		String pageQuery = dbc.getConnectionProfile().getServerType().getDialect().selectPage( quotedTable, skip, show );
+		java.util.List<String> keyColumns = new java.util.ArrayList<String>();
+		for( TableColumn column : tcatemp )
+			if( column.isPrimary() )
+				keyColumns.add( quote( column.getName() ) );
+		String pageQuery = dbc.getConnectionProfile().getServerType().getDialect().selectPage( quotedTable, String.join( ", ", keyColumns ), skip, show );
 		
 		if( pageQuery != null )
 		{
@@ -366,6 +370,34 @@ public class Table
 		return tda;
 	}	
 	
+	/**
+	 * The condition that selects the given row: its key columns when it has any,
+	 * otherwise all of its columns that are not binary.
+	 */
+	public String rowFilter( TableData [] rowData ) throws Exception
+	{
+		java.util.List<String> keys = new java.util.ArrayList<String>();
+		java.util.List<String> columns = new java.util.ArrayList<String>();
+
+		for( TableData cell : rowData )
+		{
+			TableColumn column = cell.getTableColumn();
+			String name = quote( column.getName() );
+
+			if( column.isPrimary() || column.hasUniqueIndex() )
+				keys.add( name +"="+ dbc.formatFieldValue( cell.getData() ) );
+			else if( !column.isBinary() )
+				columns.add( cell.isNull() ? name +" IS NULL" : name +"="+ dbc.formatFieldValue( cell.getData() ) );
+		}
+
+		java.util.List<String> conditions = keys.isEmpty() ? columns : keys;
+
+		if( conditions.isEmpty() )
+			throw new Exception("The row can't be identified, it has no key and no column to compare.");
+
+		return String.join( " AND ", conditions );
+	}
+
 	public void insertRow( Table tb, TableData [] rowData ) throws Exception
 	{
 		String sqlColumnName = "";
@@ -393,38 +425,12 @@ public class Table
 	
 	public int dataChanged( Table tb, TableData [] rowData, TableData cellData, Object newValue ) throws Exception
 	{
-		String sqlWhere = "";
-		boolean keySearch = false;
-		
 		if( cellData.getData().equals( newValue.toString() ) )
 			return 0;
 		else if( cellData.getTableColumn().isBinary() )
 			throw new Exception("Editing of binary data is not supported yet!");
 
-		for( int i=0; i<rowData.length; i++ )
-		{
-			if( rowData[i].getTableColumn().isPrimary() || rowData[i].getTableColumn().hasUniqueIndex() )
-			{
-				if( i<rowData.length-1 && sqlWhere.length() > 0 )
-					sqlWhere += " AND ";				
-					
-				sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() );
-				keySearch = true;
-			}
-			else if( !keySearch )
-			{
-				if( !rowData[i].getTableColumn().isBinary() )
-				{
-					if( rowData[i].isNull() )
-						sqlWhere += rowData[i].getTableColumn().getName() +" IS NULL";
-					else
-						sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() );
-										
-					if( i<rowData.length-1 )
-						sqlWhere += " AND ";
-				}
-			}
-		}
+		String sqlWhere = rowFilter( rowData );
 		dbc.useDatabase( tb.getDatabase().getName() );
 		int i = dbc.executeUpdate("UPDATE "+ quote( tb.getName() ) 
 										+" SET "+ quote( cellData.getTableColumn().getName() ) +"="+ dbc.formatFieldValue( newValue.toString() )
@@ -434,29 +440,7 @@ public class Table
 
 	public void deleteRow( Table tb, TableData [] rowData ) throws Exception
 	{
-		String sqlWhere = "";
-		boolean keySearch = false;
-		
-		for( int i=0; i<rowData.length; i++ )
-		{
-			if( rowData[i].getTableColumn().isPrimary() || rowData[i].getTableColumn().hasUniqueIndex() )
-			{
-				if( i<rowData.length-1 && sqlWhere.length() > 0 )
-					sqlWhere += " AND ";				
-
-				sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() ) +"";
-				keySearch = true;
-			}
-			else if( !keySearch )
-			{
-				if( !rowData[i].getTableColumn().isBinary() )
-				{	sqlWhere += rowData[i].getTableColumn().getName() +"="+ dbc.formatFieldValue( rowData[i].getData() ) +"";
-				
-					if( i<rowData.length-1 )
-						sqlWhere += " AND ";
-				}
-			}
-		}
+		String sqlWhere = rowFilter( rowData );
 
 		dbc.useDatabase( tb.getDatabase().getName() );
 		int i = dbc.executeUpdate("DELETE FROM "+ quote( tb.getName() ) +" WHERE "+ sqlWhere );

@@ -19,19 +19,18 @@ public class Credits extends Canvas implements Runnable
 	{	
 		try
 		{			
-			BufferedReader fin = new BufferedReader(new FileReader("credits.txt"));
-			String in = fin.readLine();
-			root = new CreditObject(in);
-			curr = root;
-			nodes++;
-			while((in = fin.readLine()) != null)
-			{	nodes ++;
-				CreditObject tmp = new CreditObject(in);
-				curr.next = tmp;
-				curr = tmp;
+			try( BufferedReader fin = new BufferedReader(new FileReader("credits.txt")) )
+			{	String in = fin.readLine();
+				root = new CreditObject(in);
+				curr = root;
+				nodes++;
+				while((in = fin.readLine()) != null)
+				{	nodes ++;
+					CreditObject tmp = new CreditObject(in);
+					curr.next = tmp;
+					curr = tmp;
+				}
 			}
-			fin.close();
-			fin = null;
 			
 			Thread t = new Thread(this);
 			t.start();

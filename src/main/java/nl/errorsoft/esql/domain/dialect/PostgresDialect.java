@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.domain.dialect;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -32,6 +33,27 @@ public class PostgresDialect extends AbstractDialect
 	public String getDefaultUsername()
 	{
 		return "postgres";
+	}
+
+	/** Rows loaded with explicit ids leave the sequence behind, so the next insert would reuse an id. */
+	public List<String> afterDataLoadSql( DatabaseConnection dbc, String table ) throws SQLException
+	{
+		List<String> statements = new ArrayList<String>();
+
+		try( PreparedStatement ps = dbc.getConnection().prepareStatement( "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND ( is_identity = 'YES' OR column_default LIKE 'nextval%' )" ) )
+		{
+			ps.setString( 1, table );
+
+			try( ResultSet rs = ps.executeQuery() )
+			{
+				while( rs.next() )
+				{
+					String column = quote( rs.getString( 1 ) );
+					statements.add( "SELECT setval(pg_get_serial_sequence(" + literal( quote( table ) ) + ", " + literal( rs.getString( 1 ) ) + "), (SELECT max(" + column + ") FROM " + quote( table ) + "))" );
+				}
+			}
+		}
+		return statements;
 	}
 
 	public String maintain( DatabaseConnection dbc, Maintenance command, String table ) throws SQLException
@@ -113,8 +135,9 @@ public class PostgresDialect extends AbstractDialect
 		return listTablesFromMetaData( dbc, db, null, getSchema( dbc ), new String[] { "TABLE", "VIEW", "MATERIALIZED VIEW", "PARTITIONED TABLE" } );
 	}
 
-	public String selectPage( String quotedTable, int skip, int show )
+	/** Without an ORDER BY the server may return the rows in any order, and an updated row moves to the end. */
+	public String selectPage( String quotedTable, String orderBy, int skip, int show )
 	{
-		return "SELECT * FROM "+ quotedTable +" LIMIT "+ show +" OFFSET "+ skip;
+		return "SELECT * FROM "+ quotedTable + ( orderBy.length() > 0 ? " ORDER BY "+ orderBy : "" ) +" LIMIT "+ show +" OFFSET "+ skip;
 	}
 }

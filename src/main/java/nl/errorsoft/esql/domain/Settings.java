@@ -66,9 +66,9 @@ public class Settings
 		set =  set + "</config>" + '\n';
 		
 		try
-		{	PrintWriter out = new PrintWriter(new FileWriter("conf/settings.xml"));
-			out.println(set);
-			out.close();
+		{	try( PrintWriter out = new PrintWriter(new FileWriter("conf/settings.xml")) )
+			{	out.println(set);
+			}
 		}
 		catch(Exception e)
 		{	return false;

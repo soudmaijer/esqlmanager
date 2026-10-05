@@ -50,7 +50,11 @@ public class Import extends Observable implements Runnable
 					
 					if( s.endsWith(";") )
 					{	
-						dbc.executeUpdate( sql );
+						// A statement that returns a result, such as moving a sequence, cannot go through executeUpdate.
+						if( sql.trim().toUpperCase().startsWith( "SELECT" ) )
+							dbc.execute( sql );
+						else
+							dbc.executeUpdate( sql );
 						sql = "";
 					}
 				}

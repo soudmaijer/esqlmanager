@@ -41,7 +41,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	private JMenuItem mnuTileVertical;
 	private JMenu mnuGroupHelp;
 	private JMenuItem mnuAbout;
-	private JMenuItem mnuUpdate;
 
 	// Toolbar
 	private JToolBar toolbar;
@@ -160,9 +159,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 		mnuGroupHelp = new JMenu("Help");
 		mnuAbout = new JMenuItem("About");
-		mnuUpdate = new JMenuItem("Check for updates");
-		mnuGroupHelp.add(mnuUpdate);
-		
 		mnuGroupHelp.addSeparator();
 		mnuGroupHelp.add(mnuAbout);
 		menubar.add( mnuGroupHelp );
@@ -322,7 +318,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		btnTileHorizontal.addActionListener(this);
 
 		mnuAbout.addActionListener(this);
-		mnuUpdate.addActionListener(this);
 
 		// Toolbar
 		btnConnect.addActionListener(this);
@@ -479,10 +474,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		else if( object == mnuAbout )
 		{
 			jmcc.showSplashScreen(0);
-		}
-		else if( object == mnuUpdate )
-		{
-			jmcc.checkForUpdates();
 		}
 		else if( object == mnuJDBC )
 		{
