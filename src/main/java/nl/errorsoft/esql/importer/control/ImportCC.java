@@ -105,7 +105,7 @@ public class ImportCC implements ProgressListener {
 	}
 
 	/*
-	 * @description: starts the Import ui for the option: Import data as CSV comma-seperated
+	 * @description: starts the Import ui for the option: Import data as CSV comma-separated
 	 */
 	public void startImportCSVUI() {
 	}

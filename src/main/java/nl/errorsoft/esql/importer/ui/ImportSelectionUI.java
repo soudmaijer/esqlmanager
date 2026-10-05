@@ -50,7 +50,7 @@ public class ImportSelectionUI extends JDialog implements ActionListener {
 	void jbInit() throws Exception {
 		this.setTitle("Import data");
 		this.setResizable(false);
-		jRadioButton1.setText("From a CSV comma-seperated file");
+		jRadioButton1.setText("From a CSV comma-separated file");
 		jRadioButton2.setText("From a file containing SQL statements");
 		jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD));
 		jLabel1.setText("Import data options:");

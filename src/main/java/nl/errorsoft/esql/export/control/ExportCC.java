@@ -99,7 +99,7 @@ public class ExportCC implements ProgressListener {
 	}
 
 	/*
-	 * @description: starts the export ui for the option: Export data as CSV comma-seperated
+	 * @description: starts the export ui for the option: Export data as CSV comma-separated
 	 */
 	public void startExportCSVUI() {
 	}

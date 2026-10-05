@@ -25,7 +25,7 @@ public class TableListView extends JScrollPane {
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.setAutoResizeMode(table.AUTO_RESIZE_OFF);
 		table.setShowGrid(true);
-		table.setGridColor(new java.awt.Color(208, 208, 208));
+		table.setGridColor(UIManager.getColor("Table.gridColor"));
 		table.addMouseListener(new TableListViewMouseListener(this));
 		table.getTableHeader().setReorderingAllowed(false);
 		this.getViewport().add(table);

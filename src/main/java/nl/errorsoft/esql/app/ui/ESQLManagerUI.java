@@ -267,7 +267,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 
 		// DesktopPane.
 		jdp = new JDesktopPane();
-		jdp.setBackground(Color.gray);
+		jdp.setBackground(UIManager.getColor("Desktop.background"));
 
 		//ScrollPane for tree.
 		jsp = new JScrollPane(jta);

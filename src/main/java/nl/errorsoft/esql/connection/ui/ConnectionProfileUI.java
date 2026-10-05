@@ -63,7 +63,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		Forms.Grid form = new Forms.Grid().row(new JLabel("Profile: "), jc).row(new JLabel("Server type: "), jcServer).row(new JLabel("Host: "), ip)
 			.row(new JLabel("Username: "), un).row(new JLabel("Password: "), pw).row(new JLabel("Port: "), pt)
-			.full(new JLabel("Database(s) ( Comma seperated, example: db1,db2,db3 ): ")).full(dbs).full(chkAutoConnect);
+			.full(new JLabel("Database(s), comma separated (example: db1,db2,db3)")).full(dbs).full(chkAutoConnect);
 
 		btnConnect = new JButton("Connect");
 		btnSave = new JButton("Save");

@@ -142,8 +142,10 @@ public class ForeignKeyDialog extends JDialog {
 		GridBagConstraints left = new GridBagConstraints();
 		left.gridx = 0;
 		left.gridy = row;
-		left.anchor = GridBagConstraints.NORTHWEST;
-		left.insets = new Insets(4, 0, 4, 10);
+		// A label sits in the middle of a one line field and at the top of the column table.
+		boolean tall = field.getPreferredSize().height > 40;
+		left.anchor = tall ? GridBagConstraints.NORTHWEST : GridBagConstraints.WEST;
+		left.insets = new Insets(tall ? 8 : 4, 0, 4, 10);
 		form.add(new JLabel(label), left);
 
 		GridBagConstraints right = new GridBagConstraints();

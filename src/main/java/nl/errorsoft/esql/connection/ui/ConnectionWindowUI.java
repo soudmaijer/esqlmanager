@@ -177,7 +177,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		// JTree
 		jsp = new JScrollPane();
-		jsp.getViewport().setBackground(Color.white);
+		jsp.getViewport().setBackground(UIManager.getColor("Tree.background"));
 
 		// SplitPane properties.
 		// One bar below the tabs: what this connection did last on the left, the paging of the table data in the centre.

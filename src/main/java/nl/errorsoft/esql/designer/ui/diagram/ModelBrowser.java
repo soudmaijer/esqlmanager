@@ -28,7 +28,7 @@ public class ModelBrowser extends JTabbedPane implements ChangeListener { // Lis
 	public void addModelViewer(String name) {
 		ModelViewer mv = new ModelViewer(mvc);
 		JScrollPane jsp = new JScrollPane(mv, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		jsp.getViewport().setBackground(Color.white);
+		jsp.getViewport().setBackground(UIManager.getColor("Panel.background"));
 		this.addTab(name, jsp);
 		this.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		v.add(mv);

@@ -150,6 +150,8 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 		JPanel buttonColumn = new JPanel(new BorderLayout());
 		buttonColumn.add(buttons, BorderLayout.NORTH);
 		p2.add(buttonColumn, BorderLayout.EAST);
+		// The Add button lines up with the column of buttons below it.
+		addfield.setPreferredSize(new java.awt.Dimension(buttons.getPreferredSize().width, addfield.getPreferredSize().height));
 
 		DataType[] ftp = ctcc.getDatatypes();
 		for (DataType type : ftp) {

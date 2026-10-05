@@ -50,7 +50,7 @@ public class ExportSelectionUI extends JDialog implements ActionListener {
 	void jbInit() throws Exception {
 		this.setTitle("Export data");
 		this.setResizable(false);
-		jRadioButton1.setText("As CSV comma-seperated");
+		jRadioButton1.setText("As CSV comma-separated");
 		jRadioButton2.setText("As SQL statements");
 		jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD));
 		jLabel1.setText("Export data options:");

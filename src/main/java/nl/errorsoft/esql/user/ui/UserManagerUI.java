@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.user.ui;
 
+import nl.errorsoft.esql.ui.util.Forms;
+
 import nl.errorsoft.esql.error.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -39,25 +41,26 @@ public class UserManagerUI extends JDialog {
 		this.cc = cc;
 
 		JPanel userPanel = new JPanel(new BorderLayout(0, 6));
-		userPanel.setBorder(BorderFactory.createTitledBorder("Users"));
+		Forms.titled(userPanel, "Users");
 		userPanel.add(new JScrollPane(users), BorderLayout.CENTER);
 		userPanel.add(userButtons(), BorderLayout.SOUTH);
 
 		JPanel privileges = new JPanel(new BorderLayout(0, 6));
-		privileges.setBorder(BorderFactory.createTitledBorder("Privileges"));
+		Forms.titled(privileges, "Privileges");
 		privileges.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-		JPanel boxes = new JPanel(new BorderLayout(0, 6));
+		JPanel boxes = Forms.titled(new JPanel(new BorderLayout(0, 6)), "Granted");
 		// Keeps the checkboxes together at the top instead of spreading them over the height.
 		boxes.add(privilegePanel, BorderLayout.NORTH);
-		boxes.add(apply, BorderLayout.SOUTH);
+		boxes.add(Forms.buttonRow(apply), BorderLayout.SOUTH);
 
 		JSplitPane right = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, privileges, boxes);
 		right.setResizeWeight(0.5);
 		JSplitPane main = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, userPanel, right);
 		main.setResizeWeight(0.25);
+		main.setBorder(BorderFactory.createEmptyBorder(Forms.PADDING, Forms.PADDING, 0, Forms.PADDING));
 
-		message.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+		message.setBorder(BorderFactory.createEmptyBorder(Forms.GAP, Forms.PADDING, Forms.GAP, Forms.PADDING));
 		getContentPane().add(main, BorderLayout.CENTER);
 		getContentPane().add(message, BorderLayout.SOUTH);
 

@@ -18,8 +18,6 @@ public class SettingsUI extends JDialog implements ActionListener {
 	private JButton btnOk = new JButton("Save");
 	private JButton btnCancel = new JButton("Cancel");
 
-	private JCheckBox update;
-	private JTextField updateServer;
 	private JComboBox<Appearance> appearance;
 	private ESQLManagerCC jmcc;
 
@@ -27,14 +25,10 @@ public class SettingsUI extends JDialog implements ActionListener {
 		super(parent, true);
 		this.jmcc = jmcc;
 
-		update = new JCheckBox("Enable auto-update");
-		update.setSelected(ApplicationContext.get().settings().isUpdaterEnabled());
-		updateServer = new JTextField(ApplicationContext.get().settings().getUpdateServer(), 16);
 		appearance = new JComboBox<>(Appearance.values());
 		appearance.setSelectedItem(ApplicationContext.get().settings().getAppearance());
 
-		JPanel jp2 = Forms.padded(new Forms.Grid().row(new JLabel("Update server"), updateServer).full(update)
-			.row(new JLabel("Appearance"), appearance).done());
+		JPanel jp2 = Forms.padded(new Forms.Grid().row(new JLabel("Appearance"), appearance).done());
 		jtp = new JTabbedPane();
 		jtp.addTab("Settings", jp2);
 
@@ -56,8 +50,6 @@ public class SettingsUI extends JDialog implements ActionListener {
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == btnOk) {
-			ApplicationContext.get().settings().setUpdaterEnabled(update.isSelected());
-			ApplicationContext.get().settings().setUpdateServer(updateServer.getText());
 			ApplicationContext.get().settings().setAppearance((Appearance) appearance.getSelectedItem());
 			ApplicationContext.get().settings().saveSettings();
 			ApplicationContext.get().settings().getAppearance().apply();

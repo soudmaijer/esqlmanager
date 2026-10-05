@@ -161,7 +161,7 @@ public class TableDataView extends JPanel implements ActionListener {
 		});
 		tbData.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tbData.setShowGrid(true);
-		tbData.setGridColor(new java.awt.Color(208, 208, 208));
+		tbData.setGridColor(UIManager.getColor("Table.gridColor"));
 		tbData.addFocusListener(new FocusAdapter() {
 			public void focusLost(FocusEvent e) {
 				if (e.getOppositeComponent() != null && e.getOppositeComponent() instanceof JTextField) {

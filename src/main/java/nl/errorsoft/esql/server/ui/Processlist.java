@@ -23,6 +23,7 @@ import nl.errorsoft.esql.server.control.ProcesslistCC;
 /** The window of the process list. It shows what {@link ProcesslistCC} gives it. */
 public class Processlist extends JDialog {
 	private static final String[] COLUMNS = {"Id", "User", "Host", "Database", "Command", "Time", "Info"};
+	private static final int[] WIDTHS = {60, 90, 110, 90, 80, 50, 420};
 
 	private final JTable jtable;
 	private final JLabel lblInterval = new JLabel();
@@ -60,8 +61,14 @@ public class Processlist extends JDialog {
 			public void windowClosing(WindowEvent we) {
 				controller.stop();
 			}
+
+			@Override
+			public void windowClosed(WindowEvent we) {
+				controller.stop();
+			}
 		});
-		setSize(400, 200);
+		setColumnWidths();
+		setSize(760, 320);
 		setLocationRelativeTo(parent);
 	}
 
@@ -73,8 +80,15 @@ public class Processlist extends JDialog {
 			model.addRow(new Object[]{p.id(), p.user(), p.host(), p.database(), p.command(), p.time(), p.info()});
 		}
 		jtable.setModel(model);
+		setColumnWidths();
 		if (selected > -1 && selected < model.getRowCount()) {
 			jtable.setRowSelectionInterval(selected, selected);
+		}
+	}
+
+	private void setColumnWidths() {
+		for (int i = 0; i < WIDTHS.length; i++) {
+			jtable.getColumnModel().getColumn(i).setPreferredWidth(WIDTHS[i]);
 		}
 	}
 
