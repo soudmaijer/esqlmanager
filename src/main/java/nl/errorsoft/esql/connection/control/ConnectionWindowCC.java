@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.query.QueryService;
+import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
@@ -412,7 +414,7 @@ public class ConnectionWindowCC extends Thread
 			cwui.disableDataEdit();
 			long start = System.nanoTime();
 			
-			if( query.toLowerCase().startsWith("select") || query.toLowerCase().startsWith("show") )
+			if( new QueryService( getDatabaseConnection() ).returnsRows( query ) )
 			{
 				TableCC tcc = new TableCC( this );
 				TableDataView result = tcc.executeQuery( query );
@@ -421,17 +423,15 @@ public class ConnectionWindowCC extends Thread
 			}
 			else
 			{
-				if( query.toLowerCase().startsWith("use") )
+				QueryService queries = new QueryService( getDatabaseConnection() );
+				
+				if( queries.isUse( query ) )
 				{
-					String db = query.substring( 3, query.length() );
-					java.util.StringTokenizer st = new java.util.StringTokenizer( db, "; `", false );
-					
-					if( st.hasMoreTokens() )
-						this.getDatabaseConnection().useDatabase( st.nextToken() );
+					queries.use( query );
 				}
 				else
 				{
-					int rows = this.getDatabaseConnection().executeUpdate( query );
+					int rows = queries.update( query );
 					setStatusDetail( "Query affected "+ rows +" row(s) in "+ millisSince( start ) +" ms" );
 				}				
 			}
@@ -452,7 +452,7 @@ public class ConnectionWindowCC extends Thread
 	{
 		try
 		{		
-			this.getDatabaseConnection().useDatabase( db.getName() );
+			new DatabaseService( getDatabaseConnection() ).use( db );
 		}
 		catch( Exception e )
 		{

@@ -10,6 +10,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.designer.model.Model;
 import javax.swing.*;
+import nl.errorsoft.esql.designer.DesignedDatabase;
+import nl.errorsoft.esql.designer.DesignedTable;
+import nl.errorsoft.esql.designer.DesignerService;
 import java.util.*;
 
 public class Generate extends javax.swing.JDialog implements Runnable
@@ -326,39 +329,27 @@ public class Generate extends javax.swing.JDialog implements Runnable
 		
 		try
 		{
-			DatabaseConnection dbc = cwui.getControlClass().getDatabaseConnection();
-			Dialect dialect = dbc.getConnectionProfile().getServerType().getDialect();
-			List<String> existingDatabases = dialect.listDatabases( dbc );
+			List<DesignedDatabase> model = new ArrayList<DesignedDatabase>();
 			
 			for( int i = 0; i < db.size(); i ++ )
 			{	DatabaseObject d = (DatabaseObject)db.get(i);
-				
-				if( !existingDatabases.contains( d.getName() ) )
-					dbc.executeUpdate( dialect.createDatabaseSql( d.getName() ) );
-				
-				dbc.useDatabase( d.getName() );
-				progress.setValue(progress.getValue() + 1);
-				
+				List<DesignedTable> designedTables = new ArrayList<DesignedTable>();
 				Vector tb = m.getReferences(d);
 				
 				for( int j = 0; j < tb.size() ; j ++ )
 				{
 					TableObject tbs = (TableObject)tb.get(j);	
 					List<CreateColumn> columns = new ArrayList<CreateColumn>();
-					progress.setValue(progress.getValue() + 1);
 					
 					for(int k = 0; k < tbs.getFields().length; k++)
-					{	columns.add( toCreateColumn( tbs.getFields()[k] ) );
-						progress.setValue(progress.getValue() + 1);
-					}
+						columns.add( toCreateColumn( tbs.getFields()[k] ) );
 					
-					// Generating a model again leaves the tables that are already there alone.
-					if( !tableExists( dbc, dialect, tbs.getName() ) )
-					{	for( String query : dialect.createTableSql( tbs.getName(), columns, tbs.getType(), tbs.getComment() ) )
-							dbc.executeUpdate( query );
-					}
+					designedTables.add( new DesignedTable( tbs.getName(), tbs.getType(), tbs.getComment(), columns ) );
 				}
+				model.add( new DesignedDatabase( d.getName(), designedTables ) );
 			}
+			
+			new DesignerService( cwui.getControlClass().getDatabaseConnection() ).generate( model, () -> progress.setValue( progress.getValue() + 1 ) );
 		}
 		catch(Exception e)
 		{
@@ -391,18 +382,6 @@ public class Generate extends javax.swing.JDialog implements Runnable
 		column.autoincrement = f.autoincrement;
 		column.zerofill = f.zerofill;
 		return column;
-	}
-	
-	private boolean tableExists( DatabaseConnection dbc, Dialect dialect, String table ) throws java.sql.SQLException
-	{
-		java.sql.ResultSet rs = dbc.getConnection().getMetaData().getTables( dbc.getConnection().getCatalog(), dialect.getSchema( dbc ), table, new String[] { "TABLE" } );
-		
-		try
-		{	return rs.next();
-		}
-		finally
-		{	rs.close();
-		}
 	}
 	
 	public void showMessage(String message)

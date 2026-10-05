@@ -61,6 +61,17 @@ public class DatabaseService
 		return tables;
 	}
 
+	public boolean exists( Database database ) throws Exception
+	{
+		return repository.exists( database.getName() );
+	}
+
+	/** Makes the database the active one of the connection. */
+	public void use( Database database ) throws Exception
+	{
+		repository.use( database.getName() );
+	}
+
 	public Database createDatabase( String name ) throws Exception
 	{
 		repository.create( name );

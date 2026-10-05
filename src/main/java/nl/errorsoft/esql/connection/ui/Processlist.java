@@ -1,4 +1,5 @@
 package nl.errorsoft.esql.connection.ui;
+import nl.errorsoft.esql.connection.ServerService;
 
 import nl.errorsoft.esql.database.Database;
 
@@ -86,7 +87,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 					dtm.addColumn("Info");					
 					
 					// Get processes and add all.
-					for( ServerProcess process : cp.getServerType().getDialect().listProcesses( m ) )
+					for( ServerProcess process : new ServerService( m ).getProcesses() )
 					{
 						dtm.addRow( new Object [] { process.getId(), process.getUser(), process.getHost(), process.getDatabase(), process.getCommand(), process.getTime(), process.getInfo() } );
 					}
@@ -159,7 +160,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 			{
 				try
 				{
-					cp.getServerType().getDialect().killProcess( m, jtable.getValueAt( jtable.getSelectedRow(), 0 ).toString() );
+					new ServerService( m ).killProcess( jtable.getValueAt( jtable.getSelectedRow(), 0 ).toString() );
 				}
 				catch( Exception ae )
 				{

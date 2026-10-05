@@ -27,6 +27,16 @@ public class DatabaseRepository extends AbstractRepository
 		return dialect().listTables( dbc, database );
 	}
 
+	public boolean exists( String name ) throws SQLException
+	{
+		return listNames().contains( name );
+	}
+
+	public void use( String name ) throws SQLException
+	{
+		useDatabase( name );
+	}
+
 	public void create( String name ) throws SQLException
 	{
 		executeUpdate( "CREATE DATABASE "+ quote( name ) );

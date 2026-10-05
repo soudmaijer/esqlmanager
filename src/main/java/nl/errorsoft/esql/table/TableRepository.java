@@ -148,6 +148,22 @@ public class TableRepository extends AbstractRepository
 		}
 	}
 
+	public boolean exists( Database database, String name ) throws SQLException
+	{
+		useDatabase( database.getName() );
+
+		try( ResultSet rs = dbc.getConnection().getMetaData().getTables( dbc.getConnection().getCatalog(), dialect().getSchema( dbc ), name, new String[] { "TABLE" } ) )
+		{
+			return rs.next();
+		}
+	}
+
+	public void create( Database database, String name, List<CreateColumn> columns, String type, String comment ) throws Exception
+	{
+		useDatabase( database.getName() );
+		executeAll( dialect().createTableSql( name, columns, type, comment ) );
+	}
+
 	public void dropTable( Table table ) throws Exception
 	{
 		executeUpdate( "DROP TABLE "+ quote( table.getName() ) );

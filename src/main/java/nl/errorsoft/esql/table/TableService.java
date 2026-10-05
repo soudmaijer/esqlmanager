@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.DataType;
 import nl.errorsoft.esql.table.Table;
@@ -40,6 +41,16 @@ public class TableService
 
 		table.setIndexes( repository.loadIndexes( table ) );
 		return table.getIndexes();
+	}
+
+	public boolean exists( Database database, String name ) throws Exception
+	{
+		return repository.exists( database, name );
+	}
+
+	public void createTable( Database database, String name, List<CreateColumn> columns, String type, String comment ) throws Exception
+	{
+		repository.create( database, name, columns, type, comment );
 	}
 
 	public void dropTable( Table table ) throws Exception

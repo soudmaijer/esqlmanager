@@ -1,4 +1,5 @@
 package nl.errorsoft.esql.table.control;
+import nl.errorsoft.esql.connection.ServerService;
 
 import nl.errorsoft.esql.database.Database;
 
@@ -173,12 +174,12 @@ public class TableCC
 	 */	
 	public TableDataView showServerStatus() throws Exception
 	{
-	  	return runCommand( cwcc.getConnectionProfile().getServerType().getDialect().getStatusQuery() );				
+	  	return show( new ServerService( cwcc.getDatabaseConnection() ).getStatus() );				
 	} 
 	
 	public TableDataView showServerVariables() throws Exception
 	{
-	  	return runCommand( cwcc.getConnectionProfile().getServerType().getDialect().getVariablesQuery() );				
+	  	return show( new ServerService( cwcc.getDatabaseConnection() ).getVariables() );				
 	} 
 	
 	public String optimizeTable( Table table ) throws Exception
@@ -201,11 +202,6 @@ public class TableCC
 		return service().repairTable( table );
 	}	
 	
-	public TableDataView runCommand( String query ) throws Exception
-	{
-		return show( service().runCommand( query ) );
-	} 
-
 	private TableDataView show( QueryResult result ) throws Exception
 	{
 		TableDataView view = new TableDataView( this );

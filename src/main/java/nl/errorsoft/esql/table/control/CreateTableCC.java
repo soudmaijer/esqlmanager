@@ -13,6 +13,7 @@ import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.table.TableService;
+import nl.errorsoft.esql.database.Database;
 import java.util.Vector;
 
 public class CreateTableCC
@@ -76,14 +77,11 @@ public class CreateTableCC
 			return;
 		}
 		try
-		{	cwcc.getDatabaseConnection().useDatabase( database );
-			java.util.List<CreateColumn> list = new java.util.ArrayList<CreateColumn>();
+		{	java.util.List<CreateColumn> list = new java.util.ArrayList<CreateColumn>();
 			for(int i = 0; i < columns.size(); i++)
 			{	list.add((CreateColumn)columns.get(i));
 			}
-			for( String query : cwcc.getConnectionProfile().getServerType().getDialect().createTableSql( name, list, type, comment ) )
-			{	cwcc.getDatabaseConnection().executeUpdate(query);
-			}
+			new TableService( cwcc.getDatabaseConnection() ).createTable( new Database( database ), name, list, type, comment );
 			ct.dispose();
 			cwcc.reloadSelectedDatabase();
 		}
