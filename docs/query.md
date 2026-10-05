@@ -4,7 +4,7 @@
 
 New query (in the context menu of the server or a database) or **Run SQL query** in the toolbar opens a query tab: "Query", "Query 2" and so on. Each tab has its own editor and result, and can be closed with its close button.
 
-The editor highlights SQL, shows line numbers and has undo. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files.
+The editor highlights SQL, shows line numbers and has undo. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files. On PostgreSQL there is no schema picker: plain table names follow the `search_path`, write `schema.table` for the others.
 
 ![A query tab with a result and the completion of the columns of products](query.png)
 

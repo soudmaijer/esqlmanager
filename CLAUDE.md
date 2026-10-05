@@ -149,5 +149,6 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 ## Known technical debt
 
-* The automatic layout of the designer can order tables so that foreign key connectors cross (shop: products above customers).
+* The automatic layout of the designer can order tables so that foreign key connectors cross in small models (shop: products above customers).
+* PostgreSQL schemas: user manager table grants ignore schemas, the export and import windows list only the current schema's tables, the query tab has no schema picker (plain names use the `search_path`), Open in designer on a database node reads its current schema (a schema node reads that schema).
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.

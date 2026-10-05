@@ -4,6 +4,10 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Connection window toolbar: 20px icons and 32x30 buttons, the same as the application toolbar (ui.util.ToolbarButtons).
+- README and docs: the features table lists schemas, appearance, tabs for Create table, Edit table and Indexes,
+  designer context menus and brand icons; SQL Server create and drop database are marked not verified; the known
+  gaps of PostgreSQL schemas are stated.
 - PostgreSQL schemas: the tree is server > databases > schemas > tables (MySQL keeps databases > tables). A
   schema node has Reload tables, Create table, Open in designer, Export and Drop schema, a database has Create
   schema and Reload schemas; menu words come from the dialect. Every statement on a table names schema.table, the
