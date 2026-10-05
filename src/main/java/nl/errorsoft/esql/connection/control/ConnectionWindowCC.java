@@ -14,7 +14,7 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 import nl.errorsoft.esql.connection.ConnectionContext;
 
-import nl.errorsoft.esql.query.QueryService;
+import nl.errorsoft.esql.query.control.QueryCC;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
 
@@ -92,7 +92,7 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	/** What this connection did last is shown in the status bar of its own window. */
-	private void setStatusDetail(String detail) {
+	public void setStatusDetail(String detail) {
 		statusDetail = detail;
 		cwui.setStatus(detail);
 		showStatusInfo();
@@ -311,13 +311,11 @@ public class ConnectionWindowCC extends Thread {
 		tbcc.saveSelectedRow();
 	}
 
+	/** Opens a new query tab on the database selected in the tree. */
 	public void startQueryUI() {
 		try {
-			jmcc.updateStatus("Starting query window...", true);
-			DatabaseCC dbcc = new DatabaseCC(this);
-			QueryUI qu = new QueryUI(this, jmcc.getUI(), ApplicationContext.get().imageLoader(), dbcc.getDatabases(), cwui.getDatabase());
-			jmcc.showConnectionState();
-			qu.setVisible(true);
+			QueryCC controller = new QueryCC(this);
+			cwui.showQueryTab(new QueryUI(controller, controller.databases(), cwui.getDatabase()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Query", e);
 		}
@@ -331,47 +329,6 @@ public class ConnectionWindowCC extends Thread {
 			fpu.setVisible(true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Field", e);
-		}
-	}
-
-	/*
-	 * @description: runs custom SQL queries for the QueryUI (wrong place!!)
-	 */
-	public void runCustomSQL(String query) {
-		try {
-			jmcc.updateStatus("Executing query...", true);
-			cwui.disableDataEdit();
-			long start = System.nanoTime();
-
-			if (getContext().queries().returnsRows(query)) {
-				TableCC tcc = new TableCC(this);
-				TableDataView result = tcc.executeQuery(query);
-				cwui.showTableDataView("Query results", result);
-				setStatusDetail("Query returned " + result.getRowCount() + " row(s) in " + millisSince(start) + " ms");
-			} else {
-				QueryService queries = getContext().queries();
-
-				if (queries.isUse(query)) {
-					queries.use(query);
-				} else {
-					int rows = queries.update(query);
-					setStatusDetail("Query affected " + rows + " row(s) in " + millisSince(start) + " ms");
-				}
-			}
-			jmcc.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Run custom sql", e);
-		}
-	}
-
-	/*
-	 * @description: Changes the active database for the QueryUI (wrong place!!)
-	 */
-	public void changeDatabase(Database db) {
-		try {
-			getContext().databases().use(db);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Change database", e);
 		}
 	}
 

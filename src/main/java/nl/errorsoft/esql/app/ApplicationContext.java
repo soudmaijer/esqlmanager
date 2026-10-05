@@ -42,13 +42,13 @@ public final class ApplicationContext {
 			images.addIcon("imgTileHorizontal", "tile-horizontal", 16, false);
 			images.addIcon("imgTileVertical", "tile-vertical", 16, false);
 			images.addIcon("pc", "server", 16, false);
-			images.addIcon("imgCreateDb", "database-add", 16, false);
-			images.addIcon("imgDropDb", "database-drop", 16, false);
 			images.addIcon("imgCreateTable", "table-add", 16, false);
 			images.addIcon("imgDropTable", "table-drop", 16, false);
 			images.addIcon("imgUserManager", "users", 16, false);
 			images.addIcon("imgRunQuery", "run-query", 16, false);
-			images.addIcon("imgDoRunQuery", "run", 16, false);
+			images.addIcon("imgRunSelection", "run", 16, false);
+			images.addIcon("imgRunAll", "run-all", 16, false);
+			images.addIcon("imgOpen", "folder-open", 16, false);
 			images.addIcon("imgNewRow", "row-add", 16, false);
 			images.addIcon("imgUpdateRow", "update-row", 16, false);
 			images.addIcon("imgDeleteRow", "row-drop", 16, false);

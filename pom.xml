@@ -150,6 +150,12 @@
       <artifactId>rsyntaxtextarea</artifactId>
       <version>4.0.1</version>
     </dependency>
+    <!-- Auto completion in the SQL editor, the release that belongs to RSyntaxTextArea 4.0.1 -->
+    <dependency>
+      <groupId>com.fifesoft</groupId>
+      <artifactId>autocomplete</artifactId>
+      <version>4.0.0</version>
+    </dependency>
     <!-- Automatic layout of the designer (Eclipse Layout Kernel, layered algorithm) -->
     <dependency>
       <groupId>org.eclipse.elk</groupId>

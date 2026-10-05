@@ -10,6 +10,7 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
+import nl.errorsoft.esql.query.ui.QueryUI;
 import nl.errorsoft.esql.ui.util.HyperLinkListener;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
@@ -47,6 +48,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JPanel navigation;
 	private Component viewTab; // The table data or table list, shown in front of the help
 	private JEditorPane html; // The HTML info data.
+	private int queryTabs; // Query tabs opened so far, for their numbers
 
 	// Root menu.
 	private JLabel rtlabel;
@@ -98,8 +100,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	// Internal toolbar.
 	private JToolBar tbTable;
 	private JButton btnRefreshTree;
-	private JButton btnDropDb;
-	private JButton btnCreateDb;
 	private JButton btnDropTable;
 	private JButton btnCreateTable;
 	private JButton btnUserManager;
@@ -145,10 +145,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		tbTable.setFloatable(false);
 		btnRefreshTree = new JButton(imgLoader.getIcon("pc"));
 		btnRefreshTree.setToolTipText("Refresh tree");
-		btnCreateDb = new JButton(imgLoader.getIcon("imgCreateDb"));
-		btnCreateDb.setToolTipText("Create database");
-		btnDropDb = new JButton(imgLoader.getIcon("imgDropDb"));
-		btnDropDb.setToolTipText("Drop database");
 		btnCreateTable = new JButton(imgLoader.getIcon("imgCreateTable"));
 		btnCreateTable.setToolTipText("Create table");
 		btnDropTable = new JButton(imgLoader.getIcon("imgDropTable"));
@@ -175,8 +171,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		tbTable.add(btnUserManager);
 		tbTable.add(btnRunQuery);
 		tbTable.addSeparator();
-		tbTable.add(btnCreateDb);
-		tbTable.add(btnDropDb);
 		tbTable.add(btnDesigner);
 		tbTable.addSeparator();
 		tbTable.add(btnCreateTable);
@@ -194,7 +188,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		this.btnUpdateRow.setEnabled(false);
 		this.btnDeleteRow.setEnabled(false);
 		this.btnRunQuery.setEnabled(false);
-		this.btnDropDb.setEnabled(false);
 		this.btnDesigner.setEnabled(false);
 		this.btnDropTable.setEnabled(false);
 		this.btnCreateTable.setEnabled(false);
@@ -437,8 +430,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		btnRefreshTree.addActionListener(this);
 		btnCreateTable.addActionListener(this);
 		btnDropTable.addActionListener(this);
-		btnCreateDb.addActionListener(this);
-		btnDropDb.addActionListener(this);
 		btnDesigner.addActionListener(this);
 		btnUserManager.addActionListener(this);
 		btnRunQuery.addActionListener(this);
@@ -461,8 +452,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 	// Disable buttons if root selected.
 	public void rootSelected() {
-		btnCreateDb.setEnabled(true);
-		btnDropDb.setEnabled(false);
 		btnDesigner.setEnabled(false);
 		btnCreateTable.setEnabled(false);
 		btnDropTable.setEnabled(false);
@@ -476,8 +465,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 	// Disable buttons if database selected.
 	public void databaseSelected() {
-		btnCreateDb.setEnabled(true);
-		btnDropDb.setEnabled(true);
 		btnDesigner.setEnabled(true);
 		btnCreateTable.setEnabled(true);
 		btnDropTable.setEnabled(false);
@@ -491,8 +478,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 	// Disable buttons if table selected.
 	public void tableSelected() {
-		btnCreateDb.setEnabled(true);
-		btnDropDb.setEnabled(true);
 		btnDesigner.setEnabled(false);
 		btnCreateTable.setEnabled(true);
 		btnDropTable.setEnabled(true);
@@ -506,8 +491,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 	// Disable buttons if field selected.
 	public void fieldSelected() {
-		btnCreateDb.setEnabled(true);
-		btnDropDb.setEnabled(true);
 		btnDesigner.setEnabled(false);
 		btnCreateTable.setEnabled(true);
 		btnDropTable.setEnabled(true);
@@ -532,10 +515,11 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	// Close frame.
 	public void closeUI(boolean confirmation) {
 		if (confirmation) {
-			JOptionPane pane = new JOptionPane();
+			Object[] options = {"Disconnect", "Cancel"};
+			int answer = JOptionPane.showOptionDialog(this, "Disconnect from " + getTitle() + "?", "Disconnect", JOptionPane.DEFAULT_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
-			if ((pane.showConfirmDialog(this, "Are you sure you want to close this window ?", "Close window", JOptionPane.YES_NO_OPTION,
-				JOptionPane.WARNING_MESSAGE)) == JOptionPane.YES_OPTION) {
+			if (answer == 0) {
 				cwcc.closeUI();
 			}
 		} else {
@@ -626,9 +610,23 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		navigation.revalidate();
 	}
 
+	/** Opens a query in a new tab ("Query", "Query 2", ...), puts it in front and gives its editor the focus. */
+	public void showQueryTab(QueryUI query) {
+		queryTabs++;
+		String title = queryTabs == 1 ? "Query" : "Query " + queryTabs;
+		this.tabbedPane.addTab(title, query);
+		this.tabbedPane.setSelectedComponent(query);
+		SwingUtilities.invokeLater(() -> query.getEditor().requestFocusInWindow());
+	}
+
 	private void closeTab(int index) {
-		if (this.tabbedPane.getComponentAt(index) == viewTab) {
+		Component tab = this.tabbedPane.getComponentAt(index);
+
+		if (tab == viewTab) {
 			viewTab = null;
+		}
+		if (tab instanceof QueryUI query) {
+			query.close();
 		}
 
 		this.tabbedPane.removeTabAt(index);
@@ -693,7 +691,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			cwcc.startQueryUI();
 		}
 		// Create database
-		else if (eventSource == btnCreateDb || eventSource == rtCreate || eventSource == dbCreateDatabase) {
+		else if (eventSource == rtCreate || eventSource == dbCreateDatabase) {
 			String input = JOptionPane.showInputDialog(this, "Enter database name", "Create new database", JOptionPane.INFORMATION_MESSAGE);
 
 			if (input != null) {
@@ -701,7 +699,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			}
 		}
 		// Drop database
-		else if (eventSource == btnDropDb || eventSource == dbDrop) {
+		else if (eventSource == dbDrop) {
 			int result = JOptionPane.showConfirmDialog(this, "Are you sure you want drop the selected database?", "Drop database", JOptionPane.YES_NO_OPTION);
 
 			if (result == JOptionPane.YES_OPTION) {
