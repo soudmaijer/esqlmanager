@@ -4,8 +4,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.DatabaseUser;
-import nl.errorsoft.esql.domain.GrantTarget;
+import nl.errorsoft.esql.user.DatabaseUser;
+import nl.errorsoft.esql.user.GrantTarget;
 
 /** Managing database accounts and their privileges, which every server does in its own way. */
 public interface UserAdmin

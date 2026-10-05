@@ -3,8 +3,8 @@ package nl.errorsoft.esql.domain.dialect;
 import java.util.ArrayList;
 import java.util.List;
 import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.ConnectionProfile;
-import nl.errorsoft.esql.domain.ServerType;
+import nl.errorsoft.esql.connection.ConnectionProfile;
+import nl.errorsoft.esql.connection.ServerType;
 
 /** Oracle has no databases to browse, the "database" of the profile is the SID to connect to. */
 public class OracleDialect extends AbstractDialect

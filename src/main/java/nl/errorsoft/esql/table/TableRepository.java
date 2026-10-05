@@ -18,7 +18,7 @@ import nl.errorsoft.esql.data.AbstractRepository;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.DataType;
-import nl.errorsoft.esql.domain.Database;
+import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
@@ -356,8 +356,7 @@ public class TableRepository extends AbstractRepository
 		try( ResultSet rs = dbc.executeQuery( sql ) )
 		{
 			ResultSetMetaData rsmd = rs.getMetaData();
-			Database database = new Database( dbc );
-			database.setName( dbc.getConnection().getCatalog() );
+			Database database = new Database( dbc.getConnection().getCatalog() );
 
 			Table result = new Table( database );
 			TableColumn [] columns = new TableColumn[ rsmd.getColumnCount() ];

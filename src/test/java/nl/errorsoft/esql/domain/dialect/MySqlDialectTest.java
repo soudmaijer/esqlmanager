@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.domain.dialect;
 
-import nl.errorsoft.esql.domain.ConnectionProfile;
-import nl.errorsoft.esql.domain.ServerType;
+import nl.errorsoft.esql.connection.ConnectionProfile;
+import nl.errorsoft.esql.connection.ServerType;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.DockerClientFactory;

@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.domain.dialect;
 
-import nl.errorsoft.esql.domain.ServerType;
+import nl.errorsoft.esql.connection.ServerType;
 
 public class Dialects
 {

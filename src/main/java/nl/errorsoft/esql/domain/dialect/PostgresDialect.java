@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.ConnectionProfile;
-import nl.errorsoft.esql.domain.Database;
-import nl.errorsoft.esql.domain.ServerProcess;
-import nl.errorsoft.esql.domain.ServerType;
+import nl.errorsoft.esql.connection.ConnectionProfile;
+import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.connection.ServerProcess;
+import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.table.Table;
 
 /**

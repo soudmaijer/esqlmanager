@@ -1,13 +1,15 @@
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.database.control.DatabaseCC;
+import nl.errorsoft.esql.ui.ColumnWidths;
+import nl.errorsoft.esql.ui.SortableTableModel;
+
 import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.table.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.control.*;
 
 public class TableListView extends JScrollPane
 {

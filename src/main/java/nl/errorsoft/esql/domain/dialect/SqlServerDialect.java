@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.ServerType;
+import nl.errorsoft.esql.connection.ServerType;
 
 public class SqlServerDialect extends AbstractDialect
 {

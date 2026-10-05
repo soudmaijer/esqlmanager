@@ -1,6 +1,8 @@
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.control.*;
+import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.database.control.DatabaseCC;
+
 import nl.errorsoft.esql.table.*;
 import nl.errorsoft.esql.table.ui.*;
 
@@ -9,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.table.TableService;
 import java.util.Vector;

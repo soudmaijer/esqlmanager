@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.data;
 
+import nl.errorsoft.esql.connection.ConnectionProfile;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

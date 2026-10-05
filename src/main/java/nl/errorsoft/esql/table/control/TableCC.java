@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.control.*;
+import nl.errorsoft.esql.database.Database;
+
+import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.blob.control.UDDataCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.ui.ImageLoader;
+
 import nl.errorsoft.esql.table.*;
 import nl.errorsoft.esql.table.ui.*;
 
 import nl.errorsoft.esql.domain.dialect.Dialect;
-import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.table.QueryResult;

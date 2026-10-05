@@ -9,8 +9,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.DatabaseUser;
-import nl.errorsoft.esql.domain.GrantTarget;
+import nl.errorsoft.esql.user.DatabaseUser;
+import nl.errorsoft.esql.user.GrantTarget;
 
 /** Accounts are user@host and privileges are granted with GRANT and REVOKE (MySQL 5.7 and later). */
 public class MySqlUserAdmin implements UserAdmin

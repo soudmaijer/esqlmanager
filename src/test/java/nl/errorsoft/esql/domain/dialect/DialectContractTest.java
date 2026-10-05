@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.domain.dialect;
 
+import nl.errorsoft.esql.connection.ServerProcess;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -12,14 +14,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.ConnectionProfile;
+import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
-import nl.errorsoft.esql.domain.Database;
-import nl.errorsoft.esql.domain.DatabaseUser;
+import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.DatabaseService;
+import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.domain.DataType;
-import nl.errorsoft.esql.domain.Export;
-import nl.errorsoft.esql.domain.GrantTarget;
-import nl.errorsoft.esql.domain.Import;
+import nl.errorsoft.esql.importexport.ExportService;
+import nl.errorsoft.esql.user.GrantTarget;
+import nl.errorsoft.esql.importexport.ImportService;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
@@ -59,8 +62,7 @@ abstract class DialectContractTest
 			connection.connect( profile(), "" );
 		}
 		dialect = connection.getConnectionProfile().getServerType().getDialect();
-		database = new Database( connection );
-		database.setName( DATABASE );
+		database = new Database( DATABASE );
 		connection.useDatabase( DATABASE );
 	}
 
@@ -118,8 +120,8 @@ abstract class DialectContractTest
 		insert( table, "third", null );
 
 		File file = dir.resolve( "dump.sql" ).toFile();
-		runSynchronously( new Export( connection, new Object[] { table }, file.getAbsolutePath(), true, true, false, true, true ) );
-		runSynchronously( new Import( connection, database, file.getAbsolutePath() ) );
+		runSynchronously( new ExportService( connection, new Object[] { table }, file.getAbsolutePath(), true, true, false, true, true ) );
+		runSynchronously( new ImportService( connection, database, file.getAbsolutePath() ) );
 
 		TableData[][] rows = service().loadPage( table, 0, 100 );
 		assertEquals( 3, rows.length );
@@ -189,14 +191,12 @@ abstract class DialectContractTest
 		String name = "db_" + System.nanoTime();
 		assertFalse( dialect.listDatabases( connection ).contains( name ) );
 
-		new Database( connection ).createDatabase( name );
+		new DatabaseService( connection ).createDatabase( name );
 		assertTrue( dialect.listDatabases( connection ).contains( name ) );
 
 		// The connection is using the database that is dropped.
 		connection.useDatabase( name );
-		Database created = new Database( connection );
-		created.setName( name );
-		created.dropDatabase( created );
+		new DatabaseService( connection ).dropDatabase( new Database( name ) );
 		assertFalse( dialect.listDatabases( connection ).contains( name ) );
 		connection.useDatabase( DATABASE );
 	}
@@ -214,7 +214,7 @@ abstract class DialectContractTest
 		// Another connection is active, and can be ended.
 		DatabaseConnection other = new DatabaseConnection();
 		other.connect( profile(), "" );
-		List<nl.errorsoft.esql.domain.ServerProcess> processes = dialect.listProcesses( connection );
+		List<nl.errorsoft.esql.connection.ServerProcess> processes = dialect.listProcesses( connection );
 		assertFalse( processes.isEmpty() );
 		other.close();
 

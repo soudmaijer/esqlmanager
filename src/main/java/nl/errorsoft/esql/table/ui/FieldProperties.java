@@ -1,10 +1,12 @@
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.designer.ui.Field;
+import nl.errorsoft.esql.designer.ui.Properties;
+
 import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.table.*;
 
-import nl.errorsoft.esql.control.*;
 import nl.errorsoft.esql.domain.*;
 import java.awt.*;
 import java.awt.event.*;

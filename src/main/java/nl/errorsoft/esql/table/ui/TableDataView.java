@@ -2,8 +2,16 @@
 
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.query.ui.UndoHandler;
+import nl.errorsoft.esql.ui.ColumnWidths;
+import nl.errorsoft.esql.ui.ExtentionFileFilter;
+import nl.errorsoft.esql.ui.HeaderListener;
+import nl.errorsoft.esql.ui.HeaderRenderer;
+import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.MultiLineCellEditor;
+import nl.errorsoft.esql.ui.SortableTableModel;
+
 import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.table.*;
 import nl.errorsoft.esql.table.control.*;
 
@@ -14,7 +22,6 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
-import nl.errorsoft.esql.control.*;
 import nl.errorsoft.esql.domain.*;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.*;

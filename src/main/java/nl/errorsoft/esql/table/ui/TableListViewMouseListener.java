@@ -1,9 +1,7 @@
 package nl.errorsoft.esql.table.ui;
 
-import nl.errorsoft.esql.control.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.gui.*;
 
 import java.awt.event.*;
 import javax.swing.*;

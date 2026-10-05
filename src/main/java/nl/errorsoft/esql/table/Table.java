@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table;
 
+import nl.errorsoft.esql.database.Database;
+
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
 
