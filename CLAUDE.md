@@ -159,3 +159,7 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 * PostgreSQL schemas: user manager table grants ignore schemas, Open in designer on a database node reads its current schema (a schema node reads that schema).
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.
+
+## Review and conventions
+
+* The checkable rules live in the project skills `esql-architecture` (A1-A8) and `esql-ui` (U1-U8), `/review` runs them with the `code-reviewer` agent. The naming vocabulary (`<Subject><Role>`, N1-N6) is in `esql-architecture`; existing classes that differ are rename debt, new classes follow it.
