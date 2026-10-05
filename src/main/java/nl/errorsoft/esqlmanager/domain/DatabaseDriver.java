@@ -211,7 +211,7 @@ public class DatabaseDriver
 		for( int i=0; i<drivers.length; i++ )
 			System.out.println( drivers[i].getDriverName() );
 
-		dp.saveProperties( drivers, 1, "MySQL", "jdbc:mysql://localhost", "com.mysql.jdbc.Driver", "c:\\", "`", "`", "'", "'" );
+		dp.saveProperties( drivers, 1, "MySQL", "jdbc:mysql://localhost", "com.mysql.cj.jdbc.Driver", "c:\\", "`", "`", "'", "'" );
 	}
 	
 	public String toString()

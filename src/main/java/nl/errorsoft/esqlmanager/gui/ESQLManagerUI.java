@@ -234,7 +234,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		statusbar.add( stl, BorderLayout.EAST );
 		
 		jp = new JPanel( new FlowLayout( FlowLayout.LEFT, 3, 2 ) );
-		statusMsg = new Label( "© Copyright Errorsoft 2002-2003." );
+		statusMsg = new Label( "Â© Copyright Errorsoft 2002-2003." );
 		statusMsg.setBackground( new JLabel().getBackground() );
 		statusMsg.setSize( new Dimension( 200, 20 ) );
 		jp.add( statusMsg );

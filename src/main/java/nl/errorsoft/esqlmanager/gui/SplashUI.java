@@ -90,7 +90,7 @@ public class SplashUI extends javax.swing.JWindow implements MouseListener, Runn
 		g1.drawString( "Version "+ jmcc.getAppVersion(), 17, 212 );
 		g1.drawString( "Build #"+ jmcc.getAppBuild(), 17, 227 );
 		g1.drawString( "http://www.errorsoft.nl", 274, 212 );
-		g1.drawString( "© Copyright Errorsoft 2002-"+ cal.get( java.util.Calendar.YEAR ), 230, 227 );
+		g1.drawString( "Â© Copyright Errorsoft 2002-"+ cal.get( java.util.Calendar.YEAR ), 230, 227 );
 	}
 	
 	public void update(Graphics g)
