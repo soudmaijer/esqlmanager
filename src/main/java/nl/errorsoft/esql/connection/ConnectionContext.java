@@ -40,7 +40,7 @@ public class ConnectionContext {
 	public ConnectionContext(DatabaseConnection connection) {
 		this.connection = connection;
 		this.tables = new TableService(new TableRepository(connection));
-		this.databases = new DatabaseService(new DatabaseRepository(connection), connection.getConnectionProfile().getDatabases());
+		this.databases = new DatabaseService(new DatabaseRepository(connection), connection.getConnectionProfile().getSelection());
 		this.users = new UserService(new UserRepository(connection), databases);
 		this.servers = new ServerService(new ServerRepository(connection), tables);
 		this.queries = new QueryService(new QueryRepository(connection));

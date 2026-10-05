@@ -56,6 +56,8 @@ public class ExportAsSQLUI extends FormDialog {
 	private final JSpinner rowsPerInsert = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
 	private final JComboBox<Charset> encoding = Encodings.combo(ApplicationContext.get().settings().getDefaultEncoding());
 
+	private final JLabel schemaFilterNote = new JLabel(
+		"<html>The profile hides some schemas in this tree. Exporting a whole database still includes them.</html>");
 	private DatabaseTreeView dtv;
 
 	public ExportAsSQLUI(ESQLManagerUI jm, ExportCC ecc) {
@@ -65,6 +67,12 @@ public class ExportAsSQLUI extends FormDialog {
 		setResizable(true);
 		showDialog();
 		toFront();
+	}
+
+	/** Tells that the tree leaves out schemas the profile hides, which an export of a whole database includes anyway. */
+	public void showSchemaFilterNote() {
+		schemaFilterNote.setVisible(true);
+		pack();
 	}
 
 	public DatabaseTreeView getDatabaseTreeView() {
@@ -141,7 +149,11 @@ public class ExportAsSQLUI extends FormDialog {
 		JPanel tree = new JPanel(new BorderLayout(0, Forms.GAP));
 		tree.add(new JLabel("Select the databases, schemas or tables to export:"), BorderLayout.NORTH);
 		tree.add(treeScroll, BorderLayout.CENTER);
-		tree.add(treeButtons, BorderLayout.SOUTH);
+		JPanel treeSouth = new JPanel(new BorderLayout(0, Forms.GAP));
+		treeSouth.add(treeButtons, BorderLayout.NORTH);
+		schemaFilterNote.setVisible(false);
+		treeSouth.add(schemaFilterNote, BorderLayout.SOUTH);
+		tree.add(treeSouth, BorderLayout.SOUTH);
 		treeScroll.setPreferredSize(new Dimension(240, 320));
 
 		JPanel main = new JPanel(new BorderLayout(Forms.PADDING, 0));

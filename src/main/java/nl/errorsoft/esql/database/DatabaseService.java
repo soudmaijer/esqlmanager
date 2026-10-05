@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
@@ -16,39 +17,24 @@ public class DatabaseService {
 	private static final Logger log = LogManager.getLogger(DatabaseService.class);
 
 	private final DatabaseRepository repository;
-	private final String[] profileFilter;
+	private final DatabaseSelection selection;
 
-	public DatabaseService(DatabaseRepository repository, String profileDatabases) {
+	public DatabaseService(DatabaseRepository repository, DatabaseSelection selection) {
 		this.repository = repository;
-		this.profileFilter = splitFilter(profileDatabases);
+		this.selection = selection;
 	}
 
-	/** The databases on the server, limited to the ones named in the profile when it names any. */
+	/** The databases on the server, limited to the ones the profile selects when it selects any. */
 	public List<Database> getDatabases() throws Exception {
-		List<Database> all = new ArrayList<>();
-
-		for (String name : repository.listNames()) {
-			all.add(new Database(name));
-		}
-
-		log.info("Found {} database(s) on the server", all.size());
-
-		if (profileFilter.length == 0) {
-			return all;
-		}
-
 		List<Database> shown = new ArrayList<>();
 
-		for (Database database : all) {
-			for (String wanted : profileFilter) {
-				if (database.getName().equalsIgnoreCase(wanted)) {
-					shown.add(database);
-					break;
-				}
+		for (String name : repository.listNames()) {
+			if (selection.showsDatabase(name)) {
+				shown.add(new Database(name));
 			}
 		}
 
-		log.info("Showing {} database(s) matching the profile filter: {}", shown.size(), String.join(", ", profileFilter));
+		log.info("Showing {} database(s){}", shown.size(), selection.isEmpty() ? "" : " of the profile selection: " + selection.toCsv());
 		return shown;
 	}
 
@@ -58,12 +44,14 @@ public class DatabaseService {
 		return tables;
 	}
 
-	/** The schemas of the database, empty on servers without schemas. */
+	/** The schemas of the database that the profile shows, empty on servers without schemas. */
 	public List<Schema> getSchemas(Database database) throws Exception {
 		List<Schema> schemas = new ArrayList<>();
 
 		for (String name : repository.listSchemaNames(database)) {
-			schemas.add(new Schema(database, name));
+			if (selection.showsSchema(database.getName(), name)) {
+				schemas.add(new Schema(database, name));
+			}
 		}
 		log.info("Database {}: {} schema(s)", database.getName(), schemas.size());
 		return schemas;
@@ -124,6 +112,7 @@ public class DatabaseService {
 		return repository.createDatabaseChoices();
 	}
 
+	/** The properties of the database; the table count covers the schemas the profile shows. */
 	public DatabaseProperties properties(Database database) throws Exception {
 		int tables = 0;
 		List<Schema> schemas = getSchemas(database);
@@ -145,17 +134,5 @@ public class DatabaseService {
 
 	public void dropDatabase(Database database) throws Exception {
 		repository.drop(database);
-	}
-
-	private static String[] splitFilter(String databases) {
-		List<String> names = new ArrayList<>();
-
-		for (String name : databases.split(",")) {
-			if (!name.trim().isEmpty()) {
-				names.add(name.trim());
-			}
-		}
-
-		return names.toArray(new String[0]);
 	}
 }

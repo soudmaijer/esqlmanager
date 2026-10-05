@@ -12,7 +12,7 @@ public class ConnectionProfile {
 	private static final Logger log = LogManager.getLogger(ConnectionProfile.class);
 
 	private String name = "";
-	private String databases = "";
+	private DatabaseSelection selection = DatabaseSelection.NONE;
 	private String host = "";
 	private String port = "";
 	private String username = "";
@@ -32,33 +32,23 @@ public class ConnectionProfile {
 		}
 	}
 
+	/** A profile that is not tied to the profile file, for the settings of one connection. */
+	public static ConnectionProfile plain() {
+		return new ConnectionProfile(null);
+	}
+
+	private ConnectionProfile(org.jdom.Document profileData) {
+		this.profileData = profileData;
+	}
+
 	public ConnectionProfile[] getProfiles() {
-		java.util.List<?> profiles = null;
-		ConnectionProfile[] p = new ConnectionProfile[0];
-
 		try {
-			if (profileData != null) {
-				if (profileData.hasRootElement()) {
-					profiles = profileData.getRootElement().getChildren("profile");
-				}
-
-				p = new ConnectionProfile[profiles.size()];
+			if (profileData != null && profileData.hasRootElement()) {
+				java.util.List<?> profiles = profileData.getRootElement().getChildren("profile");
+				ConnectionProfile[] p = new ConnectionProfile[profiles.size()];
 
 				for (int i = 0; i < profiles.size(); i++) {
-					ConnectionProfile temp = new ConnectionProfile();
-					temp.setName(((org.jdom.Element) profiles.get(i)).getChild("name").getText());
-					temp.setHost(((org.jdom.Element) profiles.get(i)).getChild("host").getText());
-					temp.setPort(((org.jdom.Element) profiles.get(i)).getChild("port").getText());
-					temp.setUsername(((org.jdom.Element) profiles.get(i)).getChild("username").getText());
-					temp.setPassword(((org.jdom.Element) profiles.get(i)).getChild("password").getText());
-					temp.setServerType(new ServerType(Integer.parseInt(((org.jdom.Element) profiles.get(i)).getChild("serverType").getText())));
-					temp.setLastUsed(Boolean.valueOf(((org.jdom.Element) profiles.get(i)).getChild("lastUsed").getText()).booleanValue());
-					temp.setAutoConnect(Boolean.valueOf(((org.jdom.Element) profiles.get(i)).getChild("autoConnect").getText()).booleanValue());
-					temp.setDatabases(((org.jdom.Element) profiles.get(i)).getChild("databases").getText());
-					// Profiles written before the option existed keep their password.
-					temp.setSavePassword(!"false".equals(((org.jdom.Element) profiles.get(i)).getChildText("savePassword")));
-
-					p[i] = temp;
+					p[i] = ProfileXml.read((org.jdom.Element) profiles.get(i));
 				}
 				return p;
 			}
@@ -66,7 +56,7 @@ public class ConnectionProfile {
 			log.error(e.getMessage(), e);
 		}
 
-		return p;
+		return new ConnectionProfile[0];
 	}
 
 	public ServerType getServerType() {
@@ -112,19 +102,9 @@ public class ConnectionProfile {
 	}
 
 	public void addProfile(ConnectionProfile cp) throws Exception {
-		org.jdom.Element newElement = new org.jdom.Element("profile");
-
 		if (profileData.hasRootElement()) {
-			newElement.addContent(new org.jdom.Element("name").setText(cp.getName()));
-			newElement.addContent(new org.jdom.Element("host").setText(cp.getHost()));
-			newElement.addContent(new org.jdom.Element("port").setText(cp.getPort()));
-			newElement.addContent(new org.jdom.Element("username").setText(cp.getUsername()));
-			newElement.addContent(new org.jdom.Element("password").setText(cp.isSavePassword() ? cp.getPassword() : ""));
-			newElement.addContent(new org.jdom.Element("savePassword").setText(Boolean.toString(cp.isSavePassword())));
-			newElement.addContent(new org.jdom.Element("serverType").setText(Integer.toString(cp.getServerType().getType())));
-			newElement.addContent(new org.jdom.Element("databases").setText(cp.getDatabases()));
-			newElement.addContent(new org.jdom.Element("autoConnect").setText(Boolean.valueOf(cp.isAutoConnect()).toString()));
-			newElement.addContent(new org.jdom.Element("lastUsed").setText("false"));
+			org.jdom.Element newElement = new org.jdom.Element("profile");
+			ProfileXml.write(newElement, cp);
 			profileData.getRootElement().addContent(newElement);
 		}
 		save(profileData);
@@ -135,43 +115,28 @@ public class ConnectionProfile {
 			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
-				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(profile.getName())) {
-					((org.jdom.Element) l.get(i)).getChild("host").setText(profile.getHost());
-					((org.jdom.Element) l.get(i)).getChild("port").setText(profile.getPort());
-					((org.jdom.Element) l.get(i)).getChild("username").setText(profile.getUsername());
-					((org.jdom.Element) l.get(i)).getChild("password").setText(profile.isSavePassword() ? profile.getPassword() : "");
-					setOptionalChild((org.jdom.Element) l.get(i), "savePassword", Boolean.toString(profile.isSavePassword()));
-					((org.jdom.Element) l.get(i)).getChild("serverType").setText(Integer.toString(profile.getServerType().getType()));
-					((org.jdom.Element) l.get(i)).getChild("databases").setText(profile.getDatabases());
-					((org.jdom.Element) l.get(i)).getChild("autoConnect").setText(Boolean.valueOf(profile.isAutoConnect()).toString());
-				} else if (profile.isAutoConnect()) {
-					((org.jdom.Element) l.get(i)).getChild("autoConnect").setText("false");
-				}
+				org.jdom.Element element = (org.jdom.Element) l.get(i);
 
+				if (profile.getName().equalsIgnoreCase(element.getChildText("name"))) {
+					ProfileXml.write(element, profile);
+				} else if (profile.isAutoConnect() && element.getChild("autoConnect") != null) {
+					element.getChild("autoConnect").setText("false");
+				}
 			}
 			save(profileData);
 		}
 	}
 
-	private static void setOptionalChild(org.jdom.Element parent, String name, String value) {
-		org.jdom.Element child = parent.getChild(name);
-		if (child == null) {
-			child = new org.jdom.Element(name);
-			parent.addContent(child);
-		}
-		child.setText(value);
-	}
-
 	/** A copy of the connection settings (not of the profile file) under another name, not auto-connecting and not last used. */
 	public ConnectionProfile copyAs(String newName) {
-		ConnectionProfile copy = new ConnectionProfile();
+		ConnectionProfile copy = plain();
 		copy.setName(newName);
 		copy.setHost(host);
 		copy.setPort(port);
 		copy.setUsername(username);
 		copy.setPassword(password);
 		copy.setSavePassword(savePassword);
-		copy.setDatabases(databases);
+		copy.setSelection(selection);
 		copy.setServerType(st);
 		return copy;
 	}
@@ -213,12 +178,26 @@ public class ConnectionProfile {
 		return name;
 	}
 
+	/** The selected databases as a comma separated list, the first is the one connected to. Schemas are in {@link #getSelection()}. */
 	public String getDatabases() {
-		return this.databases;
+		return selection.toCsv();
 	}
 
+	/** Selects the databases of a comma separated list; schemas chosen for a database that stays selected are kept. */
 	public void setDatabases(String databases) {
-		this.databases = databases;
+		java.util.Map<String, java.util.Set<String>> kept = new java.util.LinkedHashMap<>();
+		for (String name : DatabaseSelection.parse(databases).databases()) {
+			kept.put(name, selection.schemasOf(name));
+		}
+		selection = new DatabaseSelection(kept);
+	}
+
+	public DatabaseSelection getSelection() {
+		return selection;
+	}
+
+	public void setSelection(DatabaseSelection selection) {
+		this.selection = selection;
 	}
 
 	public void setName(String name) {

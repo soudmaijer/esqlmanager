@@ -18,6 +18,10 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.DatabaseCatalog;
+import nl.errorsoft.esql.database.DatabaseRepository;
+import nl.errorsoft.esql.database.DatabaseService;
+import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.export.ExportOptions;
@@ -742,6 +746,77 @@ abstract class DialectContractTest {
 		databases.dropSchema(schema);
 		assertTrue(databases.getSchemas(database).stream().noneMatch(s -> s.getName().equals(name)));
 		service().dropTable(table("orders"));
+	}
+
+	@Test
+	void profileSelectionLimitsTheDatabasesAndSchemasShown() throws Exception {
+		var all = new ConnectionContext(connection).databases();
+		Database first = all.createDatabase("sel_a_" + System.nanoTime());
+		Database second = all.createDatabase("sel_b_" + System.nanoTime());
+		boolean schemas = dialect.supports(Dialect.Feature.SCHEMAS);
+		if (schemas) {
+			for (Database db : List.of(first, second)) {
+				all.createSchema(db, "one");
+				all.createSchema(db, "two");
+			}
+		}
+
+		var unfiltered = new DatabaseService(new DatabaseRepository(connection), DatabaseSelection.NONE);
+		assertTrue(names(unfiltered.getDatabases()).containsAll(List.of(first.getName(), second.getName(), DATABASE)));
+
+		DatabaseSelection onlyFirst = DatabaseSelection.parse(first.getName());
+		var filtered = new DatabaseService(new DatabaseRepository(connection), onlyFirst);
+		assertEquals(List.of(first.getName()), names(filtered.getDatabases()));
+		if (schemas) {
+			assertEquals(List.of("one", "public", "two"), schemaNames(filtered.getSchemas(first)));
+			assertEquals(List.of(), schemaNames(filtered.getSchemas(second)));
+		}
+
+		if (schemas) {
+			DatabaseSelection oneSchema = onlyFirst.withSchema(first.getName(), "two", true).withSchema(second.getName(), "one", true);
+			var picked = new DatabaseService(new DatabaseRepository(connection), oneSchema);
+			assertEquals(List.of(first.getName(), second.getName()), names(picked.getDatabases()));
+			assertEquals(List.of("two"), schemaNames(picked.getSchemas(first)));
+			assertEquals(List.of("one"), schemaNames(picked.getSchemas(second)));
+		}
+
+		unfiltered.dropDatabase(first);
+		unfiltered.dropDatabase(second);
+	}
+
+	@Test
+	void catalogListsEveryDatabaseAndSchemaOfTheServer() throws Exception {
+		var all = new ConnectionContext(connection).databases();
+		Database extra = all.createDatabase("cat_" + System.nanoTime());
+		boolean schemas = dialect.supports(Dialect.Feature.SCHEMAS);
+		if (schemas) {
+			all.createSchema(extra, "sales");
+		}
+
+		ConnectionProfile typed = profile();
+		// A selection that names a database which is gone must not stop the catalog from connecting.
+		typed.setDatabases("no_such_database");
+		try (DatabaseCatalog catalog = new DatabaseCatalog(typed)) {
+			catalog.connect();
+			assertFalse(catalog.serverDescription().isEmpty());
+			assertTrue(catalog.databases().containsAll(List.of(DATABASE, extra.getName())));
+			if (schemas) {
+				assertTrue(catalog.schemas(extra.getName()).containsAll(List.of("public", "sales")));
+				assertFalse(catalog.schemas(extra.getName()).contains("pg_catalog"));
+			} else {
+				assertEquals(List.of(), catalog.schemas(extra.getName()));
+			}
+		}
+
+		all.dropDatabase(extra);
+	}
+
+	private static List<String> names(List<Database> databases) {
+		return databases.stream().map(Database::getName).toList();
+	}
+
+	private static List<String> schemaNames(List<Schema> schemas) {
+		return schemas.stream().map(Schema::getName).toList();
 	}
 
 	@Test

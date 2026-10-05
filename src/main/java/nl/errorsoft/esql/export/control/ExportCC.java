@@ -45,6 +45,9 @@ public class ExportCC implements ProgressListener {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			ExportAsSQLUI iasu = new ExportAsSQLUI(ecc.getUI(), this);
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
+			if (cwcc.getConnectionProfile().getSelection().hasSchemaFilter()) {
+				iasu.showSchemaFilterNote();
+			}
 			dbcc.selectInTree(iasu.getDatabaseTreeView(), cwcc.selectedObject());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Export data", e);

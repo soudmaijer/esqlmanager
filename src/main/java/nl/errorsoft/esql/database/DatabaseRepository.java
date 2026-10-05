@@ -24,7 +24,7 @@ public class DatabaseRepository extends AbstractRepository {
 		String sql = dialect().listDatabasesSql();
 
 		if (sql == null) {
-			return List.of(dbc.getConnectionProfile().getDatabases());
+			return dbc.getConnectionProfile().getSelection().databases();
 		}
 
 		List<String> names = new ArrayList<>();
