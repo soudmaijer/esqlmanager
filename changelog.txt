@@ -1,6 +1,11 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Server icons in the profile list
+
+- Connect dialog: the selected profile in the list keeps its coloured server icon when the list does not have the
+  focus (it was drawn white on a pale selection).
+
 05-10-2026: Documentation in line with the application
 
 - Help and README: a picture of the connect dialog, the designer's menus and keyboard shortcuts, queries that run in
