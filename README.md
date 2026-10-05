@@ -84,10 +84,12 @@ The application logs with Log4j 2. The configuration is `src/main/resources/log4
 ## Try it with a local PostgreSQL
 
 ```sh
-docker run -d --name esql-pg -e POSTGRES_PASSWORD=test -p 5432:5432 postgres:17
+./start.sh            # PostgreSQL 17 in Docker with a sample database "shop", then the application
+./start.sh --db-only  # only the database
+./stop.sh             # stop and remove the database container
 ```
 
-Start the application, choose **PostgreSQL** as server type, and connect with user `postgres`, password `test` and port `5432`.
+The script prints what to fill in: server type **PostgreSQL**, host `localhost`, port `5432`, user `postgres`, password `test`.
 
 ## Development
 
@@ -103,43 +105,14 @@ Design decisions and the architecture are described in `CLAUDE.md`. Format the c
 
 ```
 src/main/java/nl/errorsoft/esql
+  Main.java  starts the application
   table/ database/ importexport/ blob/ user/ designer/ query/ connection/
              one package per feature: data, service and repository, with
              control/ and ui/ below it for the controllers and Swing windows
-  app/       main window, settings and start up
+  app/       main window, settings, the ApplicationContext
   ui/        Swing parts shared by features
   data/      the database connection and the repository base class
   domain/    shared types, including dialect/ with the per-database behaviour
-src/main/resources/log4j2.xml`: messages go to the console and to the output panel. Executed queries are logged at `debug` level, set the `nl.errorsoft.esql.data` logger to `info` to hide them.
-
-## Try it with a local PostgreSQL
-
-```sh
-docker run -d --name esql-pg -e POSTGRES_PASSWORD=test -p 5432:5432 postgres:17
-```
-
-Start the application, choose **PostgreSQL** as server type, and connect with user `postgres`, password `test` and port `5432`.
-
-## Development
-
-```sh
-./mvnw test
-```
-
-The tests start PostgreSQL 17 and MySQL 8 with Testcontainers, so they need Docker and are skipped without it. They run the same scenarios against every dialect: tables, columns, indexes, export and import, editing data, users and privileges, databases, server status and the process list.
-
-Design decisions and the architecture are described in `CLAUDE.md`. Format the code with `./mvnw spotless:apply`.
-
-## Project layout
-
-```
-src/main/java/nl/errorsoft/esql
-  table/     the table feature: data, service, repository, with control/ and ui/ below it
-  control/   use-case controllers (not yet moved into features)
-  data/      the database connection
-  domain/    model classes, including dialect/ with the per-database behaviour
-  gui/       Swing windows and components
-  dbcreator/ the database model designer
 src/main/resources   icons, images, help pages and log4j2.xml
 src/test/java        dialect tests against real servers
 runtime/             configuration the application reads and writes

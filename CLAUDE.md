@@ -5,7 +5,8 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 ## Build, run, test
 
 * Maven wrapper only (`./mvnw`), never Gradle. Java 25 (`maven.compiler.release`), sources are UTF-8.
-* Run: `./mvnw exec:java`. The working directory is `runtime/` (see Configuration below).
+* Run: `./mvnw compile exec:exec` (starts `nl.errorsoft.esql.Main` with `runtime/` as working directory, see Configuration below).
+* Validate locally: `./start.sh` starts a PostgreSQL 17 container (`esql-pg`, user `postgres`, password `test`, sample database `shop`) and the application, `./start.sh --db-only` only the database, `./stop.sh` removes the container.
 * Test: `./mvnw test`. The tests start Postgres 17 and MySQL 8 with Testcontainers and are skipped without Docker.
 * A GUI cannot be started inside the Claude sandbox (no display). Run harnesses with the sandbox disabled, and verify UI work by painting the root pane to a `BufferedImage` in-process.
 
