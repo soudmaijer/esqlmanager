@@ -12,7 +12,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ## Finishing a change
 
-* Update `README.md` and `changelog.txt`, and retake `docs/screenshot.png` and `docs/designer.png` when the UI changed, before reporting a change as done.
+* Update `README.md` and `changelog.txt`, and retake `docs/screenshot.png`, `docs/designer.png` and `docs/query.png` when the UI changed, before reporting a change as done.
 
 ## Design decisions
 
@@ -38,10 +38,12 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 * Look and feel is FlatLaf, chosen through `app.Appearance` (Follow the system, Light, Dark, Native) and stored in `conf/settings.xml` (`<appearance>`), changed in Settings > Preferences and applied at once. On macOS FlatLaf uses its Mac themes, `Main` sets the screen menu bar and system appearance properties before the first window (`Appearance.prepareDesktop`). The native macOS look was far too slow when resizing, so it is only used when the user picks Native.
 * Use Swing only, no AWT widgets (`Label`, `Button`, ...). Dialogs use layout managers, not null layouts with absolute bounds; `ui.util.Forms` gives the 12px padding, the button row at the bottom right, titled groups and a label/field grid. Only the designer canvas (`ModelViewer`, its cards, the text inside a `CommentObject`), internal frames placed by `DesktopUtils` and the splash (credits scrolled over a fixed image) place components at absolute positions.
-* Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
+* Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager` (grid lines `Table.gridColor`). A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
+* The help tab (`help.ui.HelpPane`) renders the Markdown of docs/ with `HelpPages.render(name, dark)`: a white page in light themes, a dark one in dark themes, rendered again when the look and feel changes.
+* Settings has only the appearance; there is no auto-update.
 * Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.
 * The query editor is an `RSyntaxTextArea` (com.fifesoft) in an `RTextScrollPane` with SQL highlighting, line numbers and the library's undo. `ui.EditorTheme.install` gives it the RSyntaxTextArea theme `idea.xml` or `dark.xml` matching `FlatLaf.isLafDark()` and applies it again when the look and feel changes.
-* The SQL query is a tab of the connection window (`query.ui.QueryUI`, a `JPanel`, opened by `ConnectionWindowCC.startQueryUI` through `ConnectionWindowUI.showQueryTab`, numbered "Query", "Query 2", ...). Its controller `query.control.QueryCC` runs statements (stops at the first error, reports it through `ErrorHandler` naming the statement) and implements `query.SchemaNames` for the completion, caching the tables (loaded on a virtual thread when the database is chosen) and the columns per tab. Closing the tab calls `QueryUI.close()`, which uninstalls the completion; the `EditorTheme` listener goes when the editor stops being displayable.
+* The SQL query is a tab of the connection window (`query.ui.QueryUI`, a `JPanel`, opened by `ConnectionWindowCC.startQueryUI` through `ConnectionWindowUI.showQueryTab`, numbered "Query", "Query 2", ...). Its controller `query.control.QueryCC` runs statements (stops at the first error, reports it through `ErrorHandler` naming the statement) and returns a `QueryCC.StatementResult` per statement with rows, which `QueryUI` shows as a closable result tab (title the statement, tooltip the full text, a line with time, database, rows and duration; at most 20). It implements `query.SchemaNames` for the completion, caching the tables (loaded on a virtual thread when the database is chosen) and the columns per tab. Closing the tab calls `QueryUI.close()`, which uninstalls the completion; the `EditorTheme` listener goes when the editor stops being displayable.
 * `query.SqlScript` splits a script on `;` outside quotes, dollar quotes and comments and finds the statement at the caret; `query.SqlContext` is a small tokenizer that tells what fits at the caret (tables, columns of an alias or table, anything) and resolves aliases. Both are pure and unit tested.
 * Completion uses the RSyntaxTextArea AutoComplete library (`com.fifesoft:autocomplete`, the release that matches rsyntaxtextarea), with `query.ui.SqlCompletionProvider`. Names that are not plain lower case identifiers go through `dialect.quote`.
 * Query shortcuts: menu key (Cmd/Ctrl)+Enter runs the selection or the statement at the caret, +Shift+Enter runs all; Ctrl+Space, Meta+Space and menu key+Shift+Space open the completion (macOS reserves Cmd+Space for Spotlight unless the user turns that off).
@@ -94,7 +96,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ## Verifying UI changes
 
-* Retake `docs/screenshot.png` and `docs/designer.png` with a harness that paints the windows in-process against a Postgres container (use a free host port, 5432 is often taken), preferably in a subagent so the images stay out of the main context. Look at the result, check icons, alignment and the status bar.
+* Retake `docs/screenshot.png`, `docs/designer.png` and `docs/query.png` with a harness that paints the windows in-process against a Postgres container (use a free host port, 5432 is often taken), preferably in a subagent so the images stay out of the main context. Look at the result, check icons, alignment and the status bar.
 * The designer can be checked without a database: build a `Model` in a harness, add it to a `ModelViewer` (`new ModelViewerControl(null)` is enough), paint it to a `BufferedImage` with `FlatLightLaf` and `FlatDarkLaf` and look at both.
 
 ## Tests
@@ -146,4 +148,5 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 ## Known technical debt
 
+* The automatic layout of the designer can order tables so that foreign key connectors cross (shop: products above customers).
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.

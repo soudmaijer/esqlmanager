@@ -90,19 +90,33 @@ public final class HelpPages {
 
 	/** Reads a page from the classpath and renders it. */
 	public static String render(String name) {
+		return render(name, false);
+	}
+
+	/** Reads a page from the classpath and renders it, with dark colours when asked. */
+	public static String render(String name, boolean dark) {
 		URL url = resource(name);
 		if (url == null) {
 			throw new IllegalArgumentException("No help page " + name);
 		}
 		try (InputStream in = url.openStream()) {
-			return toHtml(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+			return toHtml(new String(in.readAllBytes(), StandardCharsets.UTF_8), dark);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
+	/** The help stylesheet with dark colours, for a dark look and feel. */
+	private static final String DARK_STYLE = STYLE.replace("color: #000000; background-color: #ffffff", "color: #dfe1e5; background-color: #1e1f22")
+		.replace("color: #24292f", "color: #e6e6e6").replace("#f3f4f6", "#2b2d30").replace("#eef0f3", "#2b2d30").replace("#0b57d0", "#6ea8fe");
+
 	/** Renders Markdown to a complete HTML page with the help stylesheet. */
 	public static String toHtml(String markdown) {
+		return toHtml(markdown, false);
+	}
+
+	/** Renders Markdown to a complete HTML page, with dark colours when asked. */
+	public static String toHtml(String markdown, boolean dark) {
 		HtmlRenderer renderer = HtmlRenderer.builder().extensions(EXTENSIONS).attributeProviderFactory(context -> (node, tagName, attributes) -> {
 			if (node instanceof Image) {
 				scale(attributes);
@@ -113,7 +127,7 @@ public final class HelpPages {
 			}
 		}).build();
 		String body = renderer.render(PARSER.parse(markdown));
-		return "<html><head><style type=\"text/css\">" + STYLE + "</style></head><body>" + body + "</body></html>";
+		return "<html><head><style type=\"text/css\">" + (dark ? DARK_STYLE : STYLE) + "</style></head><body>" + body + "</body></html>";
 	}
 
 	/** Gives a local image a width and height that fit the page. */

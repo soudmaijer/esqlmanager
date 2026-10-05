@@ -116,6 +116,9 @@ eSQLManager changelog
   opens wide enough for its columns and stops refreshing when it closes, the foreign key dialog centres its labels,
   the Add field button lines up with the buttons below it, grid lines and tree and desktop backgrounds follow the
   theme, "separated" is spelled correctly.
+- SQL query: every statement that returns rows gets its own closable result tab, named after the statement with the
+  full text as tooltip, and a line with the time it ran, the database, the rows and the duration (at most 20 tabs).
+- Help tab: dark pages in a dark theme, white pages in a light theme.
 - Documentation: new screenshots (connection window, designer) and a screenshot of the query tab with completion.
 
 build #64 - RC3

@@ -31,6 +31,7 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Upload and download binary data (blobs) | yes | yes | yes | yes |
 | SQL query tabs with syntax highlighting, opening and saving .sql files | yes | yes | yes | yes |
 | Run selection or the statement at the caret, run all statements of a script | yes | yes | yes | yes |
+| Query results in tabs, one per statement, with time, database, rows and duration | yes | yes | yes | yes |
 | Auto completion of keywords, tables and columns (aliases resolved) | yes | yes | yes | yes |
 | Create a database | yes | yes | yes | no |
 | Drop a database | yes | yes | yes | no |
@@ -55,8 +56,10 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Server variables | yes | yes | no | no |
 | Output panel with connection details and executed queries | yes | yes | yes | yes |
 | Status bar with server, account and the last action | yes | yes | yes | yes |
+| Light and dark themes, following the system | yes | yes | yes | yes |
+| Help tab with the Markdown documentation of docs/ | yes | yes | yes | yes |
 
-The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
+The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
 Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export and Import on a database, Edit, Indexes and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 
