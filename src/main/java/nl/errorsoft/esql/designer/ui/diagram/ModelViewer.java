@@ -27,7 +27,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -349,7 +348,7 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	 	Function to remove all selected objects from the model
 	 */
 	public void removeSelectedObjects() {
-		Vector objects = model.removeSelectedObjects();
+		List<ModelObject> objects = model.removeSelectedObjects();
 		for (int i = 0; i < objects.size(); i++) {
 			this.remove((ModelObject) objects.get(i));
 		}
@@ -604,7 +603,7 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 
 	public boolean showProperties() {
 		model.lock();
-		Vector v = this.getModel().getSelectedObjects();
+		List<ModelObject> v = this.getModel().getSelectedObjects();
 		if (v.size() == 1 && (v.get(0) instanceof DatabaseObject || v.get(0) instanceof TableObject)) {
 			mvc.showPropertiesDialog(model.getSelectedObjects());
 			model.unlock();
@@ -667,12 +666,12 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 			if (e.getSource() instanceof JMenuItem) {
 				JMenuItem tmp = (JMenuItem) e.getSource();
 				if (tmp == attach_table && attach_table.isEnabled()) {
-					Vector v = this.getModel().getSelectedObjects();
+					List<ModelObject> v = this.getModel().getSelectedObjects();
 					if (v.size() == 1 && v.get(0) instanceof DatabaseObject) {
 						this.createTableObject("New Table", (DatabaseObject) v.get(0));
 					}
 				} else if (tmp == attach_comment && attach_comment.isEnabled()) {
-					Vector v = this.getModel().getSelectedObjects();
+					List<ModelObject> v = this.getModel().getSelectedObjects();
 					if (v.size() == 1 && v.get(0) instanceof ModelObject) {
 						this.createCommentObject("New Table", (ModelObject) v.get(0));
 					}
@@ -1023,13 +1022,13 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 				mvc.newModel();
 			}
 			if (e.getKeyCode() == e.VK_F4) {
-				Vector v = this.getModel().getSelectedObjects();
+				List<ModelObject> v = this.getModel().getSelectedObjects();
 				if (v.size() == 1 && v.get(0) instanceof DatabaseObject) {
 					this.createTableObject("New Table", (DatabaseObject) v.get(0));
 				}
 			}
 			if (e.getKeyCode() == e.VK_F5) {
-				Vector v = this.getModel().getSelectedObjects();
+				List<ModelObject> v = this.getModel().getSelectedObjects();
 				if (v.size() == 1 && v.get(0) instanceof ModelObject) {
 					this.createCommentObject("New Table", (ModelObject) v.get(0));
 				}

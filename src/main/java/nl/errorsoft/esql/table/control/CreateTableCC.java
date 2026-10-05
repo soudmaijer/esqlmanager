@@ -14,7 +14,6 @@ import nl.errorsoft.esql.table.ui.TableEditor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 /** Opens the table editor as a tab of the connection window ("New table", "Edit orders") and saves what it holds. */
 public class CreateTableCC {
@@ -51,13 +50,13 @@ public class CreateTableCC {
 	/*
 	 	List all databases, so user can choose database to create table on
 	*/
-	public Vector getDatabases() {
+	public List<Database> getDatabases() {
 		try {
 			DatabaseCC dbc = new DatabaseCC(cwcc);
 			return dbc.getDatabases();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(window(), "Load databases", e);
-			return new Vector();
+			return List.of();
 		}
 	}
 

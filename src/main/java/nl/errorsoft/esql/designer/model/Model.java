@@ -14,7 +14,7 @@ public class Model implements MouseListener, MouseMotionListener {
 	private String name = "";
 	private String comment = "";
 	private String author = "";
-	private Vector modelobjects = new Vector();
+	private final List<ModelObject> modelobjects = new ArrayList<>();
 	private final List<ForeignKey> foreignKeys = new ArrayList<>();
 	private boolean locked = false;
 	private int identifier = 1;
@@ -72,7 +72,7 @@ public class Model implements MouseListener, MouseMotionListener {
 			return;
 		}
 
-		Vector v = src.getReferences();
+		List<ModelObject> v = src.getReferences();
 		for (int i = 0; i < v.size(); i++) {
 			ModelObject mo = (ModelObject) v.get(i);
 			if (mo == end) {
@@ -154,12 +154,12 @@ public class Model implements MouseListener, MouseMotionListener {
 		}
 	}
 
-	public Vector getObjects() {
+	public List<ModelObject> getObjects() {
 		return modelobjects;
 	}
 
-	public Vector getReferences(ModelObject m) {
-		Vector refs = new Vector();
+	public List<ModelObject> getReferences(ModelObject m) {
+		List<ModelObject> refs = new ArrayList<>();
 		for (int i = 0; i < modelobjects.size(); i++) {
 			ModelObject tmp = (ModelObject) modelobjects.get(i);
 			if (tmp.getReferences().contains(m) && !(tmp instanceof CommentObject)) {
@@ -175,10 +175,10 @@ public class Model implements MouseListener, MouseMotionListener {
 		return refs;
 	}
 
-	public Vector removeSelectedObjects() {
-		Vector v = new Vector();
+	public List<ModelObject> removeSelectedObjects() {
+		List<ModelObject> v = new ArrayList<>();
 		if (!locked) {
-			Vector sel = getSelectedObjects();
+			List<ModelObject> sel = getSelectedObjects();
 			for (int i = 0; i < sel.size(); i++) {
 				ModelObject tmp = (ModelObject) sel.get(i);
 				if (tmp.isSelected()) {
@@ -210,8 +210,8 @@ public class Model implements MouseListener, MouseMotionListener {
 		}
 	}
 
-	public Vector getSelectedObjects() {
-		Vector temp = new Vector();
+	public List<ModelObject> getSelectedObjects() {
+		List<ModelObject> temp = new ArrayList<>();
 		for (int i = 0; i < modelobjects.size(); i++) {
 			ModelObject tmp = (ModelObject) modelobjects.get(i);
 			if (tmp.isSelected()) {

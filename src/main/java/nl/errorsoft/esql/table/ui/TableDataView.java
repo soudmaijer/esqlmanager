@@ -96,7 +96,7 @@ public class TableDataView extends JPanel implements ActionListener {
 
 					TableData td = (TableData) tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
 					TableData[] rowData = new TableData[cols];
-					java.util.Vector dataVector = stm.getDataVector();
+					java.util.Vector<?> dataVector = stm.getDataVector();
 					Object newData = tbData.getCellEditor().getCellEditorValue();
 
 					for (int i = 0; i < cols; i++) {
@@ -367,7 +367,7 @@ public class TableDataView extends JPanel implements ActionListener {
 			this.disableCellDataEditor();
 			inserting = true;
 			int cols = tbData.getColumnCount();
-			java.util.Vector newData = new java.util.Vector();
+			java.util.Vector<Object> newData = new java.util.Vector<>();
 
 			for (int i = 0; i < cols; i++) {
 				TableData tempData = new TableData();

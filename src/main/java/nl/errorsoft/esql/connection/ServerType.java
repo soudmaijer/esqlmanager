@@ -111,7 +111,7 @@ public class ServerType {
 					continue;
 				}
 
-				java.util.List types = ((Element) driver).getChildren("type");
+				java.util.List<?> types = ((Element) driver).getChildren("type");
 				this.dt = new DataType[types.size()];
 
 				for (int i = 0; i < types.size(); i++) {

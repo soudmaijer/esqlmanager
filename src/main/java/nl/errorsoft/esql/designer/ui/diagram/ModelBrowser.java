@@ -4,12 +4,13 @@ import nl.errorsoft.esql.designer.control.ModelViewerControl;
 
 import java.awt.*;
 import javax.swing.*;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 import java.awt.event.*;
 import javax.swing.event.*;
 
-public class ModelBrowser extends JTabbedPane implements ChangeListener { // Vector with ModelViewer objects
-	private Vector v = new Vector();
+public class ModelBrowser extends JTabbedPane implements ChangeListener { // List with ModelViewer objects
+	private final List<ModelViewer> v = new ArrayList<>();
 
 	private ModelViewerControl mvc;
 

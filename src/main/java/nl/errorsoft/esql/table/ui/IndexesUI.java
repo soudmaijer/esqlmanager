@@ -33,11 +33,11 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	private final IndexesCC tcc;
 	private final String title;
 
-	private final JComboBox jcmbIndexes = new JComboBox();
+	private final JComboBox<TableIndex> jcmbIndexes = new JComboBox<>();
 	private final JButton jbtnAdd = new JButton("Add");
 	private final JButton jbtnPrimary = new JButton("Add Primary");
-	private final JList jlstUsed = new JList(new DefaultListModel());
-	private final JList jlstAvail = new JList(new DefaultListModel());
+	private final JList<TableColumn> jlstUsed = new JList<>(new DefaultListModel<>());
+	private final JList<TableColumn> jlstAvail = new JList<>(new DefaultListModel<>());
 	private final JButton jbtnAddToList = new JButton("<");
 	private final JButton jbtnRemoveFromList = new JButton(">");
 	private final JCheckBox jrdUnique = new JCheckBox("Unique");
@@ -159,11 +159,11 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 			tcc.addPrimary();
 		} else if (source == jbtnSave) {
 			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti) {
-				DefaultListModel dlm = (DefaultListModel) jlstUsed.getModel();
+				DefaultListModel<TableColumn> dlm = (DefaultListModel<TableColumn>) jlstUsed.getModel();
 				TableColumn[] tc = new TableColumn[dlm.getSize()];
 
 				for (int i = 0; i < dlm.getSize(); i++) {
-					tc[i] = (TableColumn) dlm.elementAt(i);
+					tc[i] = dlm.elementAt(i);
 				}
 
 				String type = "INDEX";
@@ -179,10 +179,10 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		}
 	}
 
-	private void moveSelected(JList from, JList to) {
+	private void moveSelected(JList<TableColumn> from, JList<TableColumn> to) {
 		if (from.getSelectedValue() instanceof TableColumn column) {
-			((DefaultListModel) from.getModel()).removeElement(column);
-			((DefaultListModel) to.getModel()).addElement(column);
+			((DefaultListModel<TableColumn>) from.getModel()).removeElement(column);
+			((DefaultListModel<TableColumn>) to.getModel()).addElement(column);
 			modified = true;
 		}
 	}
@@ -191,9 +191,9 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	public void loadIndexes(TableIndex[] tia) {
 		modified = false;
 		jbtnPrimary.setEnabled(true);
-		jcmbIndexes.setModel(new DefaultComboBoxModel());
-		jlstUsed.setModel(new DefaultListModel());
-		jlstAvail.setModel(new DefaultListModel());
+		jcmbIndexes.setModel(new DefaultComboBoxModel<>());
+		jlstUsed.setModel(new DefaultListModel<>());
+		jlstAvail.setModel(new DefaultListModel<>());
 
 		if (tia == null || tia.length == 0) {
 			return;
@@ -210,7 +210,7 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	}
 
 	public void addNewIndex(TableIndex ti, TableColumn[] tc) {
-		DefaultListModel dlmAvail = new DefaultListModel();
+		DefaultListModel<TableColumn> dlmAvail = new DefaultListModel<>();
 		jcmbIndexes.addItem(ti);
 		jcmbIndexes.setSelectedItem(ti);
 
@@ -218,7 +218,7 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 			dlmAvail.addElement(column);
 		}
 
-		jlstUsed.setModel(new DefaultListModel());
+		jlstUsed.setModel(new DefaultListModel<>());
 		jlstAvail.setModel(dlmAvail);
 		modified = true;
 	}
@@ -226,8 +226,8 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	public void itemSelected(TableIndex index) {
 		TableColumn[] used = index.getTableColumns();
 		TableColumn[] avail = index.getTable().getColumns();
-		DefaultListModel dlmUsed = new DefaultListModel();
-		DefaultListModel dlmAvail = new DefaultListModel();
+		DefaultListModel<TableColumn> dlmUsed = new DefaultListModel<>();
+		DefaultListModel<TableColumn> dlmAvail = new DefaultListModel<>();
 
 		jrdUnique.setSelected(index.isUnique());
 		jrdFulltext.setSelected(!index.isUnique() && index.isFulltext());

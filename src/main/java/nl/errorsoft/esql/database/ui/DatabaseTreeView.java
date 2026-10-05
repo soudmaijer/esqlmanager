@@ -93,18 +93,18 @@ public class DatabaseTreeView extends JTree {
 		}
 	}
 
-	public void loadDatabases(java.util.Vector v) {
+	public void loadDatabases(java.util.List<Database> v) {
 		dtm = new DefaultTreeModel(rootNode, false);
 
 		for (int i = 0; i < v.size(); i++) {
-			rootNode.add(new DefaultMutableTreeNode((Database) v.get(i)));
+			rootNode.add(new DefaultMutableTreeNode(v.get(i)));
 		}
 
 		setModel(dtm);
 		SwingUtilities.invokeLater(this::updateUI);
 	}
 
-	public void loadTables(Database database, java.util.Vector tables) {
+	public void loadTables(Database database, java.util.List<Table> tables) {
 		for (int i = 0; i < rootNode.getChildCount(); i++) {
 			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
 
@@ -112,7 +112,7 @@ public class DatabaseTreeView extends JTree {
 				node.removeAllChildren();
 
 				for (int j = 0; j < tables.size(); j++) {
-					node.add(new DefaultMutableTreeNode((Table) tables.get(j)));
+					node.add(new DefaultMutableTreeNode(tables.get(j)));
 				}
 
 				TreePath tempPath = new TreePath(node.getPath());

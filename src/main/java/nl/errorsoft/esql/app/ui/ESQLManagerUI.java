@@ -60,7 +60,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	private JButton btnCascade;
 	private JButton btnTileHorizontal;
 	private JButton btnTileVertical;
-	private JComboBox cmbWindows;
+	private JComboBox<ConnectionWindowUI> cmbWindows;
 	private static final int TOOLBAR_BUTTON_SIZE = 30;
 
 	// Statusbar
@@ -196,7 +196,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 
 		toolbar.addSeparator();
 
-		cmbWindows = new JComboBox();
+		cmbWindows = new JComboBox<>();
 		cmbWindows.addActionListener(e -> {
 			try {
 				if (cmbWindows.getItemCount() <= 0) {

@@ -11,8 +11,6 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
-import java.util.Vector;
-
 public class DatabaseCC {
 	private ConnectionWindowCC cwcc;
 
@@ -23,8 +21,8 @@ public class DatabaseCC {
 		this.cwcc = cwcc;
 	}
 
-	public java.util.Vector getDatabases() throws Exception {
-		return new Vector<Database>(service().getDatabases());
+	public java.util.List<Database> getDatabases() throws Exception {
+		return service().getDatabases();
 	}
 
 	public Database createDatabase(String name) throws Exception {
@@ -35,8 +33,8 @@ public class DatabaseCC {
 		service().dropDatabase(data);
 	}
 
-	public java.util.Vector getTables(Database database) throws Exception {
-		return new Vector<Table>(service().getTables(database));
+	public java.util.List<Table> getTables(Database database) throws Exception {
+		return service().getTables(database);
 	}
 
 	private DatabaseService service() throws Exception {
@@ -49,7 +47,7 @@ public class DatabaseCC {
 		return dbtv;
 	}
 
-	public TableListView getTableListView(Vector tables) throws Exception {
+	public TableListView getTableListView(java.util.List<Table> tables) throws Exception {
 		TableListView tlv = new TableListView(this);
 		tlv.loadDatabases(tables);
 		return tlv;

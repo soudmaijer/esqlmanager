@@ -31,7 +31,7 @@ public class TableListView extends JScrollPane {
 		this.getViewport().add(table);
 	}
 
-	public void loadDatabases(java.util.Vector v) {
+	public void loadDatabases(java.util.List<Table> v) {
 		dtm = new SortableTableModel();
 
 		dtm.addColumn("Name");

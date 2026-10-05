@@ -246,7 +246,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Loading tables...", true);
 
 			DatabaseCC dbcc = new DatabaseCC(this);
-			Vector tables = dbcc.getTables(database);
+			java.util.List<Table> tables = dbcc.getTables(database);
 			cwui.getDatabaseTreeView().loadTables(database, tables);
 			cwui.databaseSelected();
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
@@ -262,7 +262,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Loading tables...", true);
 
 			DatabaseCC dbcc = new DatabaseCC(this);
-			Vector tables = dbcc.getTables(database);
+			java.util.List<Table> tables = dbcc.getTables(database);
 			cwui.showTableListView(database.getName(), dbcc.getTableListView(tables));
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();

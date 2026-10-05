@@ -7,7 +7,8 @@ import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 
@@ -24,7 +25,7 @@ public class TableObject extends ModelObject {
 
 	private String name;
 	private String description = "";
-	private Vector fields = new Vector();
+	private final List<Field> fields = new ArrayList<>();
 	private String type = "InnoDB";
 	private String comment = "";
 
@@ -235,7 +236,7 @@ public class TableObject extends ModelObject {
 	}
 
 	public void removeAllFields() {
-		fields.removeAllElements();
+		fields.clear();
 		this.reviewSize();
 	}
 

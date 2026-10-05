@@ -48,7 +48,7 @@ public class DatabaseDriver {
 			return drivers;
 		}
 
-		List list = null;
+		List<?> list = null;
 
 		if (driverData.hasRootElement()) {
 			list = driverData.getRootElement().getChildren("driver");

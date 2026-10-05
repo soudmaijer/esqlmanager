@@ -31,8 +31,8 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 	private ESQLManagerUI jm;
 	private ConnectionProfileCC cpcc;
-	private JComboBox jc;
-	private JComboBox jcServer;
+	private JComboBox<Object> jc;
+	private JComboBox<ServerType> jcServer;
 	private JCheckBox chkAutoConnect;
 	private boolean useAutoConnect = true;
 	private ServerType[] sta;
@@ -53,7 +53,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		j.setBounds(10, 14, 100, 15);
 		this.getContentPane().add(j);
 
-		jc = new JComboBox(new DefaultComboBoxModel());
+		jc = new JComboBox<>(new DefaultComboBoxModel<>());
 		jc.setEditable(true);
 
 		jc.setBounds(100, 10, 345, 21);
@@ -63,7 +63,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		lblServer.setBounds(10, 44, 100, 15);
 		this.getContentPane().add(lblServer);
 
-		jcServer = new JComboBox(new DefaultComboBoxModel());
+		jcServer = new JComboBox<>(new DefaultComboBoxModel<>());
 		jcServer.setEditable(false);
 		jcServer.setBounds(100, 40, 345, 21);
 		this.getContentPane().add(jcServer);
@@ -160,7 +160,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 	public void loadProfiles(ConnectionProfile[] p) {
 		loadingProfile = true;
-		DefaultComboBoxModel dcm = new DefaultComboBoxModel();
+		DefaultComboBoxModel<Object> dcm = new DefaultComboBoxModel<>();
 		boolean foundLastUsed = false;
 
 		if (p == null || p.length == 0) {
@@ -208,7 +208,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 	}
 
 	public void setSelectedProfile(ConnectionProfile cp) {
-		DefaultComboBoxModel dcm = (DefaultComboBoxModel) jc.getModel();
+		DefaultComboBoxModel<Object> dcm = (DefaultComboBoxModel<Object>) jc.getModel();
 		dcm.setSelectedItem(cp);
 	}
 

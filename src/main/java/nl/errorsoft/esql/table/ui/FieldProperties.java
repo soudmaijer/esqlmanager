@@ -21,9 +21,9 @@ public class FieldProperties extends JDialog implements ActionListener {
 	private JTextField name = new JTextField();
 	private JTextField length = new JTextField();
 	private JTextField dfault = new JTextField();
-	private JComboBox fieldtypes = new JComboBox();
-	private JList indexList = new JList();
-	private DefaultListModel dlm = new DefaultListModel();
+	private JComboBox<DataType> fieldtypes = new JComboBox<>();
+	private JList<TableIndex> indexList = new JList<>();
+	private DefaultListModel<TableIndex> dlm = new DefaultListModel<>();
 	private JScrollPane indexListScroll;
 
 	// Field property checkboxes

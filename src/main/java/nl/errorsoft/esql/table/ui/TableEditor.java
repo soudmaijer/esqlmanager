@@ -21,7 +21,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Vector;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -64,12 +63,12 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 	private JButton movedown = new JButton("Down");
 
 	// current databases, tabletypes, and fieldtypes dropdowns
-	private JComboBox dbs;
-	private JComboBox tabletypes;
-	private JComboBox fieldtypes = new JComboBox();
+	private JComboBox<Database> dbs;
+	private JComboBox<String> tabletypes;
+	private JComboBox<DataType> fieldtypes = new JComboBox<>();
 
 	// List with user created fields
-	private JList fieldlist = new JList();
+	private JList<Object> fieldlist = new JList<>();
 
 	// Field property checkboxes
 	private JCheckBox primary = new JCheckBox("Primary");
@@ -81,7 +80,7 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 	private JPanel p3;
 
 	// Listmodel for adding and removing items from list
-	private DefaultListModel list = new DefaultListModel();
+	private DefaultListModel<Object> list = new DefaultListModel<>();
 
 	private JButton save = new JButton("Save");
 	private JButton cancel = new JButton("Cancel");
@@ -102,8 +101,8 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 		setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
 		// TABLE PROPERTIES PANEL - TOP
-		DefaultComboBoxModel dcm = new DefaultComboBoxModel();
-		Vector db = ctcc.getDatabases();
+		DefaultComboBoxModel<Database> dcm = new DefaultComboBoxModel<>();
+		List<Database> db = ctcc.getDatabases();
 		for (int i = 0; i < db.size(); i++) {
 			dcm.addElement((Database) db.get(i));
 			if (database != null && ((Database) db.get(i)).toString().equals(database.toString())) {
@@ -111,9 +110,9 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 			}
 		}
 		dcm.setSelectedItem(database);
-		dbs = new JComboBox(dcm);
+		dbs = new JComboBox<>(dcm);
 
-		DefaultComboBoxModel ttmodel = new DefaultComboBoxModel();
+		DefaultComboBoxModel<String> ttmodel = new DefaultComboBoxModel<>();
 		String[] tbt = ctcc.getTableTypes();
 		for (String type : tbt) {
 			ttmodel.addElement(type);
@@ -121,7 +120,7 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 				ttmodel.setSelectedItem(type);
 			}
 		}
-		tabletypes = new JComboBox(ttmodel);
+		tabletypes = new JComboBox<>(ttmodel);
 
 		JPanel p = new JPanel(new GridBagLayout());
 		p.setBorder(BorderFactory.createTitledBorder("Table Properties"));
@@ -217,7 +216,7 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 			dbs.setEnabled(false);
 
 			// Add TableColumns to list.
-			DefaultListModel dlm = new DefaultListModel();
+			DefaultListModel<Object> dlm = new DefaultListModel<>();
 			for (TableColumn column : table.getColumns()) {
 				dlm.addElement(column);
 			}

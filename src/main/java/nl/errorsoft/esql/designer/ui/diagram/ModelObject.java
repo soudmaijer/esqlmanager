@@ -2,12 +2,13 @@ package nl.errorsoft.esql.designer.ui.diagram;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.awt.event.*;
 
 public class ModelObject extends JPanel {
-	private Vector references;
+	private final List<ModelObject> references;
 	private boolean selected;
 
 	private boolean hidden = true;
@@ -18,7 +19,7 @@ public class ModelObject extends JPanel {
 	private int identifier = -1;
 
 	public ModelObject() {
-		references = new Vector();
+		references = new ArrayList<>();
 		this.setLayout(null);
 	}
 
@@ -30,7 +31,7 @@ public class ModelObject extends JPanel {
 		references.remove(mo);
 	}
 
-	public Vector getReferences() {
+	public List<ModelObject> getReferences() {
 		return references;
 	}
 

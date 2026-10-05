@@ -63,7 +63,7 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 		jtxtFieldOpenChar = new javax.swing.JTextField();
 		jtxtFieldCloseChar = new javax.swing.JTextField();
 		jPanel3 = new javax.swing.JPanel();
-		jcmbType = new javax.swing.JComboBox();
+		jcmbType = new javax.swing.JComboBox<>();
 		jbtnClose = new javax.swing.JButton();
 		jbtnClose.addActionListener(this);
 		jbtnSave = new javax.swing.JButton();
@@ -158,7 +158,7 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 
 	public void loadDrivers(DatabaseDriver[] dbda) {
 		if (dbda != null && dbda.length > 0) {
-			javax.swing.DefaultComboBoxModel dcm = new javax.swing.DefaultComboBoxModel();
+			javax.swing.DefaultComboBoxModel<DatabaseDriver> dcm = new javax.swing.DefaultComboBoxModel<>();
 
 			for (int i = 0; i < dbda.length; i++) {
 				dcm.addElement(dbda[i]);
@@ -210,7 +210,7 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 	// Variables declaration - do not modify
 	private javax.swing.JButton jbtnClose;
 	private javax.swing.JTextField jtxtClassName;
-	private javax.swing.JComboBox jcmbType;
+	private javax.swing.JComboBox<DatabaseDriver> jcmbType;
 	private javax.swing.JTextField jtxtURL;
 	private javax.swing.JTextField jtxtFieldCloseChar;
 	private javax.swing.JLabel jLabel1;

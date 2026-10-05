@@ -145,7 +145,6 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 ## Known technical debt
 
-* Raw `Vector` and other raw types (about 100 lint warnings).
 * Many dialogs still use null layouts (`ConnectionWindowUI`, `FieldProperties`, ...).
 * `Dialect` and `UserAdmin` methods such as `listTables`, `maintain`, `dropIndexSql` still take a `DatabaseConnection` and run SQL themselves, repositories only wrap them.
 * Some windows (`Processlist`, `DatabaseTreeView`) hold more logic than a UI should.

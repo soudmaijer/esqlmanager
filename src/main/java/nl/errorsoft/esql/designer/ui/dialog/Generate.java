@@ -24,7 +24,6 @@ import nl.errorsoft.esql.designer.DesignedForeignKey;
 import nl.errorsoft.esql.designer.model.ForeignKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 public class Generate extends javax.swing.JDialog implements Runnable {
 	private static final Logger log = LogManager.getLogger(Generate.class);
@@ -126,11 +125,11 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 	}
 
 	public void run() {
-		Vector v = m.getObjects();
+		List<ModelObject> v = m.getObjects();
 
 		if (v.size() != 0) {
-			Vector db = new Vector();
-			Vector tb = new Vector();
+			List<ModelObject> db = new ArrayList<>();
+			List<ModelObject> tb = new ArrayList<>();
 
 			// Split objects
 			for (int i = 0; i < v.size(); i++) {
@@ -267,9 +266,9 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 	}
 
 	private void generateActionPerformed(java.awt.event.ActionEvent evt) {
-		Vector v = m.getObjects();
+		List<ModelObject> v = m.getObjects();
 
-		Vector db = new Vector();
+		List<ModelObject> db = new ArrayList<>();
 
 		// Split objects
 		for (int i = 0; i < v.size(); i++) {
@@ -283,7 +282,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 			DatabaseObject d = (DatabaseObject) db.get(i);
 			count++;
 
-			Vector tb = m.getReferences(d);
+			List<ModelObject> tb = m.getReferences(d);
 
 			for (int j = 0; j < tb.size(); j++) {
 				count++;
@@ -306,7 +305,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 			for (int i = 0; i < db.size(); i++) {
 				DatabaseObject d = (DatabaseObject) db.get(i);
 				List<DesignedTable> designedTables = new ArrayList<>();
-				Vector tb = m.getReferences(d);
+				List<ModelObject> tb = m.getReferences(d);
 
 				for (int j = 0; j < tb.size(); j++) {
 					TableObject tbs = (TableObject) tb.get(j);

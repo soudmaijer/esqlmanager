@@ -1,10 +1,11 @@
 package nl.errorsoft.esql.designer.control;
 
-import nl.errorsoft.esql.designer.ui.DBCreator;
-
-import java.util.Vector;
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.designer.ui.DBCreator;
+import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
+
+import java.util.List;
 
 public class ModelViewerControl {
 	private DBCreator db;
@@ -13,7 +14,7 @@ public class ModelViewerControl {
 		this.db = db;
 	}
 
-	public void showPropertiesDialog(Vector sel) {
+	public void showPropertiesDialog(List<ModelObject> sel) {
 		if (sel.size() == 1) {
 			db.showProperties(sel.get(0));
 		}

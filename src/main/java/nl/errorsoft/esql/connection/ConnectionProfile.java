@@ -31,7 +31,7 @@ public class ConnectionProfile {
 	}
 
 	public ConnectionProfile[] getProfiles() {
-		java.util.List profiles = null;
+		java.util.List<?> profiles = null;
 		ConnectionProfile[] p = new ConnectionProfile[0];
 
 		try {
@@ -75,7 +75,7 @@ public class ConnectionProfile {
 
 	public boolean profileExists(String name) throws Exception {
 		if (profileData.hasRootElement()) {
-			java.util.List l = profileData.getRootElement().getChildren("profile");
+			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(name)) {
@@ -87,7 +87,7 @@ public class ConnectionProfile {
 	}
 
 	public void setLastUsed(ConnectionProfile cp) throws Exception {
-		java.util.List profiles = null;
+		java.util.List<?> profiles = null;
 
 		if (profileData.hasRootElement()) {
 			profiles = profileData.getRootElement().getChildren("profile");
@@ -127,7 +127,7 @@ public class ConnectionProfile {
 
 	public void editProfile(ConnectionProfile profile) throws Exception {
 		if (profileData.hasRootElement()) {
-			java.util.List l = profileData.getRootElement().getChildren("profile");
+			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(profile.getName())) {
@@ -149,7 +149,7 @@ public class ConnectionProfile {
 
 	public void deleteProfile(ConnectionProfile profile) throws Exception {
 		if (profileData.hasRootElement()) {
-			java.util.List l = profileData.getRootElement().getChildren("profile");
+			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(profile.getName())) {

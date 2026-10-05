@@ -24,12 +24,12 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	private JTextField txt_name = new JTextField();
 	private JTextArea txt_desc = new JTextArea();
 	private JTextField txt_comm = new JTextField();
-	private JComboBox cmb_type = new JComboBox();
+	private JComboBox<String> cmb_type = new JComboBox<>();
 
 	// Field tab
 	private JLabel lbl_fields = new JLabel("Fields");
 	private JTabbedPane tab_field = new JTabbedPane();
-	private JList lst_fields = new JList(new DefaultListModel());
+	private JList<Field> lst_fields = new JList<>(new DefaultListModel<>());
 
 	// FieldTab 1
 	private JLabel lbl_fieldname = new JLabel("Fieldname");
@@ -43,7 +43,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	private JLabel lbl_types = new JLabel("Type");
 	private JLabel lbl_length = new JLabel("Length");
 	private JLabel lbl_default = new JLabel("Default");
-	private JComboBox cmb_types = new JComboBox();
+	private JComboBox<nl.errorsoft.esql.table.DataType> cmb_types = new JComboBox<>();
 	private JTextField txt_length = new JTextField();
 	private JTextField txt_default = new JTextField();
 
@@ -237,7 +237,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 		this.enableComps(false, properties);
 
-		DefaultListModel dlm = (DefaultListModel) lst_fields.getModel();
+		DefaultListModel<Field> dlm = (DefaultListModel<Field>) lst_fields.getModel();
 		Field[] f = tb.getFields();
 		for (int i = 0; i < f.length; i++) {
 			dlm.addElement(f[i]);
@@ -326,7 +326,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 		tb.removeAllFields();
 
-		DefaultListModel dtm = (DefaultListModel) lst_fields.getModel();
+		DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
 		for (int i = 0; i < dtm.getSize(); i++) {
 			tb.addField((Field) dtm.getElementAt(i));
 		}
@@ -338,11 +338,11 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == btn_new) {
-			DefaultListModel dtm = (DefaultListModel) lst_fields.getModel();
+			DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
 			dtm.addElement(new Field("new_field", (nl.errorsoft.esql.table.DataType) cmb_types.getItemAt(0), "", "", ""));
 		}
 		if (e.getSource() == btn_rem) {
-			DefaultListModel dtm = (DefaultListModel) lst_fields.getModel();
+			DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
 			if (lst_fields.getSelectedIndex() != -1) {
 				dtm.removeElementAt(lst_fields.getSelectedIndex());
 			}
@@ -413,7 +413,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 	public void valueChanged(ListSelectionEvent e) {
 		enableComps(true, properties);
-		DefaultListModel dtm = (DefaultListModel) lst_fields.getModel();
+		DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
 		if (lst_fields.getSelectedIndex() == -1) {
 			enableComps(false, properties);
 			return;

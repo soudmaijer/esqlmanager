@@ -14,13 +14,13 @@ public class HeaderRenderer extends DefaultTableCellRenderer {
 
 	private int pushedColumn;
 	private ImageLoader il;
-	private Hashtable state;
+	private Map<Integer, Integer> state;
 	private JLabel button;
 
 	public HeaderRenderer(ImageLoader il) {
 		super();
 		pushedColumn = -1;
-		state = new Hashtable();
+		state = new HashMap<>();
 		this.il = il;
 	}
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
