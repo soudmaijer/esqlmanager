@@ -198,7 +198,7 @@ class TableController { }
 
 // Bad (rename debt if it already exists, a finding if it is new)
 class ForeignKeyUI { }
-class TableController { }
+class TableCC { }
 ```
 
 ## Current deviations (open on purpose)
@@ -207,10 +207,13 @@ Known layer and naming problems that are not fixed yet. Do not report them again
 
 - `settings.Appearance` mixes an enum with look-and-feel (Swing/FlatLaf) code.
 - `designer.model.Model` and `ModelXml` import Swing/AWT classes (they hold canvas objects such as `TableCard`).
-- Controllers import `javax.swing` components directly.
-- Services refer to `jdbc.DatabaseConnection`.
-- `database.DatabaseListService` owns a scratch `DatabaseConnection` of its own and is created by the profile controller, not by `ConnectionContext` (it runs before a connection window exists).
-- Some dialogs extend `JDialog` directly instead of `ui.dialog.FormDialog`.
+- `connection.ConnectionProfile` and `connection.DatabaseDriver` mix domain data with reading and writing their XML files (JDOM). `ProfileXml` maps one `<profile>` element, but the file IO is still in `ConnectionProfile`; a `DriverXml` does not exist yet.
+- Some controllers use Swing types beyond `Dialogs`/`SwingUtilities`: `connection.control.ConnectionProfileController` (`JPasswordField`), `server.control.ProcessListController` (`JFrame`), and `exporter.control.ExportController` and `importer.control.ImportController` (`javax.swing.tree` nodes for the tree of their window).
+- `database.DatabaseListService` owns a scratch `DatabaseConnection` of its own (the only service that refers to `jdbc.DatabaseConnection`) and is created by the profile controller, not by `ConnectionContext` (it runs before a connection window exists).
+- `ProcessListDialog`, `UserManagerDialog` and `GenerateDialog` extend `JDialog` directly instead of `ui.dialog.FormDialog`.
+- `designer.ui.dialog.ObjectNames` holds Swing-free name rules but works on the canvas cards, so it stays in `ui.dialog` instead of the feature package.
+- `designer.ui.dialog.ModelPropertiesPanel`, `DatabasePropertiesPanel` and `TablePropertiesPanel` are panels in `ui.dialog` because only `DesignerPropertiesDialog` uses them.
+- `blob.ui.TransferProgress` is the window interface the controller drives; it is not a `Listener` because it also opens the window.
 - `app.ui.CreditsPanel` extends `java.awt.Canvas` (an AWT widget).
 - `ui.util.DesktopWindows` also holds `openInBrowser`, which is not about the desktop.
 - `error.ErrorHandler` shows the error dialog itself (Swing by design): it is the one place that turns a failure into a message, called from controllers and windows.

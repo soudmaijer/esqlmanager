@@ -1,6 +1,13 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Documentation in line with the application
+
+- Help and README: a picture of the connect dialog, the designer's menus and keyboard shortcuts, queries that run in
+  the background, and on PostgreSQL that USE is not a database switch and Create database compares names with their
+  exact case.
+- No menus or labels changed; classes were renamed and moved inside the code only.
+
 05-10-2026: Small fixes from the layering review
 
 - Create database compares the name with the existing ones exactly, as the server does, so 'Shop' can be created

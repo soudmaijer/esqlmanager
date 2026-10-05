@@ -89,4 +89,4 @@ grid.show(service.load(table)); // JDBC on the EDT
 
 **Flag (as a note on the change, not on a line):**
 - A UI change with no evidence that it was painted in-process to a `BufferedImage` (light and dark for the designer) and looked at. See "Verifying UI changes" in `CLAUDE.md`.
-- A visible UI change without retaken `docs/screenshot.png`, `docs/designer.png` or `docs/query.png`, README and `changelog.txt` (newest entry first).
+- A visible UI change without retaken `docs/screenshot.png`, `docs/designer.png`, `docs/query.png` or `docs/connect.png`, README and `changelog.txt` (newest entry first).

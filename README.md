@@ -195,6 +195,8 @@ Everything the application reads and writes at runtime lives in `runtime/`:
 
 Profiles are normally created in the connection dialog, which lists the saved profiles at the left (add, remove and duplicate with the buttons above the list) and shows the selected one at the right. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
 
+![The connection dialog with a saved profile](docs/connect.png)
+
 The connection dialog has a second tab, **Databases and schemas**, that is available after Test connection succeeded. Tick the databases (and on PostgreSQL the schemas) the profile should show; nothing ticked shows everything, and the first ticked database is the one the connection is made to (`postgres` by default). The selection is stored in `profiles.xml` as `<databases>db1,db2</databases>` plus an optional `<schemas><database name="db1"><schema>public</schema></database></schemas>`; a database without schema elements shows all its schemas. Unticked schemas are left out of the tree, the export and import windows, the query tab and the designer, but exporting a whole database still includes them, which the export window notes.
 
 Note that `profiles.xml` stores saved passwords in plain text; switch off "Save password" in the profile to be asked for the password when connecting instead. Keep local changes out of version control, for example with `git update-index --skip-worktree runtime/conf/profiles.xml`.
@@ -245,7 +247,11 @@ The installed application keeps `conf/` and `credits.txt` in `~/.esqlmanager`, c
 
 The tests start PostgreSQL 17 and MySQL 8 with Testcontainers, so they need Docker and are skipped without it. They run the same scenarios against every dialect: tables, columns, indexes, export and import, editing data, users and privileges, databases, server status and the process list.
 
-Design decisions and the architecture are described in `CLAUDE.md`. Format the code with `./mvnw spotless:apply`.
+Design decisions and the architecture are described in `CLAUDE.md`. Format the code with `./mvnw spotless:apply`; `./mvnw verify` checks the formatting and runs the tests.
+
+### Conventions
+
+The rules for contributions are written down as project skills: [`.claude/skills/esql-architecture`](.claude/skills/esql-architecture/SKILL.md) holds the layering, dialect, SQL safety and naming rules (A1-A8, N1-N6) and [`.claude/skills/esql-ui`](.claude/skills/esql-ui/SKILL.md) the Swing rules (U1-U8). The `/review` skill in Claude Code checks a change against both.
 
 ## Project layout
 
@@ -257,7 +263,7 @@ src/main/java/nl/errorsoft/esql
              one package per feature: data, service and repository, with
              control/ and ui/ below it for the controllers and Swing windows
   app/       main window, start up, the ApplicationContext
-  ui/        Swing parts shared by features (icon/, table/, editor/, util/)
+  ui/        Swing parts shared by features (icon/, table/, editor/, dialog/, component/, util/)
   jdbc/      the database connection and the repository base class
   dialect/   the per-database behaviour (mysql/, postgres/, sqlserver/, oracle/)
   error/     EsqlException and the ErrorHandler

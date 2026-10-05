@@ -20,7 +20,7 @@ A row can only be changed or deleted when it can be identified, by its primary k
 * **Edit table** renames a table and changes its comment and, on MySQL, its storage engine. Show SQL lists the statements for the changes made so far.
 * **Rename table** and **Duplicate table** are in the context menu of a table. Duplicate copies the structure (columns, defaults, indexes) to a new table next to it and, when you tick "Copy the data too", the rows; the auto numbering of the copy continues after the copied rows. The new name must not exist yet.
 * **Properties** (context menu of a table or a database) shows a read-only summary: for a table its name, database, schema, engine or type, comment, number of rows and columns and its size on disk; for a database its character set and collation (MySQL) or owner and encoding (PostgreSQL) and its number of tables.
-* **Create database** (context menu of the server) checks the name against the databases in the tree and offers the options of the server: character set and collation on MySQL, owner and encoding on PostgreSQL. A choice left on "(server default)" is not written.
+* **Create database** (context menu of the server) checks the name against the databases of the server, with the exact case as the server compares it (on PostgreSQL `Shop` can be created next to `shop`), and offers the options of the server: character set and collation on MySQL, owner and encoding on PostgreSQL. A choice left on "(server default)" is not written.
 * **Rename schema** and **Drop schema** (PostgreSQL) are in the context menu of a schema, **Create schema** in the one of a database.
 * **Indexes** manages the primary key, unique indexes, plain indexes and (MySQL) fulltext indexes.
 

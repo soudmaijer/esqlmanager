@@ -14,6 +14,17 @@ Tools > Database Designer draws a model of databases, tables and notes, and gene
 * Shift-drag from a table or a note to a database to link them.
 * Tables are cards with an icon per column: a key for the primary key, a link for a foreign key column. The colours follow the light or dark appearance.
 
+## Menus and shortcuts
+
+| Menu | Items |
+|---|---|
+| File | New model (Cmd+N, Ctrl+N elsewhere), Open model (Cmd+O), Save model (Cmd+S), Save model as, Export as PlantUML, Export as Mermaid, Close |
+| Edit | Delete selected (Delete), Select all (Cmd+A), Deselect all (Cmd+D) |
+| View | Show grid, Arrange automatically |
+| Model | Add new database (F1), Add new table (F2), Add new comment (F3), Attach table (F4), Attach comment (F5), Show object properties, Show model properties |
+
+Delete removes the selected connector, or else the selected cards. Attach and Show object properties work on the selection however it was made, also after Select all. The generate button of the toolbar ("Generate model in database") opens the generate dialog.
+
 ## Foreign keys
 
 * Drag from the icon of a column onto a column of another table, use "Add foreign key..." in a table's context menu, or the Foreign keys tab of its properties. Changes in that tab reach the model when the properties are saved; Cancel discards them.

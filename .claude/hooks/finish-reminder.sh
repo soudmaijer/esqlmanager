@@ -11,5 +11,5 @@ changed=$( { git diff --name-only HEAD 2>/dev/null; git status --porcelain -uall
 printf '%s\n' "$changed" | grep -Eq '^src/.*\.java$' || exit 0
 printf '%s\n' "$changed" | grep -Fxq 'changelog.txt' && exit 0
 
-echo "Reminder: Java sources changed but changelog.txt did not. Add a newest-first entry to changelog.txt, update README.md and docs/ if behaviour changed, and for UI changes retake docs/screenshot.png, docs/designer.png and docs/query.png (unless this is an internal change with nothing user visible)."
+echo "Reminder: Java sources changed but changelog.txt did not. Add a newest-first entry to changelog.txt, update README.md and docs/ if behaviour changed, and for UI changes retake docs/screenshot.png, docs/designer.png, docs/query.png and docs/connect.png (unless this is an internal change with nothing user visible)."
 exit 0
