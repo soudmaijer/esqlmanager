@@ -44,6 +44,9 @@ public class ForeignKeyDialog extends FormDialog {
 	private final JComboBox<String> onDelete = actions();
 	private final JComboBox<String> onUpdate = actions();
 
+	private final JButton removePair = Forms.button("Re&move pair");
+	private final JLabel referencedHint = hint(" ");
+
 	private String suggestedName;
 	private ForeignKey result;
 	private ForeignKey candidate;
@@ -60,7 +63,8 @@ public class ForeignKeyDialog extends FormDialog {
 		referenced.setRenderer(new javax.swing.DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(javax.swing.JList<?> list, Object value, int index, boolean selected, boolean focus) {
-				return super.getListCellRendererComponent(list, value instanceof TableObject table ? table.getName() : value, index, selected, focus);
+				String text = value instanceof TableObject table ? table.getName() + (table == from ? " (this table)" : "") : String.valueOf(value);
+				return super.getListCellRendererComponent(list, text, index, selected, focus);
 			}
 		});
 		referenced.setSelectedItem(initial.to());
@@ -82,7 +86,12 @@ public class ForeignKeyDialog extends FormDialog {
 		pairTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(columnBox(from)));
 		updateReferencedEditor();
 		referenced.addActionListener(e -> referencedChanged());
-		pairs.addTableModelListener(e -> renameIfSuggested());
+		pairs.addTableModelListener(e -> {
+			renameIfSuggested();
+			removePair.setEnabled(pairs.getRowCount() > 1);
+		});
+		removePair.setEnabled(pairs.getRowCount() > 1);
+		showReferencedHint();
 
 		setOkCancel(content(), initial.name().isEmpty() ? "&Add" : "&Save", "Cancel");
 		setValidator(this::check);
@@ -104,7 +113,7 @@ public class ForeignKeyDialog extends FormDialog {
 		JScrollPane scroll = new JScrollPane(pairTable);
 		scroll.setPreferredSize(new java.awt.Dimension(360, 110));
 		JButton add = Forms.button("Add &pair");
-		JButton remove = Forms.button("Re&move pair");
+		JButton remove = removePair;
 		add.addActionListener(e -> pairs.addRow(new Object[]{firstColumn(from), primaryColumn(selectedTable())}));
 		remove.addActionListener(e -> removeSelectedPair());
 		JPanel pairButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
@@ -114,8 +123,27 @@ public class ForeignKeyDialog extends FormDialog {
 		columns.add(scroll, BorderLayout.CENTER);
 		columns.add(pairButtons, BorderLayout.SOUTH);
 
-		return new Forms.Grid().row(new JLabel("Table:"), new JLabel(from.getName())).row("&References:", referenced).row("&Name:", name)
-			.area(Forms.label("Co&lumns:", pairTable), columns).row("On &delete:", onDelete).row("On &update:", onUpdate).panel();
+		return new Forms.Grid().row(new JLabel("Table:"), new JLabel(from.getName())).row("&References:", referenced).full(referencedHint).row("&Name:", name)
+			.area(Forms.label("Co&lumns:", pairTable), columns).row("On &delete:", onDelete).row("On &update:", onUpdate)
+			.full(hint("Server default: the server decides, usually NO ACTION (the change is refused while rows still refer to it).")).panel();
+	}
+
+	private static JLabel hint(String text) {
+		JLabel label = new JLabel(text);
+		java.awt.Color disabled = javax.swing.UIManager.getColor("Label.disabledForeground");
+		if (disabled != null) {
+			label.setForeground(disabled);
+		}
+		label.setFont(label.getFont().deriveFont(label.getFont().getSize2D() - 1f));
+		return label;
+	}
+
+	/** Says when the key refers to its own table, which is the only choice when the model has one table. */
+	private void showReferencedHint() {
+		boolean self = selectedTable() == from;
+		boolean only = referenced.getItemCount() == 1;
+		referencedHint.setText(
+			self ? (only ? "The model has only this table, so the key refers to a column of the table itself." : "The key refers to the table itself.") : " ");
 	}
 
 	/** Builds the key from the dialog and checks it; the message to show, null when the key is valid. */
@@ -143,6 +171,7 @@ public class ForeignKeyDialog extends FormDialog {
 	}
 
 	private void referencedChanged() {
+		showReferencedHint();
 		if (pairTable.isEditing()) {
 			pairTable.getCellEditor().cancelCellEditing();
 		}

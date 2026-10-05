@@ -65,6 +65,16 @@ public class CreateTableCC {
 		}
 	}
 
+	/** True when the server has schemas between databases and tables. */
+	public boolean supportsSchemas() {
+		return cwcc.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS);
+	}
+
+	/** The name of the schema a new table goes in, null for the current schema of the database. */
+	public String targetSchemaName() {
+		return schema == null ? null : schema.getName();
+	}
+
 	/*
 	 	List all tabletypes, empty when the server has no such choice
 	*/

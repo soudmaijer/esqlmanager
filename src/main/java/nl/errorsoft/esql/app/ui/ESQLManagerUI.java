@@ -516,7 +516,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		} else if (object == mnuTileCascade || object == btnCascade) {
 			DesktopUtils.cascadeAll(jdp);
 		} else if (object == mnuAbout) {
-			jmcc.showSplashScreen(0);
+			new AboutDialog(this, jmcc.getAppName(), jmcc.getAppVersion(), jmcc.getAppCommit(), () -> jmcc.showSplashScreen(0)).showDialog();
 		} else if (object == mnuJDBC) {
 			jmcc.dispatchDriverUI();
 		}

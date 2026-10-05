@@ -1,172 +1,437 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
-import nl.errorsoft.esql.designer.ui.diagram.Field;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import nl.errorsoft.esql.connection.ServerType;
-
-import javax.swing.*;
-
-import nl.errorsoft.esql.ui.util.Forms;
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.event.*;
-import java.util.IdentityHashMap;
-import java.util.Map;
-
 import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
+import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.ui.util.Forms;
 
-public class TableProperties extends JTabbedPane implements PropertiesInterface, ActionListener, ListSelectionListener, CaretListener { // General tab
-	private JLabel lbl_name = new JLabel("Name:");
-	private JLabel lbl_comm = new JLabel("Comment:");
-	private JLabel lbl_type = new JLabel("Type:");
-	private JLabel lbl_desc = new JLabel("Description:");
+/** The properties of a table in the designer: General, Fields (the list of fields and one form for the selected field) and Foreign keys. */
+public class TableProperties extends JTabbedPane implements PropertiesInterface {
+	// General
+	private final JTextField txt_name = new JTextField();
+	private final JTextField txt_comm = new JTextField();
+	private final JTextArea txt_desc = new JTextArea();
+	private final JComboBox<String> cmb_type = new JComboBox<>();
 
-	private JTextField txt_name = new JTextField();
-	private JTextArea txt_desc = new JTextArea();
-	private JTextField txt_comm = new JTextField();
-	private JComboBox<String> cmb_type = new JComboBox<>();
+	// Fields
+	private final JList<Field> lst_fields = new JList<>(new DefaultListModel<>());
+	private final JTextField txt_fieldname = new JTextField();
+	private final JComboBox<DataType> cmb_types = new JComboBox<>();
+	private final JTextField txt_length = new JTextField();
+	private final JTextField txt_default = new JTextField();
+	private final JTextArea txt_fieldcomm = new JTextArea();
 
-	// Field tab
-	private JLabel lbl_fields = new JLabel("Fields:");
-	private JTabbedPane tab_field = new JTabbedPane();
-	private JList<Field> lst_fields = new JList<>(new DefaultListModel<>());
+	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary Key");
+	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "N&ot null");
+	private final JCheckBox unique = Forms.mnemonic(new JCheckBox(), "&Unique");
+	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "&Auto Increment");
+	private final JCheckBox index = Forms.mnemonic(new JCheckBox(), "&Index");
+	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "U&nsigned");
+	private final JCheckBox binary = Forms.mnemonic(new JCheckBox(), "&Binary");
+	private final JCheckBox zerofill = Forms.mnemonic(new JCheckBox(), "&Zerofill");
 
-	// FieldTab 1
-	private JLabel lbl_fieldname = new JLabel("Field name:");
-	private JLabel lbl_fieldcomm = new JLabel("Comment:");
-	private JTextField txt_fieldname = new JTextField();
-	private JTextArea txt_fieldcomm = new JTextArea();
-	private JButton btn_new = new JButton("New");
-	private JButton btn_rem = new JButton("Remove");
-
-	// FieldTab 2
-	private JLabel lbl_types = new JLabel("Type:");
-	private JLabel lbl_length = new JLabel("Length:");
-	private JLabel lbl_default = new JLabel("Default:");
-	private JComboBox<nl.errorsoft.esql.table.DataType> cmb_types = new JComboBox<>();
-	private JTextField txt_length = new JTextField();
-	private JTextField txt_default = new JTextField();
-
-	// Field property checkboxes
-	private JCheckBox primary = new JCheckBox("Primary");
-	private JCheckBox index = new JCheckBox("Index");
-	private JCheckBox unique = new JCheckBox("Unique");
-	private JCheckBox notnull = new JCheckBox("Not null");
-	private JCheckBox autoincrement = new JCheckBox("Auto increment");
-	private JCheckBox binary = new JCheckBox("Binary");
-	private JCheckBox unsigned = new JCheckBox("Unsigned");
-	private JCheckBox zerofill = new JCheckBox("Zerofill");
-
-	private JPanel properties;
+	private JPanel fieldForm;
 	private Field selField = null;
+	/** True while the form is filled from a field, so that filling it does not write back. */
+	private boolean loading;
 
-	private JList<ForeignKey> lst_keys = new JList<>();
+	private final JList<ForeignKey> lst_keys = new JList<>();
 
-	// Tableobject
-	private TableObject tb;
-	private nl.errorsoft.esql.connection.ServerType serverType;
+	private final TableObject tb;
 
 	// The model keeps its foreign keys in step with renamed and removed fields.
 	private final Model model;
 	private final Map<Field, String> namesBefore = new IdentityHashMap<>();
 
-	public TableProperties(TableObject tb, nl.errorsoft.esql.connection.ServerType serverType, Model model) {
-		lbl_name.setLabelFor(txt_name);
-		lbl_name.setDisplayedMnemonic('N');
+	public TableProperties(TableObject tb, ServerType serverType, Model model) {
 		this.model = model;
-		this.serverType = serverType;
+		this.tb = tb;
 
+		addTab("General", generalTab(tb, serverType));
+		addTab("Fields", fieldsTab(serverType));
+		if (model != null) {
+			addTab("Foreign keys", foreignKeysTab());
+		}
+
+		DefaultListModel<Field> dlm = (DefaultListModel<Field>) lst_fields.getModel();
+		for (Field original : tb.getFields()) {
+			// The dialog edits copies, the table gets them on OK.
+			Field copy = original.copy();
+			dlm.addElement(copy);
+			namesBefore.put(copy, original.getName());
+		}
+		if (!dlm.isEmpty()) {
+			lst_fields.setSelectedIndex(0);
+		} else {
+			showField(null);
+		}
+	}
+
+	private JPanel generalTab(TableObject tb, ServerType serverType) {
 		txt_name.setText(tb.getName());
 		txt_comm.setText(tb.getComment());
 		String[] tableTypes = serverType.getDialect().getTableTypes();
-		for (int i = 0; i < tableTypes.length; i++) {
-			cmb_type.addItem(tableTypes[i]);
+		for (String tableType : tableTypes) {
+			cmb_type.addItem(tableType);
 		}
 		cmb_type.setSelectedItem(tb.getType());
-		// Servers without storage engines have nothing to choose here.
-		lbl_type.setVisible(tableTypes.length > 0);
-		cmb_type.setVisible(tableTypes.length > 0);
 		txt_desc.setFont(txt_name.getFont());
 		txt_desc.setLineWrap(true);
 		txt_desc.setWrapStyleWord(true);
 		txt_desc.setText(tb.getDescription());
-		JScrollPane jsp = new JScrollPane(txt_desc);
-		jsp.setPreferredSize(new Dimension(185, 160));
+		JScrollPane notes = new JScrollPane(txt_desc);
+		notes.setPreferredSize(new Dimension(300, 120));
 
-		JPanel general = Forms.padded(
-			new Forms.Grid().row(lbl_name, txt_name).row(lbl_comm, txt_comm).row(lbl_type, cmb_type).area(lbl_desc, jsp).panel());
-		general.setOpaque(false);
-		this.addTab("General", general);
+		Forms.Grid grid = new Forms.Grid().row("&Name:", txt_name);
+		// Servers without storage engines have nothing to choose here.
+		if (tableTypes.length > 0) {
+			grid.row("&Type:", cmb_type);
+		}
+		grid.row("&Comment:", txt_comm).area("N&otes:", notes);
+		txt_comm.setToolTipText("The comment of the table in the database");
+		txt_desc.setToolTipText("Notes that only the model file keeps, they are not written to the database");
+		return Forms.padded(grid.panel());
+	}
 
-		// Fields tab: the list of fields above the editor of the selected field.
-		JScrollPane jsp2 = new JScrollPane(lst_fields);
-		jsp2.setPreferredSize(new Dimension(185, 80));
-		JPanel fields = Forms.padded(new Forms.Grid().row(lbl_fields, jsp2).fill(tab_field).panel());
+	private JPanel fieldsTab(ServerType serverType) {
+		for (DataType type : serverType.getDataTypes()) {
+			cmb_types.addItem(type);
+		}
 
+		// The type options exist for the servers whose data types have them.
+		boolean hasUnsigned = false;
+		boolean hasBinary = false;
+		boolean hasZerofill = false;
+		for (DataType type : serverType.getDataTypes()) {
+			hasUnsigned |= type.unsigned;
+			hasBinary |= type.binary;
+			hasZerofill |= type.zerofill;
+		}
+		unsigned.setVisible(hasUnsigned);
+		binary.setVisible(hasBinary);
+		zerofill.setVisible(hasZerofill);
+
+		JPanel constraints = Forms.titled(new JPanel(new GridLayout(0, 2, Forms.GAP, 0)), "Constraints");
+		constraints.add(primary);
+		constraints.add(notnull);
+		constraints.add(unique);
+		constraints.add(autoincrement);
+		constraints.add(index);
+
+		Forms.Grid grid = new Forms.Grid();
 		txt_fieldcomm.setWrapStyleWord(true);
 		txt_fieldcomm.setLineWrap(true);
-		txt_fieldcomm.setFont(lbl_fieldcomm.getFont());
-		JScrollPane jsp3 = new JScrollPane(txt_fieldcomm);
-		jsp3.setPreferredSize(new Dimension(180, 70));
-		JPanel first = Forms
-			.padded(new Forms.Grid().row(lbl_fieldname, txt_fieldname).area(lbl_fieldcomm, jsp3).full(Forms.buttonRow(btn_new, btn_rem)).panel());
-
-		nl.errorsoft.esql.table.DataType[] fo = serverType.getDataTypes();
-		for (int i = 0; i < fo.length; i++) {
-			cmb_types.addItem(fo[i]);
+		txt_fieldcomm.setFont(txt_fieldname.getFont());
+		JScrollPane comment = new JScrollPane(txt_fieldcomm);
+		comment.setPreferredSize(new Dimension(300, 60));
+		grid.row("Na&me:", txt_fieldname).row("T&ype:", cmb_types).row("&Length:", txt_length).row("&Default:", txt_default).area("Co&mment:", comment);
+		grid.full(constraints);
+		if (hasUnsigned || hasBinary || hasZerofill) {
+			JPanel options = Forms.titled(new JPanel(new GridLayout(0, 3, Forms.GAP, 0)), "Type options");
+			options.add(unsigned);
+			options.add(binary);
+			options.add(zerofill);
+			grid.full(options);
 		}
-		JPanel flags = new JPanel(new GridLayout(4, 2));
-		flags.add(primary);
-		flags.add(index);
-		flags.add(binary);
-		flags.add(notnull);
-		flags.add(unsigned);
-		flags.add(autoincrement);
-		flags.add(zerofill);
-		flags.add(unique);
-		properties = Forms.padded(new Forms.Grid().row(lbl_types, cmb_types).row(lbl_length, txt_length).row(lbl_default, txt_default).full(flags).done());
+		fieldForm = grid.panel();
 
-		tab_field.addTab("Create or edit", first);
-		tab_field.addTab("Properties", properties);
+		bind(txt_fieldname, text -> {
+			if (!text.trim().isEmpty()) {
+				selField.setName(text);
+			}
+			markNameProblem();
+		});
+		bind(txt_length, text -> {
+			selField.setLength(text);
+			markLengthProblem();
+		});
+		bind(txt_default, text -> selField.setDefault(text));
+		bind(txt_fieldcomm, text -> selField.setComment(text));
+		cmb_types.addActionListener(e -> typeChosen());
+		bind(primary, value -> selField.primary = value);
+		bind(unique, value -> selField.unique = value);
+		bind(index, value -> selField.index = value);
+		bind(notnull, value -> selField.notnull = value);
+		bind(unsigned, value -> selField.unsigned = value);
+		bind(binary, value -> selField.binary = value);
+		bind(autoincrement, value -> selField.autoincrement = value);
+		bind(zerofill, value -> selField.zerofill = value);
+		lst_fields.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		lst_fields.addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				showField(lst_fields.getSelectedValue());
+			}
+		});
 
-		this.addTab("Fields", fields);
+		JButton add = Forms.button("&Add");
+		JButton duplicate = Forms.button("D&uplicate");
+		JButton remove = Forms.button("&Remove");
+		JButton up = Forms.button("U&p");
+		JButton down = Forms.button("Do&wn");
+		add.addActionListener(e -> addField());
+		duplicate.addActionListener(e -> duplicateField());
+		remove.addActionListener(e -> removeField());
+		up.addActionListener(e -> moveField(-1));
+		down.addActionListener(e -> moveField(1));
 
-		this.tb = tb;
+		JPanel buttons = new JPanel(new GridLayout(0, 3, Forms.GAP, Forms.GAP));
+		buttons.setBorder(BorderFactory.createEmptyBorder(Forms.GAP, 0, 0, 0));
+		buttons.add(add);
+		buttons.add(duplicate);
+		buttons.add(remove);
+		buttons.add(up);
+		buttons.add(down);
 
-		if (model != null) {
-			this.addTab("Foreign keys", foreignKeysTab());
+		JScrollPane list = new JScrollPane(lst_fields);
+		list.setPreferredSize(new Dimension(200, 200));
+		JPanel left = new JPanel(new BorderLayout());
+		left.add(Forms.label("&Fields:", lst_fields), BorderLayout.NORTH);
+		left.add(list, BorderLayout.CENTER);
+		left.add(buttons, BorderLayout.SOUTH);
+
+		JPanel panel = Forms.padded(new JPanel(new BorderLayout(Forms.PADDING, 0)));
+		panel.add(left, BorderLayout.WEST);
+		panel.add(fieldForm, BorderLayout.CENTER);
+		return panel;
+	}
+
+	private void bind(javax.swing.text.JTextComponent component, Consumer<String> write) {
+		component.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				changed();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				changed();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				changed();
+			}
+
+			private void changed() {
+				if (!loading && selField != null) {
+					write.accept(component.getText());
+					lst_fields.repaint();
+				}
+			}
+		});
+	}
+
+	private void bind(JCheckBox box, Consumer<Boolean> write) {
+		box.addActionListener(e -> {
+			if (!loading && selField != null) {
+				write.accept(box.isSelected());
+			}
+		});
+	}
+
+	private void markNameProblem() {
+		List<String> names = fieldNames();
+		boolean problem = txt_fieldname.getText().isBlank()
+			|| FieldRules.nameProblem(names) != null && names.stream().filter(n -> n.equalsIgnoreCase(txt_fieldname.getText().trim())).count() > 1;
+		txt_fieldname.putClientProperty("JComponent.outline", problem ? "error" : null);
+	}
+
+	private void markLengthProblem() {
+		DataType type = (DataType) cmb_types.getSelectedItem();
+		String problem = FieldRules.lengthProblem(type == null ? "" : type.getName(), txt_length.getText());
+		txt_length.putClientProperty("JComponent.outline", problem == null ? null : "error");
+		txt_length.setToolTipText(problem);
+	}
+
+	private List<String> fieldNames() {
+		List<String> names = new ArrayList<>();
+		DefaultListModel<Field> fields = fields();
+		for (int i = 0; i < fields.getSize(); i++) {
+			names.add(fields.get(i).getName());
 		}
+		return names;
+	}
 
-		cmb_types.addActionListener(this);
-		cmb_types.setSelectedIndex(0);
-		lst_fields.addListSelectionListener(this);
-		btn_new.addActionListener(this);
-		btn_rem.addActionListener(this);
-		primary.addActionListener(this);
-		index.addActionListener(this);
-		unique.addActionListener(this);
-		binary.addActionListener(this);
-		notnull.addActionListener(this);
-		unsigned.addActionListener(this);
-		autoincrement.addActionListener(this);
-		zerofill.addActionListener(this);
+	private DefaultListModel<Field> fields() {
+		return (DefaultListModel<Field>) lst_fields.getModel();
+	}
 
-		txt_fieldname.addCaretListener(this);
-		txt_fieldcomm.addCaretListener(this);
-		txt_default.addCaretListener(this);
-		txt_length.addCaretListener(this);
+	private void addField() {
+		Field field = new Field(FieldRules.uniqueName("new_field", fieldNames()), cmb_types.getItemAt(0), "", "", "");
+		fields().addElement(field);
+		lst_fields.setSelectedIndex(fields().getSize() - 1);
+		txt_fieldname.requestFocusInWindow();
+		txt_fieldname.selectAll();
+	}
 
-		this.enableComps(false, properties);
+	private void duplicateField() {
+		Field source = lst_fields.getSelectedValue();
+		if (source == null) {
+			return;
+		}
+		Field copy = source.copy();
+		copy.setName(FieldRules.uniqueName(source.getName() + "_copy", fieldNames()));
+		// A copy cannot be a second primary key or auto number.
+		copy.primary = false;
+		copy.autoincrement = false;
+		int at = lst_fields.getSelectedIndex() + 1;
+		fields().add(at, copy);
+		lst_fields.setSelectedIndex(at);
+		txt_fieldname.requestFocusInWindow();
+		txt_fieldname.selectAll();
+	}
 
-		DefaultListModel<Field> dlm = (DefaultListModel<Field>) lst_fields.getModel();
-		Field[] f = tb.getFields();
-		for (int i = 0; i < f.length; i++) {
-			// The dialog edits copies, the table gets them on OK.
-			Field copy = f[i].copy();
-			dlm.addElement(copy);
-			namesBefore.put(copy, f[i].getName());
+	private void removeField() {
+		int at = lst_fields.getSelectedIndex();
+		if (at < 0) {
+			return;
+		}
+		String name = fields().get(at).getName();
+		if (!Dialogs.confirmDestructive(this, "Remove field", "Remove field '" + name + "' from the table?", "Remove")) {
+			return;
+		}
+		fields().remove(at);
+		if (!fields().isEmpty()) {
+			lst_fields.setSelectedIndex(Math.min(at, fields().getSize() - 1));
+		} else {
+			showField(null);
+		}
+	}
+
+	private void moveField(int step) {
+		int at = lst_fields.getSelectedIndex();
+		int to = at + step;
+		if (at < 0 || to < 0 || to >= fields().getSize()) {
+			return;
+		}
+		Field field = fields().remove(at);
+		fields().add(to, field);
+		lst_fields.setSelectedIndex(to);
+	}
+
+	/** Fills the form from a field, or disables it when there is none. */
+	private void showField(Field field) {
+		selField = field;
+		setEnabledDeep(fieldForm, field != null);
+		if (field == null) {
+			loading = true;
+			txt_fieldname.setText("");
+			txt_length.setText("");
+			txt_default.setText("");
+			txt_fieldcomm.setText("");
+			for (JCheckBox box : List.of(primary, notnull, unique, autoincrement, index, unsigned, binary, zerofill)) {
+				box.setSelected(false);
+			}
+			loading = false;
+			return;
+		}
+		loading = true;
+		for (int i = 0; i < cmb_types.getItemCount(); i++) {
+			if (cmb_types.getItemAt(i).getName().equals(field.getType().getName())) {
+				cmb_types.setSelectedIndex(i);
+				break;
+			}
+		}
+		txt_fieldname.setText(field.getName());
+		txt_length.setText(field.getLength());
+		txt_default.setText(field.getDefault());
+		txt_fieldcomm.setText(field.getComment());
+		primary.setSelected(field.primary);
+		notnull.setSelected(field.notnull);
+		unique.setSelected(field.unique);
+		autoincrement.setSelected(field.autoincrement);
+		index.setSelected(field.index);
+		unsigned.setSelected(field.unsigned);
+		binary.setSelected(field.binary);
+		zerofill.setSelected(field.zerofill);
+		loading = false;
+		enableOptionsFor((DataType) cmb_types.getSelectedItem());
+		markNameProblem();
+		markLengthProblem();
+	}
+
+	/** The type was chosen: options the type does not have are switched off. */
+	private void typeChosen() {
+		DataType type = (DataType) cmb_types.getSelectedItem();
+		if (loading || selField == null || type == null) {
+			return;
+		}
+		selField.setType(type);
+		loading = true;
+		clearUnless(primary, type.primary, value -> selField.primary = value);
+		clearUnless(index, type.index, value -> selField.index = value);
+		clearUnless(unique, type.unique, value -> selField.unique = value);
+		clearUnless(binary, type.binary, value -> selField.binary = value);
+		clearUnless(notnull, type.notnull, value -> selField.notnull = value);
+		clearUnless(unsigned, type.unsigned, value -> selField.unsigned = value);
+		clearUnless(autoincrement, type.autoincrement, value -> selField.autoincrement = value);
+		clearUnless(zerofill, type.zerofill, value -> selField.zerofill = value);
+		loading = false;
+		enableOptionsFor(type);
+		markLengthProblem();
+		lst_fields.repaint();
+	}
+
+	private static void clearUnless(JCheckBox box, boolean allowed, Consumer<Boolean> write) {
+		if (!allowed) {
+			box.setSelected(false);
+			write.accept(false);
+		}
+	}
+
+	private void enableOptionsFor(DataType type) {
+		if (type == null) {
+			return;
+		}
+		primary.setEnabled(type.primary);
+		binary.setEnabled(type.binary);
+		unsigned.setEnabled(type.unsigned);
+		zerofill.setEnabled(type.zerofill);
+		index.setEnabled(type.index);
+		unique.setEnabled(type.unique);
+		notnull.setEnabled(type.notnull);
+		autoincrement.setEnabled(type.autoincrement);
+	}
+
+	private static void setEnabledDeep(Container container, boolean enabled) {
+		for (Component child : container.getComponents()) {
+			child.setEnabled(enabled);
+			if (child instanceof Container inner) {
+				setEnabledDeep(inner, enabled);
+			}
 		}
 	}
 
@@ -243,6 +508,32 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		lst_keys.setModel(keys);
 	}
 
+	@Override
+	public String inputProblem() {
+		String name = txt_name.getText().trim();
+		if (name.isEmpty()) {
+			setSelectedIndex(0);
+			return "The table needs a name.";
+		}
+		String names = FieldRules.nameProblem(fieldNames());
+		if (names != null) {
+			setSelectedIndex(1);
+			return names;
+		}
+		DefaultListModel<Field> fields = fields();
+		for (int i = 0; i < fields.getSize(); i++) {
+			Field field = fields.get(i);
+			String length = FieldRules.lengthProblem(field.getType().getName(), field.getLength());
+			if (length != null) {
+				setSelectedIndex(1);
+				lst_fields.setSelectedIndex(i);
+				return "Field '" + field.getName() + "': " + length;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public void saveProperties() {
 		tb.setName(txt_name.getText());
 		tb.setDescription(txt_desc.getText());
@@ -251,152 +542,13 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 		tb.removeAllFields();
 
-		DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
+		DefaultListModel<Field> dtm = fields();
 		for (int i = 0; i < dtm.getSize(); i++) {
-			tb.addField((Field) dtm.getElementAt(i));
+			tb.addField(dtm.getElementAt(i));
 		}
 
 		if (model != null) {
 			model.fieldsEdited(tb, namesBefore);
-		}
-	}
-
-	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == btn_new) {
-			DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
-			dtm.addElement(new Field("new_field", (nl.errorsoft.esql.table.DataType) cmb_types.getItemAt(0), "", "", ""));
-		}
-		if (e.getSource() == btn_rem) {
-			DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
-			if (lst_fields.getSelectedIndex() != -1) {
-				dtm.removeElementAt(lst_fields.getSelectedIndex());
-			}
-		} else if (e.getSource() == cmb_types) {
-			nl.errorsoft.esql.table.DataType fo = (nl.errorsoft.esql.table.DataType) cmb_types.getSelectedItem();
-			primary.setEnabled(fo.primary);
-			binary.setEnabled(fo.binary);
-			unsigned.setEnabled(fo.unsigned);
-			zerofill.setEnabled(fo.zerofill);
-			index.setEnabled(fo.index);
-			notnull.setEnabled(fo.notnull);
-			autoincrement.setEnabled(fo.autoincrement);
-
-			if (selField != null) {
-				if (!fo.primary) {
-					primary.setSelected(false);
-					selField.primary = fo.primary;
-				}
-				if (!fo.index) {
-					index.setSelected(false);
-					selField.index = fo.index;
-				}
-				if (!fo.unique) {
-					unique.setSelected(false);
-					selField.unique = fo.unique;
-				}
-				if (!fo.binary) {
-					binary.setSelected(false);
-					selField.binary = fo.binary;
-				}
-				if (!fo.notnull) {
-					notnull.setSelected(false);
-					selField.notnull = fo.notnull;
-				}
-				if (!fo.unsigned) {
-					unsigned.setSelected(false);
-					selField.unsigned = fo.unsigned;
-				}
-				if (!fo.autoincrement) {
-					autoincrement.setSelected(false);
-					selField.autoincrement = fo.autoincrement;
-				}
-				if (!fo.zerofill) {
-					zerofill.setSelected(false);
-					selField.zerofill = fo.zerofill;
-				}
-
-				selField.setType(fo);
-			}
-		} else if (e.getSource() == primary) {
-			selField.primary = primary.isSelected();
-		} else if (e.getSource() == unique) {
-			selField.unique = unique.isSelected();
-		} else if (e.getSource() == index) {
-			selField.index = index.isSelected();
-		} else if (e.getSource() == notnull) {
-			selField.notnull = notnull.isSelected();
-		} else if (e.getSource() == unsigned) {
-			selField.unsigned = unsigned.isSelected();
-		} else if (e.getSource() == binary) {
-			selField.binary = binary.isSelected();
-		} else if (e.getSource() == autoincrement) {
-			selField.autoincrement = autoincrement.isSelected();
-		} else if (e.getSource() == zerofill) {
-			selField.zerofill = zerofill.isSelected();
-		}
-	}
-
-	public void valueChanged(ListSelectionEvent e) {
-		enableComps(true, properties);
-		DefaultListModel<Field> dtm = (DefaultListModel<Field>) lst_fields.getModel();
-		if (lst_fields.getSelectedIndex() == -1) {
-			enableComps(false, properties);
-			return;
-		} else {
-			enableComps(true, properties);
-		}
-		Field fo = (Field) dtm.getElementAt(lst_fields.getSelectedIndex());
-		selField = fo;
-
-		primary.setSelected(selField.primary);
-		index.setSelected(selField.index);
-		unique.setSelected(selField.unique);
-		binary.setSelected(selField.binary);
-		notnull.setSelected(selField.notnull);
-		unsigned.setSelected(selField.unsigned);
-		autoincrement.setSelected(selField.autoincrement);
-		zerofill.setSelected(selField.zerofill);
-		cmb_types.setSelectedItem(selField.getType());
-		txt_default.setText(selField.getDefault());
-		txt_length.setText(selField.getLength());
-		txt_fieldcomm.setText(selField.getComment());
-		txt_fieldname.setText(selField.getName());
-
-		for (int i = 0; i < cmb_types.getItemCount(); i++) {
-			if (cmb_types.getItemAt(i).toString().equals(fo.getType().getName())) {
-				cmb_types.setSelectedIndex(i);
-				break;
-			}
-		}
-	}
-
-	public void enableComps(boolean b, JComponent cmp) {
-		for (int i = 0; i < cmp.getComponentCount(); i++) {
-			Component child = cmp.getComponent(i);
-			if (child instanceof JPanel panel) {
-				enableComps(b, panel);
-			} else {
-				child.setEnabled(b);
-			}
-		}
-	}
-
-	public void caretUpdate(CaretEvent e) {
-		if (selField != null) {
-			if (e.getSource() == txt_default) {
-				selField.setDefault(this.txt_default.getText());
-			}
-			if (e.getSource() == txt_length) {
-				selField.setLength(this.txt_length.getText());
-			}
-			if (e.getSource() == txt_fieldcomm) {
-				selField.setComment(this.txt_fieldcomm.getText());
-			}
-			if (e.getSource() == txt_fieldname && txt_fieldname.getText().trim().length() != 0) {
-				selField.setName(this.txt_fieldname.getText());
-			}
-
-			lst_fields.repaint();
 		}
 	}
 }

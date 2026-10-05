@@ -9,9 +9,18 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.event.TreeExpansionEvent;
@@ -21,6 +30,7 @@ import javax.swing.tree.TreePath;
 import nl.errorsoft.esql.user.control.UserManagerCC;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.user.GrantTarget;
+import nl.errorsoft.esql.user.PrivilegeGroup;
 
 /** Manages the accounts of the server and the privileges they have on the server, a database or a table. */
 public class UserManagerUI extends JDialog {
@@ -31,11 +41,25 @@ public class UserManagerUI extends JDialog {
 	private final JList<DatabaseUser> users = new JList<>(userModel);
 	private final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(GrantTarget.global()));
 	private final JTree tree = new JTree(treeModel);
-	private final JPanel privilegePanel = new JPanel(new GridLayout(0, 2, 8, 4));
+	private final JPanel privilegePanel = new JPanel();
+	private final List<JCheckBox> privilegeBoxes = new ArrayList<>();
+	private final JTextField search = new JTextField(12);
+	private final List<DatabaseUser> allUsers = new ArrayList<>();
+	private final JPanel grantedPanel = Forms.titled(new JPanel(new BorderLayout(0, 6)), "Granted");
 	private final JButton apply = Forms.button("Appl&y");
+	private final JButton selectAll = Forms.button("Select a&ll");
+	private final JButton selectNone = Forms.button("Select &none");
 	private final JLabel message = new JLabel(" ");
 	private final JButton changePassword = Forms.button("&Password...");
-	private final JButton delete = Forms.button("&Delete");
+	private final JButton delete = Forms.button("&Drop");
+
+	// What the privilege panel shows: the user and target it was filled for, and the privileges the server has granted.
+	private DatabaseUser shownUser;
+	private GrantTarget shownTarget;
+	private TreePath shownPath;
+	private Set<String> shownGrants = Set.of();
+	/** True while the code changes the selection back, so that the listeners ignore it. */
+	private boolean reverting;
 
 	public UserManagerUI(ESQLManagerUI owner, UserManagerCC cc) throws Exception {
 		super(owner, "User manager", false);
@@ -43,6 +67,10 @@ public class UserManagerUI extends JDialog {
 
 		JPanel userPanel = new JPanel(new BorderLayout(0, 6));
 		Forms.titled(userPanel, "Users");
+		JPanel searchRow = new JPanel(new BorderLayout(Forms.GAP, 0));
+		searchRow.add(Forms.label("&Find:", search), BorderLayout.WEST);
+		searchRow.add(search, BorderLayout.CENTER);
+		userPanel.add(searchRow, BorderLayout.NORTH);
 		userPanel.add(new JScrollPane(users), BorderLayout.CENTER);
 		userPanel.add(userButtons(), BorderLayout.SOUTH);
 
@@ -50,9 +78,16 @@ public class UserManagerUI extends JDialog {
 		Forms.titled(privileges, "Privileges");
 		privileges.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-		JPanel boxes = Forms.titled(new JPanel(new BorderLayout(0, 6)), "Granted");
+		JPanel boxes = grantedPanel;
+		privilegePanel.setLayout(new BoxLayout(privilegePanel, BoxLayout.Y_AXIS));
+		JPanel selectRow = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
+		selectRow.add(selectAll);
+		selectRow.add(selectNone);
 		// Keeps the checkboxes together at the top instead of spreading them over the height.
-		boxes.add(privilegePanel, BorderLayout.NORTH);
+		JPanel top = new JPanel(new BorderLayout(0, 6));
+		top.add(selectRow, BorderLayout.NORTH);
+		top.add(privilegePanel, BorderLayout.CENTER);
+		boxes.add(top, BorderLayout.NORTH);
 		boxes.add(Forms.buttonRow(apply), BorderLayout.SOUTH);
 
 		JSplitPane right = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, privileges, boxes);
@@ -68,12 +103,44 @@ public class UserManagerUI extends JDialog {
 		initTree();
 		users.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		users.addListSelectionListener(e -> {
-			if (!e.getValueIsAdjusting()) {
+			if (!e.getValueIsAdjusting() && !reverting) {
+				if (hasUnappliedChanges() && !confirmDiscard()) {
+					reverting = true;
+					users.setSelectedValue(shownUser, true);
+					reverting = false;
+					return;
+				}
 				userSelected();
 			}
 		});
-		tree.addTreeSelectionListener((TreeSelectionEvent e) -> showGrants());
+		tree.addTreeSelectionListener((TreeSelectionEvent e) -> {
+			if (reverting) {
+				return;
+			}
+			if (hasUnappliedChanges() && !confirmDiscard()) {
+				reverting = true;
+				tree.setSelectionPath(shownPath);
+				reverting = false;
+				return;
+			}
+			showGrants();
+		});
+		search.getDocument().addDocumentListener(new DocumentListener() {
+			public void insertUpdate(DocumentEvent e) {
+				filterUsers();
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				filterUsers();
+			}
+
+			public void changedUpdate(DocumentEvent e) {
+				filterUsers();
+			}
+		});
 		apply.addActionListener(e -> applyGrants());
+		selectAll.addActionListener(e -> setAllPrivileges(true));
+		selectNone.addActionListener(e -> setAllPrivileges(false));
 		loadUsers();
 		showGrants();
 
@@ -140,21 +207,39 @@ public class UserManagerUI extends JDialog {
 
 	private void loadUsers() {
 		DatabaseUser selected = users.getSelectedValue();
-		userModel.clear();
+		allUsers.clear();
 
 		try {
-			for (DatabaseUser user : cc.listUsers()) {
-				userModel.addElement(user);
-			}
+			allUsers.addAll(cc.listUsers());
 		} catch (Exception e) {
 			showError("Load users", e);
 		}
 
+		reverting = true;
+		fillUserList(selected);
+		reverting = false;
+		userSelected();
+	}
+
+	/** Shows the users that contain the search text; the selected user stays in the list so that typing never changes the selection. */
+	private void filterUsers() {
+		DatabaseUser selected = users.getSelectedValue();
+		reverting = true;
+		fillUserList(selected);
+		reverting = false;
+	}
+
+	private void fillUserList(DatabaseUser selected) {
+		String wanted = search.getText().trim().toLowerCase(Locale.ROOT);
+		userModel.clear();
+		for (DatabaseUser user : allUsers) {
+			if (wanted.isEmpty() || user.equals(selected) || user.toString().toLowerCase(Locale.ROOT).contains(wanted)) {
+				userModel.addElement(user);
+			}
+		}
 		if (selected != null) {
 			users.setSelectedValue(selected, true);
 		}
-
-		userSelected();
 	}
 
 	private void userSelected() {
@@ -178,16 +263,33 @@ public class UserManagerUI extends JDialog {
 
 	private void showGrants() {
 		privilegePanel.removeAll();
+		privilegeBoxes.clear();
 		DatabaseUser user = users.getSelectedValue();
 		GrantTarget target = selectedTarget();
-		apply.setEnabled(user != null && target != null);
+		shownUser = user;
+		shownTarget = target;
+		shownPath = tree.getSelectionPath();
+		shownGrants = Set.of();
+		selectAll.setEnabled(user != null && target != null);
+		selectNone.setEnabled(user != null && target != null);
 
 		if (user != null && target != null) {
 			try {
-				Set<String> granted = cc.getGrants(user, target);
+				shownGrants = cc.getGrants(user, target);
 
+				Map<PrivilegeGroup, JPanel> groups = new EnumMap<>(PrivilegeGroup.class);
 				for (String privilege : cc.getPrivileges(target.scope())) {
-					privilegePanel.add(new JCheckBox(privilege, granted.contains(privilege)));
+					JCheckBox box = new JCheckBox(privilege, shownGrants.contains(privilege));
+					box.addActionListener(e -> updateChanged());
+					privilegeBoxes.add(box);
+					groups.computeIfAbsent(PrivilegeGroup.of(privilege), group -> Forms.titled(new JPanel(new GridLayout(0, 2, 8, 4)), group.title())).add(box);
+				}
+				// One group needs no heading of its own, the box around all privileges says enough.
+				for (JPanel group : groups.values()) {
+					if (groups.size() == 1) {
+						group.setBorder(BorderFactory.createEmptyBorder());
+					}
+					privilegePanel.add(group);
 				}
 
 				message.setText(user + " on " + describe(target));
@@ -195,20 +297,52 @@ public class UserManagerUI extends JDialog {
 				showError("Read privileges", e);
 			}
 		}
+		updateChanged();
 		privilegePanel.revalidate();
 		privilegePanel.repaint();
 	}
 
-	private void applyGrants() {
+	private Set<String> selectedPrivileges() {
 		Set<String> selected = new LinkedHashSet<>();
 
-		for (Component component : privilegePanel.getComponents()) {
-			JCheckBox box = (JCheckBox) component;
-
+		for (JCheckBox box : privilegeBoxes) {
 			if (box.isSelected()) {
 				selected.add(box.getText());
 			}
 		}
+		return selected;
+	}
+
+	private void setAllPrivileges(boolean selected) {
+		for (JCheckBox box : privilegeBoxes) {
+			box.setSelected(selected);
+		}
+		updateChanged();
+	}
+
+	/** True when the checkboxes differ from what the server has granted. */
+	private boolean hasUnappliedChanges() {
+		return shownUser != null && shownTarget != null && !selectedPrivileges().equals(shownGrants);
+	}
+
+	/** Marks the changes that are not applied yet in the title of the group and enables Apply only for them. */
+	private void updateChanged() {
+		boolean changed = hasUnappliedChanges();
+		apply.setEnabled(changed);
+		if (grantedPanel.getBorder() instanceof CompoundBorder compound && compound.getOutsideBorder() instanceof TitledBorder titled) {
+			titled.setTitle(changed ? "Granted (not applied yet)" : "Granted");
+			grantedPanel.repaint();
+		}
+	}
+
+	private boolean confirmDiscard() {
+		return Dialogs.confirmDestructive(this, "Discard changes?",
+			"The privileges of '" + shownUser + "' on " + describe(shownTarget) + " are not applied. Discard them?",
+			"Discard");
+	}
+
+	private void applyGrants() {
+		Set<String> selected = selectedPrivileges();
 
 		try {
 			DatabaseUser user = users.getSelectedValue();
@@ -298,8 +432,9 @@ public class UserManagerUI extends JDialog {
 		};
 	}
 
+	/** The error is shown once, in the dialog of the error handler; the status line only gets cleared. */
 	private void showError(String action, Exception e) {
-		message.setText(action + " failed: " + e.getMessage());
+		message.setText(" ");
 		ApplicationContext.get().errors().report(this, action, e);
 	}
 }

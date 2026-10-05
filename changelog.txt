@@ -2,6 +2,26 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Clearer layouts for the field, table, index and user dialogs
+
+- Designer table properties: the fields tab has the list of fields on the left (Add, Duplicate, Remove with
+  confirmation, Up, Down) and one form for the selected field: name, type, length, default, comment, the constraints
+  (Primary Key, Not null, Unique, Auto Increment, Index) and, for servers whose types have them, the type options
+  (Unsigned, Binary, Zerofill). The length must be a number (or precision and scale such as 10,2; ENUM and SET list
+  values), field names must be unique, and OK reports the problem inside the dialog. The comment of the table is
+  written to the database, the notes only stay in the model file.
+- Table editor: database (and schema), name, type and comment in one column, the columns in a grid that is edited in
+  place (name, type, length, not null, primary key, auto increment, default) with the details in a group "Column:
+  <name>", new columns are called column_1, column_2, ..., Ctrl/Cmd+S saves and a missing name or column is explained
+  below the form.
+- Indexes: a list of all indexes with their type on the left, the editor on the right, the type as Normal, Unique or
+  Fulltext, and Close instead of Cancel.
+- Connection profile: "Databases:" with the explanation as a hint under the field. Foreign key dialog: Remove pair is
+  disabled for the last pair and hints explain the server default and a key to the table itself. User manager: search
+  field, privileges in groups (Data, Structure, Administration) with Select all and Select none, a mark and a question
+  before unapplied changes are discarded, one error message, and Drop for accounts. About shows the version, commit,
+  Java version and licence notice, with a Credits button.
+
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
 - Dialogs share one base (ui.util.FormDialog): the action button is labelled with the action (Create, Save, Export,

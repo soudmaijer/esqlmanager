@@ -23,8 +23,8 @@ public class Properties extends FormDialog {
 		setResizable(true);
 
 		cont = new JPanel(new BorderLayout());
-		cont.setPreferredSize(new Dimension(270, 300));
 		setOkCancel(cont, "&Save", "Cancel");
+		setValidator(() -> cur == null ? null : ((PropertiesInterface) cur).inputProblem());
 		setOnAccept(() -> ((PropertiesInterface) cur).saveProperties());
 	}
 

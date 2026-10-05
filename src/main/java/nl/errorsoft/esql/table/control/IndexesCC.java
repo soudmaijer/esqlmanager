@@ -40,14 +40,14 @@ public class IndexesCC {
 		}
 
 		String title = "Indexes " + t.getName();
-		iu = new IndexesUI(this, title);
+		iu = new IndexesUI(this, title, cwcc.getConnectionProfile().getServerType().getDialect().indexTypes());
 		service().loadColumns(t);
 		service().loadIndexes(t);
 		iu.loadIndexes(t.getIndexes());
 		cwcc.getWindow().showEditorTab(key, title, iu);
 	}
 
-	/** Cancel: closes the tab, asking first when something has not been saved. */
+	/** Close: closes the tab, asking first when something has not been saved. */
 	public void close() {
 		cwcc.getWindow().closeTab(iu);
 	}

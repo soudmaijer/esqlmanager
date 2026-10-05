@@ -5,87 +5,158 @@ import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.control.IndexesCC;
 import nl.errorsoft.esql.ui.util.EditorTab;
+import nl.errorsoft.esql.ui.util.Forms;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.TitledBorder;
 
 /**
- * The indexes of one table, as a tab of the connection window. Save writes the selected index, Drop removes it; the tab stays open and shows the indexes
- * as they are after the change. Cancel closes it, asking first when the selected index has changes that are not saved.
+ * The indexes of one table, as a tab of the connection window. The list on the left holds all indexes with their type, the editor on the right the type
+ * and the columns of the selected one. Save writes the selected index, Drop removes it; the tab stays open and shows the indexes as they are after the
+ * change. Close closes it, asking first when the selected index has changes that are not saved.
  */
-public class IndexesUI extends JPanel implements ActionListener, EditorTab {
+public class IndexesUI extends JPanel implements EditorTab {
 	private final IndexesCC tcc;
 	private final String title;
 
-	private final JComboBox<TableIndex> jcmbIndexes = new JComboBox<>();
-	private final JButton jbtnAdd = new JButton("Add");
-	private final JButton jbtnPrimary = new JButton("Add Primary");
+	private final JList<TableIndex> indexList = new JList<>(new DefaultListModel<>());
+	private final JButton jbtnAdd = Forms.button("&Add...");
+	private final JButton jbtnPrimary = Forms.button("Add &Primary");
 	private final JList<TableColumn> jlstUsed = new JList<>(new DefaultListModel<>());
 	private final JList<TableColumn> jlstAvail = new JList<>(new DefaultListModel<>());
 	private final JButton jbtnAddToList = new JButton("<");
 	private final JButton jbtnRemoveFromList = new JButton(">");
-	private final JCheckBox jrdUnique = new JCheckBox("Unique");
-	private final JCheckBox jrdFulltext = new JCheckBox("Fulltext");
-	private final JButton jbtnUp = new JButton("Up");
-	private final JButton jbtnDown = new JButton("Down");
-	private final JButton jbtnSave = new JButton("Save");
-	private final JButton jbtnDrop = new JButton("Drop");
-	private final JButton jbtnCancel = new JButton("Cancel");
+	private final JRadioButton jrdNormal = Forms.mnemonic(new JRadioButton(), "&Normal");
+	private final JRadioButton jrdUnique = Forms.mnemonic(new JRadioButton(), "&Unique");
+	private final JRadioButton jrdFulltext = Forms.mnemonic(new JRadioButton(), "&Fulltext");
+	private final JButton jbtnUp = Forms.button("U&p");
+	private final JButton jbtnDown = Forms.button("&Down");
+	private final JButton jbtnSave = Forms.button("&Save");
+	private final JButton jbtnDrop = Forms.button("D&rop");
+	private final JButton jbtnClose = Forms.button("&Close");
+	private final JPanel editor = Forms.titled(new JPanel(new BorderLayout(0, Forms.GAP)), "Index");
+	private final JLabel hint = new JLabel(" ");
 
 	// Columns, type or a new index changed since the indexes were loaded.
 	private boolean modified;
-	// The index whose columns are shown, and whether the combo box is being filled by the code (not chosen by the user).
+	// The index whose columns are shown, and whether the list is being filled by the code (not chosen by the user).
 	private TableIndex shown;
 	private boolean loading;
 
-	public IndexesUI(IndexesCC tcc, String title) {
-		super(new BorderLayout(8, 8));
+	/** @param indexTypes the kinds of index the server offers (INDEX, UNIQUE, FULLTEXT), a kind that is not in it has no radio button. */
+	public IndexesUI(IndexesCC tcc, String title, List<String> indexTypes) {
+		super(new BorderLayout(Forms.PADDING, 0));
 		this.tcc = tcc;
 		this.title = title;
-		setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		setBorder(BorderFactory.createEmptyBorder(Forms.PADDING, Forms.PADDING, Forms.PADDING, Forms.PADDING));
 
-		JPanel indexes = new JPanel(new GridBagLayout());
-		indexes.setBorder(BorderFactory.createTitledBorder("Indexes"));
-		GridBagConstraints c = constraints(0, 0);
-		indexes.add(new JLabel("Name:"), c);
-		c = constraints(1, 0);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 1;
-		indexes.add(jcmbIndexes, c);
-		c = constraints(2, 0);
-		indexes.add(jbtnPrimary, c);
-		c = constraints(3, 0);
-		indexes.add(jbtnAdd, c);
+		add(listPanel(), BorderLayout.WEST);
+		add(editorPanel(indexTypes), BorderLayout.CENTER);
+		add(bottom(), BorderLayout.SOUTH);
+
+		jbtnAdd.addActionListener(e -> addIndex());
+		jbtnPrimary.addActionListener(e -> {
+			if (!modified || confirmDiscard()) {
+				tcc.addPrimary();
+			}
+		});
+		jbtnAddToList.addActionListener(e -> moveSelected(jlstAvail, jlstUsed));
+		jbtnRemoveFromList.addActionListener(e -> moveSelected(jlstUsed, jlstAvail));
+		jbtnUp.addActionListener(e -> moveUsed(-1));
+		jbtnDown.addActionListener(e -> moveUsed(1));
+		jbtnSave.addActionListener(e -> save());
+		jbtnDrop.addActionListener(e -> dropIndex());
+		jbtnClose.addActionListener(e -> tcc.close());
+		for (JRadioButton radio : List.of(jrdNormal, jrdUnique, jrdFulltext)) {
+			radio.addActionListener(e -> modified = true);
+		}
+		indexList.addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting() || loading || !(indexList.getSelectedValue() instanceof TableIndex chosen) || chosen == shown) {
+				return;
+			}
+			if (modified && !confirmDiscard()) {
+				loading = true;
+				indexList.setSelectedValue(shown, true);
+				loading = false;
+				return;
+			}
+			modified = false;
+			itemSelected(chosen);
+		});
+		showNone();
+	}
+
+	private JPanel listPanel() {
+		indexList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		indexList.setCellRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selected, boolean focus) {
+				TableIndex item = (TableIndex) value;
+				return super.getListCellRendererComponent(list, item + "  (" + kind(item) + ")", index, selected, focus);
+			}
+		});
+		JScrollPane scroll = new JScrollPane(indexList);
+		scroll.setPreferredSize(new Dimension(220, 240));
+		JPanel buttons = new JPanel(new GridLayout(1, 2, Forms.GAP, 0));
+		buttons.setBorder(BorderFactory.createEmptyBorder(Forms.GAP, 0, 0, 0));
+		buttons.add(jbtnAdd);
+		buttons.add(jbtnPrimary);
+
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(Forms.label("&Indexes:", indexList), BorderLayout.NORTH);
+		panel.add(scroll, BorderLayout.CENTER);
+		panel.add(buttons, BorderLayout.SOUTH);
+		return panel;
+	}
+
+	private JPanel editorPanel(List<String> indexTypes) {
+		ButtonGroup group = new ButtonGroup();
+		group.add(jrdNormal);
+		group.add(jrdUnique);
+		group.add(jrdFulltext);
+		JPanel type = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.PADDING, 0));
+		type.add(new JLabel("Type:"));
+		type.add(jrdNormal);
+		if (indexTypes.contains("UNIQUE")) {
+			type.add(jrdUnique);
+		}
+		if (indexTypes.contains("FULLTEXT")) {
+			type.add(jrdFulltext);
+		}
 
 		JPanel columns = new JPanel(new GridBagLayout());
-		columns.setBorder(BorderFactory.createTitledBorder("Columns"));
-		columns.add(new JLabel("Used:"), constraints(0, 0));
-		columns.add(new JLabel("Available:"), constraints(2, 0));
-		c = constraints(0, 1);
+		columns.add(Forms.label("U&sed columns:", jlstUsed), constraints(0, 0));
+		columns.add(Forms.label("Availa&ble columns:", jlstAvail), constraints(2, 0));
+		GridBagConstraints c = constraints(0, 1);
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 1;
 		c.weighty = 1;
 		columns.add(new JScrollPane(jlstUsed), c);
-		JPanel move = new JPanel(new GridLayout(2, 1, 0, 4));
+		JPanel move = new JPanel(new GridLayout(2, 1, 0, Forms.GAP));
 		move.add(jbtnAddToList);
 		move.add(jbtnRemoveFromList);
 		columns.add(move, constraints(1, 1));
@@ -94,7 +165,7 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		c.weightx = 1;
 		c.weighty = 1;
 		columns.add(new JScrollPane(jlstAvail), c);
-		JPanel order = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+		JPanel order = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
 		order.add(jbtnUp);
 		order.add(jbtnDown);
 		c = constraints(0, 2);
@@ -108,40 +179,27 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		jlstAvail.addMouseListener(doubleClick(jlstAvail, jlstUsed));
 		jlstUsed.addMouseListener(doubleClick(jlstUsed, jlstAvail));
 
-		JPanel type = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		type.setBorder(BorderFactory.createTitledBorder("Index type"));
-		type.add(jrdUnique);
-		type.add(jrdFulltext);
-
-		add(indexes, BorderLayout.NORTH);
-		add(columns, BorderLayout.CENTER);
-
-		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-		buttons.add(jbtnSave);
-		buttons.add(jbtnDrop);
-		buttons.add(jbtnCancel);
-		JPanel south = new JPanel(new BorderLayout(0, 8));
-		south.add(type, BorderLayout.NORTH);
-		south.add(buttons, BorderLayout.SOUTH);
-		add(south, BorderLayout.SOUTH);
-
-		for (JButton button : new JButton[]{jbtnAdd, jbtnPrimary, jbtnAddToList, jbtnRemoveFromList, jbtnUp, jbtnDown, jbtnSave, jbtnDrop, jbtnCancel}) {
-			button.addActionListener(this);
+		Color disabled = UIManager.getColor("Label.disabledForeground");
+		if (disabled != null) {
+			hint.setForeground(disabled);
 		}
-		jrdUnique.addActionListener(this);
-		jrdFulltext.addActionListener(this);
-		jcmbIndexes.addItemListener(e -> {
-			if (e.getStateChange() == ItemEvent.SELECTED && !loading && jcmbIndexes.getSelectedItem() instanceof TableIndex ti && ti != shown) {
-				if (modified && !confirmDiscard()) {
-					loading = true;
-					jcmbIndexes.setSelectedItem(shown);
-					loading = false;
-					return;
-				}
-				modified = false;
-				itemSelected(ti);
-			}
-		});
+		editor.add(type, BorderLayout.NORTH);
+		editor.add(columns, BorderLayout.CENTER);
+		editor.add(hint, BorderLayout.SOUTH);
+		return editor;
+	}
+
+	private JPanel bottom() {
+		return Forms.buttonRow(jbtnSave, jbtnDrop, jbtnClose);
+	}
+
+	private static GridBagConstraints constraints(int x, int y) {
+		GridBagConstraints c = new GridBagConstraints();
+		c.gridx = x;
+		c.gridy = y;
+		c.anchor = GridBagConstraints.WEST;
+		c.insets = new Insets(Forms.GAP / 2, Forms.GAP / 2, Forms.GAP / 2, Forms.GAP / 2);
+		return c;
 	}
 
 	private MouseAdapter doubleClick(JList<TableColumn> from, JList<TableColumn> to) {
@@ -155,17 +213,17 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		};
 	}
 
-	private boolean confirmDiscard() {
-		return Dialogs.confirmDestructive(this, "Discard changes?", "Discard the unsaved changes to index '" + shown + "'?", "Discard");
+	/** The kind of an index as the list shows it. */
+	private static String kind(TableIndex index) {
+		if (index.isPrimary()) {
+			return "primary key";
+		}
+		String kind = index.isUnique() ? "unique" : index.isFulltext() ? "fulltext" : "normal";
+		return index.isNew() ? "new, " + kind : kind;
 	}
 
-	private static GridBagConstraints constraints(int x, int y) {
-		GridBagConstraints c = new GridBagConstraints();
-		c.gridx = x;
-		c.gridy = y;
-		c.anchor = GridBagConstraints.WEST;
-		c.insets = new Insets(2, 4, 2, 4);
-		return c;
+	private boolean confirmDiscard() {
+		return Dialogs.confirmDestructive(this, "Discard changes?", "Discard the unsaved changes to index '" + shown + "'?", "Discard");
 	}
 
 	@Override
@@ -173,63 +231,53 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		return !modified || Dialogs.confirmDestructive(this, "Discard changes?", "Discard the changes in " + title + "?", "Discard");
 	}
 
-	public void actionPerformed(ActionEvent evt) {
-		Object source = evt.getSource();
+	private void addIndex() {
+		if (modified && !confirmDiscard()) {
+			return;
+		}
+		String input = Dialogs.input(this, "New index", "&Name:", "Create");
 
-		if (source == jbtnCancel) {
-			tcc.close();
-		} else if (source == jbtnRemoveFromList) {
-			moveSelected(jlstUsed, jlstAvail);
-		} else if (source == jbtnAddToList) {
-			moveSelected(jlstAvail, jlstUsed);
-		} else if (source == jbtnUp) {
-			moveUsed(-1);
-		} else if (source == jbtnDown) {
-			moveUsed(1);
-		} else if (source == jrdFulltext) {
-			jrdUnique.setSelected(false);
-			modified = true;
-		} else if (source == jrdUnique) {
-			jrdFulltext.setSelected(false);
-			modified = true;
-		} else if (source == jbtnDrop) {
-			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti
-				&& Dialogs.confirmDestructive(this, "Drop index", "Drop index '" + ti + "' of " + title + "? This cannot be undone.", "Drop")) {
-				tcc.dropIndex(ti);
-			}
-		} else if (source == jbtnAdd) {
-			if (modified && !confirmDiscard()) {
+		if (input != null) {
+			tcc.addNew(input);
+		}
+	}
+
+	private void dropIndex() {
+		if (indexList.getSelectedValue() instanceof TableIndex ti
+			&& Dialogs.confirmDestructive(this, "Drop index", "Drop index '" + ti + "' of " + title + "? This cannot be undone.", "Drop")) {
+			tcc.dropIndex(ti);
+		}
+	}
+
+	private void save() {
+		if (indexList.getSelectedValue() instanceof TableIndex ti) {
+			DefaultListModel<TableColumn> dlm = (DefaultListModel<TableColumn>) jlstUsed.getModel();
+			if (dlm.isEmpty()) {
+				hint.setForeground(errorColor());
+				hint.setText("Select at least one column for the index.");
 				return;
 			}
-			String input = Dialogs.input(this, "New index", "&Name:", "Create");
+			TableColumn[] tc = new TableColumn[dlm.getSize()];
 
-			if (input != null) {
-				tcc.addNew(input);
+			for (int i = 0; i < dlm.getSize(); i++) {
+				tc[i] = dlm.elementAt(i);
 			}
-		} else if (source == jbtnPrimary) {
-			if (!modified || confirmDiscard()) {
-				tcc.addPrimary();
+
+			String type = "INDEX";
+
+			if (jrdFulltext.isSelected()) {
+				type = "FULLTEXT";
+			} else if (jrdUnique.isSelected()) {
+				type = "UNIQUE";
 			}
-		} else if (source == jbtnSave) {
-			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti) {
-				DefaultListModel<TableColumn> dlm = (DefaultListModel<TableColumn>) jlstUsed.getModel();
-				TableColumn[] tc = new TableColumn[dlm.getSize()];
 
-				for (int i = 0; i < dlm.getSize(); i++) {
-					tc[i] = dlm.elementAt(i);
-				}
-
-				String type = "INDEX";
-
-				if (jrdFulltext.isSelected()) {
-					type = "FULLTEXT";
-				} else if (jrdUnique.isSelected()) {
-					type = "UNIQUE";
-				}
-
-				tcc.modifyIndex(ti, tc, type);
-			}
+			tcc.modifyIndex(ti, tc, type);
 		}
+	}
+
+	private static Color errorColor() {
+		Color red = UIManager.getColor("Actions.Red");
+		return red != null ? red : Color.RED;
 	}
 
 	private void moveUsed(int step) {
@@ -252,23 +300,44 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		}
 	}
 
+	/** Nothing selected: the editor and its buttons are off. */
+	private void showNone() {
+		shown = null;
+		setTitle("Index");
+		hint.setText(" ");
+		for (Component component : new Component[]{jrdNormal, jrdUnique, jrdFulltext, jlstUsed, jlstAvail, jbtnAddToList, jbtnRemoveFromList, jbtnUp, jbtnDown,
+			jbtnSave, jbtnDrop}) {
+			component.setEnabled(false);
+		}
+	}
+
+	private void setTitle(String text) {
+		if (editor.getBorder() instanceof CompoundBorder compound && compound.getOutsideBorder() instanceof TitledBorder titled) {
+			titled.setTitle(text);
+			editor.repaint();
+		}
+	}
+
 	/** Shows the indexes as they are in the database, nothing is modified any more. */
 	public void loadIndexes(TableIndex[] tia) {
 		modified = false;
 		loading = true;
 		shown = null;
 		jbtnPrimary.setEnabled(true);
-		jcmbIndexes.setModel(new DefaultComboBoxModel<>());
+		DefaultListModel<TableIndex> model = new DefaultListModel<>();
+		indexList.setModel(model);
 		jlstUsed.setModel(new DefaultListModel<>());
 		jlstAvail.setModel(new DefaultListModel<>());
+		showNone();
 
 		if (tia != null && tia.length > 0) {
 			for (TableIndex index : tia) {
 				if (index.isPrimary()) {
 					jbtnPrimary.setEnabled(false);
 				}
-				jcmbIndexes.addItem(index);
+				model.addElement(index);
 			}
+			indexList.setSelectedIndex(0);
 			itemSelected(tia[0]);
 		}
 		loading = false;
@@ -277,10 +346,10 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	public void addNewIndex(TableIndex ti, TableColumn[] tc) {
 		DefaultListModel<TableColumn> dlmAvail = new DefaultListModel<>();
 		loading = true;
-		jcmbIndexes.addItem(ti);
-		jcmbIndexes.setSelectedItem(ti);
+		((DefaultListModel<TableIndex>) indexList.getModel()).addElement(ti);
+		indexList.setSelectedValue(ti, true);
 		loading = false;
-		shown = ti;
+		itemSelected(ti);
 
 		for (TableColumn column : tc) {
 			dlmAvail.addElement(column);
@@ -300,8 +369,17 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 
 		jrdUnique.setSelected(index.isUnique());
 		jrdFulltext.setSelected(!index.isUnique() && index.isFulltext());
-		jrdUnique.setEnabled(!index.isPrimary());
-		jrdFulltext.setEnabled(!index.isPrimary());
+		jrdNormal.setSelected(!index.isUnique() && !index.isFulltext());
+		boolean editable = !index.isPrimary();
+		for (Component component : new Component[]{jrdNormal, jrdUnique, jrdFulltext}) {
+			component.setEnabled(editable);
+		}
+		for (Component component : new Component[]{jlstUsed, jlstAvail, jbtnAddToList, jbtnRemoveFromList, jbtnUp, jbtnDown, jbtnSave, jbtnDrop}) {
+			component.setEnabled(true);
+		}
+		setTitle("Index: " + index);
+		hint.setForeground(UIManager.getColor("Label.disabledForeground"));
+		hint.setText(index.isPrimary() ? "The primary key is always unique, only its columns can change." : " ");
 
 		for (TableColumn column : avail) {
 			dlmAvail.addElement(column);

@@ -39,8 +39,8 @@ public class Generate extends JDialog {
 	private final JLabel[] checks = new JLabel[STEPS.length];
 	private final JTextArea problems = new JTextArea(6, 36);
 	private final JProgressBar progress = new JProgressBar();
-	private final JButton generate = new JButton("Generate");
-	private final JButton close = new JButton("Close");
+	private final JButton generate = Forms.button("&Generate");
+	private final JButton close = Forms.button("&Close");
 	/** True while checking or generating, the dialog cannot be closed then. */
 	private boolean busy;
 

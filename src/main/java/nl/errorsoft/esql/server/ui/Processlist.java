@@ -47,7 +47,7 @@ public class Processlist extends JDialog {
 		kill.setEnabled(false);
 		kill.addActionListener(e -> killSelected(controller));
 		jtable.getSelectionModel().addListSelectionListener(e -> kill.setEnabled(jtable.getSelectedRow() > -1));
-		JButton close = new JButton("Close");
+		JButton close = Forms.button("&Close");
 		close.addActionListener(e -> dispose());
 
 		JPanel south = new JPanel(new BorderLayout());

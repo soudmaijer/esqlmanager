@@ -59,7 +59,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		chkAutoConnect = Forms.mnemonic(new JCheckBox(), "&Auto-connect to this server on startup");
 
 		Forms.Grid form = new Forms.Grid().row("&Profile:", jc).row("Server &type:", jcServer).row("&Host:", ip).row("P&ort:", pt)
-			.row("&Username:", un).row("Pass&word:", pw).row("&Database(s):", dbs).full(chkAutoConnect);
+			.row("&Username:", un).row("Pass&word:", pw).row("&Databases:", dbs).full(databasesHint()).full(chkAutoConnect);
 		dbs.setToolTipText("Comma separated, for example db1,db2,db3. The first one is connected to.");
 
 		btnConnect = Forms.button("&Connect");
@@ -87,6 +87,17 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 
 		jc.addItemListener(this);
 		jcServer.addItemListener(this);
+	}
+
+	/** The explanation of the databases field in the colour of disabled text. */
+	private static JLabel databasesHint() {
+		JLabel hint = new JLabel("Comma separated, for example db1,db2. The first one is connected to.");
+		java.awt.Color disabled = UIManager.getColor("Label.disabledForeground");
+		if (disabled != null) {
+			hint.setForeground(disabled);
+		}
+		hint.setFont(hint.getFont().deriveFont(hint.getFont().getSize2D() - 1f));
+		return hint;
 	}
 
 	public void loadProfiles(ConnectionProfile[] p) {

@@ -119,6 +119,11 @@ public interface Dialect {
 	/** Changes an existing column to the given definition, renaming it when the name differs. */
 	List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column);
 
+	/** The kinds of index a user can choose, the values {@link #addIndexSql} takes as type. SPATIAL is not written by any dialect, so it is not offered. */
+	default List<String> indexTypes() {
+		return List.of("INDEX", "UNIQUE", "FULLTEXT");
+	}
+
 	/**
 	 * Adds an index on the given columns.
 	 * @param name the index name, "PRIMARY" for the primary key.
