@@ -11,6 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.connection.ServerType;
@@ -20,6 +22,58 @@ import nl.errorsoft.esql.connection.ServerType;
  * A database holds schemas (public and others), which hold the tables; unqualified names resolve through the search_path.
  */
 public class PostgresDialect extends AbstractDialect {
+	/** A text default with an optional cast, as PostgreSQL reports it: 'it''s'::character varying. */
+	private static final Pattern CAST_DEFAULT = Pattern.compile("^'(.*)'(::[\\w\\s\\[\\]]+)?$", Pattern.DOTALL);
+
+	/** serial, bigserial and smallserial are integer types with a sequence. */
+	@Override
+	protected String identityType(String typeName) {
+		return switch (typeName) {
+			case "serial" -> "integer";
+			case "bigserial" -> "bigint";
+			case "smallserial" -> "smallint";
+			default -> typeName;
+		};
+	}
+
+	/** A column with a sequence default (serial) is filled by the server too. */
+	@Override
+	protected boolean isAutoIncrement(ResultSet rs, String defaultValue) throws SQLException {
+		return super.isAutoIncrement(rs, defaultValue) || defaultValue != null && defaultValue.startsWith("nextval(");
+	}
+
+	/** The driver calls char bpchar. */
+	@Override
+	protected boolean isSizedText(String typeName) {
+		return super.isSizedText(ddlTypeName(typeName));
+	}
+
+	@Override
+	protected String ddlTypeName(String typeName) {
+		return typeName.equals("bpchar") ? "char" : typeName;
+	}
+
+	@Override
+	protected String plainDefault(String defaultValue) {
+		Matcher literal = CAST_DEFAULT.matcher(defaultValue);
+		return literal.matches() ? literal.group(1).replace("''", "'") : defaultValue;
+	}
+
+	/** Reads the PostgreSQL type names of the driver (int4, bpchar, serial) as the names the designer uses (integer, char). */
+	@Override
+	public String datatypeName(String nativeTypeName) {
+		return switch (identityType(nativeTypeName.toLowerCase())) {
+			case "int2" -> "smallint";
+			case "int4" -> "integer";
+			case "int8" -> "bigint";
+			case "float4" -> "real";
+			case "float8" -> "double precision";
+			case "bool" -> "boolean";
+			case "bpchar" -> "char";
+			case String other -> other;
+		};
+	}
+
 	private static final String DEFAULT_DATABASE = "postgres";
 
 	public int getType() {

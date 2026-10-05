@@ -24,8 +24,8 @@ import nl.errorsoft.esql.table.Table;
  * portably (full text indexes, copying a table, switching database in a script) it refuses.
  */
 public abstract class AbstractDialect implements Dialect {
-	/** A text default with an optional cast, as PostgreSQL reports it: 'it''s'::character varying. */
-	private static final Pattern QUOTED_DEFAULT = Pattern.compile("^'(.*)'(::[\\w\\s\\[\\]]+)?$", Pattern.DOTALL);
+	/** A quoted text default as JDBC reports it: 'it''s'. */
+	private static final Pattern QUOTED_DEFAULT = Pattern.compile("^'(.*)'$", Pattern.DOTALL);
 
 	public boolean supports(Feature feature) {
 		return false;
@@ -435,28 +435,29 @@ public abstract class AbstractDialect implements Dialect {
 		return "CREATE TABLE " + quote(table) + " (" + String.join(", ", definitions) + ")";
 	}
 
-	private String identityType(String typeName) {
-		return switch (typeName) {
-			case "serial" -> "integer";
-			case "bigserial" -> "bigint";
-			case "smallserial" -> "smallint";
-			default -> typeName;
-		};
+	/** The type to write for an identity column, from the driver's type name. */
+	protected String identityType(String typeName) {
+		return typeName;
 	}
 
-	/** Reads the PostgreSQL type names of the driver (int4, bpchar, serial) as the names the designer uses (integer, char). */
+	/** Whether a column is filled by the server, from a {@code getColumns} row and its default. */
+	protected boolean isAutoIncrement(ResultSet rs, String defaultValue) throws SQLException {
+		return "YES".equals(rs.getString("IS_AUTOINCREMENT"));
+	}
+
+	/** Reads a {@code getColumns} row as a column with the type names of {@code datatypes.xml}. */
 	public ColumnDefinition readColumn(ResultSet rs) throws SQLException {
 		ColumnDefinition column = new ColumnDefinition(rs.getString("COLUMN_NAME"));
 		String type = rs.getString("TYPE_NAME").toLowerCase();
 		String defaultValue = rs.getString("COLUMN_DEF");
 		int size = rs.getInt("COLUMN_SIZE");
 
-		column.autoIncrement = "YES".equals(rs.getString("IS_AUTOINCREMENT")) || (defaultValue != null && defaultValue.startsWith("nextval("));
+		column.autoIncrement = isAutoIncrement(rs, defaultValue);
 		column.notNull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
-		column.type = DataType.named(designerTypeName(identityType(type)));
+		column.type = DataType.named(datatypeName(type));
 		column.defaultValue = column.autoIncrement || defaultValue == null ? "" : plainDefault(defaultValue);
 
-		if ((type.equals("varchar") || type.equals("bpchar")) && size > 0 && size < Integer.MAX_VALUE) {
+		if (isSizedText(type) && size > 0 && size < Integer.MAX_VALUE) {
 			column.length = String.valueOf(size);
 		} else if (type.equals("numeric") && size > 0 && size < 1000) {
 			column.length = size + "," + rs.getInt("DECIMAL_DIGITS");
@@ -464,37 +465,31 @@ public abstract class AbstractDialect implements Dialect {
 		return column;
 	}
 
+	/** The driver's type name as the name the designer uses (lower case). */
 	@Override
 	public String datatypeName(String nativeTypeName) {
-		return designerTypeName(identityType(nativeTypeName.toLowerCase()));
+		return identityType(nativeTypeName.toLowerCase());
 	}
 
-	private static String designerTypeName(String type) {
-		return switch (type) {
-			case "int2" -> "smallint";
-			case "int4" -> "integer";
-			case "int8" -> "bigint";
-			case "float4" -> "real";
-			case "float8" -> "double precision";
-			case "bool" -> "boolean";
-			case "bpchar" -> "char";
-			default -> type;
-		};
+	/** Whether a driver type name is text with a length (varchar, char). */
+	protected boolean isSizedText(String typeName) {
+		return typeName.equals("varchar") || typeName.equals("char");
 	}
 
-	/** A default such as {@code 'it''s'::character varying} as the text it stands for; an expression such as now() stays as it is. */
-	private static String plainDefault(String defaultValue) {
+	/** A quoted default as the text it stands for; an expression such as now() stays as it is. */
+	protected String plainDefault(String defaultValue) {
 		Matcher literal = QUOTED_DEFAULT.matcher(defaultValue);
 		return literal.matches() ? literal.group(1).replace("''", "'") : defaultValue;
 	}
 
-	private String typeWithSize(ResultSet rs) throws SQLException {
-		String type = rs.getString("TYPE_NAME");
-		int size = rs.getInt("COLUMN_SIZE");
+	/** The type name to write in DDL for a driver type name. */
+	protected String ddlTypeName(String typeName) {
+		return typeName;
+	}
 
-		if (type.equals("bpchar")) {
-			type = "char";
-		}
+	private String typeWithSize(ResultSet rs) throws SQLException {
+		String type = ddlTypeName(rs.getString("TYPE_NAME"));
+		int size = rs.getInt("COLUMN_SIZE");
 
 		if ((type.equals("varchar") || type.equals("char")) && size > 0 && size < Integer.MAX_VALUE) {
 			return type + "(" + size + ")";
