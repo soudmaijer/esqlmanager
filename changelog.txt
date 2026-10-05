@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Clearer errors
+
+- Export names the table or view when the server gives no definition for it, instead of failing on an empty result.
+- Editing a binary cell in the grid says to use Upload instead.
+- Designer: an unexpected problem in the foreign key dialog is reported as an error, not shown as a wrong input.
+
 05-10-2026: Process list rows and designer attach shortcuts
 
 - Process list on PostgreSQL: the list includes its own connection, as on MySQL, so it is no longer empty on a quiet

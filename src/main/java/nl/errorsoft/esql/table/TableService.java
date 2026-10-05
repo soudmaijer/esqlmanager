@@ -253,7 +253,7 @@ public class TableService {
 		if (unchanged) {
 			return 0;
 		} else if (cell.getTableColumn().isBinary()) {
-			throw new EsqlException("Editing of binary data is not supported yet!");
+			throw new EsqlException("Binary data cannot be edited in the grid, use Upload instead.");
 		}
 
 		return repository.updateCell(table, row, cell, text.isEmpty() ? null : text);

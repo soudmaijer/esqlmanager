@@ -415,6 +415,7 @@ public abstract class AbstractDialect implements Dialect {
 		String definition = quote(rs.getString("COLUMN_NAME")) + " ";
 		String defaultValue = rs.getString("COLUMN_DEF");
 		boolean identity = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
+		// COLUMN_DEF is an expression the server wrote itself (a literal already quoted, or a function call), so it goes into the DDL as it is.
 
 		definition += identity ? identityType(rs.getString("TYPE_NAME")) : typeWithSize(rs);
 

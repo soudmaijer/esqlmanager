@@ -8,9 +8,6 @@ import java.util.List;
 
 import javax.swing.*;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
@@ -22,7 +19,6 @@ import nl.errorsoft.esql.ui.util.Forms;
 
 /** Checks the designer model step by step and generates it on the server of the connection. */
 public class GenerateDialog extends JDialog {
-	private static final Logger log = LogManager.getLogger(GenerateDialog.class);
 	private static final ModelCheck[] STEPS = ModelCheck.values();
 
 	private final GenerateController controller;
@@ -132,7 +128,6 @@ public class GenerateDialog extends JDialog {
 			try {
 				controller.generate(snapshot, () -> SwingUtilities.invokeLater(() -> progress.setValue(progress.getValue() + 1)));
 			} catch (Exception e) {
-				log.debug("Model generation failed", e);
 				failure = e;
 			}
 			Exception error = failure;

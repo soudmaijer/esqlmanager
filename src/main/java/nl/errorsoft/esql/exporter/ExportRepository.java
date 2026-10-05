@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.jdbc.AbstractRepository;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
@@ -106,7 +107,9 @@ public class ExportRepository extends AbstractRepository {
 			return null;
 		}
 		try (ResultSet rs = dbc.executeQuery(show)) {
-			rs.first();
+			if (!rs.next()) {
+				throw new EsqlException("The server gave no definition of view " + view.name() + ".");
+			}
 			return rs.getString(2).replaceAll(";\\s*$", "");
 		}
 	}
@@ -133,7 +136,9 @@ public class ExportRepository extends AbstractRepository {
 
 		if (show != null) {
 			try (ResultSet rs = dbc.executeQuery(show)) {
-				rs.first();
+				if (!rs.next()) {
+					throw new EsqlException("The server gave no definition of table " + table.name() + ".");
+				}
 				return rs.getString(2);
 			}
 		}

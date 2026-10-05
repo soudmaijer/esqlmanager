@@ -70,8 +70,8 @@ public class ConnectionWindowController {
 	/** Shows the window on the event thread, then connects and lists the databases on a virtual thread. */
 	private void open() {
 		ConnectionProfile profile = session.getConnectionProfile();
-		log.info("Connecting to `" + profile.getServerType().getDescription() + "` @ `" + profile.getHost() + "` with username `" + profile.getUsername()
-			+ "` on port `" + profile.getPort() + "`");
+		log.info("Opening a connection window for {} on {}:{} as {}", profile.getServerType().getDescription(), profile.getHost(), profile.getPort(),
+			profile.getUsername());
 		connectionWindow = new ConnectionWindow(this, mainController.getMainWindow());
 		mainController.showConnectionWindow(connectionWindow);
 		mainController.updateStatus("Connecting...", true);

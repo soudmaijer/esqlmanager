@@ -30,6 +30,7 @@ import javax.swing.table.DefaultTableModel;
 import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.ui.dialog.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 
@@ -165,7 +166,8 @@ public class ForeignKeyDialog extends FormDialog {
 			key.validate();
 			candidate = key;
 			return null;
-		} catch (RuntimeException e) {
+		} catch (EsqlException e) {
+			// validate() reports what is wrong with the input this way; anything else is unexpected and goes to the error handler.
 			return e.getMessage();
 		}
 	}
