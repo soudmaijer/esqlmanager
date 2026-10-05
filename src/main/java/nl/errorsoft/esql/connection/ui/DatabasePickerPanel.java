@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.connection.ui.dialog;
+package nl.errorsoft.esql.connection.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -36,7 +36,7 @@ import nl.errorsoft.esql.ui.util.Forms;
  * schemas of each database, which are loaded when the database is opened. What is ticked is kept in a {@link DatabaseSelection} that outlives the tree, so
  * ticks stay when the tree is cleared because the connection settings changed and are shown again after the next successful test.
  */
-class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
+public class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
 	private static final String LOADING = "Loading...";
 	private static final String RETRY = "Loading failed, click to retry";
 
@@ -77,7 +77,7 @@ class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
 	private Set<String> known;
 	private final Set<String> requested = new HashSet<>();
 
-	DatabasePickerPanel(Consumer<String> schemaLoader, Runnable reload) {
+	public DatabasePickerPanel(Consumer<String> schemaLoader, Runnable reload) {
 		super(new BorderLayout(0, Forms.GAP));
 		this.schemaLoader = schemaLoader;
 
@@ -128,19 +128,19 @@ class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
 	}
 
 	/** The ticks to show, for example those of the profile that was chosen. */
-	void setSelection(DatabaseSelection selection) {
+	public void setSelection(DatabaseSelection selection) {
 		this.selection = selection;
 		tree.repaint();
 		updateStatus();
 	}
 
 	/** What is ticked, without the databases the server turned out not to have. */
-	DatabaseSelection getSelection() {
+	public DatabaseSelection getSelection() {
 		return known == null ? selection : selection.onlyDatabases(known::contains);
 	}
 
 	/** Empties the tree and shows the reason. The ticks are kept. */
-	void clear(String message) {
+	public void clear(String message) {
 		known = null;
 		requested.clear();
 		root.removeAllChildren();
@@ -150,7 +150,7 @@ class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
 	}
 
 	/** Lists the databases of the server, each expandable when the server has schemas. */
-	void showDatabases(Dialect dialect, List<String> databases) {
+	public void showDatabases(Dialect dialect, List<String> databases) {
 		this.dialect = dialect;
 		known = new HashSet<>(databases);
 		requested.clear();
@@ -168,7 +168,7 @@ class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
 	}
 
 	/** Shows the schemas that were asked for with the schema loader. */
-	void showSchemas(String database, List<String> schemas) {
+	public void showSchemas(String database, List<String> schemas) {
 		DefaultMutableTreeNode node = databaseNode(database);
 		if (node != null) {
 			node.removeAllChildren();
@@ -180,7 +180,7 @@ class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckModel {
 	}
 
 	/** Replaces the loading row of the database by a row that loads again when it is clicked. */
-	void showSchemaFailure(String database) {
+	public void showSchemaFailure(String database) {
 		DefaultMutableTreeNode node = databaseNode(database);
 		if (node != null) {
 			requested.remove(database);

@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
-/** A column of a table drawn on the designer canvas (the canvas counterpart of {@code table.CreateColumn}). */
+/** A column of a table drawn on the designer canvas (the canvas counterpart of {@code table.ColumnDefinition}). */
 public class DesignerColumn {
 	private String name;
 	private String length;

@@ -1,9 +1,6 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
 import nl.errorsoft.esql.designer.ui.dialog.ForeignKeyDialog;
-import nl.errorsoft.esql.table.Table;
-
-import nl.errorsoft.esql.database.Database;
 
 import java.awt.BasicStroke;
 import java.awt.Component;
@@ -33,7 +30,7 @@ import javax.swing.KeyStroke;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
+import nl.errorsoft.esql.designer.model.ModelForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 public class DesignerCanvas extends JLayeredPane implements MouseListener, MouseMotionListener, ActionListener { //	Model for this component
@@ -52,12 +49,12 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private int w = 0;
 	private int h = 0;
 
-	private ModelObject src = null;
+	private ModelCard src = null;
 	private int refx = 0;
 	private int refy = 0;
 
 	private boolean placemode = false;
-	private ModelObject place = null;
+	private ModelCard place = null;
 
 	private JMenu model_menu = new JMenu("Model");
 	private JMenuItem create_database = new JMenuItem("Add new database");
@@ -86,12 +83,12 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private boolean showGrid = true;
 
 	// The foreign key connector that is selected or under the mouse, and the card under the mouse
-	private DesignerForeignKey selectedKey;
-	private DesignerForeignKey hoveredKey;
-	private ModelObject hoveredObject;
+	private ModelForeignKey selectedKey;
+	private ModelForeignKey hoveredKey;
+	private ModelCard hoveredObject;
 
 	// A foreign key being dragged from a column row: the table, the column and the mouse in viewer coordinates
-	private TableObject linkFrom;
+	private TableCard linkFrom;
 	private String linkColumn;
 	private Point linkPoint;
 
@@ -192,7 +189,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	@Override
 	protected void addImpl(Component component, Object constraints, int index) {
 		super.addImpl(component, constraints, index);
-		if (component instanceof ModelObject object) {
+		if (component instanceof ModelCard object) {
 			object.removePropertyChangeListener("selected", selectionListener);
 			object.addPropertyChangeListener("selected", selectionListener);
 		}
@@ -220,7 +217,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	public void setShowTableTypes(boolean showTableTypes) {
 		this.showTableTypes = showTableTypes;
 		for (Component component : getComponents()) {
-			if (component instanceof TableObject table) {
+			if (component instanceof TableCard table) {
 				table.reviewSize();
 			}
 		}
@@ -259,8 +256,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	/*
 		Function creates a new databaseobject
 	*/
-	public void createDatabaseObject(String name) {
-		DatabaseObject db = model.createDatabaseObject(name);
+	public void createDatabaseCard(String name) {
+		DatabaseCard db = model.createDatabaseCard(name);
 		db.addMouseListener(this);
 		db.addMouseMotionListener(this);
 		this.enterPlaceMode(db);
@@ -269,8 +266,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	/*
 		Function creates a new tableobject
 	*/
-	public void createTableObject(String name) {
-		TableObject tb = model.createTableObject(name);
+	public void createTableCard(String name) {
+		TableCard tb = model.createTableCard(name);
 		tb.addMouseListener(this);
 		tb.addMouseMotionListener(this);
 		this.enterPlaceMode(tb);
@@ -279,8 +276,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	/*
 		Function creates a new tableobject, with reference from parent db
 	*/
-	public void createTableObject(String name, DatabaseObject db) {
-		TableObject tb = model.createTableObject(name);
+	public void createTableCard(String name, DatabaseCard db) {
+		TableCard tb = model.createTableCard(name);
 		tb.addMouseListener(this);
 		tb.addMouseMotionListener(this);
 		model.addReference(db, tb);
@@ -290,8 +287,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	/*
 		Function creates a new commentobject, with reference to parentobject
 	*/
-	public void createCommentObject(String name, ModelObject obj) {
-		CommentObject tb = model.createCommentObject(name);
+	public void createNoteCard(String name, ModelCard obj) {
+		NoteCard tb = model.createNoteCard(name);
 		tb.addMouseListener(this);
 		tb.addMouseMotionListener(this);
 		model.addReference(tb, obj);
@@ -301,14 +298,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	/*
 		Function creates a new databaseobject
 	*/
-	public void createCommentObject(String name) {
-		CommentObject cm = model.createCommentObject(name);
+	public void createNoteCard(String name) {
+		NoteCard cm = model.createNoteCard(name);
 		cm.addMouseListener(this);
 		cm.addMouseMotionListener(this);
 		this.enterPlaceMode(cm);
 	}
 
-	public void enterPlaceMode(ModelObject mo) {
+	public void enterPlaceMode(ModelCard mo) {
 		this.place = mo;
 		this.placemode = true;
 		model.lock();
@@ -355,9 +352,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	 	Function to remove all selected objects from the model
 	 */
 	public void removeSelectedObjects() {
-		List<ModelObject> objects = model.removeSelectedObjects();
+		List<ModelCard> objects = model.removeSelectedObjects();
 		for (int i = 0; i < objects.size(); i++) {
-			this.remove((ModelObject) objects.get(i));
+			this.remove((ModelCard) objects.get(i));
 		}
 		this.repaint();
 	}
@@ -381,16 +378,16 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		DesignerTheme.smooth(lines);
 
 		for (Object object : model.getObjects()) {
-			ModelObject from = (ModelObject) object;
+			ModelCard from = (ModelCard) object;
 			for (Object reference : from.getReferences()) {
-				ModelObject to = (ModelObject) reference;
+				ModelCard to = (ModelCard) reference;
 				if (!from.isHidden() && !to.isHidden()) {
 					ConnectorPainter.paintLink(lines, from, to);
 				}
 			}
 		}
 
-		for (DesignerForeignKey key : model.getForeignKeys()) {
+		for (ModelForeignKey key : model.getForeignKeys()) {
 			if (!key.from().isHidden() && !key.to().isHidden()) {
 				ConnectorPainter.paint(lines, key, isHighlighted(key));
 			}
@@ -414,7 +411,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	/** A connector is drawn in the accent colour when it, or one of its tables, is selected or under the mouse. */
-	private boolean isHighlighted(DesignerForeignKey key) {
+	private boolean isHighlighted(ModelForeignKey key) {
 		return key == selectedKey || key == hoveredKey || key.from().isSelected() || key.to().isSelected() || key.from() == hoveredObject
 			|| key.to() == hoveredObject;
 	}
@@ -423,14 +420,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	 * Opens the foreign key dialog for a new key and adds the key to the model.
 	 * @param to the referenced table, null to let the user choose (the dialog starts with the first other table).
 	 */
-	public void addForeignKey(TableObject from, String column, TableObject to, String toColumn) {
-		TableObject parent = to != null ? to : firstOtherTable(from);
+	public void addForeignKey(TableCard from, String column, TableCard to, String toColumn) {
+		TableCard parent = to != null ? to : firstOtherTable(from);
 		String parentColumn = toColumn != null ? toColumn : ForeignKeyDialog.primaryColumn(parent);
-		DesignerForeignKey initial = new DesignerForeignKey(from, column.isEmpty() ? List.of() : List.of(column), parent,
+		ModelForeignKey initial = new ModelForeignKey(from, column.isEmpty() ? List.of() : List.of(column), parent,
 			column.isEmpty() ? List.of() : List.of(parentColumn),
 			"",
 			"", "");
-		DesignerForeignKey key = ForeignKeyDialog.edit(this, model, initial);
+		ModelForeignKey key = ForeignKeyDialog.edit(this, model, initial);
 		if (key != null) {
 			model.addForeignKey(key);
 			selectedKey = key;
@@ -438,11 +435,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		repaint();
 	}
 
-	public void editForeignKey(DesignerForeignKey key) {
+	public void editForeignKey(ModelForeignKey key) {
 		if (key == null) {
 			return;
 		}
-		DesignerForeignKey edited = ForeignKeyDialog.edit(this, model, key);
+		ModelForeignKey edited = ForeignKeyDialog.edit(this, model, key);
 		if (edited != null) {
 			model.removeForeignKey(key);
 			model.addForeignKey(edited);
@@ -451,7 +448,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		repaint();
 	}
 
-	public void removeForeignKey(DesignerForeignKey key) {
+	public void removeForeignKey(ModelForeignKey key) {
 		if (key != null) {
 			model.removeForeignKey(key);
 			if (selectedKey == key) {
@@ -462,10 +459,10 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		}
 	}
 
-	private TableObject firstOtherTable(TableObject table) {
-		TableObject first = null;
+	private TableCard firstOtherTable(TableCard table) {
+		TableCard first = null;
 		for (Object object : model.getObjects()) {
-			if (object instanceof TableObject other) {
+			if (object instanceof TableCard other) {
 				if (other != table) {
 					return other;
 				}
@@ -475,14 +472,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return first;
 	}
 
-	private static String firstColumnOf(TableObject table) {
+	private static String firstColumnOf(TableCard table) {
 		DesignerColumn[] fields = table.getFields();
 		return fields.length == 0 ? "" : fields[0].getName();
 	}
 
 	/** Ends a foreign key drag: a drop on a table opens the dialog with the column under the mouse as the referenced column. */
 	private void finishLink() {
-		TableObject from = linkFrom;
+		TableCard from = linkFrom;
 		String column = linkColumn;
 		Point point = linkPoint;
 		linkFrom = null;
@@ -494,7 +491,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			return;
 		}
 		for (Component component : getComponents()) {
-			if (component instanceof TableObject table && table.isVisible() && table.cardBounds().contains(point)) {
+			if (component instanceof TableCard table && table.isVisible() && table.cardBounds().contains(point)) {
 				int row = table.rowAt(point.y - table.getY());
 				String toColumn = row >= 0 ? table.getFields()[row].getName() : ForeignKeyDialog.primaryColumn(table);
 				addForeignKey(from, column, table, toColumn);
@@ -504,8 +501,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	/** The connector under a point of the viewer, the one painted last wins. */
-	private DesignerForeignKey connectorAt(Point point) {
-		List<DesignerForeignKey> keys = model.getForeignKeys();
+	private ModelForeignKey connectorAt(Point point) {
+		List<ModelForeignKey> keys = model.getForeignKeys();
 		for (int i = keys.size() - 1; i >= 0; i--) {
 			if (ConnectorPainter.hit(keys.get(i), point)) {
 				return keys.get(i);
@@ -532,12 +529,12 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	/** Columns that are part of a foreign key get the link icon in their table. */
 	private void markForeignKeyColumns() {
-		java.util.Map<TableObject, java.util.Set<String>> columns = new java.util.HashMap<>();
-		for (nl.errorsoft.esql.designer.model.DesignerForeignKey key : model.getForeignKeys()) {
+		java.util.Map<TableCard, java.util.Set<String>> columns = new java.util.HashMap<>();
+		for (ModelForeignKey key : model.getForeignKeys()) {
 			columns.computeIfAbsent(key.from(), table -> new java.util.HashSet<>()).addAll(key.fromColumns());
 		}
 		for (Object object : model.getObjects()) {
-			if (object instanceof TableObject table) {
+			if (object instanceof TableCard table) {
 				table.setForeignKeyColumns(columns.getOrDefault(table, java.util.Set.of()));
 			}
 		}
@@ -567,18 +564,18 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.model = model;
 
 		for (int i = 0; i < model.getObjects().size(); i++) {
-			ModelObject mo = (ModelObject) model.getObjects().get(i);
+			ModelCard mo = (ModelCard) model.getObjects().get(i);
 
 			mo.addMouseListener(this);
 			mo.addMouseMotionListener(this);
 
-			if (mo instanceof DatabaseObject object) {
+			if (mo instanceof DatabaseCard object) {
 				this.add(object);
 			}
-			if (mo instanceof CommentObject object1) {
+			if (mo instanceof NoteCard object1) {
 				this.add(object1);
 			}
-			if (mo instanceof TableObject object2) {
+			if (mo instanceof TableCard object2) {
 				this.add(object2);
 			}
 		}
@@ -588,18 +585,18 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	/** Enables the items of the Model menu that apply to the selection: a single database can get a table, any single card a note. */
 	public void automateMenus() {
-		List<ModelObject> selected = model.getSelectedObjects();
-		ModelObject single = selected.size() == 1 ? selected.get(0) : null;
-		attach_table.setEnabled(single instanceof DatabaseObject);
+		List<ModelCard> selected = model.getSelectedObjects();
+		ModelCard single = selected.size() == 1 ? selected.get(0) : null;
+		attach_table.setEnabled(single instanceof DatabaseCard);
 		attach_comment.setEnabled(single != null);
-		show_properties.setEnabled(single != null && !(single instanceof CommentObject));
+		show_properties.setEnabled(single != null && !(single instanceof NoteCard));
 	}
 
 	public boolean showProperties() {
 		model.lock();
 		try {
-			List<ModelObject> v = this.getModel().getSelectedObjects();
-			if (v.size() == 1 && (v.get(0) instanceof DatabaseObject || v.get(0) instanceof TableObject)) {
+			List<ModelCard> v = this.getModel().getSelectedObjects();
+			if (v.size() == 1 && (v.get(0) instanceof DatabaseCard || v.get(0) instanceof TableCard)) {
 				canvasController.showPropertiesDialog(model.getSelectedObjects());
 				return true;
 			}
@@ -611,17 +608,17 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	/** Model > Attach table (F4): a new table linked to the selected database. */
 	private void attachTable() {
-		List<ModelObject> v = this.getModel().getSelectedObjects();
-		if (!placemode && v.size() == 1 && v.get(0) instanceof DatabaseObject database) {
-			this.createTableObject("New Table", database);
+		List<ModelCard> v = this.getModel().getSelectedObjects();
+		if (!placemode && v.size() == 1 && v.get(0) instanceof DatabaseCard database) {
+			this.createTableCard("New Table", database);
 		}
 	}
 
 	/** Model > Attach comment (F5): a new note linked to the selected object. */
 	private void attachNote() {
-		List<ModelObject> v = this.getModel().getSelectedObjects();
+		List<ModelCard> v = this.getModel().getSelectedObjects();
 		if (!placemode && v.size() == 1) {
-			this.createCommentObject("New comment", v.get(0));
+			this.createNoteCard("New comment", v.get(0));
 		}
 	}
 
@@ -643,10 +640,10 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	public void mousePressed(MouseEvent e) {
 		if (!placemode) {
 			this.moveToFront((Component) e.getSource());
-			if (e.getSource() instanceof ModelObject) {
+			if (e.getSource() instanceof ModelCard) {
 				selectedKey = null;
 			}
-			if (e.getSource() instanceof TableObject table && !e.isShiftDown() && !e.isMetaDown() && !e.isPopupTrigger()
+			if (e.getSource() instanceof TableCard table && !e.isShiftDown() && !e.isMetaDown() && !e.isPopupTrigger()
 				&& table.handleAt(e.getX(), e.getY()) >= 0) {
 				linkFrom = table;
 				linkColumn = table.getFields()[table.handleAt(e.getX(), e.getY())].getName();
@@ -659,8 +656,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				if (selectedKey != null) {
 					requestFocusInWindow();
 				}
-			} else if (e.isShiftDown() && e.getSource() instanceof ModelObject) {
-				src = (ModelObject) e.getSource();
+			} else if (e.isShiftDown() && e.getSource() instanceof ModelCard) {
+				src = (ModelCard) e.getSource();
 				refx = src.getX() + e.getX();
 				refy = src.getY() + e.getY();
 			}
@@ -687,7 +684,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				Rectangle rect = new Rectangle(xpos, ypos, w, h);
 				Component[] cmps = this.getComponents();
 				for (int i = 0; i < cmps.length; i++) {
-					ModelObject tmp = (ModelObject) cmps[i];
+					ModelCard tmp = (ModelCard) cmps[i];
 					if (rect.contains(tmp.getLocation())) {
 						tmp.setSelected(true);
 					} else {
@@ -700,12 +697,12 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				h = 0;
 			} else {
 				if (e.isShiftDown()) {
-					ModelObject end = (ModelObject) e.getSource();
+					ModelCard end = (ModelCard) e.getSource();
 					int xloc = end.getX() + e.getX();
 					int yloc = end.getY() + e.getY();
 
-					if (this.getComponentAt(xloc, yloc) instanceof ModelObject) {
-						end = (ModelObject) this.getComponentAt(xloc, yloc);
+					if (this.getComponentAt(xloc, yloc) instanceof ModelCard) {
+						end = (ModelCard) this.getComponentAt(xloc, yloc);
 					}
 
 					if (src != null && end != null) {
@@ -768,11 +765,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == create_database || e.getSource() == btn_add_database) {
-			this.createDatabaseObject("New Database");
+			this.createDatabaseCard("New Database");
 		} else if (e.getSource() == create_table || e.getSource() == btn_add_table) {
-			this.createTableObject("New Table");
+			this.createTableCard("New Table");
 		} else if (e.getSource() == create_comment || e.getSource() == btn_add_comment) {
-			this.createCommentObject("New comment");
+			this.createNoteCard("New comment");
 		} else if (e.getSource() == btn_open) {
 			canvasController.openModel();
 		} else if (e.getSource() == btn_save) {
@@ -805,15 +802,15 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		Component source = (Component) e.getSource();
 		JPopupMenu menu;
 
-		if (source instanceof ModelObject object) {
+		if (source instanceof ModelCard object) {
 			if (!object.isSelected()) {
 				model.deselectAll();
 				object.setSelected(true);
 			}
 			menu = switch (object) {
-				case TableObject table -> tableMenu(table);
-				case DatabaseObject database -> databaseMenu(database);
-				case CommentObject note -> noteMenu(note);
+				case TableCard table -> tableMenu(table);
+				case DatabaseCard database -> databaseMenu(database);
+				case NoteCard note -> noteMenu(note);
 				default -> null;
 			};
 		} else if (source == this) {
@@ -831,9 +828,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	JPopupMenu canvasMenu(Point point) {
 		JPopupMenu menu = new JPopupMenu();
-		menu.add(item("Add database", "add_database", () -> placeAt(model.createDatabaseObject("New Database"), point)));
-		menu.add(item("Add table", "add_table", () -> placeAt(model.createTableObject("New Table"), point)));
-		menu.add(item("Add note", "add_comment", () -> placeAt(model.createCommentObject("New comment"), point)));
+		menu.add(item("Add database", "add_database", () -> placeAt(model.createDatabaseCard("New Database"), point)));
+		menu.add(item("Add table", "add_table", () -> placeAt(model.createTableCard("New Table"), point)));
+		menu.add(item("Add note", "add_comment", () -> placeAt(model.createNoteCard("New comment"), point)));
 		menu.addSeparator();
 		if (!model.getObjects().isEmpty()) {
 			menu.add(item("Select all", null, () -> {
@@ -841,7 +838,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				repaint();
 			}));
 		}
-		if (model.getObjects().stream().anyMatch(object -> object instanceof TableObject)) {
+		if (model.getObjects().stream().anyMatch(object -> object instanceof TableCard)) {
 			menu.add(item("Arrange automatically", null, this::arrangeAutomatically));
 		}
 		JCheckBoxMenuItem grid = new JCheckBoxMenuItem("Show grid", showGrid);
@@ -852,15 +849,15 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return menu;
 	}
 
-	JPopupMenu tableMenu(TableObject table) {
+	JPopupMenu tableMenu(TableCard table) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Properties...", "des_properties", this::showProperties));
 		menu.add(item("Add foreign key...", "linkimg", () -> addForeignKey(table, firstColumnOf(table), null, null)));
 
-		List<ModelObject> linked = linkedObjects(table);
+		List<ModelCard> linked = linkedObjects(table);
 		JMenu link = new JMenu("Link to database");
 		for (Object object : model.getObjects()) {
-			if (object instanceof DatabaseObject database && !linked.contains(database)) {
+			if (object instanceof DatabaseCard database && !linked.contains(database)) {
 				link.add(item(database.getName(), null, () -> {
 					model.addReference(database, table);
 					repaint();
@@ -874,11 +871,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return menu;
 	}
 
-	JPopupMenu databaseMenu(DatabaseObject database) {
+	JPopupMenu databaseMenu(DatabaseCard database) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Properties...", "des_properties", this::showProperties));
 		menu.add(item("Add table to this database", "add_table", () -> {
-			TableObject table = model.createTableObject("New Table");
+			TableCard table = model.createTableCard("New Table");
 			model.addReference(database, table);
 			Rectangle card = database.cardBounds();
 			placeAt(table, new Point(card.x, card.y + card.height + 40));
@@ -887,14 +884,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return menu;
 	}
 
-	JPopupMenu noteMenu(CommentObject note) {
+	JPopupMenu noteMenu(NoteCard note) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Edit", "des_properties", note::startEditing));
 		addObjectItems(menu, note, linkedObjects(note));
 		return menu;
 	}
 
-	JPopupMenu connectorMenu(DesignerForeignKey key) {
+	JPopupMenu connectorMenu(ModelForeignKey key) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Edit foreign key...", "des_properties", () -> editForeignKey(key)));
 		menu.add(item("Remove foreign key", null, () -> removeForeignKey(key)));
@@ -902,10 +899,10 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	/** What every card has: a note attached to it, removing its links (when it has any), and delete. */
-	private void addObjectItems(JPopupMenu menu, ModelObject object, List<ModelObject> linked) {
-		if (!(object instanceof CommentObject)) {
+	private void addObjectItems(JPopupMenu menu, ModelCard object, List<ModelCard> linked) {
+		if (!(object instanceof NoteCard)) {
 			menu.add(item("Add note", "add_comment", () -> {
-				CommentObject note = model.createCommentObject("New comment");
+				NoteCard note = model.createNoteCard("New comment");
 				model.addReference(note, object);
 				Rectangle card = object.cardBounds();
 				placeAt(note, new Point(card.x + card.width + 40, card.y));
@@ -913,8 +910,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		}
 		if (!linked.isEmpty()) {
 			JMenu unlink = new JMenu("Remove link");
-			for (ModelObject other : linked) {
-				String name = other instanceof CommentObject ? "Note" : other.getName();
+			for (ModelCard other : linked) {
+				String name = other instanceof NoteCard ? "Note" : other.getName();
 				unlink.add(item(name, null, () -> {
 					other.removeReference(object);
 					object.removeReference(other);
@@ -929,10 +926,10 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	/** The cards an object is linked to with a database or note link, in both directions. */
-	private List<ModelObject> linkedObjects(ModelObject object) {
-		List<ModelObject> linked = new java.util.ArrayList<>();
+	private List<ModelCard> linkedObjects(ModelCard object) {
+		List<ModelCard> linked = new java.util.ArrayList<>();
 		for (Object other : model.getObjects()) {
-			ModelObject candidate = (ModelObject) other;
+			ModelCard candidate = (ModelCard) other;
 			if (candidate != object && (candidate.getReferences().contains(object) || object.getReferences().contains(candidate))) {
 				linked.add(candidate);
 			}
@@ -950,7 +947,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	/** Adds a new card with its top left corner at a point of the viewer and selects it. */
-	private void placeAt(ModelObject object, Point point) {
+	private void placeAt(ModelCard object, Point point) {
 		object.addMouseListener(this);
 		object.addMouseMotionListener(this);
 		object.setHidden(false);
@@ -969,7 +966,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		}
 	}
 	public void mouseEntered(MouseEvent e) {
-		if (e.getSource() instanceof ModelObject object) {
+		if (e.getSource() instanceof ModelCard object) {
 			hoveredObject = object;
 			hoveredKey = null;
 			repaint();
@@ -985,7 +982,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public void mouseMoved(MouseEvent e) {
 		if (e.getSource() == this) {
-			DesignerForeignKey key = connectorAt(e.getPoint());
+			ModelForeignKey key = connectorAt(e.getPoint());
 			if (key != hoveredKey) {
 				hoveredKey = key;
 				setToolTipText(key == null ? null : key.name());

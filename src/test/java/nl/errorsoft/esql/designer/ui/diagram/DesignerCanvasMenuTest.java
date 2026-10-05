@@ -27,7 +27,7 @@ class DesignerCanvasMenuTest {
 
 	@Test
 	void canvasWithTablesCanBeSelectedAndArranged() {
-		viewer.getModel().createTableObject("orders");
+		viewer.getModel().createTableCard("orders");
 		assertEquals(List.of("Add database", "Add table", "Add note", "-", "Select all", "Arrange automatically", "Show grid", "-", "Model properties..."),
 			texts(viewer.canvasMenu(new Point(10, 10))));
 	}
@@ -35,10 +35,10 @@ class DesignerCanvasMenuTest {
 	@Test
 	void tableMenuLinksOnlyToDatabasesItIsNotLinkedTo() {
 		Model model = viewer.getModel();
-		TableObject table = model.createTableObject("orders");
+		TableCard table = model.createTableCard("orders");
 		assertEquals(List.of("Properties...", "Add foreign key...", "Add note", "-", "Delete"), texts(viewer.tableMenu(table)));
 
-		DatabaseObject shop = model.createDatabaseObject("shop");
+		DatabaseCard shop = model.createDatabaseCard("shop");
 		assertEquals(List.of("Properties...", "Add foreign key...", "Link to database", "Add note", "-", "Delete"), texts(viewer.tableMenu(table)));
 
 		model.addReference(shop, table);
@@ -49,8 +49,8 @@ class DesignerCanvasMenuTest {
 	void databaseAndNoteMenus() {
 		Model model = viewer.getModel();
 		assertEquals(List.of("Properties...", "Add table to this database", "Add note", "-", "Delete"),
-			texts(viewer.databaseMenu(model.createDatabaseObject("shop"))));
-		assertEquals(List.of("Edit", "-", "Delete"), texts(viewer.noteMenu(model.createCommentObject("remember"))));
+			texts(viewer.databaseMenu(model.createDatabaseCard("shop"))));
+		assertEquals(List.of("Edit", "-", "Delete"), texts(viewer.noteMenu(model.createNoteCard("remember"))));
 	}
 
 	private static List<String> texts(JPopupMenu menu) {

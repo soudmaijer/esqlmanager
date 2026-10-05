@@ -3,13 +3,12 @@ package nl.errorsoft.esql.ui.table;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.table.*;
-import javax.swing.event.*;
 
-public class HeaderListener implements MouseListener {
+public class SortHeaderListener implements MouseListener {
 	private JTableHeader header;
 	private HeaderRenderer renderer;
 
-	public HeaderListener(JTableHeader header, HeaderRenderer renderer) {
+	public SortHeaderListener(JTableHeader header, HeaderRenderer renderer) {
 		this.header = header;
 		this.renderer = renderer;
 	}

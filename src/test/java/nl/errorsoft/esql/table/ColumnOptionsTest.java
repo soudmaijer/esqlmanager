@@ -12,7 +12,7 @@ class ColumnOptionsTest {
 	@Test
 	void theColumnKeepsOnlyWhatTheTypeAllows() {
 		DataType text = new DataType("text", EnumSet.of(DataType.Option.NOT_NULL));
-		CreateColumn column = new ColumnOptions("note", "", "x", text, false, true, false, false, "a note").toColumn();
+		ColumnDefinition column = new ColumnOptions("note", "", "x", text, false, true, false, false, "a note").toColumn();
 
 		assertEquals("note", column.name);
 		assertEquals("x", column.defaultval);

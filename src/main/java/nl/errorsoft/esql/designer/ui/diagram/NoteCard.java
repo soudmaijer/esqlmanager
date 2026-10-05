@@ -5,14 +5,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Path2D;
 
-public class CommentObject extends ModelObject implements MouseListener, FocusListener, AdjustmentListener {
+public class NoteCard extends ModelCard implements MouseListener, FocusListener, AdjustmentListener {
 	private String comment;
 
 	private JTextArea jt = new JTextArea();
 	private JScrollPane jsp = new JScrollPane(jt, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 	private JButton jb = new JButton();
 
-	public CommentObject(String comment, int identifier) {
+	public NoteCard(String comment, int identifier) {
 		this.comment = comment;
 		this.setOpaque(false);
 		this.setIdentifier(identifier);

@@ -1,12 +1,12 @@
 package nl.errorsoft.esql.table;
 
-public class TableData {
+public class TableCell {
 	private Object data;
 	private boolean newRow = false;
 	private boolean nullData = true;
 	private nl.errorsoft.esql.table.TableColumn tc;
 
-	public TableData() {
+	public TableCell() {
 	}
 
 	public void setTableColumn(nl.errorsoft.esql.table.TableColumn tc) {

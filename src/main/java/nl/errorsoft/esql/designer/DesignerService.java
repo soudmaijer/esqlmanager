@@ -8,7 +8,7 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.error.EsqlException;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableForeignKey;
@@ -50,7 +50,7 @@ public class DesignerService {
 				continue;
 			}
 
-			List<CreateColumn> columns = repository.loadColumns(schema, table.getName());
+			List<ColumnDefinition> columns = repository.loadColumns(schema, table.getName());
 			markIndexes(table, columns);
 			List<DesignedForeignKey> keys = new ArrayList<>();
 			for (DesignedForeignKey key : repository.loadForeignKeys(schema, table.getName())) {
@@ -67,12 +67,12 @@ public class DesignerService {
 	}
 
 	/** The designer has an index and a unique flag per column, so only indexes on one column are kept; the primary key is already marked. */
-	private void markIndexes(Table table, List<CreateColumn> columns) throws Exception {
+	private void markIndexes(Table table, List<ColumnDefinition> columns) throws Exception {
 		for (TableIndex index : tables.loadIndexes(table)) {
 			if (index.isPrimary() || index.getTableColumns().length != 1) {
 				continue;
 			}
-			for (CreateColumn column : columns) {
+			for (ColumnDefinition column : columns) {
 				if (column.name.equals(index.getTableColumns()[0].getName())) {
 					column.unique |= index.isUnique();
 					column.index |= !index.isUnique();

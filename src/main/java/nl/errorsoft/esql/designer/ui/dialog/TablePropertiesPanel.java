@@ -18,7 +18,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -30,11 +29,12 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import nl.errorsoft.esql.designer.FieldRules;
 import nl.errorsoft.esql.connection.ServerType;
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
+import nl.errorsoft.esql.designer.model.ModelForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -69,17 +69,17 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	/** True while the form is filled from a field, so that filling it does not write back. */
 	private boolean loading;
 
-	private final JList<DesignerForeignKey> lst_keys = new JList<>(new DefaultListModel<>());
+	private final JList<ModelForeignKey> lst_keys = new JList<>(new DefaultListModel<>());
 	/** The foreign keys of this table as they were, and as edited in the tab; the model gets the edited ones on OK, Cancel leaves it alone. */
-	private final List<DesignerForeignKey> keysBefore = new ArrayList<>();
+	private final List<ModelForeignKey> keysBefore = new ArrayList<>();
 
-	private final TableObject tb;
+	private final TableCard tb;
 
 	// The model keeps its foreign keys in step with renamed and removed fields.
 	private final Model model;
 	private final Map<DesignerColumn, String> namesBefore = new IdentityHashMap<>();
 
-	public TablePropertiesPanel(TableObject tb, ServerType serverType, Model model) {
+	public TablePropertiesPanel(TableCard tb, ServerType serverType, Model model) {
 		this.model = model;
 		this.tb = tb;
 
@@ -103,7 +103,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		}
 	}
 
-	private JPanel generalTab(TableObject tb, ServerType serverType) {
+	private JPanel generalTab(TableCard tb, ServerType serverType) {
 		txt_name.setText(tb.getName());
 		txt_comm.setText(tb.getComment());
 		String[] tableTypes = serverType.getDialect().getTableTypes();
@@ -440,7 +440,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	/** The foreign keys of this table on other tables. Changes are kept in the tab and reach the model on OK. */
 	private JPanel foreignKeysTab() {
-		for (DesignerForeignKey key : model.foreignKeysOf(tb)) {
+		for (ModelForeignKey key : model.foreignKeysOf(tb)) {
 			if (key.from() == tb) {
 				keysBefore.add(key);
 				keys().addElement(key);
@@ -450,7 +450,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		lst_keys.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int i, boolean selected, boolean focus) {
-				DesignerForeignKey key = (DesignerForeignKey) value;
+				ModelForeignKey key = (ModelForeignKey) value;
 				String text = key.name() + ": " + String.join(", ", key.fromColumns()) + " -> " + key.to().getName() + "(" + String.join(", ", key.toColumns())
 					+ ")";
 				return super.getListCellRendererComponent(list, text, i, selected, focus);
@@ -485,22 +485,22 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		return panel;
 	}
 
-	private DefaultListModel<DesignerForeignKey> keys() {
-		return (DefaultListModel<DesignerForeignKey>) lst_keys.getModel();
+	private DefaultListModel<ModelForeignKey> keys() {
+		return (DefaultListModel<ModelForeignKey>) lst_keys.getModel();
 	}
 
 	private void addKey() {
 		DesignerColumn[] f = tb.getFields();
 		String column = f.length == 0 ? "" : f[0].getName();
-		TableObject parent = tb;
+		TableCard parent = tb;
 		for (Object object : model.getObjects()) {
-			if (object instanceof TableObject other && other != tb) {
+			if (object instanceof TableCard other && other != tb) {
 				parent = other;
 				break;
 			}
 		}
-		DesignerForeignKey key = ForeignKeyDialog.edit(this, model,
-			new DesignerForeignKey(tb, column.isEmpty() ? List.of() : List.of(column), parent, List.of(), "", "", ""));
+		ModelForeignKey key = ForeignKeyDialog.edit(this, model,
+			new ModelForeignKey(tb, column.isEmpty() ? List.of() : List.of(column), parent, List.of(), "", "", ""));
 		if (key != null) {
 			keys().addElement(key);
 			lst_keys.setSelectedValue(key, true);
@@ -512,14 +512,14 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		if (at < 0) {
 			return;
 		}
-		DesignerForeignKey edited = ForeignKeyDialog.edit(this, model, keys().get(at));
+		ModelForeignKey edited = ForeignKeyDialog.edit(this, model, keys().get(at));
 		if (edited != null) {
 			keys().set(at, edited);
 		}
 	}
 
 	private void removeKey() {
-		DesignerForeignKey key = lst_keys.getSelectedValue();
+		ModelForeignKey key = lst_keys.getSelectedValue();
 		if (key != null && Dialogs.confirmDestructive(this, "Remove foreign key",
 			"Remove foreign key '" + key.name() + "' from table '" + tb.getName() + "'? It is removed from the model when you save the properties.",
 			"Remove")) {
@@ -529,7 +529,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	/** Puts the keys of the tab in the model in place of the ones the table had. */
 	private void saveKeys() {
-		for (DesignerForeignKey key : keysBefore) {
+		for (ModelForeignKey key : keysBefore) {
 			model.removeForeignKey(key);
 		}
 		for (int i = 0; i < keys().getSize(); i++) {

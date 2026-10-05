@@ -9,12 +9,12 @@ import nl.errorsoft.esql.connection.DriverProperties;
 import nl.errorsoft.esql.connection.ui.dialog.DriverDialog;
 
 public class DatabaseDriverController {
-	private MainController connectionWindowController;
+	private MainController mainController;
 	private DatabaseDriver[] drivers;
 	private DriverDialog driverDialog;
 
-	public DatabaseDriverController(MainController connectionWindowController) {
-		this.connectionWindowController = connectionWindowController;
+	public DatabaseDriverController(MainController mainController) {
+		this.mainController = mainController;
 	}
 
 	public void showDialog(MainWindow mainWindow) {

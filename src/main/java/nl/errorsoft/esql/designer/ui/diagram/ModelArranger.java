@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.errorsoft.esql.designer.layout.AutoLayout;
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
+import nl.errorsoft.esql.designer.model.ModelForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 /** Moves the cards of a model to the places {@link AutoLayout} gives them: the databases in a row at the top, the tables below. */
@@ -22,12 +22,12 @@ public final class ModelArranger {
 		int databasesBottom = MARGIN;
 
 		for (Object object : model.getObjects()) {
-			if (object instanceof DatabaseObject database) {
+			if (object instanceof DatabaseCard database) {
 				database.setCardLocation(x, MARGIN);
 				Rectangle card = database.cardBounds();
 				x += card.width + AutoLayout.SPACING;
 				databasesBottom = Math.max(databasesBottom, card.y + card.height + AutoLayout.SPACING);
-			} else if (object instanceof TableObject table) {
+			} else if (object instanceof TableCard table) {
 				// The card may have been made before the table knew its viewer, its size is brought up to date first.
 				table.reviewSize();
 				Rectangle card = table.cardBounds();
@@ -36,13 +36,13 @@ public final class ModelArranger {
 		}
 
 		List<AutoLayout.Edge> edges = new ArrayList<>();
-		for (DesignerForeignKey key : model.getForeignKeys()) {
+		for (ModelForeignKey key : model.getForeignKeys()) {
 			edges.add(new AutoLayout.Edge(String.valueOf(key.from().getIdentifier()), String.valueOf(key.to().getIdentifier())));
 		}
 
 		Map<String, AutoLayout.Position> positions = AutoLayout.arrange(tables, edges, MARGIN, databasesBottom);
 		for (Object object : model.getObjects()) {
-			if (object instanceof TableObject table) {
+			if (object instanceof TableCard table) {
 				AutoLayout.Position position = positions.get(String.valueOf(table.getIdentifier()));
 				table.setCardLocation(position.x(), position.y());
 			}

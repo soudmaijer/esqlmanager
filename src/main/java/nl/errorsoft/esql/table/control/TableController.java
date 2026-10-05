@@ -1,9 +1,9 @@
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 import nl.errorsoft.esql.table.ui.TableDataTab;
 
 import nl.errorsoft.esql.blob.control.BlobTransferController;
@@ -20,23 +20,23 @@ public class TableController {
 		this.connectionWindowController = connectionWindowController;
 	}
 
-	public void showDownloadFileDialog(Table table, TableData[] rowData, TableData cellData) {
+	public void showDownloadFileDialog(Table table, TableCell[] rowData, TableCell cellData) {
 		BlobTransferController blobTransferController = new BlobTransferController(connectionWindowController);
 		blobTransferController.showDownloadDialog(connectionWindowController.getMainWindow(), table, rowData, cellData);
 	}
 
-	public void showUploadFileDialog(Table table, TableData[] rowData, TableData cellData) {
+	public void showUploadFileDialog(Table table, TableCell[] rowData, TableCell cellData) {
 		BlobTransferController blobTransferController = new BlobTransferController(connectionWindowController);
 		blobTransferController.showUploadDialog(connectionWindowController.getMainWindow(), table, rowData, cellData);
 	}
 
 	/** Reads a page of rows; database work, not for the event thread. */
-	public TableData[][] loadPage(Table table, int skip, int show) throws Exception {
+	public TableCell[][] loadPage(Table table, int skip, int show) throws Exception {
 		return service().loadPage(table, skip, show);
 	}
 
 	/** The tab with the rows of a page read by {@link #loadPage}, on the event thread. */
-	public TableDataTab newTableDataTab(Table table, TableData[][] rows) {
+	public TableDataTab newTableDataTab(Table table, TableCell[][] rows) {
 		tableDataTab = new TableDataTab(this);
 		tableDataTab.loadData(table, table.getColumns(), rows);
 		return tableDataTab;
@@ -73,11 +73,11 @@ public class TableController {
 		service().executeUpdate(query);
 	}
 
-	public void addTableColumn(Table tb, CreateColumn column) throws Exception {
+	public void addTableColumn(Table tb, ColumnDefinition column) throws Exception {
 		service().addColumn(tb, column);
 	}
 
-	public void editTableColumn(TableColumn tbc, CreateColumn column) throws Exception {
+	public void editTableColumn(TableColumn tbc, ColumnDefinition column) throws Exception {
 		service().editColumn(tbc, column);
 	}
 
@@ -93,15 +93,15 @@ public class TableController {
 		tableDataTab.saveSelectedRow();
 	}
 
-	public void insertRow(Table table, TableData[] rowData) throws Exception {
+	public void insertRow(Table table, TableCell[] rowData) throws Exception {
 		service().insertRow(table, rowData);
 	}
 
-	public void dataChanged(Table table, TableData[] rowData, TableData cellData, Object newValue) throws Exception {
+	public void dataChanged(Table table, TableCell[] rowData, TableCell cellData, Object newValue) throws Exception {
 		service().changeCell(table, rowData, cellData, newValue);
 	}
 
-	public void deleteRow(Table table, TableData[] rowData) throws Exception {
+	public void deleteRow(Table table, TableCell[] rowData) throws Exception {
 		service().deleteRow(table, rowData);
 	}
 
@@ -120,8 +120,8 @@ public class TableController {
 		return service().optimizeTable(table);
 	}
 
-	public String analyseTable(Table table) throws Exception {
-		return service().analyseTable(table);
+	public String analyzeTable(Table table) throws Exception {
+		return service().analyzeTable(table);
 	}
 
 	public String checkTable(Table table) throws Exception {

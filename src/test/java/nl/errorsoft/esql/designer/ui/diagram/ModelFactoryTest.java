@@ -7,7 +7,7 @@ import java.util.List;
 
 import nl.errorsoft.esql.designer.DesignedModel;
 import nl.errorsoft.esql.designer.DesignedTable;
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
+import nl.errorsoft.esql.designer.model.ModelForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.table.DataType;
 import org.junit.jupiter.api.Test;
@@ -17,11 +17,11 @@ class ModelFactoryTest {
 	@Test
 	void snapshotHasTheTablesOfEachDatabaseTheirColumnsAndOutgoingKeys() {
 		Model model = new Model("test");
-		DatabaseObject shop = model.createDatabaseObject("shop");
-		TableObject customers = model.createTableObject("customers");
-		TableObject orders = model.createTableObject("orders");
-		TableObject loose = model.createTableObject("loose");
-		CommentObject note = model.createCommentObject("a note");
+		DatabaseCard shop = model.createDatabaseCard("shop");
+		TableCard customers = model.createTableCard("customers");
+		TableCard orders = model.createTableCard("orders");
+		TableCard loose = model.createTableCard("loose");
+		NoteCard note = model.createNoteCard("a note");
 		DesignerColumn id = new DesignerColumn("id", DataType.named("integer"), "", "", "");
 		id.primary = true;
 		customers.addField(id);
@@ -30,7 +30,7 @@ class ModelFactoryTest {
 		model.addReference(shop, orders);
 		// A note linked to a database is not a table.
 		model.addReference(shop, note);
-		model.addForeignKey(new DesignerForeignKey(orders, List.of("customer_id"), customers, List.of("id"), "fk_customer", "CASCADE", ""));
+		model.addForeignKey(new ModelForeignKey(orders, List.of("customer_id"), customers, List.of("id"), "fk_customer", "CASCADE", ""));
 
 		DesignedModel snapshot = ModelFactory.toDesigned(model);
 

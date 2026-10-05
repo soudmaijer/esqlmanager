@@ -72,7 +72,8 @@ public final class Dialogs {
 		return dialog.showDialog();
 	}
 
-	private static Window windowOf(Component parent) {
+	/** The window of a component, or the component itself when it is a window. */
+	public static Window windowOf(Component parent) {
 		return parent instanceof Window window ? window : parent == null ? null : SwingUtilities.getWindowAncestor(parent);
 	}
 

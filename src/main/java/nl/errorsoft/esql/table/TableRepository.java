@@ -242,12 +242,12 @@ public class TableRepository extends AbstractRepository {
 
 	// Columns
 
-	public void addColumn(Table table, CreateColumn column) throws Exception {
+	public void addColumn(Table table, ColumnDefinition column) throws Exception {
 		useDatabaseOf(table);
 		executeAll(dialect().addColumnSql(table.qualifiedName(), column));
 	}
 
-	public void modifyColumn(TableColumn old, CreateColumn column) throws Exception {
+	public void modifyColumn(TableColumn old, ColumnDefinition column) throws Exception {
 		useDatabaseOf(old.getTable());
 		executeAll(dialect().modifyColumnSql(old.getTable().qualifiedName(), old.getName(), column));
 	}
@@ -310,7 +310,7 @@ public class TableRepository extends AbstractRepository {
 	// Rows
 
 	/** Reads one page of rows and sets the row count and the column metadata on the table. The columns must be loaded first. */
-	public TableData[][] readPage(Table table, int skip, int show) throws Exception {
+	public TableCell[][] readPage(Table table, int skip, int show) throws Exception {
 		useDatabaseOf(table);
 		TableColumn[] columns = table.getColumns();
 		String quotedTable = quote(table);
@@ -350,13 +350,13 @@ public class TableRepository extends AbstractRepository {
 				columns[i].setType(rsmd.getColumnType(i + 1));
 			}
 
-			List<TableData[]> rows = new ArrayList<>();
+			List<TableCell[]> rows = new ArrayList<>();
 
 			while (rs.next()) {
-				TableData[] row = new TableData[columns.length];
+				TableCell[] row = new TableCell[columns.length];
 
 				for (int i = 0; i < row.length; i++) {
-					row[i] = new TableData();
+					row[i] = new TableCell();
 					row[i].setTableColumn(columns[i]);
 
 					if (!columns[i].isBinary()) {
@@ -367,15 +367,15 @@ public class TableRepository extends AbstractRepository {
 				rows.add(row);
 			}
 
-			return rows.toArray(new TableData[rows.size()][]);
+			return rows.toArray(new TableCell[rows.size()][]);
 		}
 	}
 
-	public void insertRow(Table table, TableData[] row) throws Exception {
+	public void insertRow(Table table, TableCell[] row) throws Exception {
 		List<String> names = new ArrayList<>();
 		List<String> values = new ArrayList<>();
 
-		for (TableData cell : row) {
+		for (TableCell cell : row) {
 			names.add(quote(cell.getTableColumn().getName()));
 			values.add(sqlValue(cell));
 		}
@@ -386,7 +386,7 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	/** Sets one cell of the row, {@code newValue} null writes SQL NULL. */
-	public int updateCell(Table table, TableData[] row, TableData cell, String newValue) throws Exception {
+	public int updateCell(Table table, TableCell[] row, TableCell cell, String newValue) throws Exception {
 		String where = rowFilter(row);
 
 		useDatabaseOf(table);
@@ -395,7 +395,7 @@ public class TableRepository extends AbstractRepository {
 			+ " WHERE " + where);
 	}
 
-	public void deleteRow(Table table, TableData[] row) throws Exception {
+	public void deleteRow(Table table, TableCell[] row) throws Exception {
 		String where = rowFilter(row);
 
 		useDatabaseOf(table);
@@ -406,11 +406,11 @@ public class TableRepository extends AbstractRepository {
 	 * The condition that selects the given row: its key columns when it has any,
 	 * otherwise all of its columns that are not binary.
 	 */
-	public String rowFilter(TableData[] row) throws Exception {
+	public String rowFilter(TableCell[] row) throws Exception {
 		List<String> keys = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
 
-		for (TableData cell : row) {
+		for (TableCell cell : row) {
 			TableColumn column = cell.getTableColumn();
 			String name = quote(column.getName());
 
@@ -451,7 +451,7 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	/** The value of a cell as it goes into a statement, an empty cell is NULL and not the text "null". */
-	private String sqlValue(TableData cell) {
+	private String sqlValue(TableCell cell) {
 		return cell.isNull() ? "NULL" : literal(cell.getData());
 	}
 }

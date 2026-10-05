@@ -5,11 +5,11 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.ArrayList;
 
-import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
-import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
+import nl.errorsoft.esql.designer.ui.diagram.NoteCard;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseCard;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
-import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.ModelCard;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import org.jdom.Document;
@@ -47,18 +47,18 @@ final class ModelXml {
 
 		for (Object object : model.getObjects()) {
 			switch (object) {
-				case DatabaseObject db -> databases.addContent(database(db));
-				case TableObject tb -> tables.addContent(table(tb));
-				case CommentObject cm -> comments.addContent(comment(cm));
+				case DatabaseCard db -> databases.addContent(database(db));
+				case TableCard tb -> tables.addContent(table(tb));
+				case NoteCard cm -> comments.addContent(comment(cm));
 				default -> {
 				}
 			}
 
-			ModelObject source = (ModelObject) object;
+			ModelCard source = (ModelCard) object;
 			for (Object target : source.getReferences()) {
 				Element relation = new Element("relation");
 				relation.addContent(text("source_identifier", source.getIdentifier()));
-				relation.addContent(text("target_identifier", ((ModelObject) target).getIdentifier()));
+				relation.addContent(text("target_identifier", ((ModelCard) target).getIdentifier()));
 				relations.addContent(relation);
 			}
 		}
@@ -72,7 +72,7 @@ final class ModelXml {
 		return new XMLOutputter(Format.getPrettyFormat().setEncoding("UTF-8")).outputString(new Document(root));
 	}
 
-	private static Element database(DatabaseObject db) {
+	private static Element database(DatabaseCard db) {
 		Element element = new Element("database");
 		element.addContent(text("name", db.getName()));
 		element.addContent(text("comment", db.getDescription()));
@@ -81,7 +81,7 @@ final class ModelXml {
 		return element;
 	}
 
-	private static Element table(TableObject tb) {
+	private static Element table(TableCard tb) {
 		Element element = new Element("table");
 		element.addContent(text("name", tb.getName()));
 		element.addContent(text("comment", tb.getComment()));
@@ -112,7 +112,7 @@ final class ModelXml {
 		return element;
 	}
 
-	private static Element comment(CommentObject cm) {
+	private static Element comment(NoteCard cm) {
 		Element element = new Element("comment");
 		element.addContent(text("comment", cm.getComment()));
 		element.addContent(text("identifier", cm.getIdentifier()));
@@ -122,7 +122,7 @@ final class ModelXml {
 
 	private static Element foreignKeys(Model model) {
 		Element keys = new Element("foreignkeys");
-		for (DesignerForeignKey key : model.getForeignKeys()) {
+		for (ModelForeignKey key : model.getForeignKeys()) {
 			Element element = new Element("foreignkey");
 			element.addContent(text("name", key.name()));
 			element.addContent(text("from_identifier", key.from().getIdentifier()));
@@ -141,7 +141,7 @@ final class ModelXml {
 		return keys;
 	}
 
-	private static Element bounds(ModelObject object) {
+	private static Element bounds(ModelCard object) {
 		// The card, not the shadow margin around it, so that models written before the cards had a shadow keep their positions.
 		Rectangle card = object.cardBounds();
 		Element bounds = new Element("bounds");
@@ -172,20 +172,20 @@ final class ModelXml {
 		model.setComment(text(root, "comment", ""));
 
 		for (Element db : children(root, "databases", "database")) {
-			DatabaseObject d = model.createDatabaseObject(text(db, "name", ""));
+			DatabaseCard d = model.createDatabaseCard(text(db, "name", ""));
 			d.setDescription(text(db, "comment", ""));
 			d.setIdentifier(number(db, "identifier", -1));
 			place(d, db);
 		}
 
 		for (Element cm : children(root, "comments", "comment")) {
-			CommentObject c = model.createCommentObject(text(cm, "comment", ""));
+			NoteCard c = model.createNoteCard(text(cm, "comment", ""));
 			c.setIdentifier(number(cm, "identifier", -1));
 			place(c, cm);
 		}
 
 		for (Element tb : children(root, "tables", "table")) {
-			TableObject t = model.createTableObject(text(tb, "name", ""));
+			TableCard t = model.createTableCard(text(tb, "name", ""));
 			t.setComment(text(tb, "comment", ""));
 			t.setDescription(text(tb, "description", ""));
 			t.setIdentifier(number(tb, "identifier", -1));
@@ -208,8 +208,8 @@ final class ModelXml {
 		}
 
 		for (Element rl : children(root, "relations", "relation")) {
-			ModelObject source = model.getObjectByIdentifier(number(rl, "source_identifier", -1));
-			ModelObject target = model.getObjectByIdentifier(number(rl, "target_identifier", -1));
+			ModelCard source = model.getObjectByIdentifier(number(rl, "source_identifier", -1));
+			ModelCard target = model.getObjectByIdentifier(number(rl, "target_identifier", -1));
 
 			// A relation to an object that is not in the file can't be drawn, it is left out.
 			if (source != null && target != null) {
@@ -226,11 +226,11 @@ final class ModelXml {
 
 	private static void readForeignKeys(Model model, Element root) {
 		for (Element fk : children(root, "foreignkeys", "foreignkey")) {
-			ModelObject from = model.getObjectByIdentifier(number(fk, "from_identifier", -1));
-			ModelObject to = model.getObjectByIdentifier(number(fk, "to_identifier", -1));
+			ModelCard from = model.getObjectByIdentifier(number(fk, "from_identifier", -1));
+			ModelCard to = model.getObjectByIdentifier(number(fk, "to_identifier", -1));
 
 			// A key between tables that are not in the file can't be restored, it is left out.
-			if (!(from instanceof TableObject fromTable) || !(to instanceof TableObject toTable)) {
+			if (!(from instanceof TableCard fromTable) || !(to instanceof TableCard toTable)) {
 				continue;
 			}
 
@@ -242,18 +242,18 @@ final class ModelXml {
 				toColumns.add(column.getAttributeValue("to", ""));
 			}
 
-			model.addForeignKey(new DesignerForeignKey(fromTable, fromColumns, toTable, toColumns, text(fk, "name", ""),
+			model.addForeignKey(new ModelForeignKey(fromTable, fromColumns, toTable, toColumns, text(fk, "name", ""),
 				text(fk, "on_delete", ""), text(fk, "on_update", "")));
 		}
 	}
 
-	private static void place(ModelObject object, Element element) {
+	private static void place(ModelCard object, Element element) {
 		Element bounds = element.getChild("bounds");
 		if (bounds != null) {
 			Rectangle card = object.cardBounds();
 			object.setCardLocation(number(bounds, "x", 0), number(bounds, "y", 0));
 			// Tables and databases size themselves to their content, only a note keeps the size it was given.
-			if (object instanceof CommentObject) {
+			if (object instanceof NoteCard) {
 				object.setCardSize(Math.max(120, number(bounds, "w", card.width)), Math.max(60, number(bounds, "h", card.height)));
 			}
 		}

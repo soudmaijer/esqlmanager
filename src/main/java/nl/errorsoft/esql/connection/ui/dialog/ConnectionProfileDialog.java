@@ -30,6 +30,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.connection.ui.DatabasePickerPanel;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.ServerType;

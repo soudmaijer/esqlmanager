@@ -10,13 +10,13 @@ import org.junit.jupiter.api.Test;
 
 import nl.errorsoft.esql.table.DataType.Option;
 
-class CreateColumnTest {
+class ColumnDefinitionTest {
 	private static final DataType INTEGER = new DataType("integer", EnumSet.of(Option.PRIMARY, Option.NOT_NULL, Option.AUTO_INCREMENT, Option.UNSIGNED));
 	private static final DataType TEXT = new DataType("text", EnumSet.of(Option.NOT_NULL));
 
 	@Test
 	void aTypeSwitchesOffTheOptionsItDoesNotAllow() {
-		CreateColumn column = new CreateColumn("id");
+		ColumnDefinition column = new ColumnDefinition("id");
 		column.applyType(INTEGER);
 		column.primary = true;
 		column.notnull = true;
@@ -34,7 +34,7 @@ class CreateColumnTest {
 
 	@Test
 	void noTypeLeavesTheColumnAlone() {
-		CreateColumn column = new CreateColumn("id");
+		ColumnDefinition column = new ColumnDefinition("id");
 		column.applyType(INTEGER);
 		column.primary = true;
 

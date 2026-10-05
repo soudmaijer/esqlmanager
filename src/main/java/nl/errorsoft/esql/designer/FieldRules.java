@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.designer.ui.dialog;
+package nl.errorsoft.esql.designer;
 
 import java.util.HashSet;
 import java.util.List;

@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.table.Table;
@@ -107,7 +107,7 @@ public interface Dialect {
 	String[] getTableTypes();
 
 	/** The statements that create a table, including its indexes and comment. */
-	List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment);
+	List<String> createTableSql(TableName table, List<ColumnDefinition> columns, String tableType, String comment);
 
 	/** Whether a column can carry a comment. */
 	boolean supportsColumnComments();
@@ -118,10 +118,10 @@ public interface Dialect {
 
 	List<String> setTableCommentSql(TableName table, String comment);
 
-	List<String> addColumnSql(TableName table, CreateColumn column);
+	List<String> addColumnSql(TableName table, ColumnDefinition column);
 
 	/** Changes an existing column to the given definition, renaming it when the name differs. */
-	List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column);
+	List<String> modifyColumnSql(TableName table, String oldName, ColumnDefinition column);
 
 	/** The kinds of index a user can choose, the values {@link #addIndexSql} takes as type. SPATIAL is not written by any dialect, so it is not offered. */
 	default List<String> indexTypes() {
@@ -233,7 +233,7 @@ public interface Dialect {
 	 * A column of an existing table as the designer models it, read from the current row of {@link java.sql.DatabaseMetaData#getColumns}:
 	 * the type in the names of {@code datatypes.xml}, the length, the default as plain text, not null and auto numbering. The primary key is not set.
 	 */
-	CreateColumn readColumn(ResultSet columns) throws SQLException;
+	ColumnDefinition readColumn(ResultSet columns) throws SQLException;
 
 	/** The name in {@code datatypes.xml} of a type as the driver reports it (PostgreSQL {@code int4} is {@code integer}). */
 	String datatypeName(String nativeTypeName);

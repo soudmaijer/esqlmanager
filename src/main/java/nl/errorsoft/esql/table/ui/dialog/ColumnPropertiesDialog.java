@@ -20,7 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /** Adds a column to a table or edits one. */
-public class FieldPropertiesDialog extends FormDialog implements ActionListener {
+public class ColumnPropertiesDialog extends FormDialog implements ActionListener {
 	/** A length is a number, or two numbers for the precision and scale of a decimal ("10,2"). */
 	private static final Pattern LENGTH = Pattern.compile("\\d+(\\s*,\\s*\\d+)?");
 
@@ -42,7 +42,7 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 	private final JButton btnCancel = Forms.button("&Cancel");
 	private final JButton btnSave = Forms.button("&Save");
 
-	public FieldPropertiesDialog(JFrame parent, ConnectionWindowController connectionWindowController, TableColumn column, boolean add, boolean edit) {
+	public ColumnPropertiesDialog(JFrame parent, ConnectionWindowController connectionWindowController, TableColumn column, boolean add, boolean edit) {
 		super(parent, add ? "Add field" : "Edit field", true);
 		this.connectionWindowController = connectionWindowController;
 		this.add = add;

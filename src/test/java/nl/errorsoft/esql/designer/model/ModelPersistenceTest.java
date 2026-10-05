@@ -12,10 +12,10 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
-import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
+import nl.errorsoft.esql.designer.ui.diagram.NoteCard;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseCard;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import org.junit.jupiter.api.Test;
@@ -29,9 +29,9 @@ class ModelPersistenceTest {
 		Model model = new Model(HOSTILE);
 		model.setAuthor(HOSTILE);
 		model.setComment(HOSTILE);
-		DatabaseObject db = model.createDatabaseObject("shop");
+		DatabaseCard db = model.createDatabaseCard("shop");
 		db.setDescription(HOSTILE);
-		TableObject table = model.createTableObject("order<lines>");
+		TableCard table = model.createTableCard("order<lines>");
 		table.setComment(HOSTILE);
 		table.setDescription(HOSTILE);
 		DesignerColumn field = new DesignerColumn("id&key", DataType.named("int"), "11", HOSTILE,
@@ -39,7 +39,7 @@ class ModelPersistenceTest {
 		field.primary = true;
 		field.notnull = true;
 		table.addField(field);
-		CommentObject comment = model.createCommentObject(HOSTILE);
+		NoteCard comment = model.createNoteCard(HOSTILE);
 		table.addReference(db);
 		comment.addReference(table);
 
@@ -49,9 +49,9 @@ class ModelPersistenceTest {
 		assertEquals(HOSTILE, loaded.getAuthor());
 		assertEquals(HOSTILE, loaded.getComment());
 		assertEquals(model.getIdentifier(), loaded.getIdentifier());
-		assertEquals(HOSTILE, ((DatabaseObject) loaded.getObjectByIdentifier(db.getIdentifier())).getDescription());
+		assertEquals(HOSTILE, ((DatabaseCard) loaded.getObjectByIdentifier(db.getIdentifier())).getDescription());
 
-		TableObject loadedTable = (TableObject) loaded.getObjectByIdentifier(table.getIdentifier());
+		TableCard loadedTable = (TableCard) loaded.getObjectByIdentifier(table.getIdentifier());
 		assertEquals("order<lines>", loadedTable.getName());
 		assertEquals(HOSTILE, loadedTable.getComment());
 		assertEquals(HOSTILE, loadedTable.getDescription());
@@ -60,21 +60,21 @@ class ModelPersistenceTest {
 		assertEquals(HOSTILE, loadedField.getDefault());
 		assertTrue(loadedField.primary && loadedField.notnull);
 		assertTrue(loadedTable.getReferences().contains(loaded.getObjectByIdentifier(db.getIdentifier())));
-		assertEquals(HOSTILE, ((CommentObject) loaded.getObjectByIdentifier(comment.getIdentifier())).getComment());
+		assertEquals(HOSTILE, ((NoteCard) loaded.getObjectByIdentifier(comment.getIdentifier())).getComment());
 	}
 
 	@Test
 	void foreignKeysSurviveARoundTrip(@TempDir Path dir) throws Exception {
 		Model model = new Model("fk");
-		TableObject customer = table(model, "customer", "id", "region");
-		TableObject order = table(model, "order", "id", "customer_id", "customer_region");
+		TableCard customer = table(model, "customer", "id", "region");
+		TableCard order = table(model, "order", "id", "customer_id", "customer_region");
 		model.addForeignKey(
-			new DesignerForeignKey(order, List.of("customer_id", "customer_region"), customer, List.of("id", "region"), "fk_<order>", "CASCADE", ""));
+			new ModelForeignKey(order, List.of("customer_id", "customer_region"), customer, List.of("id", "region"), "fk_<order>", "CASCADE", ""));
 
 		Model loaded = saveAndLoad(model, dir);
 
 		assertEquals(1, loaded.getForeignKeys().size());
-		DesignerForeignKey key = loaded.getForeignKeys().get(0);
+		ModelForeignKey key = loaded.getForeignKeys().get(0);
 		assertEquals("fk_<order>", key.name());
 		assertEquals(order.getIdentifier(), key.from().getIdentifier());
 		assertEquals(customer.getIdentifier(), key.to().getIdentifier());
@@ -82,17 +82,17 @@ class ModelPersistenceTest {
 		assertEquals(List.of("id", "region"), key.toColumns());
 		assertEquals("CASCADE", key.onDelete());
 		assertEquals("", key.onUpdate());
-		assertEquals(1, loaded.foreignKeysOf((TableObject) loaded.getObjectByIdentifier(customer.getIdentifier())).size());
+		assertEquals(1, loaded.foreignKeysOf((TableCard) loaded.getObjectByIdentifier(customer.getIdentifier())).size());
 	}
 
 	@Test
 	void foreignKeysFollowTheirTablesAndFields() {
 		Model model = new Model("fk");
-		TableObject customer = table(model, "customer", "id", "name");
-		TableObject order = table(model, "order", "id", "customer_id");
-		TableObject line = table(model, "line", "id", "order_id");
-		model.addForeignKey(new DesignerForeignKey(order, List.of("customer_id"), customer, List.of("id"), "fk_customer", "", ""));
-		model.addForeignKey(new DesignerForeignKey(line, List.of("order_id"), order, List.of("id"), "fk_order", "", ""));
+		TableCard customer = table(model, "customer", "id", "name");
+		TableCard order = table(model, "order", "id", "customer_id");
+		TableCard line = table(model, "line", "id", "order_id");
+		model.addForeignKey(new ModelForeignKey(order, List.of("customer_id"), customer, List.of("id"), "fk_customer", "", ""));
+		model.addForeignKey(new ModelForeignKey(line, List.of("order_id"), order, List.of("id"), "fk_order", "", ""));
 
 		Map<DesignerColumn, String> before = names(customer);
 		customer.getFields()[0].setName("customer_no");
@@ -104,7 +104,7 @@ class ModelPersistenceTest {
 		order.removeAllFields();
 		order.addField(id);
 		model.fieldsEdited(order, before);
-		assertEquals(List.of("fk_order"), model.getForeignKeys().stream().map(DesignerForeignKey::name).toList());
+		assertEquals(List.of("fk_order"), model.getForeignKeys().stream().map(ModelForeignKey::name).toList());
 
 		model.removeObject(line);
 		assertTrue(model.getForeignKeys().isEmpty());
@@ -121,12 +121,12 @@ class ModelPersistenceTest {
 
 		assertEquals("Shop", model.getName());
 		assertEquals(5, model.getIdentifier());
-		TableObject customer = (TableObject) model.getObjectByIdentifier(2);
+		TableCard customer = (TableCard) model.getObjectByIdentifier(2);
 		assertEquals("customer", customer.getName());
 		assertEquals(2, customer.getFields().length);
 		assertTrue(customer.getFields()[0].primary);
 		assertTrue(customer.getReferences().contains(model.getObjectByIdentifier(1)));
-		assertEquals("Remember the orders", ((CommentObject) model.getObjectByIdentifier(3)).getComment());
+		assertEquals("Remember the orders", ((NoteCard) model.getObjectByIdentifier(3)).getComment());
 		assertEquals(30, customer.cardBounds().y);
 	}
 
@@ -148,15 +148,15 @@ class ModelPersistenceTest {
 		assertTrue(model.getObjects().isEmpty());
 	}
 
-	private static TableObject table(Model model, String name, String... fields) {
-		TableObject table = model.createTableObject(name);
+	private static TableCard table(Model model, String name, String... fields) {
+		TableCard table = model.createTableCard(name);
 		for (String field : fields) {
 			table.addField(new DesignerColumn(field, DataType.named("int"), "", "", ""));
 		}
 		return table;
 	}
 
-	private static Map<DesignerColumn, String> names(TableObject table) {
+	private static Map<DesignerColumn, String> names(TableCard table) {
 		Map<DesignerColumn, String> names = new IdentityHashMap<>();
 		for (DesignerColumn field : table.getFields()) {
 			names.put(field, field.getName());

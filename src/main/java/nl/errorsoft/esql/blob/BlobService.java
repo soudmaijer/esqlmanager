@@ -16,7 +16,7 @@ import nl.errorsoft.esql.job.Cancellation;
 import nl.errorsoft.esql.job.JobCancelledException;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 import nl.errorsoft.esql.table.TableService;
 
 /** Uploads a file into a binary cell and saves a binary cell to a file, reports progress (0 to 100) to the progress callback. */
@@ -34,7 +34,7 @@ public class BlobService {
 		this.tables = tables;
 	}
 
-	public void upload(Table table, TableData[] row, TableData cell, String file) throws Exception {
+	public void upload(Table table, TableCell[] row, TableCell cell, String file) throws Exception {
 		String condition = tables.rowFilter(row);
 		Path source = Path.of(file);
 		long size = Files.size(source);
@@ -46,7 +46,7 @@ public class BlobService {
 		progress(100);
 	}
 
-	public void download(Table table, TableData[] row, TableData cell, String file) throws Exception {
+	public void download(Table table, TableCell[] row, TableCell cell, String file) throws Exception {
 		String condition = tables.rowFilter(row);
 
 		try (OutputStream target = new CancellableOutputStream(Files.newOutputStream(Path.of(file)))) {

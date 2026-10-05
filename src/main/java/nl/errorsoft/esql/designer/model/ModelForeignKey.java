@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.dialect.Dialect;
 
@@ -13,15 +13,15 @@ import nl.errorsoft.esql.dialect.Dialect;
  * A foreign key drawn in the designer: the columns of {@code from} refer to the columns of {@code to}, pair by pair.
  * The actions are NO ACTION, CASCADE, SET NULL, RESTRICT or SET DEFAULT, empty for the server default.
  */
-public record DesignerForeignKey(TableObject from, List<String> fromColumns, TableObject to, List<String> toColumns, String name, String onDelete,
+public record ModelForeignKey(TableCard from, List<String> fromColumns, TableCard to, List<String> toColumns, String name, String onDelete,
 	String onUpdate) {
-	public DesignerForeignKey {
+	public ModelForeignKey {
 		fromColumns = List.copyOf(fromColumns);
 		toColumns = List.copyOf(toColumns);
 	}
 
 	/** The name a new key gets: fk_&lt;table&gt;_&lt;first column&gt;. */
-	public static String defaultName(TableObject from, String column) {
+	public static String defaultName(TableCard from, String column) {
 		return "fk_" + from.getName() + "_" + column;
 	}
 
@@ -54,7 +54,7 @@ public record DesignerForeignKey(TableObject from, List<String> fromColumns, Tab
 		}
 	}
 
-	private static DesignerColumn field(TableObject table, String column) {
+	private static DesignerColumn field(TableCard table, String column) {
 		DesignerColumn field = column == null ? null : table.getField(column);
 		if (field == null) {
 			throw new EsqlException("Table " + table.getName() + " has no column '" + (column == null ? "" : column) + "'.");
@@ -82,18 +82,18 @@ public record DesignerForeignKey(TableObject from, List<String> fromColumns, Tab
 		return "";
 	}
 
-	boolean involves(TableObject table) {
+	boolean involves(TableCard table) {
 		return from == table || to == table;
 	}
 
 	/** This key with the columns of the given table renamed (old name to new name), all at once so that swapped names stay right. */
-	DesignerForeignKey withColumnsRenamed(TableObject table, Map<String, String> renames) {
-		return new DesignerForeignKey(from, from == table ? replace(fromColumns, renames) : fromColumns, to,
+	ModelForeignKey withColumnsRenamed(TableCard table, Map<String, String> renames) {
+		return new ModelForeignKey(from, from == table ? replace(fromColumns, renames) : fromColumns, to,
 			to == table ? replace(toColumns, renames) : toColumns,
 			name, onDelete, onUpdate);
 	}
 
-	boolean usesColumn(TableObject table, String column) {
+	boolean usesColumn(TableCard table, String column) {
 		return (from == table && fromColumns.contains(column)) || (to == table && toColumns.contains(column));
 	}
 

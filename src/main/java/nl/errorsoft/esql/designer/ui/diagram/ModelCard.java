@@ -5,10 +5,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.awt.event.*;
-
-public class ModelObject extends JPanel {
-	private final List<ModelObject> references;
+public class ModelCard extends JPanel {
+	private final List<ModelCard> references;
 	private boolean selected;
 
 	private boolean hidden = true;
@@ -18,20 +16,20 @@ public class ModelObject extends JPanel {
 
 	private int identifier = -1;
 
-	public ModelObject() {
+	public ModelCard() {
 		references = new ArrayList<>();
 		this.setLayout(null);
 	}
 
-	public void addReference(ModelObject mo) {
+	public void addReference(ModelCard mo) {
 		references.add(mo);
 	}
 
-	public void removeReference(ModelObject mo) {
+	public void removeReference(ModelCard mo) {
 		references.remove(mo);
 	}
 
-	public List<ModelObject> getReferences() {
+	public List<ModelCard> getReferences() {
 		return references;
 	}
 

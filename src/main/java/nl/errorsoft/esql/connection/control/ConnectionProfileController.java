@@ -6,7 +6,7 @@ import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
-import nl.errorsoft.esql.database.DatabaseLister;
+import nl.errorsoft.esql.database.DatabaseListService;
 import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.connection.ui.dialog.ConnectionProfileDialog;
 
@@ -158,7 +158,7 @@ public class ConnectionProfileController {
 	}
 
 	/** The scratch connection of the databases tab with the one thread that uses it. */
-	private record Session(DatabaseLister catalog, ExecutorService worker) {
+	private record Session(DatabaseListService catalog, ExecutorService worker) {
 		/** Closes the connection after the work that is queued. */
 		void close() {
 			worker.execute(catalog::close);
@@ -177,7 +177,7 @@ public class ConnectionProfileController {
 	public void testConnection(ConnectionProfile profile, Consumer<TestResult> callback) {
 		invalidate();
 		int started = generation;
-		Session opened = new Session(new DatabaseLister(profile), Executors.newSingleThreadExecutor(Thread.ofVirtual().name("catalog").factory()));
+		Session opened = new Session(new DatabaseListService(profile), Executors.newSingleThreadExecutor(Thread.ofVirtual().name("catalog").factory()));
 		session = opened;
 		opened.worker().execute(() -> {
 			TestResult result;

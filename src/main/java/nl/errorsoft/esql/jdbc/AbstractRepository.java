@@ -13,7 +13,7 @@ import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.table.QueryResult;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 import nl.errorsoft.esql.table.TableName;
 
 import nl.errorsoft.esql.dialect.Dialect;
@@ -111,13 +111,13 @@ public abstract class AbstractRepository {
 		}
 
 		result.setColumns(columns);
-		List<TableData[]> rows = new ArrayList<>();
+		List<TableCell[]> rows = new ArrayList<>();
 
 		while (rs.next()) {
-			TableData[] row = new TableData[columns.length];
+			TableCell[] row = new TableCell[columns.length];
 
 			for (int i = 0; i < row.length; i++) {
-				row[i] = new TableData();
+				row[i] = new TableCell();
 				row[i].setData(rs.getObject(i + 1));
 				row[i].setTableColumn(columns[i]);
 			}
@@ -126,7 +126,7 @@ public abstract class AbstractRepository {
 		}
 
 		result.setRowCount(rows.size());
-		return new QueryResult(result, rows.toArray(new TableData[rows.size()][]));
+		return new QueryResult(result, rows.toArray(new TableCell[rows.size()][]));
 	}
 
 	/** The tables and views of a database (in the current schema on servers with schemas), with their row counts. */

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.ui.table;
 
+import nl.errorsoft.esql.table.TableCell;
+
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.*;
@@ -39,7 +41,7 @@ public class MultiLineCellEditor extends AbstractCellEditor implements TableCell
 		editorComponent.setBorder(focusBorder);
 		editorComponent.setText(switch (value) {
 			case null -> "";
-			case nl.errorsoft.esql.table.TableData cell -> cell.getEditText();
+			case TableCell cell -> cell.getEditText();
 			default -> value.toString();
 		});
 		editorComponent.grabFocus();

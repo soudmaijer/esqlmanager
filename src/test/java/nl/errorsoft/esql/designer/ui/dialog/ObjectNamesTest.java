@@ -7,25 +7,25 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.Test;
 
 import nl.errorsoft.esql.designer.model.Model;
-import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseCard;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 
 class ObjectNamesTest {
 	private final Model model = new Model("shop");
 
 	@Test
 	void namesCannotBeEmpty() {
-		TableObject table = model.createTableObject("orders");
+		TableCard table = model.createTableCard("orders");
 		assertEquals("The model needs a name.", ObjectNames.modelProblem("  "));
 		assertNull(ObjectNames.modelProblem("shop"));
 		assertEquals("The table needs a name.", ObjectNames.tableProblem(model, table, ""));
-		assertEquals("The database needs a name.", ObjectNames.databaseProblem(model, model.createDatabaseObject("a"), " "));
+		assertEquals("The database needs a name.", ObjectNames.databaseProblem(model, model.createDatabaseCard("a"), " "));
 	}
 
 	@Test
 	void aDatabaseNameIsUniqueInTheModel() {
-		DatabaseObject shop = model.createDatabaseObject("shop");
-		DatabaseObject other = model.createDatabaseObject("archive");
+		DatabaseCard shop = model.createDatabaseCard("shop");
+		DatabaseCard other = model.createDatabaseCard("archive");
 
 		assertNull(ObjectNames.databaseProblem(model, shop, "SHOP"));
 		assertNotNull(ObjectNames.databaseProblem(model, other, "Shop"));
@@ -34,10 +34,10 @@ class ObjectNamesTest {
 
 	@Test
 	void aTableNameIsUniqueWithinItsDatabase() {
-		DatabaseObject shop = model.createDatabaseObject("shop");
-		DatabaseObject archive = model.createDatabaseObject("archive");
-		TableObject orders = model.createTableObject("orders");
-		TableObject copy = model.createTableObject("orders_copy");
+		DatabaseCard shop = model.createDatabaseCard("shop");
+		DatabaseCard archive = model.createDatabaseCard("archive");
+		TableCard orders = model.createTableCard("orders");
+		TableCard copy = model.createTableCard("orders_copy");
 		model.addReference(shop, orders);
 		model.addReference(shop, copy);
 
@@ -52,8 +52,8 @@ class ObjectNamesTest {
 
 	@Test
 	void tablesWithoutADatabaseShareOneGroup() {
-		TableObject first = model.createTableObject("a");
-		TableObject second = model.createTableObject("b");
+		TableCard first = model.createTableCard("a");
+		TableCard second = model.createTableCard("b");
 		assertNotNull(ObjectNames.tableProblem(model, second, "a"));
 		assertNull(ObjectNames.tableProblem(model, first, "a"));
 	}

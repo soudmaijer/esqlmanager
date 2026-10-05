@@ -8,13 +8,13 @@ import javax.swing.Icon;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 /** The database of the model, drawn as a pill with the database icon and its name. */
-public class DatabaseObject extends ModelObject {
+public class DatabaseCard extends ModelCard {
 	private static final int HEIGHT = 44;
 
 	private String name = "";
 	private String description = "";
 
-	public DatabaseObject(String name, int identifier) {
+	public DatabaseCard(String name, int identifier) {
 		this.name = name;
 		this.setOpaque(false);
 		this.setIdentifier(identifier);

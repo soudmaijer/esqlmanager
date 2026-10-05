@@ -9,7 +9,7 @@ import nl.errorsoft.esql.database.Schema;
  * A new table: where it goes, its name, type (storage engine, null or empty when the server has none), comment and columns.
  * @param schema the schema to create it in, null for the current schema of the database
  */
-public record TableDefinition(Database database, Schema schema, String name, String type, String comment, List<CreateColumn> columns) {
+public record TableDefinition(Database database, Schema schema, String name, String type, String comment, List<ColumnDefinition> columns) {
 	public TableDefinition {
 		columns = List.copyOf(columns);
 	}

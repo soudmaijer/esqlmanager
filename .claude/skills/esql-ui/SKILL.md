@@ -30,7 +30,7 @@ JOptionPane.showConfirmDialog(window, "Are you sure?");
 ## Rule U2: Layout
 
 **Flag:**
-- A null layout with absolute bounds outside the allowed places: the designer canvas (`DesignerCanvas`, its cards, text inside a `CommentObject`), internal frames placed by `DesktopWindows`, and the splash.
+- A null layout with absolute bounds outside the allowed places: the designer canvas (`DesignerCanvas`, its cards, text inside a `NoteCard`), internal frames placed by `DesktopWindows`, and the splash.
 - A dialog or panel not built with `ui.util.Forms` (12px padding, button row bottom right, titled groups, label/field grid).
 - AWT widgets (`Label`, `Button`, `TextField`) instead of Swing.
 

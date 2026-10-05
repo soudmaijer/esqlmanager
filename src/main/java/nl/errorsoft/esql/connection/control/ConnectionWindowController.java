@@ -5,14 +5,12 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.ColumnOptions;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.control.CreateTableController;
+import nl.errorsoft.esql.table.control.TableEditorController;
 import nl.errorsoft.esql.table.control.IndexesController;
 import nl.errorsoft.esql.table.control.TableController;
-import nl.errorsoft.esql.table.ui.dialog.FieldPropertiesDialog;
+import nl.errorsoft.esql.table.ui.dialog.ColumnPropertiesDialog;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 import nl.errorsoft.esql.connection.ConnectionContext;
 
@@ -277,7 +275,7 @@ public class ConnectionWindowController {
 		}
 	}
 
-	public void addTableColumn(FieldPropertiesDialog fieldPropertiesDialog, ColumnOptions options) {
+	public void addTableColumn(ColumnPropertiesDialog fieldPropertiesDialog, ColumnOptions options) {
 		Table table = selectedTable("Add column");
 		if (table == null) {
 			return;
@@ -294,7 +292,7 @@ public class ConnectionWindowController {
 		}
 	}
 
-	public void editTableColumn(FieldPropertiesDialog fieldPropertiesDialog, TableColumn tbc, ColumnOptions options) {
+	public void editTableColumn(ColumnPropertiesDialog fieldPropertiesDialog, TableColumn tbc, ColumnOptions options) {
 		try {
 			mainController.updateStatus("Updating tablecolumn...", true);
 			TableController tableController = new TableController(this);
@@ -712,14 +710,14 @@ public class ConnectionWindowController {
 		}
 	}
 
-	public void showFieldPropertiesDialog(boolean add, boolean edit) {
+	public void showColumnPropertiesDialog(boolean add, boolean edit) {
 		if (edit ? selectedColumn("Edit column") == null : selectedTable("Add column") == null) {
 			return;
 		}
 
 		try {
 			mainController.updateStatus("Starting field properties interface...", true);
-			FieldPropertiesDialog fieldPropertiesDialog = new FieldPropertiesDialog(mainController.getMainWindow(), this, connectionWindow.getTableColumn(),
+			ColumnPropertiesDialog fieldPropertiesDialog = new ColumnPropertiesDialog(mainController.getMainWindow(), this, connectionWindow.getTableColumn(),
 				add, edit);
 			mainController.showConnectionState();
 			fieldPropertiesDialog.setVisible(true);
@@ -810,7 +808,7 @@ public class ConnectionWindowController {
 		}
 
 		try {
-			new CreateTableController(this).startCreateTable(database, hasSchemas() ? connectionWindow.getSchema() : null);
+			new TableEditorController(this).startCreateTable(database, hasSchemas() ? connectionWindow.getSchema() : null);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Create table", e);
 		}
@@ -849,7 +847,7 @@ public class ConnectionWindowController {
 		}
 
 		try {
-			new CreateTableController(this).startEditTable(table.getDatabase(), table);
+			new TableEditorController(this).startEditTable(table.getDatabase(), table);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Modify table", e);
 		}
@@ -922,8 +920,8 @@ public class ConnectionWindowController {
 		maintainSelectedTable("Optimize table", TableController::optimizeTable);
 	}
 
-	public void analyseTable() {
-		maintainSelectedTable("Analyze table", TableController::analyseTable);
+	public void analyzeTable() {
+		maintainSelectedTable("Analyze table", TableController::analyzeTable);
 	}
 
 	public void checkTable() {

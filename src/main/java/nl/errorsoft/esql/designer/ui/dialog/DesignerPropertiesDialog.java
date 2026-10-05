@@ -1,9 +1,8 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
-import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseCard;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 
-import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.designer.model.Model;
 
 import javax.swing.*;
@@ -33,13 +32,13 @@ public class DesignerPropertiesDialog extends FormDialog {
 		if (cur != null) {
 			cont.remove(cur);
 		}
-		if (obj instanceof TableObject object) {
+		if (obj instanceof TableCard object) {
 			TablePropertiesPanel properties = new TablePropertiesPanel(object, serverType, model);
 			this.setTitle("Properties of '" + object.getName() + "'");
 			this.cont.add(properties);
 			cur = properties;
 		}
-		if (obj instanceof DatabaseObject object1) {
+		if (obj instanceof DatabaseCard object1) {
 			DatabasePropertiesPanel properties = new DatabasePropertiesPanel(object1, model);
 			this.setTitle("Properties of '" + object1.getName() + "'");
 			this.cont.add(properties);

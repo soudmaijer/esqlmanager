@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.database.Database;
-import nl.errorsoft.esql.database.DatabaseLister;
+import nl.errorsoft.esql.database.DatabaseListService;
 import nl.errorsoft.esql.database.DatabaseRepository;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.connection.DatabaseSelection;
@@ -37,7 +37,7 @@ import nl.errorsoft.esql.database.Schema;
 import org.junit.jupiter.api.Assumptions;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.TableForeignKey;
 import nl.errorsoft.esql.designer.DesignedDatabase;
@@ -148,7 +148,7 @@ abstract class DialectContractTest {
 		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), file.getAbsolutePath());
 		runSynchronously(imported::setListener, imported);
 
-		TableData[][] rows = service().loadPage(table, 0, 100);
+		TableCell[][] rows = service().loadPage(table, 0, 100);
 		assertEquals(3, rows.length);
 		assertEquals("it's \\ tricky\nwith a second line", rows[1][2].getData());
 		assertTrue(rows[2][2].isNull());
@@ -168,7 +168,7 @@ abstract class DialectContractTest {
 		insert(table, "b", "y");
 		String hostile = "O'Brien \\' ; DROP TABLE " + name + "; -- \\";
 
-		TableData[][] rows = service().loadPage(table, 0, 100);
+		TableCell[][] rows = service().loadPage(table, 0, 100);
 		assertEquals(1, service().changeCell(table, rows[0], rows[0][2], hostile));
 		assertEquals(hostile, service().loadPage(table, 0, 100)[0][2].getData());
 
@@ -180,14 +180,14 @@ abstract class DialectContractTest {
 	@Test
 	void anEmptyCellIsWrittenAsNull() throws Exception {
 		String name = "nulls_" + System.nanoTime();
-		CreateColumn id = new CreateColumn("id");
+		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
 		id.notnull = true;
-		CreateColumn label = new CreateColumn("label");
+		ColumnDefinition label = new ColumnDefinition("label");
 		label.type = VARCHAR;
 		label.length = "20";
-		CreateColumn amount = new CreateColumn("amount");
+		ColumnDefinition amount = new ColumnDefinition("amount");
 		amount.type = INTEGER;
 		for (String statement : dialect.createTableSql(TableName.of(name), Arrays.asList(id, label, amount), null, "")) {
 			connection.executeUpdate(statement);
@@ -195,7 +195,7 @@ abstract class DialectContractTest {
 		connection.executeUpdate("INSERT INTO " + dialect.quote(TableName.of(name)) + " VALUES (1, 'text', 7)");
 		Table table = table(name);
 
-		TableData[] row = service().loadPage(table, 0, 10)[0];
+		TableCell[] row = service().loadPage(table, 0, 10)[0];
 		assertEquals(1, service().changeCell(table, row, row[1], ""));
 		row = service().loadPage(table, 0, 10)[0];
 		assertTrue(row[1].isNull());
@@ -301,7 +301,7 @@ abstract class DialectContractTest {
 		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), file.getAbsolutePath(),
 			new ImportOptions(true, false, java.nio.charset.StandardCharsets.ISO_8859_1));
 		runSynchronously(imported::setListener, imported);
-		TableData[][] rows = service().loadPage(table, 0, 100);
+		TableCell[][] rows = service().loadPage(table, 0, 100);
 		assertEquals(3, rows.length);
 		assertEquals("caf\u00e9", rows[0][2].getData());
 		service().dropTable(table);
@@ -521,9 +521,9 @@ abstract class DialectContractTest {
 	void columnsCarryCommentsAndStatementsCanBePreviewed() throws Exception {
 		Assumptions.assumeTrue(dialect.supportsColumnComments(), "The server has no column comments");
 		String name = "cc_" + System.nanoTime();
-		CreateColumn id = column("id", INTEGER, "", true);
+		ColumnDefinition id = column("id", INTEGER, "", true);
 		id.comment = "the key, it's unique";
-		CreateColumn label = column("label", VARCHAR, "20", false);
+		ColumnDefinition label = column("label", VARCHAR, "20", false);
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 
 		// The preview is what Save runs.
@@ -534,12 +534,12 @@ abstract class DialectContractTest {
 		assertEquals("the key, it's unique", service().loadColumns(table)[0].getComment());
 		assertEquals("", service().loadColumns(table)[1].getComment());
 
-		CreateColumn added = column("extra", INTEGER, "", false);
+		ColumnDefinition added = column("extra", INTEGER, "", false);
 		added.comment = "added later";
 		service().addColumn(table, added);
 		assertEquals("added later", service().loadColumns(table)[2].getComment());
 
-		CreateColumn changed = column("extra", INTEGER, "", false);
+		ColumnDefinition changed = column("extra", INTEGER, "", false);
 		changed.comment = "";
 		service().editColumn(table.getTableColumn("extra"), changed);
 		assertEquals("", service().loadColumns(table)[2].getComment());
@@ -599,7 +599,7 @@ abstract class DialectContractTest {
 		for (Dialect.Maintenance command : dialect.maintenanceCommands()) {
 			String message = switch (command) {
 				case OPTIMIZE -> service().optimizeTable(table);
-				case ANALYZE -> service().analyseTable(table);
+				case ANALYZE -> service().analyzeTable(table);
 				case CHECK -> service().checkTable(table);
 				case REPAIR -> service().repairTable(table);
 			};
@@ -614,11 +614,11 @@ abstract class DialectContractTest {
 		String parent = "fk_parent_" + System.nanoTime();
 		String child = "fk_child_" + System.nanoTime();
 		createTable(parent, "");
-		CreateColumn id = new CreateColumn("id");
+		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
 		id.notnull = true;
-		CreateColumn parentId = new CreateColumn("parent_id");
+		ColumnDefinition parentId = new ColumnDefinition("parent_id");
 		parentId.type = INTEGER;
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 		service().createTable(new TableDefinition(database, null, child, engine, "", Arrays.asList(id, parentId)));
@@ -649,11 +649,11 @@ abstract class DialectContractTest {
 		String parent = "gen_parent_" + System.nanoTime();
 		String child = "gen_child_" + System.nanoTime();
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
-		CreateColumn id = new CreateColumn("id");
+		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
 		id.notnull = true;
-		CreateColumn parentId = new CreateColumn("parent_id");
+		ColumnDefinition parentId = new ColumnDefinition("parent_id");
 		parentId.type = INTEGER;
 		DesignedForeignKey key = new DesignedForeignKey("fk_gen", List.of("parent_id"), parent, List.of("id"), "SET NULL", "");
 		// The child comes first, so the key can only be added after every table was created.
@@ -683,9 +683,9 @@ abstract class DialectContractTest {
 	void designerReadsAnExistingDatabaseBack() throws Exception {
 		String name = "re_" + System.nanoTime();
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
-		CreateColumn id = column("id", INTEGER, "", true);
+		ColumnDefinition id = column("id", INTEGER, "", true);
 		id.autoincrement = true;
-		CreateColumn customerName = column("name", VARCHAR, "50", false);
+		ColumnDefinition customerName = column("name", VARCHAR, "50", false);
 		customerName.notnull = true;
 		customerName.defaultval = "it's";
 		DesignedTable customers = new DesignedTable("customers", engine, "", List.of(id, customerName), List.of());
@@ -710,10 +710,10 @@ abstract class DialectContractTest {
 		assertEquals(List.of("customers", "notes", "order_lines", "products"), read.tables().stream().map(DesignedTable::name).sorted().toList());
 		DesignedTable readCustomers = designed(read, "customers");
 		assertEquals(List.of("id", "name"), readCustomers.columns().stream().map(c -> c.name).toList());
-		CreateColumn readId = readCustomers.columns().get(0);
+		ColumnDefinition readId = readCustomers.columns().get(0);
 		assertTrue(readId.primary && readId.autoincrement && readId.notnull);
 		assertTrue(readId.type.getName().toLowerCase().startsWith("int"), readId.type.getName());
-		CreateColumn readName = readCustomers.columns().get(1);
+		ColumnDefinition readName = readCustomers.columns().get(1);
 		assertEquals("varchar", readName.type.getName().toLowerCase());
 		assertEquals("50", readName.length);
 		assertEquals("it's", readName.defaultval);
@@ -760,16 +760,16 @@ abstract class DialectContractTest {
 		Table orders = tables.get(0);
 		assertEquals(name, orders.getSchema().getName());
 
-		TableData[] row = new TableData[2];
+		TableCell[] row = new TableCell[2];
 		TableColumn[] columns = service().loadColumns(orders);
 		assertEquals(List.of("id", "note"), Arrays.stream(columns).map(TableColumn::getName).toList());
 		for (int i = 0; i < 2; i++) {
-			row[i] = new TableData();
+			row[i] = new TableCell();
 			row[i].setTableColumn(columns[i]);
 			row[i].setData(i == 0 ? "7" : "in schema");
 		}
 		service().insertRow(orders, row);
-		TableData[][] rows = service().loadPage(orders, 0, 10);
+		TableCell[][] rows = service().loadPage(orders, 0, 10);
 		assertEquals(1, rows.length);
 		assertEquals("in schema", rows[0][1].getData());
 		assertEquals(0, service().loadPage(table("orders"), 0, 10).length);
@@ -789,7 +789,7 @@ abstract class DialectContractTest {
 		index.setName("orders_note_idx");
 		service().addIndex(orders, index, new TableColumn[]{orders.getTableColumn("note")}, "INDEX");
 		service().dropIndex(orders, orders.getTableIndex("orders_note_idx"));
-		assertNotNull(service().analyseTable(orders));
+		assertNotNull(service().analyzeTable(orders));
 
 		var designed = new ConnectionContext(connection).designer().reverseEngineer(schema);
 		assertEquals(List.of("orders"), designed.tables().stream().map(DesignedTable::name).toList());
@@ -848,7 +848,7 @@ abstract class DialectContractTest {
 		ConnectionProfile typed = profile();
 		// A selection that names a database which is gone must not stop the catalog from connecting.
 		typed.setDatabases("no_such_database");
-		try (DatabaseLister catalog = new DatabaseLister(typed)) {
+		try (DatabaseListService catalog = new DatabaseListService(typed)) {
 			catalog.connect();
 			assertFalse(catalog.serverDescription().isEmpty());
 			assertTrue(catalog.databases().containsAll(List.of(DATABASE, extra.getName())));
@@ -952,7 +952,7 @@ abstract class DialectContractTest {
 			queryTabSwitches.run();
 			assertNotNull(switch (command) {
 				case OPTIMIZE -> service().optimizeTable(table);
-				case ANALYZE -> service().analyseTable(table);
+				case ANALYZE -> service().analyzeTable(table);
 				case CHECK -> service().checkTable(table);
 				case REPAIR -> service().repairTable(table);
 			});
@@ -1043,8 +1043,8 @@ abstract class DialectContractTest {
 		}
 	}
 
-	private static CreateColumn column(String name, DataType type, String length, boolean primary) {
-		CreateColumn column = new CreateColumn(name);
+	private static ColumnDefinition column(String name, DataType type, String length, boolean primary) {
+		ColumnDefinition column = new ColumnDefinition(name);
 		column.type = type;
 		column.length = length;
 		column.primary = primary;
@@ -1064,17 +1064,17 @@ abstract class DialectContractTest {
 	}
 
 	private void createTable(String name, String comment) throws Exception {
-		CreateColumn id = new CreateColumn("id");
+		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
 		id.notnull = true;
 		id.autoincrement = true;
-		CreateColumn title = new CreateColumn("name");
+		ColumnDefinition title = new ColumnDefinition("name");
 		title.type = VARCHAR;
 		title.length = "50";
 		title.notnull = true;
 		title.defaultval = "it's";
-		CreateColumn note = new CreateColumn("note");
+		ColumnDefinition note = new ColumnDefinition("note");
 		note.type = DataType.named("text");
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 
@@ -1098,10 +1098,10 @@ abstract class DialectContractTest {
 	private void insert(Table table, String name, String note) throws Exception {
 		TableColumn[] columns = service().loadColumns(table);
 		table.setColumns(columns);
-		TableData[] row = new TableData[2];
+		TableCell[] row = new TableCell[2];
 
 		for (int i = 0; i < 2; i++) {
-			row[i] = new TableData();
+			row[i] = new TableCell();
 			row[i].setTableColumn(columns[i + 1]);
 			row[i].setData(i == 0 ? name : note);
 		}

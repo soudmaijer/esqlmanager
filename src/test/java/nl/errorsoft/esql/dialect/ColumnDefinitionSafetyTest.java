@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import nl.errorsoft.esql.dialect.mysql.MySqlDialect;
 import nl.errorsoft.esql.dialect.postgres.PostgresDialect;
 import nl.errorsoft.esql.error.EsqlException;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.TableName;
 
@@ -24,7 +24,7 @@ class ColumnDefinitionSafetyTest {
 	@Test
 	void refusesALengthThatIsNotANumber() {
 		for (Dialect dialect : dialects) {
-			CreateColumn column = column("varchar", HOSTILE_LENGTH);
+			ColumnDefinition column = column("varchar", HOSTILE_LENGTH);
 			assertThrows(EsqlException.class, () -> dialect.createTableSql(TableName.of("t"), List.of(column), null, ""));
 			assertThrows(EsqlException.class, () -> dialect.addColumnSql(TableName.of("t"), column));
 			assertThrows(EsqlException.class, () -> dialect.modifyColumnSql(TableName.of("t"), "a", column));
@@ -34,7 +34,7 @@ class ColumnDefinitionSafetyTest {
 	@Test
 	void refusesATypeNameThatIsNotAName() {
 		for (Dialect dialect : dialects) {
-			CreateColumn column = column("int); DROP TABLE x; --", "");
+			ColumnDefinition column = column("int); DROP TABLE x; --", "");
 			assertThrows(EsqlException.class, () -> dialect.createTableSql(TableName.of("t"), List.of(column), null, ""));
 		}
 	}
@@ -60,8 +60,8 @@ class ColumnDefinitionSafetyTest {
 		assertEquals("ALTER TABLE `t` ENGINE=InnoDB", dialect.setTableTypeSql(TableName.of("t"), "innodb").get(0));
 	}
 
-	private static CreateColumn column(String type, String length) {
-		CreateColumn column = new CreateColumn("c");
+	private static ColumnDefinition column(String type, String length) {
+		ColumnDefinition column = new ColumnDefinition("c");
 		column.type = DataType.named(type);
 		column.length = length;
 		return column;

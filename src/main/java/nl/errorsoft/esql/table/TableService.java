@@ -125,7 +125,7 @@ public class TableService {
 		return repository.maintain(table, Dialect.Maintenance.OPTIMIZE);
 	}
 
-	public String analyseTable(Table table) throws Exception {
+	public String analyzeTable(Table table) throws Exception {
 		return repository.maintain(table, Dialect.Maintenance.ANALYZE);
 	}
 
@@ -139,12 +139,12 @@ public class TableService {
 
 	// Columns
 
-	public void addColumn(Table table, CreateColumn column) throws Exception {
+	public void addColumn(Table table, ColumnDefinition column) throws Exception {
 		repository.addColumn(table, column);
 	}
 
 	/** Changes the column to the given definition; {@code column.primary} adds or drops the primary key. */
-	public void editColumn(TableColumn old, CreateColumn column) throws Exception {
+	public void editColumn(TableColumn old, ColumnDefinition column) throws Exception {
 		repository.modifyColumn(old, column);
 
 		if (old.isPrimary() && !column.primary) {
@@ -160,8 +160,8 @@ public class TableService {
 	}
 
 	/** A column definition from the form of a dialog: options the type does not have are switched off. */
-	public static CreateColumn newColumn(String name, String length, String defaultValue, DataType type, boolean auto, boolean unsigned, boolean nullable) {
-		CreateColumn column = new CreateColumn(name);
+	public static ColumnDefinition newColumn(String name, String length, String defaultValue, DataType type, boolean auto, boolean unsigned, boolean nullable) {
+		ColumnDefinition column = new ColumnDefinition(name);
 		column.type = type;
 		column.length = length;
 		column.defaultval = defaultValue;
@@ -231,13 +231,13 @@ public class TableService {
 	// Rows
 
 	/** Loads the columns, indexes and row count of the table and returns one page of its rows. */
-	public TableData[][] loadPage(Table table, int skip, int show) throws Exception {
+	public TableCell[][] loadPage(Table table, int skip, int show) throws Exception {
 		loadColumns(table);
 		loadIndexes(table);
 		return repository.readPage(table, skip, show);
 	}
 
-	public void insertRow(Table table, TableData[] row) throws Exception {
+	public void insertRow(Table table, TableCell[] row) throws Exception {
 		repository.insertRow(table, row);
 		table.setRowCount(table.getRowCount() + 1);
 	}
@@ -246,7 +246,7 @@ public class TableService {
 	 * Writes the text typed into a cell; an empty text is SQL NULL.
 	 * Returns the number of changed rows, zero when the value is the same.
 	 */
-	public int changeCell(Table table, TableData[] row, TableData cell, Object newValue) throws Exception {
+	public int changeCell(Table table, TableCell[] row, TableCell cell, Object newValue) throws Exception {
 		String text = newValue == null ? "" : newValue.toString();
 		boolean unchanged = cell.isNull() ? text.isEmpty() : cell.getData().equals(text);
 		if (unchanged) {
@@ -258,13 +258,13 @@ public class TableService {
 		return repository.updateCell(table, row, cell, text.isEmpty() ? null : text);
 	}
 
-	public void deleteRow(Table table, TableData[] row) throws Exception {
+	public void deleteRow(Table table, TableCell[] row) throws Exception {
 		repository.deleteRow(table, row);
 		table.setRowCount(table.getRowCount() - 1);
 	}
 
 	/** The condition that selects the given row, for statements that handle a single row. */
-	public String rowFilter(TableData[] row) throws Exception {
+	public String rowFilter(TableCell[] row) throws Exception {
 		return repository.rowFilter(row);
 	}
 

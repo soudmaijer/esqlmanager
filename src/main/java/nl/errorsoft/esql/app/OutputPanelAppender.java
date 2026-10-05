@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.app.control;
+package nl.errorsoft.esql.app;
 
 import java.io.Serializable;
 import org.apache.logging.log4j.LogManager;

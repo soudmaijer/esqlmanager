@@ -10,18 +10,19 @@ import javax.swing.JTextField;
 import nl.errorsoft.esql.database.DatabaseNames;
 import nl.errorsoft.esql.dialect.DatabaseOption;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
+import nl.errorsoft.esql.ui.dialog.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 
 /** The Create database dialog: the name and the options of the server (character set, owner, ...), each chosen from the values the server offers. */
-public final class CreateDatabaseDialog {
+public final class CreateDatabaseDialog extends FormDialog {
 	/** What the user chose: the name and the value per option key, blank where the server default is wanted. */
 	public record Request(String name, Map<String, String> options) {
 	}
 
 	private static final String SERVER_DEFAULT = "";
 
-	private CreateDatabaseDialog() {
-	}
+	private final JTextField name = new JTextField(24);
+	private final Map<String, JComboBox<String>> combos = new LinkedHashMap<>();
 
 	/**
 	 * Asks for the name and options.
@@ -32,9 +33,13 @@ public final class CreateDatabaseDialog {
 	 * @return null when the user cancels
 	 */
 	public static Request ask(Component parent, String term, List<DatabaseOption> options, Map<String, List<String>> choices, List<String> existing) {
-		JTextField name = new JTextField(24);
+		CreateDatabaseDialog dialog = new CreateDatabaseDialog(parent, term, options, choices, existing);
+		return dialog.showDialog() ? dialog.request() : null;
+	}
+
+	private CreateDatabaseDialog(Component parent, String term, List<DatabaseOption> options, Map<String, List<String>> choices, List<String> existing) {
+		super(Dialogs.windowOf(parent), "Create " + term, true);
 		Forms.Grid grid = new Forms.Grid().row("&Name:", name);
-		Map<String, JComboBox<String>> combos = new LinkedHashMap<>();
 
 		for (DatabaseOption option : options) {
 			JComboBox<String> combo = new JComboBox<>();
@@ -58,12 +63,12 @@ public final class CreateDatabaseDialog {
 			}
 		}
 
-		boolean accepted = Dialogs.form(parent, "Create " + term, grid.panel(), "Create", name, () -> DatabaseNames.problem(name.getText(), term, existing));
+		setOkCancel(grid.panel(), "Create", "Cancel");
+		setValidator(() -> DatabaseNames.problem(name.getText(), term, existing));
+		setInitialFocus(name);
+	}
 
-		if (!accepted) {
-			return null;
-		}
-
+	private Request request() {
 		Map<String, String> chosen = new LinkedHashMap<>();
 		combos.forEach((key, combo) -> chosen.put(key, java.util.Objects.toString(combo.getSelectedItem(), "")));
 		return new Request(name.getText().trim(), chosen);

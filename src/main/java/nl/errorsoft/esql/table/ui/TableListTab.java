@@ -7,7 +7,6 @@ import nl.errorsoft.esql.ui.table.ColumnWidths;
 import nl.errorsoft.esql.ui.table.SortableTableModel;
 
 import javax.swing.*;
-import javax.swing.table.*;
 
 public class TableListTab extends JScrollPane {
 	DatabaseController databaseController;
@@ -31,7 +30,7 @@ public class TableListTab extends JScrollPane {
 		this.getViewport().add(table);
 	}
 
-	public void loadDatabases(java.util.List<Table> v) {
+	public void loadTables(java.util.List<Table> v) {
 		dtm = new SortableTableModel();
 
 		dtm.addColumn("Name");

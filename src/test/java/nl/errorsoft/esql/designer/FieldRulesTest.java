@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.designer.ui.dialog;
+package nl.errorsoft.esql.designer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.blob.control;
 
 import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
@@ -23,15 +23,15 @@ public class BlobTransferController {
 	private ConnectionWindowController connectionWindowController;
 	private TransferProgress progress;
 	private Table table;
-	private TableData[] row;
-	private TableData cell;
+	private TableCell[] row;
+	private TableCell cell;
 	private volatile BlobService running;
 
 	public BlobTransferController(ConnectionWindowController connectionWindowController) {
 		this.connectionWindowController = connectionWindowController;
 	}
 
-	public void showDownloadDialog(MainWindow parent, Table table, TableData[] row, TableData cell) {
+	public void showDownloadDialog(MainWindow parent, Table table, TableCell[] row, TableCell cell) {
 		this.table = table;
 		this.row = row;
 		this.cell = cell;
@@ -39,7 +39,7 @@ public class BlobTransferController {
 		progress.open();
 	}
 
-	public void showUploadDialog(MainWindow parent, Table table, TableData[] row, TableData cell) {
+	public void showUploadDialog(MainWindow parent, Table table, TableCell[] row, TableCell cell) {
 		this.table = table;
 		this.row = row;
 		this.cell = cell;

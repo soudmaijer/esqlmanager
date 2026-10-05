@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import org.junit.jupiter.api.Test;
 
 class ModelCheckTest {
 	private static DesignedTable table(String name, String... columns) {
-		return new DesignedTable(name, "", "", java.util.Arrays.stream(columns).map(CreateColumn::new).toList(), List.of());
+		return new DesignedTable(name, "", "", java.util.Arrays.stream(columns).map(ColumnDefinition::new).toList(), List.of());
 	}
 
 	@Test

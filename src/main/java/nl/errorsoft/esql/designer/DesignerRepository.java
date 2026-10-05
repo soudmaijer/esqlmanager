@@ -13,7 +13,7 @@ import java.util.TreeMap;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.jdbc.AbstractRepository;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 
 /** Reads the structure of an existing database for the designer from the JDBC metadata; what differs per server is asked from the dialect. */
 public class DesignerRepository extends AbstractRepository {
@@ -44,9 +44,9 @@ public class DesignerRepository extends AbstractRepository {
 	}
 
 	/** The columns of a table of the active database in their order, with the primary key columns marked. */
-	public List<CreateColumn> loadColumns(String schema, String table) throws SQLException {
+	public List<ColumnDefinition> loadColumns(String schema, String table) throws SQLException {
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-		List<CreateColumn> columns = new ArrayList<>();
+		List<ColumnDefinition> columns = new ArrayList<>();
 
 		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table, "%")) {
 			while (rs.next()) {
@@ -56,7 +56,7 @@ public class DesignerRepository extends AbstractRepository {
 
 		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table)) {
 			while (rs.next()) {
-				for (CreateColumn column : columns) {
+				for (ColumnDefinition column : columns) {
 					column.primary |= column.name.equals(rs.getString("COLUMN_NAME"));
 				}
 			}

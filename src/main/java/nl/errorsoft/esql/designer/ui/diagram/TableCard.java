@@ -15,7 +15,7 @@ import javax.swing.Icon;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 /** A table of the model, drawn as a card: a header in the accent colour with the name and a row per field. */
-public class TableObject extends ModelObject {
+public class TableCard extends ModelCard {
 	static final int HEADER = 30;
 	static final int ROW = 20;
 	private static final int BOTTOM = 6;
@@ -32,7 +32,7 @@ public class TableObject extends ModelObject {
 	private int hoveredRow = -1;
 	private Set<String> foreignKeyColumns = new HashSet<>();
 
-	public TableObject(String name, int identifier) {
+	public TableCard(String name, int identifier) {
 		this.name = name;
 		this.setOpaque(false);
 		this.setIdentifier(identifier);

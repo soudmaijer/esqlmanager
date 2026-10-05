@@ -3,12 +3,12 @@ package nl.errorsoft.esql.table.ui;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.ColumnNames;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableDefinition;
-import nl.errorsoft.esql.table.control.CreateTableController;
+import nl.errorsoft.esql.table.control.TableEditorController;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.component.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -59,7 +59,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private static final int AUTO_INCREMENT = 5;
 	private static final int DEFAULT = 6;
 
-	private final CreateTableController createTableController;
+	private final TableEditorController createTableController;
 	private final String title;
 	private final Table table;
 
@@ -69,7 +69,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final JComboBox<Database> dbs;
 	private final JComboBox<String> tabletypes;
 
-	// The columns: new ones (CreateColumn) or, when editing, the existing ones (TableColumn) which are only shown
+	// The columns: new ones (ColumnDefinition) or, when editing, the existing ones (TableColumn) which are only shown
 	private final List<Object> columns = new ArrayList<>();
 	private final ColumnTableModel columnModel = new ColumnTableModel();
 	private final JTable columnTable = new JTable(columnModel);
@@ -101,7 +101,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final JButton cancel = Forms.button("&Cancel");
 
 	/** The new column shown in the details, null when none is selected or the columns are the existing ones. */
-	private CreateColumn selField = null;
+	private ColumnDefinition selField = null;
 	/** True while the details are filled from a column, so that filling them does not write back. */
 	private boolean loading;
 	/** After a Save with a problem the message follows the input until the problem is gone. */
@@ -113,7 +113,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final String initialType;
 	private boolean columnsChanged;
 
-	public TableEditorTab(CreateTableController createTableController, String title, Database database, Table table) {
+	public TableEditorTab(TableEditorController createTableController, String title, Database database, Table table) {
 		super(new BorderLayout(0, Forms.PADDING));
 		this.createTableController = createTableController;
 		this.title = title;
@@ -359,9 +359,9 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		if (!showSql.isSelected() || !(sqlScroll.isVisible())) {
 			return;
 		}
-		List<CreateColumn> created = new ArrayList<>();
+		List<ColumnDefinition> created = new ArrayList<>();
 		for (Object column : columns) {
-			if (column instanceof CreateColumn c) {
+			if (column instanceof ColumnDefinition c) {
 				created.add(c);
 			}
 		}
@@ -401,9 +401,9 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			return;
 		}
 		if (table == null) {
-			List<CreateColumn> cols = new ArrayList<>();
+			List<ColumnDefinition> cols = new ArrayList<>();
 			for (Object column : columns) {
-				cols.add((CreateColumn) column);
+				cols.add((ColumnDefinition) column);
 			}
 			createTableController.createTable(definition(tablename.getText(), cols), this);
 		} else {
@@ -412,7 +412,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	}
 
 	/** The table as the editor holds it, in the chosen database. */
-	private TableDefinition definition(String name, List<CreateColumn> columns) {
+	private TableDefinition definition(String name, List<ColumnDefinition> columns) {
 		Database database = dbs.getSelectedItem() instanceof Database chosen ? chosen : new Database("");
 		return new TableDefinition(database, null, name, selectedTableType(), comment.getText(), columns);
 	}
@@ -421,7 +421,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		if (columnTable.isEditing()) {
 			columnTable.getCellEditor().stopCellEditing();
 		}
-		CreateColumn column = new CreateColumn(ColumnNames.next(allNames()));
+		ColumnDefinition column = new ColumnDefinition(ColumnNames.next(allNames()));
 		column.type = columnType.getItemAt(0);
 		columns.add(column);
 		columnModel.fireTableRowsInserted(columns.size() - 1, columns.size() - 1);
@@ -469,7 +469,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private List<String> allNames() {
 		List<String> names = new ArrayList<>();
 		for (Object column : columns) {
-			names.add(column instanceof TableColumn tc ? tc.getName() : ((CreateColumn) column).name);
+			names.add(column instanceof TableColumn tc ? tc.getName() : ((ColumnDefinition) column).name);
 		}
 		return names;
 	}
@@ -504,7 +504,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private void showColumn() {
 		int row = columnTable.getSelectedRow();
 		Object selected = row >= 0 && row < columns.size() ? columns.get(row) : null;
-		selField = selected instanceof CreateColumn column ? column : null;
+		selField = selected instanceof ColumnDefinition column ? column : null;
 		loading = true;
 		if (selField != null) {
 			columnName.setText(selField.name);
@@ -608,7 +608,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 
 		@Override
 		public boolean isCellEditable(int row, int column) {
-			if (!(columns.get(row) instanceof CreateColumn created)) {
+			if (!(columns.get(row) instanceof ColumnDefinition created)) {
 				return false;
 			}
 			DataType type = created.type;
@@ -622,7 +622,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 
 		@Override
 		public Object getValueAt(int row, int column) {
-			if (columns.get(row) instanceof CreateColumn created) {
+			if (columns.get(row) instanceof ColumnDefinition created) {
 				return switch (column) {
 					case NAME -> created.name;
 					case TYPE -> created.type;
@@ -647,7 +647,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 
 		@Override
 		public void setValueAt(Object value, int row, int column) {
-			if (!(columns.get(row) instanceof CreateColumn created)) {
+			if (!(columns.get(row) instanceof ColumnDefinition created)) {
 				return;
 			}
 			switch (column) {

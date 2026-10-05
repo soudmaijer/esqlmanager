@@ -13,7 +13,6 @@ import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.TreeMenu;
 import nl.errorsoft.esql.connection.TreeSelection;
-import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.query.ui.QueryTab;
 import nl.errorsoft.esql.help.ui.HelpPanel;
@@ -554,7 +553,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		}
 		// Add field.
 		else if (eventSource == btnAddField) {
-			connectionWindowController.showFieldPropertiesDialog(true, false);
+			connectionWindowController.showColumnPropertiesDialog(true, false);
 		}
 		// Drop field.
 		else if (eventSource == btnDeleteField) {
@@ -608,7 +607,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 			case OPEN_TABLE -> connectionWindowController.openTable(getTable());
 			case EDIT_TABLE -> connectionWindowController.showEditTableTab();
 			case INDEXES -> connectionWindowController.showIndexesTab();
-			case ADD_FIELD -> connectionWindowController.showFieldPropertiesDialog(true, false);
+			case ADD_FIELD -> connectionWindowController.showColumnPropertiesDialog(true, false);
 			case EMPTY_TABLE -> {
 				if (Dialogs.confirmDestructive(this, "Empty table", "Delete all rows from " + tableName(getTable()) + "? This cannot be undone.", "Empty")) {
 					connectionWindowController.flushSelectedTable();
@@ -616,11 +615,11 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 			}
 			case DROP_TABLE -> dropTable();
 			case OPTIMIZE -> connectionWindowController.optimizeTable();
-			case ANALYZE -> connectionWindowController.analyseTable();
+			case ANALYZE -> connectionWindowController.analyzeTable();
 			case CHECK -> connectionWindowController.checkTable();
 			case REPAIR -> connectionWindowController.repairTable();
 			case RELOAD_COLUMNS -> connectionWindowController.reloadSelectedTable();
-			case EDIT_FIELD -> connectionWindowController.showFieldPropertiesDialog(false, true);
+			case EDIT_FIELD -> connectionWindowController.showColumnPropertiesDialog(false, true);
 			case DROP_FIELD -> dropField();
 			case SEPARATOR -> {
 			}

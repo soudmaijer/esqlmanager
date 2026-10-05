@@ -53,7 +53,7 @@ String sql = type == ServerType.POSTGRESQL ? query + " LIMIT " + size : query + 
 **Flag:**
 - A raw identifier or value concatenated into a statement. Identifiers go through `dialect.quote(...)` (tables through `quote(TableName)`), values through `dialect.literal(...)` or `DatabaseConnection.formatFieldValue`.
 - Metadata lookups without `PreparedStatement` parameters.
-- An empty cell written as the text "null" instead of SQL `NULL` (`TableData.isNull()`).
+- An empty cell written as the text "null" instead of SQL `NULL` (`TableCell.isNull()`).
 - Paging without ordering by the primary key on PostgreSQL and MySQL.
 
 ```java
@@ -149,6 +149,8 @@ This is the naming standard. New and renamed classes must follow it. Existing cl
 | `Dialog` | Anything that is a `JDialog` (replaces `UI` and `Form` suffixes and bare names such as `Generate`, `Properties`, `Processlist`) |
 | `Panel` | Composed Swing component inside a window, tab or dialog (replaces `View` / `Form`) |
 | `Renderer`, `CellEditor` | Swing renderers and editors |
+| `Painter` | Draws a shape on a canvas with `Graphics2D` (not a cell renderer), such as `ConnectorPainter` |
+| `Card` | An object drawn on the designer canvas (`TableCard`, `DatabaseCard`, `NoteCard`, base `ModelCard`) |
 | `Listener` | Swing event or callback |
 | `Theme` | Colours and fonts |
 | `Dialect`, `UserAdmin` | Per-server SQL writers |
@@ -161,6 +163,10 @@ This is the naming standard. New and renamed classes must follow it. Existing cl
 
 `Forms`, `Encodings`, `Validation`, `DesktopWindows`. Never `Util` / `Utils` / `Helper`.
 
+A static class that is one algorithm or one conversion may be named after what it does instead (`AutoLayout`, `DiagramExporter`), when a plural noun would say less.
+
+A dialog with a static entry point (`CreateDatabaseDialog.ask`, `PropertiesDialog.show`) is still a `FormDialog` subclass with a private constructor; the static method builds, shows and reads it.
+
 ### N3: Interfaces have no `I` prefix or `IF` / `Interface` suffix
 
 Name them by role (`ProgressListener`, `EditorTab`).
@@ -172,7 +178,8 @@ Name them by role (`ProgressListener`, `EditorTab`).
 - `<feature>.ui`: `Window`, `Tab`, `Panel`, `Renderer`, `Listener`.
 - `<feature>.ui.dialog`: every `Dialog`.
 - Shared Swing: `ui.dialog`, `ui.table`, `ui.icon`, `ui.component`.
-- Export and import are a pair: `exporter` / `importer`.
+- Export and import are a pair: `exporter` / `importer` (never `export`, which would not pair with `importer`, a reserved word as `import`).
+- Swing-free rules used by a dialog (`designer.FieldRules`) live in the feature package, not in `ui.dialog`.
 
 ### N5: No abbreviations
 
@@ -199,10 +206,10 @@ class TableController { }
 Known layer and naming problems that are not fixed yet. Do not report them again as new findings, fix them one feature at a time.
 
 - `settings.Appearance` mixes an enum with look-and-feel (Swing/FlatLaf) code.
-- `designer.model.Model` and `ModelXml` import Swing/AWT classes (they hold canvas objects such as `TableObject`).
+- `designer.model.Model` and `ModelXml` import Swing/AWT classes (they hold canvas objects such as `TableCard`).
 - Controllers import `javax.swing` components directly.
 - Services refer to `jdbc.DatabaseConnection`.
-- `database.DatabaseLister` runs JDBC itself outside a repository.
+- `database.DatabaseListService` owns a scratch `DatabaseConnection` of its own and is created by the profile controller, not by `ConnectionContext` (it runs before a connection window exists).
 - Some dialogs extend `JDialog` directly instead of `ui.dialog.FormDialog`.
 - `app.ui.CreditsPanel` extends `java.awt.Canvas` (an AWT widget).
 - `ui.util.DesktopWindows` also holds `openInBrowser`, which is not about the desktop.

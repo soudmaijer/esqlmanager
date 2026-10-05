@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.database.Database;
@@ -99,11 +99,11 @@ public abstract class AbstractDialect implements Dialect {
 		return new String[0];
 	}
 
-	public List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment) {
+	public List<String> createTableSql(TableName table, List<ColumnDefinition> columns, String tableType, String comment) {
 		List<String> definitions = new ArrayList<>();
 		List<String> primary = new ArrayList<>();
 
-		for (CreateColumn column : columns) {
+		for (ColumnDefinition column : columns) {
 			definitions.add(quote(column.name) + " " + columnDefinition(column));
 
 			if (column.primary) {
@@ -121,7 +121,7 @@ public abstract class AbstractDialect implements Dialect {
 		List<String> statements = new ArrayList<>();
 		statements.add("CREATE TABLE " + quote(table) + " (" + String.join(", ", definitions) + ")");
 
-		for (CreateColumn column : columns) {
+		for (ColumnDefinition column : columns) {
 			if (column.index) {
 				statements.addAll(addIndexSql(table, table.name() + "_" + column.name + "_idx", "INDEX", Arrays.asList(column.name)));
 			}
@@ -131,7 +131,7 @@ public abstract class AbstractDialect implements Dialect {
 			statements.addAll(setTableCommentSql(table, comment));
 		}
 
-		for (CreateColumn column : columns) {
+		for (ColumnDefinition column : columns) {
 			statements.addAll(columnCommentSql(table, column, false));
 		}
 
@@ -143,7 +143,7 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/** The statements that set the comment of a column, none where the comment is part of the column definition. @param always write a statement for an empty comment too, to clear it */
-	protected List<String> columnCommentSql(TableName table, CreateColumn column, boolean always) {
+	protected List<String> columnCommentSql(TableName table, ColumnDefinition column, boolean always) {
 		if (!supportsColumnComments() || (!always && column.comment.isBlank())) {
 			return List.of();
 		}
@@ -163,7 +163,7 @@ public abstract class AbstractDialect implements Dialect {
 		return Arrays.asList("COMMENT ON TABLE " + quote(table) + " IS " + literal(comment));
 	}
 
-	public List<String> addColumnSql(TableName table, CreateColumn column) {
+	public List<String> addColumnSql(TableName table, ColumnDefinition column) {
 		String statement = "ALTER TABLE " + quote(table) + " ADD COLUMN " + quote(column.name) + " " + columnDefinition(column);
 
 		if (column.primary) {
@@ -175,7 +175,7 @@ public abstract class AbstractDialect implements Dialect {
 		return statements;
 	}
 
-	public List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column) {
+	public List<String> modifyColumnSql(TableName table, String oldName, ColumnDefinition column) {
 		String alter = "ALTER TABLE " + quote(table);
 		String name = quote(column.name);
 		List<String> statements = new ArrayList<>();
@@ -445,8 +445,8 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/** Reads the PostgreSQL type names of the driver (int4, bpchar, serial) as the names the designer uses (integer, char). */
-	public CreateColumn readColumn(ResultSet rs) throws SQLException {
-		CreateColumn column = new CreateColumn(rs.getString("COLUMN_NAME"));
+	public ColumnDefinition readColumn(ResultSet rs) throws SQLException {
+		ColumnDefinition column = new ColumnDefinition(rs.getString("COLUMN_NAME"));
 		String type = rs.getString("TYPE_NAME").toLowerCase();
 		String defaultValue = rs.getString("COLUMN_DEF");
 		int size = rs.getInt("COLUMN_SIZE");
@@ -540,7 +540,7 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/** The type, size, default and nullability of a column as used in CREATE TABLE and ALTER TABLE. */
-	protected String columnDefinition(CreateColumn column) {
+	protected String columnDefinition(ColumnDefinition column) {
 		String definition = columnType(column);
 
 		if (column.defaultval.trim().length() > 0) {
@@ -556,7 +556,7 @@ public abstract class AbstractDialect implements Dialect {
 		return definition;
 	}
 
-	protected String columnType(CreateColumn column) {
+	protected String columnType(ColumnDefinition column) {
 		return typeWithLength(column);
 	}
 
@@ -567,7 +567,7 @@ public abstract class AbstractDialect implements Dialect {
 	 * The type of a column with its length, such as {@code varchar (50)} or {@code enum ('a', 'b')}. Both come from text the user typed or a model
 	 * file, so they are checked: the type is a plain name, the length a number or precision and scale, and the values of ENUM and SET are literals.
 	 */
-	protected String typeWithLength(CreateColumn column) {
+	protected String typeWithLength(ColumnDefinition column) {
 		String type = column.type.getName().trim();
 		if (!TYPE_NAME.matcher(type).matches()) {
 			throw new EsqlException("'" + type + "' is not a data type.");

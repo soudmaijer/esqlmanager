@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
 import nl.errorsoft.esql.designer.model.Model;
-import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseCard;
 
 import javax.swing.*;
 
@@ -15,12 +15,12 @@ public class DatabasePropertiesPanel extends JPanel implements PropertiesPanel {
 	private JTextArea txt_comm = new JTextArea();
 
 	// Databaseobject
-	private DatabaseObject db;
+	private DatabaseCard db;
 
 	/** The model the database is part of, so that the name can be checked against the other databases. */
 	private final Model model;
 
-	public DatabasePropertiesPanel(DatabaseObject db, Model model) {
+	public DatabasePropertiesPanel(DatabaseCard db, Model model) {
 		this.model = model;
 		lbl_name.setLabelFor(txt_name);
 		lbl_name.setDisplayedMnemonic('N');

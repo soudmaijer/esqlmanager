@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.ui.table;
 
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -150,8 +150,8 @@ class Sort {
 		} else if (o2 == null) {
 			return 1;
 		} else {
-			TableData a = (TableData) o1;
-			TableData b = (TableData) o2;
+			TableCell a = (TableCell) o1;
+			TableCell b = (TableCell) o2;
 
 			Object native1 = a.getNativeData();
 			Object native2 = b.getNativeData();

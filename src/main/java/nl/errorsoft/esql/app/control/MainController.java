@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.app.control;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.app.OutputPanelAppender;
 
 import nl.errorsoft.esql.connection.control.ConnectionProfileController;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;

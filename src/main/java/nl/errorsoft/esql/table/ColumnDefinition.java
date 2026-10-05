@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.table;
 
-public class CreateColumn {
+public class ColumnDefinition {
 	public String name = "";
 
 	public boolean primary = false;
@@ -19,7 +19,7 @@ public class CreateColumn {
 	/** The comment of the column, written where {@code Dialect.supportsColumnComments}. */
 	public String comment = "";
 
-	public CreateColumn(String name) {
+	public ColumnDefinition(String name) {
 		this.name = name;
 	}
 

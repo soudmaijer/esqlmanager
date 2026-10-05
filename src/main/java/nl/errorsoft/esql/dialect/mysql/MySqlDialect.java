@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.database.Database;
@@ -79,7 +79,7 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	/** MySQL writes the comment in the column definition. */
-	protected List<String> columnCommentSql(TableName table, CreateColumn column, boolean always) {
+	protected List<String> columnCommentSql(TableName table, ColumnDefinition column, boolean always) {
 		return List.of();
 	}
 
@@ -158,11 +158,11 @@ public class MySqlDialect extends AbstractDialect {
 		return new String[]{"InnoDB", "MyISAM", "MEMORY", "ARCHIVE", "CSV"};
 	}
 
-	public List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment) {
+	public List<String> createTableSql(TableName table, List<ColumnDefinition> columns, String tableType, String comment) {
 		List<String> definitions = new ArrayList<>();
 		List<String> primary = new ArrayList<>();
 
-		for (CreateColumn column : columns) {
+		for (ColumnDefinition column : columns) {
 			definitions.add(quote(column.name) + " " + columnDefinition(column));
 
 			if (column.primary) {
@@ -210,7 +210,7 @@ public class MySqlDialect extends AbstractDialect {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " COMMENT=" + literal(comment));
 	}
 
-	public List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column) {
+	public List<String> modifyColumnSql(TableName table, String oldName, ColumnDefinition column) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " CHANGE " + quote(oldName) + " " + quote(column.name) + " " + columnDefinition(column));
 	}
 
@@ -262,8 +262,8 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	/** The driver reports types in upper case with the sign attached (INT UNSIGNED) and defaults as plain text. */
-	public CreateColumn readColumn(ResultSet rs) throws SQLException {
-		CreateColumn column = new CreateColumn(rs.getString("COLUMN_NAME"));
+	public ColumnDefinition readColumn(ResultSet rs) throws SQLException {
+		ColumnDefinition column = new ColumnDefinition(rs.getString("COLUMN_NAME"));
 		String type = rs.getString("TYPE_NAME").toUpperCase();
 		String defaultValue = rs.getString("COLUMN_DEF");
 		int size = rs.getInt("COLUMN_SIZE");
@@ -283,7 +283,7 @@ public class MySqlDialect extends AbstractDialect {
 		return column;
 	}
 
-	protected String columnDefinition(CreateColumn column) {
+	protected String columnDefinition(ColumnDefinition column) {
 		String definition = typeWithLength(column);
 
 		if (column.unsigned) {

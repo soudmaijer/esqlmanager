@@ -16,14 +16,14 @@ import nl.errorsoft.esql.table.ui.TableEditorTab;
 import java.util.List;
 
 /** Opens the table editor as a tab of the connection window ("New table", "Edit orders") and saves what it holds. */
-public class CreateTableController {
+public class TableEditorController {
 	private static final String NEW_TABLE = "New table";
 
 	private ConnectionWindowController connectionWindowController;
 	/** The schema a new table goes in, null for the current schema of the chosen database. */
 	private Schema schema;
 
-	public CreateTableController(ConnectionWindowController connectionWindowController) {
+	public TableEditorController(ConnectionWindowController connectionWindowController) {
 		this.connectionWindowController = connectionWindowController;
 	}
 

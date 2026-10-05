@@ -7,14 +7,14 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.ui.table.ColumnWidths;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
-import nl.errorsoft.esql.ui.table.HeaderListener;
+import nl.errorsoft.esql.ui.table.SortHeaderListener;
 import nl.errorsoft.esql.ui.table.HeaderRenderer;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.table.MultiLineCellEditor;
 import nl.errorsoft.esql.ui.table.SortableTableModel;
 
 import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableCell;
 import nl.errorsoft.esql.table.control.TableController;
 
 import java.awt.*;
@@ -59,8 +59,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private JButton btnSaveCellData;
 	private JButton btnCloseCellData;
 	private UndoManager undoManager;
-	private HeaderListener headerListener;
-	private TableData editingCell;
+	private SortHeaderListener headerListener;
+	private TableCell editingCell;
 	private int editingRow;
 	private int editingCol;
 
@@ -77,13 +77,13 @@ public class TableDataTab extends JPanel implements ActionListener {
 					int row = tbData.getEditingRow();
 					int cols = tbData.getColumnCount();
 
-					TableData td = (TableData) tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
-					TableData[] rowData = new TableData[cols];
+					TableCell td = (TableCell) tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
+					TableCell[] rowData = new TableCell[cols];
 					java.util.Vector<?> dataVector = stm.getDataVector();
 					Object newData = tbData.getCellEditor().getCellEditorValue();
 
 					for (int i = 0; i < cols; i++) {
-						rowData[i] = (TableData) tbData.getValueAt(row, i);
+						rowData[i] = (TableCell) tbData.getValueAt(row, i);
 
 						// New data inserted.
 						if (rowData[i].isNewRow()) {
@@ -103,7 +103,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 				}
 			}
 			public boolean isCellEditable(int row, int col) {
-				TableData td = (TableData) tbData.getValueAt(row, col);
+				TableCell td = (TableCell) tbData.getValueAt(row, col);
 				return td.getTableColumn().isWritable();
 			}
 		};
@@ -131,7 +131,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 						} else {
 							Object temp = tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
 
-							if (temp instanceof TableData data) {
+							if (temp instanceof TableCell data) {
 								if (!data.isNewRow()) {
 									enabledCellDataEditor();
 								}
@@ -310,7 +310,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		// Enable textarea
 		editingRow = tbData.getSelectedRow();
 		editingCol = tbData.getSelectedColumn();
-		editingCell = (TableData) tbData.getModel().getValueAt(editingRow, editingCol);
+		editingCell = (TableCell) tbData.getModel().getValueAt(editingRow, editingCol);
 
 		cellData.setEnabled(true);
 		cellData.setText(editingCell.getEditText());
@@ -336,7 +336,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		jsplit.setBottomComponent(null);
 	}
 
-	public boolean dataChanged(TableData[] rowData, TableData cellData, Object newValue) {
+	public boolean dataChanged(TableCell[] rowData, TableCell cellData, Object newValue) {
 		try {
 			tableController.dataChanged(cellData.getTableColumn().getTable(), rowData, cellData, newValue);
 		} catch (Exception e) {
@@ -354,7 +354,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 			java.util.Vector<Object> newData = new java.util.Vector<>();
 
 			for (int i = 0; i < cols; i++) {
-				TableData tempData = new TableData();
+				TableCell tempData = new TableCell();
 				tempData.setNewRow(true);
 				tempData.setData(new String());
 				tempData.setTableColumn((nl.errorsoft.esql.table.TableColumn) tbData.getColumnModel().getColumn(i).getHeaderValue());
@@ -381,10 +381,10 @@ public class TableDataTab extends JPanel implements ActionListener {
 		}
 
 		int cols = tbData.getColumnCount();
-		TableData[] tda = new TableData[cols];
+		TableCell[] tda = new TableCell[cols];
 
 		for (int j = 0; j < cols; j++) {
-			tda[j] = (TableData) stm.getValueAt(ia, j);
+			tda[j] = (TableCell) stm.getValueAt(ia, j);
 		}
 		try {
 			if (tda[0].isNewRow()) {
@@ -408,11 +408,11 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		if (Dialogs.confirmDestructive(this, "Delete rows", "Delete " + ia.length + " row(s) from " + from + "? This cannot be undone.", "Delete")) {
 			int cols = tbData.getColumnCount();
-			TableData[] tda = new TableData[cols];
+			TableCell[] tda = new TableCell[cols];
 
 			for (int i = ia.length - 1; i >= 0; i--) {
 				for (int j = 0; j < cols; j++) {
-					tda[j] = (TableData) stm.getValueAt(ia[i], j);
+					tda[j] = (TableCell) stm.getValueAt(ia[i], j);
 				}
 				try {
 					if (!tda[0].isNewRow()) {
@@ -444,7 +444,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		lblRows.setText("Total: " + table.getRowCount());
 	}
 
-	public void loadData(Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableData[][] tda) {
+	public void loadData(Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableCell[][] tda) {
 		this.table = table;
 		showRecordCount();
 
@@ -463,7 +463,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		if (headerListener != null) {
 			tbData.getTableHeader().removeMouseListener(headerListener);
 		}
-		headerListener = new HeaderListener(tbData.getTableHeader(), hr);
+		headerListener = new SortHeaderListener(tbData.getTableHeader(), hr);
 		tbData.getTableHeader().addMouseListener(headerListener);
 		stm.setDataVector(tda, columns);
 		tbData.setColumnModel(tcm);
@@ -481,10 +481,10 @@ public class TableDataTab extends JPanel implements ActionListener {
 		Object src = e.getSource();
 
 		if (src == btnUpdateRowData) {
-			TableData[] rowData = new TableData[tbData.getColumnCount()];
+			TableCell[] rowData = new TableCell[tbData.getColumnCount()];
 
 			for (int i = 0; i < tbData.getColumnCount(); i++) {
-				rowData[i] = (TableData) tbData.getValueAt(this.editingRow, i);
+				rowData[i] = (TableCell) tbData.getValueAt(this.editingRow, i);
 			}
 
 			if (this.dataChanged(rowData, this.editingCell, this.cellData.getText())) {
@@ -509,22 +509,22 @@ public class TableDataTab extends JPanel implements ActionListener {
 			}
 		} else if (src == btnSaveData) {
 			int row = tbData.getSelectedRow();
-			TableData[] rowData = new TableData[tbData.getColumnCount()];
+			TableCell[] rowData = new TableCell[tbData.getColumnCount()];
 
 			for (int i = 0; i < tbData.getColumnCount(); i++) {
-				rowData[i] = (TableData) tbData.getValueAt(row, i);
+				rowData[i] = (TableCell) tbData.getValueAt(row, i);
 			}
 
-			tableController.showDownloadFileDialog(this.table, rowData, (TableData) tbData.getValueAt(row, tbData.getSelectedColumn()));
+			tableController.showDownloadFileDialog(this.table, rowData, (TableCell) tbData.getValueAt(row, tbData.getSelectedColumn()));
 		} else if (src == btnAddData) {
 			int row = tbData.getSelectedRow();
-			TableData[] rowData = new TableData[tbData.getColumnCount()];
+			TableCell[] rowData = new TableCell[tbData.getColumnCount()];
 
 			for (int i = 0; i < tbData.getColumnCount(); i++) {
-				rowData[i] = (TableData) tbData.getValueAt(row, i);
+				rowData[i] = (TableCell) tbData.getValueAt(row, i);
 			}
 
-			tableController.showUploadFileDialog(this.table, rowData, (TableData) tbData.getValueAt(row, tbData.getSelectedColumn()));
+			tableController.showUploadFileDialog(this.table, rowData, (TableCell) tbData.getValueAt(row, tbData.getSelectedColumn()));
 		} else {
 			try {
 				skip = Integer.parseInt(this.jtfSkip.getText());

@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -22,7 +22,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
+import nl.errorsoft.esql.designer.model.ModelForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.error.EsqlException;
@@ -31,9 +31,9 @@ import nl.errorsoft.esql.ui.util.Forms;
 
 /** Edits a foreign key of the designer: the referenced table, the column pairs, the name and the actions. */
 public class ForeignKeyDialog extends FormDialog {
-	private final TableObject from;
+	private final TableCard from;
 
-	private final JComboBox<TableObject> referenced = new JComboBox<>();
+	private final JComboBox<TableCard> referenced = new JComboBox<>();
 	private final JTextField name = new JTextField(24);
 	private final DefaultTableModel pairs = new DefaultTableModel(new Object[]{"Column", "Referenced column"}, 0);
 	private final JTable pairTable = new JTable(pairs);
@@ -44,22 +44,22 @@ public class ForeignKeyDialog extends FormDialog {
 	private final JLabel referencedHint = hint(" ");
 
 	private String suggestedName;
-	private DesignerForeignKey result;
-	private DesignerForeignKey candidate;
+	private ModelForeignKey result;
+	private ModelForeignKey candidate;
 
-	private ForeignKeyDialog(Window owner, Model model, DesignerForeignKey initial) {
+	private ForeignKeyDialog(Window owner, Model model, ModelForeignKey initial) {
 		super(owner, initial.name().isEmpty() ? "Add foreign key" : "Edit foreign key", true);
 		this.from = initial.from();
 
 		for (Object object : model.getObjects()) {
-			if (object instanceof TableObject table) {
+			if (object instanceof TableCard table) {
 				referenced.addItem(table);
 			}
 		}
 		referenced.setRenderer(new javax.swing.DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(javax.swing.JList<?> list, Object value, int index, boolean selected, boolean focus) {
-				String text = value instanceof TableObject table ? table.getName() + (table == from ? " (this table)" : "") : String.valueOf(value);
+				String text = value instanceof TableCard table ? table.getName() + (table == from ? " (this table)" : "") : String.valueOf(value);
 				return super.getListCellRendererComponent(list, text, index, selected, focus);
 			}
 		});
@@ -72,7 +72,7 @@ public class ForeignKeyDialog extends FormDialog {
 			pairs.addRow(new Object[]{firstColumn(from), primaryColumn(initial.to())});
 		}
 
-		suggestedName = DesignerForeignKey.defaultName(from, String.valueOf(pairs.getValueAt(0, 0)));
+		suggestedName = ModelForeignKey.defaultName(from, String.valueOf(pairs.getValueAt(0, 0)));
 		name.setText(initial.name().isEmpty() ? suggestedName : initial.name());
 		onDelete.setSelectedItem(initial.onDelete() == null ? "" : initial.onDelete());
 		onUpdate.setSelectedItem(initial.onUpdate() == null ? "" : initial.onUpdate());
@@ -100,7 +100,7 @@ public class ForeignKeyDialog extends FormDialog {
 	 * Shows the dialog and returns the key as it was edited, or null when the user cancels. A key that is not valid is reported and the dialog stays open.
 	 * @param initial the key to edit; a new key has an empty name and the columns that were dragged (or none).
 	 */
-	public static DesignerForeignKey edit(Component parent, Model model, DesignerForeignKey initial) {
+	public static ModelForeignKey edit(Component parent, Model model, ModelForeignKey initial) {
 		ForeignKeyDialog dialog = new ForeignKeyDialog(SwingUtilities.getWindowAncestor(parent), model, initial);
 		return dialog.showDialog() ? dialog.result : null;
 	}
@@ -155,7 +155,7 @@ public class ForeignKeyDialog extends FormDialog {
 			toColumns.add(text(pairs.getValueAt(i, 1)));
 		}
 
-		DesignerForeignKey key = new DesignerForeignKey(from, fromColumns, selectedTable(), toColumns, name.getText().trim(), text(onDelete.getSelectedItem()),
+		ModelForeignKey key = new ModelForeignKey(from, fromColumns, selectedTable(), toColumns, name.getText().trim(), text(onDelete.getSelectedItem()),
 			text(onUpdate.getSelectedItem()));
 		try {
 			key.validate();
@@ -180,14 +180,14 @@ public class ForeignKeyDialog extends FormDialog {
 	}
 
 	private void updateReferencedEditor() {
-		TableObject table = selectedTable();
+		TableCard table = selectedTable();
 		pairTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(table == null ? new JComboBox<String>() : columnBox(table)));
 	}
 
 	/** The name follows the first column for as long as the user has not typed a name of their own. */
 	private void renameIfSuggested() {
 		if (pairs.getRowCount() > 0 && name.getText().equals(suggestedName)) {
-			suggestedName = DesignerForeignKey.defaultName(from, text(pairs.getValueAt(0, 0)));
+			suggestedName = ModelForeignKey.defaultName(from, text(pairs.getValueAt(0, 0)));
 			name.setText(suggestedName);
 		}
 	}
@@ -202,11 +202,11 @@ public class ForeignKeyDialog extends FormDialog {
 		}
 	}
 
-	private TableObject selectedTable() {
-		return (TableObject) referenced.getSelectedItem();
+	private TableCard selectedTable() {
+		return (TableCard) referenced.getSelectedItem();
 	}
 
-	private static JComboBox<String> columnBox(TableObject table) {
+	private static JComboBox<String> columnBox(TableCard table) {
 		JComboBox<String> box = new JComboBox<>();
 		for (DesignerColumn field : table.getFields()) {
 			box.addItem(field.getName());
@@ -229,13 +229,13 @@ public class ForeignKeyDialog extends FormDialog {
 		return box;
 	}
 
-	private static String firstColumn(TableObject table) {
+	private static String firstColumn(TableCard table) {
 		DesignerColumn[] fields = table.getFields();
 		return fields.length == 0 ? "" : fields[0].getName();
 	}
 
 	/** The first primary key column of a table, the column a new key most likely refers to. */
-	public static String primaryColumn(TableObject table) {
+	public static String primaryColumn(TableCard table) {
 		if (table == null) {
 			return "";
 		}

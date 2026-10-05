@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.designer.control;
 
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
-import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
+import nl.errorsoft.esql.designer.ui.diagram.ModelCard;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public class DesignerCanvasController {
 		this.designerWindow = designerWindow;
 	}
 
-	public void showPropertiesDialog(List<ModelObject> selection) {
+	public void showPropertiesDialog(List<ModelCard> selection) {
 		if (selection.size() == 1) {
 			designerWindow.showProperties(selection.get(0));
 		}

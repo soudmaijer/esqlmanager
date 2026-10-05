@@ -13,7 +13,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
+import nl.errorsoft.esql.designer.model.ModelForeignKey;
 
 /**
  * Draws the relations of the designer. A foreign key is an orthogonal connector from the row of its column in the child table to the row of the referenced
@@ -39,7 +39,7 @@ public final class ConnectorPainter {
 	record Route(List<Point2D> points, int startOut, int endOut) {
 	}
 
-	static Route route(DesignerForeignKey key) {
+	static Route route(ModelForeignKey key) {
 		Rectangle from = key.from().cardBounds();
 		Rectangle to = key.to().cardBounds();
 		int fromY = key.from().rowAnchorY(key.fromColumns().getFirst());
@@ -101,7 +101,7 @@ public final class ConnectorPainter {
 		return path;
 	}
 
-	public static void paint(Graphics2D g2, DesignerForeignKey key, boolean highlighted) {
+	public static void paint(Graphics2D g2, ModelForeignKey key, boolean highlighted) {
 		paint(g2, route(key), highlighted);
 	}
 
@@ -120,7 +120,7 @@ public final class ConnectorPainter {
 	}
 
 	/** The connector that is drawn while a foreign key is dragged from a column, it follows the mouse. */
-	public static void paintGhost(Graphics2D g2, TableObject from, String column, Point mouse) {
+	public static void paintGhost(Graphics2D g2, TableCard from, String column, Point mouse) {
 		Rectangle card = from.cardBounds();
 		int y = from.rowAnchorY(column);
 		boolean right = mouse.x >= card.getCenterX();
@@ -144,12 +144,12 @@ public final class ConnectorPainter {
 	}
 
 	/** Whether a point (in viewer coordinates) is on the connector or close to it. */
-	public static boolean hit(DesignerForeignKey key, Point point) {
+	public static boolean hit(ModelForeignKey key, Point point) {
 		return new BasicStroke(HIT_WIDTH).createStrokedShape(path(route(key))).contains(point);
 	}
 
 	/** A dashed curve between a database or a note and the object it belongs to. Cards are painted on top, so it runs from centre to centre. */
-	public static void paintLink(Graphics2D g2, ModelObject a, ModelObject b) {
+	public static void paintLink(Graphics2D g2, ModelCard a, ModelCard b) {
 		Stroke stroke = g2.getStroke();
 		g2.setColor(DesignerTheme.translucent(DesignerTheme.muted(), 140));
 		g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10f, new float[]{4f, 4f}, 0f));

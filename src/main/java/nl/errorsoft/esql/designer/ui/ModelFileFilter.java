@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.designer.ui.diagram;
+package nl.errorsoft.esql.designer.ui;
 
 import java.io.File;
 

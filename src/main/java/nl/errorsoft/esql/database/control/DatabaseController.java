@@ -109,7 +109,7 @@ public class DatabaseController {
 
 	public TableListTab getTableListTab(java.util.List<Table> tables) throws Exception {
 		TableListTab tableListTab = new TableListTab(this);
-		tableListTab.loadDatabases(tables);
+		tableListTab.loadTables(tables);
 		return tableListTab;
 	}
 

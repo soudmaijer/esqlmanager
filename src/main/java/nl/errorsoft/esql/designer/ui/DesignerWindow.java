@@ -11,7 +11,7 @@ import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.dialog.GenerateDialog;
-import nl.errorsoft.esql.designer.ui.diagram.ModelFileFilter;
+import nl.errorsoft.esql.designer.ui.ModelFileFilter;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerCanvas;
 import nl.errorsoft.esql.designer.ui.dialog.DesignerPropertiesDialog;
 
