@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>esql</groupId>
+  <artifactId>esqlmanager</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+    <maven.compiler.release>25</maven.compiler.release>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <compilerArgs>
+            <arg>-Xlint:-options</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <configuration>
+          <!-- The app reads and writes conf/ and credits.txt relative to the working directory -->
+          <executable>java</executable>
+          <classpathScope>compile</classpathScope>
+          <workingDirectory>${project.basedir}</workingDirectory>
+          <arguments>
+            <argument>-cp</argument>
+            <classpath/>
+            <argument>nl.errorsoft.esqlmanager.domain.Main</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jdom</groupId>
+      <artifactId>jdom</artifactId>
+      <version>1.1.3</version>
+    </dependency>
+    <!-- Not on Maven Central, so taken from the project's own lib/ -->
+    <dependency>
+      <groupId>com.psychoticsoftware</groupId>
+      <artifactId>guardian</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/psyguardian.jar</systemPath>
+    </dependency>
+    <!-- Old JDBC drivers shipped in lib/ -->
+    <dependency>
+      <groupId>esql.drivers</groupId>
+      <artifactId>mysql</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/mysql.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>esql.drivers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/postgresql.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>esql.drivers</groupId>
+      <artifactId>oracle</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/oracle.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>esql.drivers</groupId>
+      <artifactId>msbase</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/msbase.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>esql.drivers</groupId>
+      <artifactId>mssqlserver</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/mssqlserver.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>esql.drivers</groupId>
+      <artifactId>msutil</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/msutil.jar</systemPath>
+    </dependency>
+  </dependencies>
+</project>
