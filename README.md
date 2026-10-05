@@ -6,6 +6,8 @@ A graphical database manager written in Java Swing. It started in 2002 as a grad
 
 ![The model designer with a shop database and its tables](docs/designer.png)
 
+![The same window in the dark appearance](docs/screenshot-dark.png)
+
 ![A query tab with highlighted SQL, a result and the completion popup](docs/query.png)
 
 ## Documentation
