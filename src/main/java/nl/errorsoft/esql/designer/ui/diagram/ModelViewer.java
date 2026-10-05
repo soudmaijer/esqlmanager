@@ -36,6 +36,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToolBar;
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
@@ -192,6 +193,7 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		toolbar.add(btn_properties);
 		toolbar.addSeparator();
 		toolbar.add(btn_export);
+		ToolbarButtons.style(btn_new, btn_save, btn_open, btn_add_database, btn_add_table, btn_add_comment, btn_properties, btn_export);
 	}
 
 	/*
