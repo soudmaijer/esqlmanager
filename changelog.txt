@@ -2,6 +2,16 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Dialog layout fixes found on screen
+
+- The application starts again: the Tools menu items were enabled before the window list existed.
+- Table editor: the form scrolls when the window is too small instead of squeezing the column list away, the SQL
+  preview is four lines high and the read-only schema field no longer takes the focus.
+- Edit field: the type of an existing PostgreSQL column is selected (int4 shows as integer) and Unsigned is only
+  checked for types that have it.
+- Properties windows of a table and a database have a minimum width.
+- Screenshots in docs/ retaken.
+
 05-10-2026: SQL preview, process list controls, preferences, designer validation
 
 - Table editor: "Show SQL" shows the statements that Save runs (the CREATE TABLE of a new table, the changes of an

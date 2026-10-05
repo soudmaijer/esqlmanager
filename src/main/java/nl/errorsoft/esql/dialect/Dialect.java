@@ -229,6 +229,9 @@ public interface Dialect {
 	 */
 	CreateColumn readColumn(ResultSet columns) throws SQLException;
 
+	/** The name in {@code datatypes.xml} of a type as the driver reports it (PostgreSQL {@code int4} is {@code integer}). */
+	String datatypeName(String nativeTypeName);
+
 	/** A query whose second column is the CREATE TABLE statement of an existing table, null when it is built from the metadata with {@link #createTableDdl}. */
 	String showCreateTableSql(TableName table);
 

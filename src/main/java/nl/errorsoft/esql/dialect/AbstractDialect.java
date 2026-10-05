@@ -437,6 +437,11 @@ public abstract class AbstractDialect implements Dialect {
 		return column;
 	}
 
+	@Override
+	public String datatypeName(String nativeTypeName) {
+		return designerTypeName(identityType(nativeTypeName.toLowerCase()));
+	}
+
 	private static String designerTypeName(String type) {
 		return switch (type) {
 			case "int2" -> "smallint";

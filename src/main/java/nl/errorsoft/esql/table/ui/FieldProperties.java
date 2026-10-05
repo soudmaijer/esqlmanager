@@ -52,10 +52,11 @@ public class FieldProperties extends FormDialog implements ActionListener {
 
 		fieldtypes.addActionListener(this);
 		DataType[] types = cwcc.getConnectionProfile().getServerType().getDataTypes();
+		String currentType = edit ? cwcc.dialect().datatypeName(column.getNativeTypeName()) : null;
 		for (int i = 0; i < types.length; i++) {
 			fieldtypes.addItem(types[i]);
 
-			if (edit && column.getNativeTypeName().equalsIgnoreCase(types[i].getName())) {
+			if (edit && currentType.equalsIgnoreCase(types[i].getName())) {
 				fieldtypes.setSelectedIndex(i);
 			}
 		}
@@ -84,7 +85,7 @@ public class FieldProperties extends FormDialog implements ActionListener {
 			primary.setEnabled(false);
 			autoIncrement.setSelected(column.isAutoIncrement());
 			notnull.setSelected(!column.isNullable());
-			unsigned.setSelected(!column.isSigned());
+			unsigned.setSelected(unsigned.isEnabled() && !column.isSigned());
 			// The server reports a size for every type, only types that are written with a length show it.
 			length.setText(takesLength(column.getNativeTypeName()) ? Integer.toString(column.getSize()) : "");
 			dfault.setText(column.getDefault());

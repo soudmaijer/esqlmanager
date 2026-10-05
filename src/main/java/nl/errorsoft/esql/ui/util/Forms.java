@@ -1,10 +1,13 @@
 package nl.errorsoft.esql.ui.util;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -12,6 +15,9 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
+import javax.swing.ScrollPaneConstants;
 
 /** Small helpers for dialogs built with layout managers: the padding, a row of buttons and a label/field form. */
 public final class Forms {
@@ -33,6 +39,48 @@ public final class Forms {
 	public static <T extends JComponent> T titled(T component, String title) {
 		component.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(title), BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP)));
 		return component;
+	}
+
+	/** Puts a form in a scroll pane that scrolls vertically when the window is too small for it. Otherwise the form fills the window as it would without one. */
+	public static JScrollPane verticalScroll(JComponent content) {
+		JPanel view = new FitWidthPanel();
+		view.add(content, BorderLayout.CENTER);
+		JScrollPane scroll = new JScrollPane(view, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll.setBorder(BorderFactory.createEmptyBorder());
+		scroll.getVerticalScrollBar().setUnitIncrement(16);
+		return scroll;
+	}
+
+	/** Follows the width of the viewport, and its height when the viewport is taller than the content. */
+	private static final class FitWidthPanel extends JPanel implements Scrollable {
+		FitWidthPanel() {
+			super(new BorderLayout());
+		}
+
+		@Override
+		public Dimension getPreferredScrollableViewportSize() {
+			return getPreferredSize();
+		}
+
+		@Override
+		public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+			return 16;
+		}
+
+		@Override
+		public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+			return visibleRect.height;
+		}
+
+		@Override
+		public boolean getScrollableTracksViewportWidth() {
+			return true;
+		}
+
+		@Override
+		public boolean getScrollableTracksViewportHeight() {
+			return getParent() != null && getParent().getHeight() > getPreferredSize().height;
+		}
 	}
 
 	/** A text with an optional mnemonic: "&Name" underlines the N. A literal ampersand is written "&&". */
@@ -106,12 +154,12 @@ public final class Forms {
 
 	/** Buttons at the right and one apart at the left, for example a destructive Delete away from Save. */
 	public static JPanel buttonRowWithLeading(Component leading, Component... buttons) {
-		JPanel row = new JPanel(new java.awt.BorderLayout());
+		JPanel row = new JPanel(new BorderLayout());
 		JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		left.setBorder(BorderFactory.createEmptyBorder(PADDING, 0, 0, 0));
 		left.add(leading);
-		row.add(left, java.awt.BorderLayout.WEST);
-		row.add(buttonRow(buttons), java.awt.BorderLayout.EAST);
+		row.add(left, BorderLayout.WEST);
+		row.add(buttonRow(buttons), BorderLayout.EAST);
 		return row;
 	}
 

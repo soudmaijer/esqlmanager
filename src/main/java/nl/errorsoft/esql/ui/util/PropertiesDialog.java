@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.ui.util;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Window;
 import java.util.Map;
 import javax.swing.JButton;
@@ -10,6 +11,8 @@ import javax.swing.SwingUtilities;
 
 /** A read-only list of properties (a label and its value per row) with a Close button. */
 public final class PropertiesDialog {
+	private static final int MIN_WIDTH = 320;
+
 	private PropertiesDialog() {
 	}
 
@@ -26,6 +29,8 @@ public final class PropertiesDialog {
 		});
 
 		JPanel content = grid.panel();
+		Dimension size = content.getPreferredSize();
+		content.setPreferredSize(new Dimension(Math.max(MIN_WIDTH, size.width), size.height));
 		JButton close = Forms.button("&Close");
 		close.addActionListener(e -> dialog.dispose());
 		dialog.layoutDialog(content, close);

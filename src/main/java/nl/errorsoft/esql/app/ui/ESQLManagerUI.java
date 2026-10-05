@@ -154,7 +154,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		mnuGroupImportExport.addSeparator();
 		mnuGroupImportExport.add(mnuDesigner);
 		menubar.add(mnuGroupImportExport);
-		updateMenus();
 
 		mnuGroupWindow = new JMenu("Window");
 		mnuTileCascade = new JMenuItem("Cascade");
@@ -232,6 +231,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		cmbWindows.setMinimumSize(new Dimension(160, ToolbarButtons.HEIGHT));
 		cmbWindows.setPreferredSize(new Dimension(220, ToolbarButtons.HEIGHT));
 		toolbar.add(cmbWindows);
+		updateMenus();
 		ToolbarButtons.style(btnConnect, btnDisconnect, btnCascade, btnTileHorizontal, btnTileVertical);
 		this.getContentPane().add(toolbar, BorderLayout.NORTH);
 

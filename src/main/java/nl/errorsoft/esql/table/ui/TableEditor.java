@@ -95,7 +95,7 @@ public class TableEditor extends JPanel implements EditorTab {
 
 	// The SQL that Save would run, shown on request
 	private final JCheckBox showSql = Forms.mnemonic(new JCheckBox(), "Show S&QL");
-	private final RSyntaxTextArea sqlPreview = new RSyntaxTextArea(7, 60);
+	private final RSyntaxTextArea sqlPreview = new RSyntaxTextArea(4, 60);
 	private final JScrollPane sqlScroll = new JScrollPane(sqlPreview);
 
 	private final JButton save = Forms.button("&Save");
@@ -144,8 +144,10 @@ public class TableEditor extends JPanel implements EditorTab {
 
 		columnFields = new JComponent[]{columnName, columnType, length, defaultval, columnComment, primary, notnull, autoincrement, unsigned};
 
-		add(tableProperties(tbt.length > 0, table), BorderLayout.NORTH);
-		add(columnsPanel(), BorderLayout.CENTER);
+		JPanel form = new JPanel(new BorderLayout(0, Forms.PADDING));
+		form.add(tableProperties(tbt.length > 0, table), BorderLayout.NORTH);
+		form.add(columnsPanel(), BorderLayout.CENTER);
+		add(Forms.verticalScroll(form), BorderLayout.CENTER);
 		add(bottom(), BorderLayout.SOUTH);
 
 		if (table != null) {
@@ -184,6 +186,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		if (ctcc.supportsSchemas()) {
 			JTextField schema = new JTextField(24);
 			schema.setEditable(false);
+			schema.setFocusable(false);
 			if (existing != null && existing.getSchema() != null) {
 				schema.setText(existing.getSchema().getName());
 			} else {
