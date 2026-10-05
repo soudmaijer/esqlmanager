@@ -39,6 +39,7 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Database designer: draw a model and generate it | yes | yes | no | no |
 | Designer foreign keys: drag from column to column, edit and generate | yes | yes | no | no |
 | Designer export as PlantUML and Mermaid | yes | yes | yes | yes |
+| Designer: open an existing database (reverse engineering) with automatic layout | yes | yes | no | no |
 | User manager: accounts and passwords | yes | yes (roles) | no | no |
 | User manager: privileges per server, database and table | yes | yes | no | no |
 | Process list, with ending a process | yes | yes | no | no |
@@ -56,6 +57,7 @@ The designer (Tools > Database Designer) draws a model of databases, tables and 
 * Drag from the icon of a column onto a column of another table to create a foreign key, or use "Add Foreign Key..." in the table's context menu or the Foreign Keys tab of its properties. The dialog takes several column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions.
 * Foreign keys are drawn from column to column with a crow's foot at the many side. Double click a line to edit it, select it and press Delete to remove it.
 * Shift-drag links a table or a note to a database.
+* "Open in designer" in the context menu of a database (or the toolbar button of the connection window) reads all tables of that database, views left out, with their columns, primary keys and foreign keys (composite keys too) into a new model. The tables are placed automatically with the layered algorithm of the [Eclipse Layout Kernel](https://eclipse.dev/elk/): a referenced table left of the tables that refer to it, tables without relations in a grid below. View > Arrange Automatically does the same for any model. The model can be saved as an .edm file; generating it on the same database skips the tables and keys that exist.
 * File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram. For the shop model:
 
 ```plantuml

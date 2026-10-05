@@ -11,6 +11,7 @@ import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.dialog.Generate;
+import nl.errorsoft.esql.designer.ui.diagram.ModelArranger;
 import nl.errorsoft.esql.designer.ui.diagram.ModelBrowser;
 import nl.errorsoft.esql.designer.ui.diagram.ModelFilter;
 import nl.errorsoft.esql.designer.ui.diagram.ModelViewer;
@@ -46,6 +47,7 @@ public class DBCreator extends JDialog implements MouseListener {
 
 	private JMenu view = new JMenu("View");
 	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show Grid", true);
+	private JMenuItem view_arrange = new JMenuItem("Arrange Automatically");
 
 	private ModelBrowser mb;
 	private ModelViewer mv;
@@ -56,6 +58,14 @@ public class DBCreator extends JDialog implements MouseListener {
 	private ConnectionWindowUI cwui;
 
 	public DBCreator(ESQLManagerUI eui, ConnectionWindowUI cwui) {
+		this(eui, cwui, null);
+	}
+
+	/**
+	 * Opens the designer.
+	 * @param model a model to show, such as one read from an existing database, which is then arranged automatically; null for a new model.
+	 */
+	public DBCreator(ESQLManagerUI eui, ConnectionWindowUI cwui, Model model) {
 		super(eui, true);
 
 		this.eui = eui;
@@ -123,6 +133,9 @@ public class DBCreator extends JDialog implements MouseListener {
 		view.add(view_grid);
 		view.setMnemonic('V');
 		view_grid.addActionListener(e -> mv.setShowGrid(view_grid.isSelected()));
+		view.addSeparator();
+		view.add(view_arrange);
+		view_arrange.addActionListener(e -> arrangeAutomatically());
 
 		buildMenu();
 
@@ -130,12 +143,25 @@ public class DBCreator extends JDialog implements MouseListener {
 
 		properties = new Properties(eui, cwui.getControlClass().getConnectionProfile().getServerType());
 
+		if (model != null) {
+			this.setSize(1024, 720);
+			mv.setModel(model);
+			arrangeAutomatically();
+		}
+
 		this.setLocation(eui.getLocation().x + (int) ((eui.getSize().width - this.getSize().width) / 2),
 			eui.getLocation().y + (int) ((eui.getSize().height - this.getSize().height) / 2));
 
 		this.updateTitle();
 
 		this.setVisible(true);
+	}
+
+	/** Places the tables with the automatic layout, referenced tables left of the tables that refer to them. */
+	private void arrangeAutomatically() {
+		ModelArranger.arrange(mv.getModel());
+		mv.resize();
+		mv.repaint();
 	}
 
 	public void updateTitle() {

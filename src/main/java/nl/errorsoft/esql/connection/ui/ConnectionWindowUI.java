@@ -59,6 +59,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JMenuItem dbCreateDatabase;
 	private JMenuItem dbDrop;
 	private JMenuItem dbCreateTable;
+	private JMenuItem dbDesigner;
 	private JMenuItem dbRefresh;
 
 	// Table menu.
@@ -95,6 +96,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JButton btnDropTable;
 	private JButton btnCreateTable;
 	private JButton btnUserManager;
+	private JButton btnDesigner;
 	private JButton btnRunQuery;
 	private JButton btnNewRow;
 	private JButton btnUpdateRow;
@@ -144,6 +146,8 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		btnCreateTable.setToolTipText("Create table");
 		btnDropTable = new JButton(imgLoader.getIcon("imgDropTable"));
 		btnDropTable.setToolTipText("Drop table");
+		btnDesigner = new JButton(imgLoader.getIcon("imgDesigner"));
+		btnDesigner.setToolTipText("Open database in designer");
 		btnUserManager = new JButton(imgLoader.getIcon("imgUserManager"));
 		btnUserManager.setToolTipText("User manager");
 		btnRunQuery = new JButton(imgLoader.getIcon("imgRunQuery"));
@@ -166,6 +170,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		tbTable.addSeparator();
 		tbTable.add(btnCreateDb);
 		tbTable.add(btnDropDb);
+		tbTable.add(btnDesigner);
 		tbTable.addSeparator();
 		tbTable.add(btnCreateTable);
 		tbTable.add(btnDropTable);
@@ -183,6 +188,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		this.btnDeleteRow.setEnabled(false);
 		this.btnRunQuery.setEnabled(false);
 		this.btnDropDb.setEnabled(false);
+		this.btnDesigner.setEnabled(false);
 		this.btnDropTable.setEnabled(false);
 		this.btnCreateTable.setEnabled(false);
 		this.btnAddField.setEnabled(false);
@@ -231,6 +237,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		dbDrop = new JMenuItem("Drop database");
 		dbCreateTable = new JMenuItem("Create table");
 		dbRefresh = new JMenuItem("Reload table(s)");
+		dbDesigner = new JMenuItem("Open in designer");
 
 		// Database menu item placement.
 		dbmenu.add(dblabel);
@@ -239,6 +246,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		dbmenu.add(dbDrop);
 		dbmenu.addSeparator();
 		dbmenu.add(dbCreateTable);
+		dbmenu.add(dbDesigner);
 		dbmenu.addSeparator();
 		dbmenu.add(dbRefresh);
 
@@ -382,6 +390,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		dbDrop.addActionListener(this);
 		dbCreateTable.addActionListener(this);
 		dbRefresh.addActionListener(this);
+		dbDesigner.addActionListener(this);
 
 		// Rootmenu listeners
 		rtCreate.addActionListener(this);
@@ -402,6 +411,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		btnDropTable.addActionListener(this);
 		btnCreateDb.addActionListener(this);
 		btnDropDb.addActionListener(this);
+		btnDesigner.addActionListener(this);
 		btnUserManager.addActionListener(this);
 		btnRunQuery.addActionListener(this);
 		btnNewRow.addActionListener(this);
@@ -425,6 +435,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public void rootSelected() {
 		btnCreateDb.setEnabled(true);
 		btnDropDb.setEnabled(false);
+		btnDesigner.setEnabled(false);
 		btnCreateTable.setEnabled(false);
 		btnDropTable.setEnabled(false);
 		btnAddField.setEnabled(false);
@@ -439,6 +450,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public void databaseSelected() {
 		btnCreateDb.setEnabled(true);
 		btnDropDb.setEnabled(true);
+		btnDesigner.setEnabled(true);
 		btnCreateTable.setEnabled(true);
 		btnDropTable.setEnabled(false);
 		btnAddField.setEnabled(false);
@@ -453,6 +465,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public void tableSelected() {
 		btnCreateDb.setEnabled(true);
 		btnDropDb.setEnabled(true);
+		btnDesigner.setEnabled(false);
 		btnCreateTable.setEnabled(true);
 		btnDropTable.setEnabled(true);
 		btnAddField.setEnabled(true);
@@ -467,6 +480,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public void fieldSelected() {
 		btnCreateDb.setEnabled(true);
 		btnDropDb.setEnabled(true);
+		btnDesigner.setEnabled(false);
 		btnCreateTable.setEnabled(true);
 		btnDropTable.setEnabled(true);
 		btnAddField.setEnabled(true);
@@ -631,6 +645,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			if (result == JOptionPane.YES_OPTION) {
 				cwcc.dropDatabase();
 			}
+		}
+		// Read the database into the designer.
+		else if (eventSource == btnDesigner || eventSource == dbDesigner) {
+			cwcc.openDatabaseInDesigner();
 		}
 		// Reload databases.
 		else if (eventSource == this.dbRefresh) {

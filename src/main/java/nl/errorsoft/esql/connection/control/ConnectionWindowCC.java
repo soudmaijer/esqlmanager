@@ -25,6 +25,10 @@ import nl.errorsoft.esql.connection.ConnectionWindow;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.server.ui.Processlist;
 import nl.errorsoft.esql.database.control.DatabaseCC;
+import nl.errorsoft.esql.designer.DesignedDatabase;
+import nl.errorsoft.esql.designer.model.Model;
+import nl.errorsoft.esql.designer.ui.DBCreator;
+import nl.errorsoft.esql.designer.ui.diagram.ModelFactory;
 import nl.errorsoft.esql.query.ui.QueryUI;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.user.control.UserManagerCC;
@@ -428,6 +432,26 @@ public class ConnectionWindowCC extends Thread {
 			tbcc.startCreateTableUI(jmcc.getUI(), cwui.getDatabase());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Create table", e);
+		}
+	}
+
+	/** Reads the tables and foreign keys of the selected database and opens them in the designer, arranged automatically. */
+	public void openDatabaseInDesigner() {
+		if (!requireFeature(Dialect.Feature.DESIGNER, "The designer")) {
+			return;
+		}
+
+		try {
+			Database database = cwui.getDatabase();
+			jmcc.updateStatus("Reading database structure...", true);
+			DesignedDatabase designed = getContext().designer().reverseEngineer(database);
+			Model model = ModelFactory.fromDatabase(designed, cw.getConnectionProfile().getServerType().getDataTypes());
+			setStatusDetail(database.getName() + ": " + designed.tables().size() + " table(s) opened in the designer");
+			jmcc.updateStatus("Ready...", false);
+			new DBCreator(jmcc.getUI(), cwui, model);
+		} catch (Exception e) {
+			jmcc.updateStatus("Ready...", false);
+			ApplicationContext.get().errors().report(cwui, "Open in designer", e);
 		}
 	}
 

@@ -24,7 +24,7 @@ import org.eclipse.elk.graph.util.ElkGraphUtil;
  */
 public final class AutoLayout {
 	/** Space between the tables, and between the layers where the connectors run. */
-	static final int SPACING = 40;
+	public static final int SPACING = 40;
 	static final int LAYER_SPACING = 90;
 
 	/** A table to place, with the size of its card. */

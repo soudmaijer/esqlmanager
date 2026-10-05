@@ -60,6 +60,10 @@ eSQLManager changelog
   and the ON DELETE and ON UPDATE actions, and checks that the columns exist and their types fit. Double click a line to
   edit it, Delete removes it.
 - Designer export: File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram.
+- Designer reverse engineering: "Open in designer" on a database reads its tables, columns, primary keys and
+  foreign keys (composite keys too, views left out) into a model that can be saved and generated again.
+- Designer layout: tables are placed automatically with the Eclipse Layout Kernel (layered, referenced tables first,
+  tables without relations in a grid below), also for any model with View > Arrange Automatically.
 - Package structure by feature: dialect (with mysql, postgres, sqlserver and oracle sub packages), jdbc, error, job,
   export, importer, server, settings, and shared ui split into icon, table, editor and util. The designer UI is split
   into diagram and dialog. The old domain, data and importexport packages are gone.
