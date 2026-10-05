@@ -75,12 +75,9 @@ public class UserService {
 	public List<String> getTableNames(String databaseName) throws Exception {
 		List<String> names = new ArrayList<>();
 
-		for (Database database : databases.getDatabases()) {
-			if (database.getName().equals(databaseName)) {
-				for (Table table : databases.getTables(database)) {
-					names.add(table.getName());
-				}
-			}
+		// The name comes from getDatabaseNames, which already applied the profile's filter.
+		for (Table table : databases.getTables(new Database(databaseName))) {
+			names.add(table.getName());
 		}
 		return names;
 	}

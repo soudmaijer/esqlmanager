@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 
+import nl.errorsoft.esql.database.DatabaseNames;
 import nl.errorsoft.esql.dialect.DatabaseOption;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -27,7 +28,7 @@ public final class CreateDatabaseDialog {
 	 * @param term what the server calls a database ("database")
 	 * @param options the options of the dialect
 	 * @param choices the values per option key
-	 * @param existing the names that are taken, the name must differ from all of them (ignoring case)
+	 * @param existing the names that are taken, checked with {@link DatabaseNames}
 	 * @return null when the user cancels
 	 */
 	public static Request ask(Component parent, String term, List<DatabaseOption> options, Map<String, List<String>> choices, List<String> existing) {
@@ -57,13 +58,7 @@ public final class CreateDatabaseDialog {
 			}
 		}
 
-		boolean accepted = Dialogs.form(parent, "Create " + term, grid.panel(), "Create", name, () -> {
-			String value = name.getText().trim();
-			if (value.isEmpty()) {
-				return "Enter a name for the " + term + ".";
-			}
-			return existing.stream().anyMatch(value::equalsIgnoreCase) ? "A " + term + " named '" + value + "' exists already." : null;
-		});
+		boolean accepted = Dialogs.form(parent, "Create " + term, grid.panel(), "Create", name, () -> DatabaseNames.problem(name.getText(), term, existing));
 
 		if (!accepted) {
 			return null;

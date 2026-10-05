@@ -490,7 +490,7 @@ public class UserManagerDialog extends JDialog {
 	private String describe(GrantTarget target) {
 		return switch (target.scope()) {
 			case GLOBAL -> "the server";
-			case DATABASE -> "database " + target.database();
+			case DATABASE -> userManagerController.databaseTerm() + " " + target.database();
 			default -> "table " + target.database() + "." + target.table();
 		};
 	}

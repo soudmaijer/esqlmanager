@@ -20,7 +20,8 @@ import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.table.Table;
 
 /**
- * Plain JDBC and ANSI SQL behaviour that works on any database. DialectFactory override what is different.
+ * Plain JDBC and ANSI SQL behaviour that works on any database. Each dialect overrides what is different on its server; what the base cannot write
+ * portably (full text indexes, copying a table, switching database in a script) it refuses.
  */
 public abstract class AbstractDialect implements Dialect {
 	/** A text default with an optional cast, as PostgreSQL reports it: 'it''s'::character varying. */
@@ -208,8 +209,7 @@ public abstract class AbstractDialect implements Dialect {
 		}
 
 		if ("FULLTEXT".equalsIgnoreCase(type)) {
-			return Arrays.asList("CREATE INDEX " + quote(name) + " ON " + quote(table) + " USING GIN (to_tsvector('simple', "
-				+ String.join(" || ' ' || ", quoted) + "))");
+			throw new EsqlException("Full text indexes are not available on this server.");
 		}
 
 		String unique = "UNIQUE".equalsIgnoreCase(type) ? "UNIQUE " : "";
@@ -316,13 +316,7 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	public List<String> copyTableSql(TableName source, TableName target, boolean withData) {
-		List<String> statements = new ArrayList<>();
-		statements.add("CREATE TABLE " + quote(target) + " (LIKE " + quote(source) + " INCLUDING ALL)");
-
-		if (withData) {
-			statements.add("INSERT INTO " + quote(target) + " SELECT * FROM " + quote(source));
-		}
-		return statements;
+		throw new EsqlException("Copying a table is not available on this server.");
 	}
 
 	public String tableSizeSql() {
@@ -337,13 +331,13 @@ public abstract class AbstractDialect implements Dialect {
 		return null;
 	}
 
-	/** Not every server can switch database with a statement, so scripts use the psql meta command that Import understands. */
 	public String useDatabaseSql(String database) {
-		return "\\connect " + quote(database);
+		throw new UnsupportedOperationException("Scripts cannot switch database on this server");
 	}
 
+	/** A server without a switch statement of its own has no statement that switches database. */
 	public String databaseSwitchTarget(String statement) {
-		return switchTarget(statement, "\\connect", "\\c");
+		return null;
 	}
 
 	/** The (unquoted) name after one of the commands, when the statement is that command followed by a name; null otherwise. */

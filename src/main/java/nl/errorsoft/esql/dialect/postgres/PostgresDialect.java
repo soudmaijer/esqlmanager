@@ -55,6 +55,35 @@ public class PostgresDialect extends AbstractDialect {
 		return "SELECT NULL, 'CREATE VIEW ' || " + name + " || ' AS ' || pg_get_viewdef(" + name + "::regclass, true)";
 	}
 
+	/** A full text index is a GIN index on the words of the columns. */
+	public List<String> addIndexSql(TableName table, String name, String type, List<String> columns) {
+		if (!"FULLTEXT".equalsIgnoreCase(type)) {
+			return super.addIndexSql(table, name, type, columns);
+		}
+		List<String> quoted = columns.stream().map(this::quote).toList();
+		return List.of("CREATE INDEX " + quote(name) + " ON " + quote(table) + " USING GIN (to_tsvector('simple', " + String.join(" || ' ' || ", quoted)
+			+ "))");
+	}
+
+	public List<String> copyTableSql(TableName source, TableName target, boolean withData) {
+		List<String> statements = new ArrayList<>();
+		statements.add("CREATE TABLE " + quote(target) + " (LIKE " + quote(source) + " INCLUDING ALL)");
+
+		if (withData) {
+			statements.add("INSERT INTO " + quote(target) + " SELECT * FROM " + quote(source));
+		}
+		return statements;
+	}
+
+	/** PostgreSQL cannot switch database with a statement, so scripts use the psql meta command that Import understands. */
+	public String useDatabaseSql(String database) {
+		return "\\connect " + quote(database);
+	}
+
+	public String databaseSwitchTarget(String statement) {
+		return switchTarget(statement, "\\connect", "\\c");
+	}
+
 	public String beginTransactionSql() {
 		return "BEGIN";
 	}

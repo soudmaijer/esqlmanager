@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.designer.model;
 
+import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
@@ -352,6 +353,37 @@ public class Model implements MouseListener, MouseMotionListener {
 	/** Reads a model file of version 0.1 or 0.2. */
 	public Model loadModel(File xml) throws Exception {
 		return ModelXml.read(xml);
+	}
+
+	/** What a text diagram (PlantUML, Mermaid) shows of this model. */
+	public DiagramModel toDiagram() {
+		List<String> databases = new ArrayList<>();
+		List<DiagramModel.Table> tables = new ArrayList<>();
+		List<DiagramModel.Relation> relations = new ArrayList<>();
+
+		for (DesignerForeignKey key : foreignKeys) {
+			relations.add(new DiagramModel.Relation(key.from().getName(), key.fromColumns(), key.to().getName(), key.toColumns(), key.name()));
+		}
+
+		for (Object object : modelobjects) {
+			if (object instanceof DatabaseObject database) {
+				databases.add(database.getName());
+			} else if (object instanceof TableObject table) {
+				Set<String> foreign = new HashSet<>();
+				for (DesignerForeignKey key : foreignKeysOf(table)) {
+					if (key.from() == table) {
+						foreign.addAll(key.fromColumns());
+					}
+				}
+
+				List<DiagramModel.Column> columns = new ArrayList<>();
+				for (DesignerColumn field : table.getFields()) {
+					columns.add(new DiagramModel.Column(field.getName(), TableObject.typeText(field), field.primary, foreign.contains(field.getName())));
+				}
+				tables.add(new DiagramModel.Table(table.getName(), columns));
+			}
+		}
+		return new DiagramModel(databases, tables, relations);
 	}
 
 	public void mouseClicked(MouseEvent e) {

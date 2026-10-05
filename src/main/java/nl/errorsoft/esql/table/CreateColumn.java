@@ -23,6 +23,19 @@ public class CreateColumn {
 		this.name = name;
 	}
 
+	/** Chooses the type of the column and switches off the options the type does not allow; null leaves the column as it is. */
+	public void applyType(DataType type) {
+		if (type == null) {
+			return;
+		}
+		this.type = type;
+		primary &= type.allows(DataType.Option.PRIMARY);
+		notnull &= type.allows(DataType.Option.NOT_NULL);
+		unsigned &= type.allows(DataType.Option.UNSIGNED);
+		autoincrement &= type.allows(DataType.Option.AUTO_INCREMENT);
+		zerofill &= type.allows(DataType.Option.ZEROFILL);
+	}
+
 	public String toString() {
 		return name;
 	}

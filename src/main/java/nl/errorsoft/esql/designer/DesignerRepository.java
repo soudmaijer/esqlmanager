@@ -69,8 +69,8 @@ public class DesignerRepository extends AbstractRepository {
 	 * order. A key on a table elsewhere is left out, even when a table of this schema has the same name.
 	 */
 	public List<DesignedForeignKey> loadForeignKeys(String schema, String table) throws SQLException {
-		Map<String, TreeMap<Integer, String[]>> pairs = new LinkedHashMap<>();
-		Map<String, String[]> details = new LinkedHashMap<>();
+		Map<String, TreeMap<Integer, ColumnPair>> pairs = new LinkedHashMap<>();
+		Map<String, KeyDetail> details = new LinkedHashMap<>();
 		String catalog = dbc.getConnection().getCatalog();
 		String readSchema = schemaOrCurrent(schema);
 
@@ -81,23 +81,31 @@ public class DesignerRepository extends AbstractRepository {
 				}
 				String name = rs.getString("FK_NAME");
 				pairs.computeIfAbsent(name, key -> new TreeMap<>()).put(rs.getInt("KEY_SEQ"),
-					new String[]{rs.getString("FKCOLUMN_NAME"), rs.getString("PKCOLUMN_NAME")});
-				details.put(name, new String[]{rs.getString("PKTABLE_NAME"), action(rs.getInt("DELETE_RULE")), action(rs.getInt("UPDATE_RULE"))});
+					new ColumnPair(rs.getString("FKCOLUMN_NAME"), rs.getString("PKCOLUMN_NAME")));
+				details.put(name, new KeyDetail(rs.getString("PKTABLE_NAME"), action(rs.getInt("DELETE_RULE")), action(rs.getInt("UPDATE_RULE"))));
 			}
 		}
 
 		List<DesignedForeignKey> keys = new ArrayList<>();
-		for (Map.Entry<String, TreeMap<Integer, String[]>> key : pairs.entrySet()) {
+		for (Map.Entry<String, TreeMap<Integer, ColumnPair>> key : pairs.entrySet()) {
 			List<String> columns = new ArrayList<>();
 			List<String> referenced = new ArrayList<>();
-			for (String[] pair : key.getValue().values()) {
-				columns.add(pair[0]);
-				referenced.add(pair[1]);
+			for (ColumnPair pair : key.getValue().values()) {
+				columns.add(pair.column());
+				referenced.add(pair.referenced());
 			}
-			String[] detail = details.get(key.getKey());
-			keys.add(new DesignedForeignKey(key.getKey(), columns, detail[0], referenced, detail[1], detail[2]));
+			KeyDetail detail = details.get(key.getKey());
+			keys.add(new DesignedForeignKey(key.getKey(), columns, detail.referencedTable(), referenced, detail.onDelete(), detail.onUpdate()));
 		}
 		return keys;
+	}
+
+	/** A column of a foreign key and the column of the referenced table it refers to. */
+	private record ColumnPair(String column, String referenced) {
+	}
+
+	/** What a foreign key says once, whatever the number of columns: the referenced table and the actions. */
+	private record KeyDetail(String referencedTable, String onDelete, String onUpdate) {
 	}
 
 	/** Whether the referenced catalog or schema is the one read; a server without catalogs or schemas reports null. */

@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Small fixes from the layering review
+
+- Create database compares the name with the existing ones exactly, as the server does, so 'Shop' can be created
+  next to 'shop' on PostgreSQL.
+- Upload and Download have a mnemonic on Cancel.
+
 05-10-2026: Clearer errors
 
 - Export names the table or view when the server gives no definition for it, instead of failing on an empty result.

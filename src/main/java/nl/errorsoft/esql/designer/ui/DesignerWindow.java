@@ -296,7 +296,7 @@ public class DesignerWindow extends JInternalFrame {
 
 		if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 			try {
-				Files.writeString(jfc.getSelectedFile().toPath(), exporter.apply(DiagramModel.of(canvas.getModel())),
+				Files.writeString(jfc.getSelectedFile().toPath(), exporter.apply(canvas.getModel().toDiagram()),
 					StandardCharsets.UTF_8);
 				log.info("Model exported as {} to {}", format, jfc.getSelectedFile());
 			} catch (Exception ex) {

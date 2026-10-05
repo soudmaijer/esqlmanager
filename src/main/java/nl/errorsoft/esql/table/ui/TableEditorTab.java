@@ -263,7 +263,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 				selField.name = name;
 			}
 		})));
-		columnType.addActionListener(e -> write(() -> applyType(selField, (DataType) columnType.getSelectedItem())));
+		columnType.addActionListener(e -> write(() -> selField.applyType((DataType) columnType.getSelectedItem())));
 		length.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.length = length.getText())));
 		defaultval.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.defaultval = defaultval.getText())));
 		columnComment.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.comment = columnComment.getText())));
@@ -502,19 +502,6 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		refreshPreview();
 	}
 
-	/** The type was chosen: options the type does not have are switched off. */
-	static void applyType(CreateColumn column, DataType type) {
-		if (type == null) {
-			return;
-		}
-		column.type = type;
-		column.primary &= type.allows(DataType.Option.PRIMARY);
-		column.notnull &= type.allows(DataType.Option.NOT_NULL);
-		column.unsigned &= type.allows(DataType.Option.UNSIGNED);
-		column.autoincrement &= type.allows(DataType.Option.AUTO_INCREMENT);
-		column.zerofill &= type.allows(DataType.Option.ZEROFILL);
-	}
-
 	/** Fills the details from the selected column. A new column can be edited, an existing one is only shown. */
 	private void showColumn() {
 		int row = columnTable.getSelectedRow();
@@ -674,7 +661,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 						created.name = name;
 					}
 				}
-				case TYPE -> applyType(created, (DataType) value);
+				case TYPE -> created.applyType((DataType) value);
 				case LENGTH -> created.length = Objects.toString(value, "");
 				case NOT_NULL -> created.notnull = (Boolean) value;
 				case PRIMARY -> created.primary = (Boolean) value;

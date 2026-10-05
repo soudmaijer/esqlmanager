@@ -95,11 +95,12 @@ public class DatabaseService {
 	 * @throws EsqlException when the name is empty or a database of that name exists
 	 */
 	public Database createDatabase(String name, Map<String, String> options) throws Exception {
-		if (name == null || name.isBlank()) {
-			throw new EsqlException("Enter a name for the " + repository.databaseTerm() + ".");
+		String problem = DatabaseNames.problem(name, repository.databaseTerm(), List.of());
+		if (problem != null) {
+			throw new EsqlException(problem);
 		}
 		if (exists(new Database(name))) {
-			throw new EsqlException("A " + repository.databaseTerm() + " named '" + name + "' exists already.");
+			throw new EsqlException(DatabaseNames.taken(name, repository.databaseTerm()));
 		}
 
 		repository.create(name, options);

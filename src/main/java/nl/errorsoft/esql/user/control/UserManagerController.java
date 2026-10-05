@@ -37,6 +37,11 @@ public class UserManagerController {
 		}
 	}
 
+	/** What the server calls a database, for the messages of the dialog. */
+	public String databaseTerm() {
+		return connectionWindowController.dialect().databaseTerm();
+	}
+
 	public boolean usesHost() {
 		return service().usesHost();
 	}
