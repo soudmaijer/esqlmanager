@@ -65,7 +65,7 @@ public class UserService
 	{
 		List<String> names = new ArrayList<String>();
 
-		for( Database database : databases.getDatabases() )
+		for ( Database database : databases.getDatabases() )
 			names.add( database.getName() );
 
 		return names;
@@ -75,11 +75,11 @@ public class UserService
 	{
 		List<String> names = new ArrayList<String>();
 
-		for( Database database : databases.getDatabases() )
+		for ( Database database : databases.getDatabases() )
 		{
-			if( database.getName().equals( databaseName ) )
+			if ( database.getName().equals( databaseName ) )
 			{
-				for( Table table : databases.getTables( database ) )
+				for ( Table table : databases.getTables( database ) )
 					names.add( table.getName() );
 			}
 		}

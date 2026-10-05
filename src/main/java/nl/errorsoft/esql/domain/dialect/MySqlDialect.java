@@ -48,8 +48,9 @@ public class MySqlDialect extends AbstractDialect
 		List<ServerProcess> processes = new ArrayList<ServerProcess>();
 		ResultSet rs = dbc.executeQuery( "SHOW PROCESSLIST" );
 
-		while( rs.next() )
-			processes.add( new ServerProcess( rs.getString( "Id" ), rs.getString( "User" ), rs.getString( "Host" ), rs.getString( "db" ), rs.getString( "Command" ), rs.getString( "Time" ), rs.getString( "Info" ) ) );
+		while ( rs.next() )
+			processes.add( new ServerProcess( rs.getString( "Id" ), rs.getString( "User" ), rs.getString( "Host" ), rs.getString( "db" ),
+				rs.getString( "Command" ), rs.getString( "Time" ), rs.getString( "Info" ) ) );
 
 		rs.close();
 		return processes;
@@ -76,7 +77,7 @@ public class MySqlDialect extends AbstractDialect
 		ResultSet rs = dbc.executeQuery( command + " TABLE " + quote( table ) );
 		String message = "";
 
-		if( rs.first() )
+		if ( rs.first() )
 			message = rs.getString( "Msg_Text" );
 
 		rs.close();
@@ -107,9 +108,9 @@ public class MySqlDialect extends AbstractDialect
 		return "`" + identifier.replace( "`", "``" ) + "`";
 	}
 
-	public String [] getTableTypes()
+	public String[] getTableTypes()
 	{
-		return new String[] { "InnoDB", "MyISAM", "MEMORY", "ARCHIVE", "CSV" };
+		return new String[]{"InnoDB", "MyISAM", "MEMORY", "ARCHIVE", "CSV"};
 	}
 
 	public List<String> createTableSql( String table, List<CreateColumn> columns, String tableType, String comment )
@@ -117,26 +118,26 @@ public class MySqlDialect extends AbstractDialect
 		List<String> definitions = new ArrayList<String>();
 		List<String> primary = new ArrayList<String>();
 
-		for( CreateColumn column : columns )
+		for ( CreateColumn column : columns )
 		{
 			definitions.add( quote( column.name ) + " " + columnDefinition( column ) );
 
-			if( column.primary )
+			if ( column.primary )
 				primary.add( quote( column.name ) );
-			if( column.unique )
+			if ( column.unique )
 				definitions.add( "UNIQUE (" + quote( column.name ) + ")" );
-			if( column.index )
+			if ( column.index )
 				definitions.add( "INDEX (" + quote( column.name ) + ")" );
 		}
 
-		if( !primary.isEmpty() )
+		if ( !primary.isEmpty() )
 			definitions.add( "PRIMARY KEY (" + String.join( ", ", primary ) + ")" );
 
 		String statement = "CREATE TABLE " + quote( table ) + " (" + String.join( ", ", definitions ) + ")";
 
-		if( tableType != null && tableType.length() > 0 )
+		if ( tableType != null && tableType.length() > 0 )
 			statement += " ENGINE=" + tableType;
-		if( comment.trim().length() > 0 )
+		if ( comment.trim().length() > 0 )
 			statement += " COMMENT=" + literal( comment );
 
 		return Arrays.asList( statement );
@@ -161,12 +162,12 @@ public class MySqlDialect extends AbstractDialect
 	{
 		List<String> quoted = new ArrayList<String>();
 
-		for( String column : columns )
+		for ( String column : columns )
 			quoted.add( quote( column ) );
 
 		String cols = "(" + String.join( ", ", quoted ) + ")";
 
-		if( name.equals( "PRIMARY" ) )
+		if ( name.equals( "PRIMARY" ) )
 			return Arrays.asList( "ALTER TABLE " + quote( table ) + " ADD PRIMARY KEY " + cols );
 
 		return Arrays.asList( "ALTER TABLE " + quote( table ) + " ADD " + type + " " + quote( name ) + " " + cols );
@@ -174,7 +175,7 @@ public class MySqlDialect extends AbstractDialect
 
 	public List<String> dropIndexSql( DatabaseConnection dbc, String table, String name )
 	{
-		if( name.equals( "PRIMARY" ) )
+		if ( name.equals( "PRIMARY" ) )
 			return Arrays.asList( "ALTER TABLE " + quote( table ) + " DROP PRIMARY KEY" );
 
 		return Arrays.asList( "ALTER TABLE " + quote( table ) + " DROP INDEX " + quote( name ) );
@@ -193,19 +194,19 @@ public class MySqlDialect extends AbstractDialect
 	{
 		String definition = column.type.getName();
 
-		if( column.length.trim().length() > 0 )
+		if ( column.length.trim().length() > 0 )
 			definition += " (" + column.length + ")";
-		if( column.unsigned )
+		if ( column.unsigned )
 			definition += " UNSIGNED";
-		if( column.zerofill )
+		if ( column.zerofill )
 			definition += " ZEROFILL";
-		if( column.binary )
+		if ( column.binary )
 			definition += " BINARY";
-		if( column.defaultval.trim().length() > 0 )
+		if ( column.defaultval.trim().length() > 0 )
 			definition += " DEFAULT " + literal( column.defaultval );
-		if( column.notnull )
+		if ( column.notnull )
 			definition += " NOT NULL";
-		if( column.autoincrement )
+		if ( column.autoincrement )
 			definition += " AUTO_INCREMENT";
 
 		return definition;
@@ -221,8 +222,8 @@ public class MySqlDialect extends AbstractDialect
 		List<String> names = new ArrayList<String>();
 		ResultSet rs = dbc.executeQuery( "SHOW DATABASES" );
 
-		while( rs.next() )
-			names.add( rs.getString(1) );
+		while ( rs.next() )
+			names.add( rs.getString( 1 ) );
 
 		rs.close();
 		return names;
@@ -233,13 +234,13 @@ public class MySqlDialect extends AbstractDialect
 		Vector<Table> tables = new Vector<Table>();
 		ResultSet rs = dbc.executeQuery( "SHOW TABLE STATUS" );
 
-		while( rs.next() )
+		while ( rs.next() )
 		{
 			Table table = new Table( db );
-			table.setName( rs.getString("Name") );
-			table.setType( rs.getString("Engine") );
-			table.setRowCount( rs.getInt("Rows") );
-			table.setComment( rs.getString("Comment") );
+			table.setName( rs.getString( "Name" ) );
+			table.setType( rs.getString( "Engine" ) );
+			table.setRowCount( rs.getInt( "Rows" ) );
+			table.setComment( rs.getString( "Comment" ) );
 			tables.add( table );
 		}
 		rs.close();
@@ -248,6 +249,6 @@ public class MySqlDialect extends AbstractDialect
 
 	public String selectPage( String quotedTable, String orderBy, int skip, int show )
 	{
-		return "SELECT * FROM "+ quotedTable + ( orderBy.length() > 0 ? " ORDER BY "+ orderBy : "" ) +" LIMIT "+ skip +","+ show;
+		return "SELECT * FROM " + quotedTable + ( orderBy.length() > 0 ? " ORDER BY " + orderBy : "" ) + " LIMIT " + skip + "," + show;
 	}
 }

@@ -31,8 +31,8 @@ public class SqlServerDialect extends AbstractDialect
 		CallableStatement cs = dbc.getConnection().prepareCall( "{call sp_databases}" );
 		ResultSet rs = cs.executeQuery();
 
-		while( rs.next() )
-			names.add( rs.getString(1) );
+		while ( rs.next() )
+			names.add( rs.getString( 1 ) );
 
 		rs.close();
 		cs.close();

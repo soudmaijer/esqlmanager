@@ -52,7 +52,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Code style
 
-* Match the surrounding code. Most sources use tabs and CRLF line endings; new files use LF. Keep each file's existing line endings when editing.
+* Formatting is done by Spotless with the Eclipse formatter profile in `.eclipse-formatter.xml` (tabs, braces on their own line, spaces inside parentheses, 160 columns, LF line endings). Run `./mvnw spotless:apply` before committing, `./mvnw spotless:check` verifies. `.editorconfig` holds the same basics for editors. IntelliJ's own formatter does not follow it.
 * Resources are closed with try-with-resources. No deprecated API in new code (`new Integer`, `Dialog.show()`, ...).
 * No em-dashes in prose or documentation.
 
@@ -75,14 +75,23 @@ The code is moving from layers by technical type (`gui`, `control`, `domain`, `d
 * A result that is more than one object is a small record in the feature package (`table.QueryResult`).
 * Do this one feature at a time and keep the contract tests green.
 
-Status per feature:
+Features and their packages (all under `nl.errorsoft.esql`; each has `control` and `ui` subpackages where it has windows):
 
-* `table`: done, in `nl.errorsoft.esql.table` (data classes, `TableRepository`, `TableService`, `QueryResult`), `table.control` (`TableCC`, `IndexesCC`, `CreateTableCC`) and `table.ui` (`TableDataView`, `TableListView`, `CreateTable`, `FieldProperties`, `IndexesUI`). A feature has its data, service and repository in its own package and `control` and `ui` as subpackages.
-* `database`, `importexport` (`Export`, `Import`, `UDData`), `designer`, `user`, `connection`: not done.
+* `table`: tables, columns, indexes, rows (`Table`, `TableColumn`, `TableIndex`, `TableData`, `TableService`, `TableRepository`, `QueryResult`).
+* `database`: databases and their table lists (`Database`, `DatabaseService`, `DatabaseRepository`), including the tree view.
+* `importexport`: SQL export and import (`ExportService`, `ImportService`, with an `ExportRepository` and `ImportRepository`). Services run on their own thread and report progress to `Observer`s.
+* `blob`: uploading and saving binary cells (`BlobService`, `BlobRepository`).
+* `user`: accounts and privileges (`UserService`, `UserRepository`). The SQL itself is in the dialect's `UserAdmin`, which the repository wraps.
+* `designer`: the model designer. `DesignerService` creates the designed databases and tables from `DesignedDatabase` and `DesignedTable`.
+* `query`: statements typed by the user (`QueryService`, `QueryRepository`) and the editor with syntax highlighting.
+* `connection`: profiles, drivers, the connection window, process list, server status and variables (`ServerService`).
+* `app`: main window, settings, start up. `ui`: Swing parts shared by several features (`ImageLoader`, `ColumnWidths`, ...). `data`: `DatabaseConnection` and `AbstractRepository`. `domain`: types shared by features (`CreateColumn`, `DataType`) and `domain.dialect`.
+* A service gets the connection of the window it works for (`new TableService( cwcc.getDatabaseConnection() )`) and a repository is created by its service. Services may call other services (`BlobService` uses `TableService.rowFilter`).
 
 ## Known technical debt
 
 * Raw `Vector` and other raw types (about 100 lint warnings), `java.util.Observable`/`Observer` for progress reporting.
 * Many dialogs still use null layouts (`ConnectionWindowUI`, `CreateTable`, `IndexesUI`, ...).
-* Domain classes mix data, behaviour and SQL (`Database`, `Export`, `Import`, `UDData`). `Dialect` methods such as `maintain` and `dropIndexSql` still take a `DatabaseConnection` and run SQL themselves.
+* `Dialect` and `UserAdmin` methods such as `listTables`, `maintain`, `dropIndexSql` still take a `DatabaseConnection` and run SQL themselves, repositories only wrap them.
+* Controllers still create a service per call and some windows (`Processlist`, `DatabaseTreeView`) hold more logic than a UI should.
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.

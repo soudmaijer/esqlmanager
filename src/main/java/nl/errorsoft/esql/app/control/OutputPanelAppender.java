@@ -33,7 +33,7 @@ public class OutputPanelAppender extends AbstractAppender
 	/** Attaches the output panel to the root logger. */
 	public static void install( ESQLManagerUI ui )
 	{
-		LoggerContext context = (LoggerContext)LogManager.getContext( false );
+		LoggerContext context = ( LoggerContext ) LogManager.getContext( false );
 		Configuration config = context.getConfiguration();
 		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern( "%d{HH:mm:ss} %-5level %msg%n" ).setConfiguration( config ).build();
 		Appender appender = new OutputPanelAppender( layout, ui );

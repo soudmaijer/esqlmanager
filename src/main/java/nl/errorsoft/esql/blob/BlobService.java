@@ -29,26 +29,26 @@ public class BlobService extends Observable
 		this.tables = new TableService( dbc );
 	}
 
-	public void upload( Table table, TableData [] row, TableData cell, String file ) throws Exception
+	public void upload( Table table, TableData[] row, TableData cell, String file ) throws Exception
 	{
 		String condition = tables.rowFilter( row );
-		byte [] content = Files.readAllBytes( Path.of( file ) );
+		byte[] content = Files.readAllBytes( Path.of( file ) );
 		log.debug( "Read {} bytes from {}", content.length, file );
 
 		repository.write( table, cell.getTableColumn().getName(), condition, new ByteArrayInputStream( content ), content.length );
 		progress( 100 );
 	}
 
-	public void download( Table table, TableData [] row, TableData cell, String file ) throws Exception
+	public void download( Table table, TableData[] row, TableData cell, String file ) throws Exception
 	{
 		String condition = tables.rowFilter( row );
 
-		try( BufferedOutputStream target = new BufferedOutputStream( new FileOutputStream( file ) ) )
+		try ( BufferedOutputStream target = new BufferedOutputStream( new FileOutputStream( file ) ) )
 		{
-			if( !repository.read( table, cell.getTableColumn().getName(), condition, target ) )
+			if ( !repository.read( table, cell.getTableColumn().getName(), condition, target ) )
 				log.warn( "No row found to save to {}", file );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			log.error( "Can't save {}: {}", file, e.getMessage(), e );
 		}

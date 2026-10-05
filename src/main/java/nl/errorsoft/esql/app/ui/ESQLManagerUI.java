@@ -44,7 +44,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	private JMenuItem mnuImportFromFile;
 	private JMenuItem mnuExportToFile;
 	private JMenuItem mnuDesigner;
-	
+
 	private JMenu mnuGroupWindow;
 	private JMenuItem mnuTileCascade;
 	private JMenuItem mnuTileHorizontal;
@@ -74,7 +74,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	private JDesktopPane jdp;
 	private ImageLoader imgLoader;
 	private MutableAttributeSet attributeSet;
-	
+
 	SyntaxDocument syndoc = new SyntaxDocument();
 
 	public ESQLManagerUI( ESQLManagerCC jmcc )
@@ -83,28 +83,28 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 		// Get Imageloader
 		imgLoader = jmcc.getImageLoader();
-		
+
 		// Create components.
 		initComponents();
 
 		// Set window properties
 		this.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
 		this.setTitle( jmcc.getTitle() );
-		this.setIconImage( imgLoader.getImage("windowIcon") );
+		this.setIconImage( imgLoader.getImage( "windowIcon" ) );
 		this.addWindowListener( new WindowAdapter()
 		{
-			public void windowClosing(WindowEvent w)
+			public void windowClosing( WindowEvent w )
 			{
 				closeUI();
 			}
-		});
+		} );
 		this.pack();
-		
+
 		// Fix found on Sun forum: http://forum.java.sun.com/thread.jsp?forum=57&thread=158893
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		Rectangle screenRect = ge.getMaximumWindowBounds();
-		
-		this.setSize( (int)screenRect.getWidth(), (int)screenRect.getHeight() );
+
+		this.setSize( ( int ) screenRect.getWidth(), ( int ) screenRect.getHeight() );
 		this.setVisible( true );
 		this.setExtendedState( JFrame.MAXIMIZED_BOTH );
 
@@ -115,65 +115,66 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	public void initComponents()
 	{
 		// FlatLaf paints much faster than the native macOS look and feel, especially while resizing.
-		if( !com.formdev.flatlaf.FlatLightLaf.setup() )
+		if ( !com.formdev.flatlaf.FlatLightLaf.setup() )
 		{
 			try
 			{
 				UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
 			}
-			catch( Exception e )
-			{	log.warn( "Could not set the look and feel", e );
+			catch ( Exception e )
+			{
+				log.warn( "Could not set the look and feel", e );
 			}
 		}
 
 		/*
 		 * Menubar
 		 */
- 		menubar = new JMenuBar();
-		mnuGroupOptions = new JMenu("Options");
-		mnuConnect = new JMenuItem("Connect");
-		mnuDisconnect = new JMenuItem("Disconnect");
-		mnuExit = new JMenuItem("Exit");
-		mnuGroupOptions.add(mnuConnect);
-		mnuGroupOptions.add(mnuDisconnect);
+		menubar = new JMenuBar();
+		mnuGroupOptions = new JMenu( "Options" );
+		mnuConnect = new JMenuItem( "Connect" );
+		mnuDisconnect = new JMenuItem( "Disconnect" );
+		mnuExit = new JMenuItem( "Exit" );
+		mnuGroupOptions.add( mnuConnect );
+		mnuGroupOptions.add( mnuDisconnect );
 		mnuGroupOptions.addSeparator();
-		mnuGroupOptions.add(mnuExit);
-		menubar.add(mnuGroupOptions);
+		mnuGroupOptions.add( mnuExit );
+		menubar.add( mnuGroupOptions );
 
-		mnuGroupSettings = new JMenu("Settings");
-		mnuSettings = new JMenuItem("Preferences");
-		mnuJDBC = new JMenuItem("JDBC Driver settings");
+		mnuGroupSettings = new JMenu( "Settings" );
+		mnuSettings = new JMenuItem( "Preferences" );
+		mnuJDBC = new JMenuItem( "JDBC Driver settings" );
 		mnuJDBC.addActionListener( this );
 		mnuGroupSettings.add( mnuSettings );
 		mnuGroupSettings.add( mnuJDBC );
-		menubar.add(mnuGroupSettings);
+		menubar.add( mnuGroupSettings );
 
-		mnuGroupImportExport = new JMenu("Tools");
-		mnuImportFromFile = new JMenuItem("Import data...");
-		mnuExportToFile = new JMenuItem("Export data...");
-		mnuDesigner = new JMenuItem("Database Designer");
+		mnuGroupImportExport = new JMenu( "Tools" );
+		mnuImportFromFile = new JMenuItem( "Import data..." );
+		mnuExportToFile = new JMenuItem( "Export data..." );
+		mnuDesigner = new JMenuItem( "Database Designer" );
 		mnuGroupImportExport.add( mnuImportFromFile );
 		mnuGroupImportExport.add( mnuExportToFile );
 		mnuGroupImportExport.addSeparator();
 		mnuGroupImportExport.add( mnuDesigner );
 		menubar.add( mnuGroupImportExport );
 
-		mnuGroupWindow = new JMenu("Window");
-		mnuTileCascade = new JMenuItem("Cascade");
-		mnuTileHorizontal = new JMenuItem("Tile horizontal");
-		mnuTileVertical = new JMenuItem("Tile vertical");
-		mnuGroupWindow.add(mnuTileCascade);
-		mnuGroupWindow.add(mnuTileHorizontal);
-		mnuGroupWindow.add(mnuTileVertical);
+		mnuGroupWindow = new JMenu( "Window" );
+		mnuTileCascade = new JMenuItem( "Cascade" );
+		mnuTileHorizontal = new JMenuItem( "Tile horizontal" );
+		mnuTileVertical = new JMenuItem( "Tile vertical" );
+		mnuGroupWindow.add( mnuTileCascade );
+		mnuGroupWindow.add( mnuTileHorizontal );
+		mnuGroupWindow.add( mnuTileVertical );
 		menubar.add( mnuGroupWindow );
 
-		mnuGroupHelp = new JMenu("Help");
-		mnuAbout = new JMenuItem("About");
+		mnuGroupHelp = new JMenu( "Help" );
+		mnuAbout = new JMenuItem( "About" );
 		mnuGroupHelp.addSeparator();
-		mnuGroupHelp.add(mnuAbout);
+		mnuGroupHelp.add( mnuAbout );
 		menubar.add( mnuGroupHelp );
 
-		setJMenuBar(menubar);
+		setJMenuBar( menubar );
 
 		/*
 		 * Toolbar
@@ -181,56 +182,56 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		toolbar = new JToolBar();
 		toolbar.setLayout( new FlowLayout( FlowLayout.LEFT, 0, 0 ) );
 		toolbar.setFloatable( true );
-		btnConnect = new JButton( new ImageIcon( imgLoader.getImage("imgConnect") ) );
+		btnConnect = new JButton( new ImageIcon( imgLoader.getImage( "imgConnect" ) ) );
 		btnConnect.setEnabled( true );
-		btnConnect.setToolTipText("Connect");
+		btnConnect.setToolTipText( "Connect" );
 		toolbar.add( btnConnect );
 
-		btnDisconnect = new JButton( new ImageIcon( imgLoader.getImage("imgDisconnect") ) );
+		btnDisconnect = new JButton( new ImageIcon( imgLoader.getImage( "imgDisconnect" ) ) );
 		btnDisconnect.setEnabled( false );
-		btnDisconnect.setToolTipText("Disconnect");
+		btnDisconnect.setToolTipText( "Disconnect" );
 		toolbar.add( btnDisconnect );
 
 		toolbar.addSeparator();
 
-		btnCascade = new JButton( new ImageIcon( imgLoader.getImage("imgCascade") ) );
+		btnCascade = new JButton( new ImageIcon( imgLoader.getImage( "imgCascade" ) ) );
 		btnCascade.setEnabled( false );
-		btnCascade.setToolTipText("Cascade");
+		btnCascade.setToolTipText( "Cascade" );
 		toolbar.add( btnCascade );
 
-		btnTileHorizontal = new JButton( new ImageIcon( imgLoader.getImage("imgTileHorizontal") ) );
+		btnTileHorizontal = new JButton( new ImageIcon( imgLoader.getImage( "imgTileHorizontal" ) ) );
 		btnTileHorizontal.setEnabled( false );
-		btnTileHorizontal.setToolTipText("Tile horizontal");
+		btnTileHorizontal.setToolTipText( "Tile horizontal" );
 		toolbar.add( btnTileHorizontal );
 
-		btnTileVertical = new JButton( new ImageIcon( imgLoader.getImage("imgTileVertical") ) );
+		btnTileVertical = new JButton( new ImageIcon( imgLoader.getImage( "imgTileVertical" ) ) );
 		btnTileVertical.setEnabled( false );
-		btnTileVertical.setToolTipText("Tile vertical");
+		btnTileVertical.setToolTipText( "Tile vertical" );
 		toolbar.add( btnTileVertical );
 
 		toolbar.addSeparator();
 
 		cmbWindows = new JComboBox();
-		cmbWindows.addActionListener(new ActionListener()
+		cmbWindows.addActionListener( new ActionListener()
 		{
-			public void actionPerformed(ActionEvent e)
+			public void actionPerformed( ActionEvent e )
 			{
 				try
 				{
-					if( cmbWindows.getItemCount() <= 0 )
+					if ( cmbWindows.getItemCount() <= 0 )
 						return;
 
-					ConnectionWindowUI window = (ConnectionWindowUI)cmbWindows.getSelectedItem();
+					ConnectionWindowUI window = ( ConnectionWindowUI ) cmbWindows.getSelectedItem();
 
-					if( window != null )
+					if ( window != null )
 						jdp.getDesktopManager().activateFrame( window );
 				}
-				catch( Exception ae )
+				catch ( Exception ae )
 				{
 					log.error( ae.getMessage(), ae );
 				}
 			}
-		});
+		} );
 
 		cmbWindows.setPreferredSize( new Dimension( 125, 20 ) );
 		toolbar.add( cmbWindows );
@@ -241,10 +242,10 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		 */
 		statusbar = new JPanel();
 		statusbar.setLayout( new BorderLayout() );
-		stl = new StatusLight(imgLoader);
-		stl.setPreferredSize(new Dimension(20,16));
+		stl = new StatusLight( imgLoader );
+		stl.setPreferredSize( new Dimension( 20, 16 ) );
 		statusbar.add( stl, BorderLayout.EAST );
-		
+
 		statusMsg = new JLabel( "Ready..." );
 		statusMsg.setBorder( BorderFactory.createEmptyBorder( 3, 8, 3, 8 ) );
 		statusMsg.setPreferredSize( new Dimension( 200, 20 ) );
@@ -265,7 +266,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		outputTitle.setFont( outputTitle.getFont().deriveFont( Font.BOLD ) );
 		outputTitle.setBorder( BorderFactory.createEmptyBorder( 3, 8, 3, 8 ) );
 		outputPanel.add( outputTitle, BorderLayout.NORTH );
-		
+
 		// No line wrapping: re-wrapping a long log on every width change made resizing slow.
 		jta = new JTextPane()
 		{
@@ -276,69 +277,69 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		};
 		// A read-only text pane is painted grey by default, the output should look like the other content areas.
 		jta.setBackground( new Color( UIManager.getColor( "TextPane.background" ).getRGB() ) );
-		jta.setFont(new Font("arial", Font.PLAIN, 11));
-		jta.setEditable(false);
+		jta.setFont( new Font( "arial", Font.PLAIN, 11 ) );
+		jta.setEditable( false );
 
 		attributeSet = new javax.swing.text.SimpleAttributeSet();
-		StyleConstants.setBold(attributeSet, false);
-		StyleConstants.setForeground(attributeSet, java.awt.Color.black);
+		StyleConstants.setBold( attributeSet, false );
+		StyleConstants.setForeground( attributeSet, java.awt.Color.black );
 		jta.setDocument( syndoc );
-		
+
 		// DesktopPane.
 		jdp = new JDesktopPane();
 		jdp.setBackground( Color.gray );
 
 		//ScrollPane for tree.
-		jsp = new JScrollPane(jta);
+		jsp = new JScrollPane( jta );
 		jsp.getViewport().setBackground( jta.getBackground() );
-		jsp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		jsp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		jsp.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS );
+		jsp.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 		outputPanel.add( jsp, BorderLayout.CENTER );
-		
-		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jdp, outputPanel);
-		jsplit.setOneTouchExpandable(true);
+
+		jsplit = new JSplitPane( JSplitPane.VERTICAL_SPLIT, jdp, outputPanel );
+		jsplit.setOneTouchExpandable( true );
 		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
-		jsplit.setContinuousLayout(true);
+		jsplit.setContinuousLayout( true );
 		// A maximized internal frame must not limit how far the divider can move.
 		jdp.setMinimumSize( new Dimension( 0, 0 ) );
 		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
-		jsplit.setResizeWeight(1.0);
+		jsplit.setResizeWeight( 1.0 );
 		outputPanel.setMinimumSize( new Dimension( 0, 60 ) );
-		getContentPane().add(jsplit);
+		getContentPane().add( jsplit );
 
 		/*
 		 *	ActionListeners
 		 */
 		// Menubar
-		mnuConnect.addActionListener(this);
-		mnuDisconnect.addActionListener(this);
-		mnuExit.addActionListener(this);
+		mnuConnect.addActionListener( this );
+		mnuDisconnect.addActionListener( this );
+		mnuExit.addActionListener( this );
 
-		mnuSettings.addActionListener(this);
-		mnuTileCascade.addActionListener(this);
-		mnuTileVertical.addActionListener(this);
-		mnuTileHorizontal.addActionListener(this);
+		mnuSettings.addActionListener( this );
+		mnuTileCascade.addActionListener( this );
+		mnuTileVertical.addActionListener( this );
+		mnuTileHorizontal.addActionListener( this );
 
-		mnuExportToFile.addActionListener(this);
-		mnuImportFromFile.addActionListener(this);
-		mnuDesigner.addActionListener(this);
+		mnuExportToFile.addActionListener( this );
+		mnuImportFromFile.addActionListener( this );
+		mnuDesigner.addActionListener( this );
 
-		btnCascade.addActionListener(this);
-		btnTileVertical.addActionListener(this);
-		btnTileHorizontal.addActionListener(this);
+		btnCascade.addActionListener( this );
+		btnTileVertical.addActionListener( this );
+		btnTileHorizontal.addActionListener( this );
 
-		mnuAbout.addActionListener(this);
+		mnuAbout.addActionListener( this );
 
 		// Toolbar
-		btnConnect.addActionListener(this);
-		btnDisconnect.addActionListener(this);
+		btnConnect.addActionListener( this );
+		btnDisconnect.addActionListener( this );
 	}
 
 	public void closeUI()
 	{
-		JOptionPane pane = new JOptionPane("Shutdown",JOptionPane.WARNING_MESSAGE );
+		JOptionPane pane = new JOptionPane( "Shutdown", JOptionPane.WARNING_MESSAGE );
 
-		if( JOptionPane.showConfirmDialog( this, "Are you sure you want to exit ?", "Shutdown", JOptionPane.YES_NO_OPTION ) == JOptionPane.YES_OPTION )
+		if ( JOptionPane.showConfirmDialog( this, "Are you sure you want to exit ?", "Shutdown", JOptionPane.YES_NO_OPTION ) == JOptionPane.YES_OPTION )
 		{
 			jmcc.closeUI();
 		}
@@ -351,15 +352,15 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 	public void updateStatus( final String message, final boolean red )
 	{
-		stl.switchRedLight(red);
-		
+		stl.switchRedLight( red );
+
 		statusMsg.setText( message );
 	}
 
 	/** Shows what the active connection is looking at, next to the action that is going on. */
 	public void setStatusInfo( final String info )
 	{
-		if( !SwingUtilities.isEventDispatchThread() )
+		if ( !SwingUtilities.isEventDispatchThread() )
 		{
 			SwingUtilities.invokeLater( () -> setStatusInfo( info ) );
 			return;
@@ -371,27 +372,29 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	public void print( String s )
 	{
 		// Log messages come from any thread, the document may only be changed on the event thread.
-		if( !SwingUtilities.isEventDispatchThread() )
+		if ( !SwingUtilities.isEventDispatchThread() )
 		{
 			SwingUtilities.invokeLater( () -> print( s ) );
 			return;
 		}
-		
+
 		try
-		{	
+		{
 			syndoc.append( s );
 			trimOutput();
 			jta.setCaretPosition( jta.getDocument().getLength() );
 		}
-		catch(Exception e)	{	}
+		catch ( Exception e )
+		{
+		}
 	}
 
 	// Keeps the output panel from growing without limit.
 	private void trimOutput() throws javax.swing.text.BadLocationException
 	{
 		int length = syndoc.getLength();
-		
-		if( length > MAX_OUTPUT_CHARS )
+
+		if ( length > MAX_OUTPUT_CHARS )
 		{
 			int cut = length - MAX_OUTPUT_CHARS / 2;
 			String head = syndoc.getText( cut, Math.min( 200, length - cut ) );
@@ -409,35 +412,37 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		btnTileVertical.setEnabled( true );
 
 		jdp.add( cw );
-		
+
 		// A maximized frame follows the size of the desktop, so the content scales with the output panel.
 		try
-		{	cw.setMaximum( true );
+		{
+			cw.setMaximum( true );
 		}
-		catch( java.beans.PropertyVetoException e )
-		{	log.warn( "Could not maximize the connection window", e );
+		catch ( java.beans.PropertyVetoException e )
+		{
+			log.warn( "Could not maximize the connection window", e );
 		}
 
 		cmbWindows.addItem( cw );
-		cmbWindows.setSelectedIndex( cmbWindows.getItemCount()-1 );
+		cmbWindows.setSelectedIndex( cmbWindows.getItemCount() - 1 );
 	}
-	
+
 	public ConnectionWindowUI getConnectionWindow()
 	{
-		return (ConnectionWindowUI)cmbWindows.getSelectedItem();
+		return ( ConnectionWindowUI ) cmbWindows.getSelectedItem();
 	}
 
 	public int getConnectionWindowCount()
 	{
 		return cmbWindows.getItemCount();
-	}	
-	
+	}
+
 	public void removeConnectionWindow( ConnectionWindowUI cw )
 	{
 		cmbWindows.removeItemAt( cmbWindows.getSelectedIndex() );
 		jdp.getDesktopManager().closeFrame( cw );
 
-		if( jdp.getAllFrames().length == 0 )
+		if ( jdp.getAllFrames().length == 0 )
 		{
 			btnConnect.setEnabled( true );
 			btnDisconnect.setEnabled( false );
@@ -453,7 +458,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		Object object = event.getSource();
 
 		// Check for menu or Toolbar events.
-		if (object == mnuExit)
+		if ( object == mnuExit )
 		{
 			closeUI();
 		}
@@ -467,69 +472,69 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		}
 		else if ( object == mnuDisconnect || object == btnDisconnect )
 		{
-			((ConnectionWindowUI)jdp.getSelectedFrame() ).closeUI(true);
+			( ( ConnectionWindowUI ) jdp.getSelectedFrame() ).closeUI( true );
 		}
-		else if( object == mnuTileVertical || object == btnTileVertical )
+		else if ( object == mnuTileVertical || object == btnTileVertical )
 		{
-			DesktopUtils.tileVertical(jdp);
+			DesktopUtils.tileVertical( jdp );
 		}
-		else if( object == mnuTileHorizontal || object == btnTileHorizontal )
+		else if ( object == mnuTileHorizontal || object == btnTileHorizontal )
 		{
-			DesktopUtils.tileHorizontal(jdp);
+			DesktopUtils.tileHorizontal( jdp );
 		}
-		else if( object == mnuTileCascade || object == btnCascade )
+		else if ( object == mnuTileCascade || object == btnCascade )
 		{
-			DesktopUtils.cascadeAll(jdp);
+			DesktopUtils.cascadeAll( jdp );
 		}
-		else if( object == mnuAbout )
+		else if ( object == mnuAbout )
 		{
-			jmcc.showSplashScreen(0);
+			jmcc.showSplashScreen( 0 );
 		}
-		else if( object == mnuJDBC )
+		else if ( object == mnuJDBC )
 		{
 			jmcc.dispatchDriverUI();
 		}
 		// Import sql file.
-		else if( object == mnuImportFromFile )
+		else if ( object == mnuImportFromFile )
 		{
-		   if( jdp.getAllFrames().length > 0 )
-		   {
-		   	jmcc.dispatchImportUI();
-		   }
-		}		
+			if ( jdp.getAllFrames().length > 0 )
+			{
+				jmcc.dispatchImportUI();
+			}
+		}
 		// Export sql file.
-		else if( object == mnuExportToFile )
+		else if ( object == mnuExportToFile )
 		{
-		   if( jdp.getAllFrames().length > 0 )
-		   {
-		   	jmcc.dispatchExportUI();
-		   }
+			if ( jdp.getAllFrames().length > 0 )
+			{
+				jmcc.dispatchExportUI();
+			}
 		}
 		// Start designer
-		else if( object == mnuDesigner )
+		else if ( object == mnuDesigner )
 		{
-		   if( jdp.getAllFrames().length > 0 )
-		   {
-		   	jmcc.dispatchDesigner();
-		   }
-		}		
+			if ( jdp.getAllFrames().length > 0 )
+			{
+				jmcc.dispatchDesigner();
+			}
+		}
 	}
-	
-	public void showMessage(String message)
+
+	public void showMessage( String message )
 	{
-		JOptionPane pane = new JOptionPane();  
-  		pane.showMessageDialog( this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE );  					
-	}	
-	
-	public void showMessage(String title, String message)
+		JOptionPane pane = new JOptionPane();
+		pane.showMessageDialog( this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE );
+	}
+
+	public void showMessage( String title, String message )
 	{
-		JOptionPane pane = new JOptionPane();  
-  		pane.showMessageDialog( this, message, title, JOptionPane.INFORMATION_MESSAGE );  					
-	}	
-	 	
-	public void showErrorMessage(String message)
+		JOptionPane pane = new JOptionPane();
+		pane.showMessageDialog( this, message, title, JOptionPane.INFORMATION_MESSAGE );
+	}
+
+	public void showErrorMessage( String message )
 	{
-		JOptionPane pane = new JOptionPane();  
-  		pane.showMessageDialog( this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE );  					
-	}	
+		JOptionPane pane = new JOptionPane();
+		pane.showMessageDialog( this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE );
+	}
 }

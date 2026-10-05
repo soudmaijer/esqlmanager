@@ -31,7 +31,7 @@ public class QueryService
 	{
 		StringTokenizer names = new StringTokenizer( sql.substring( 3 ), "; `", false );
 
-		if( names.hasMoreTokens() )
+		if ( names.hasMoreTokens() )
 			repository.switchDatabase( names.nextToken() );
 	}
 

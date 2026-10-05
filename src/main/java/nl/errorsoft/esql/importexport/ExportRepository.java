@@ -27,8 +27,8 @@ public class ExportRepository extends AbstractRepository
 		useDatabase( database.getName() );
 		List<String> names = new ArrayList<String>();
 
-		for( Table table : dialect().listTables( dbc, database ) )
-			if( !"VIEW".equalsIgnoreCase( table.getType() ) )
+		for ( Table table : dialect().listTables( dbc, database ) )
+			if ( !"VIEW".equalsIgnoreCase( table.getType() ) )
 				names.add( table.getName() );
 
 		return names;
@@ -46,7 +46,7 @@ public class ExportRepository extends AbstractRepository
 
 	public String dropTableSql( String table )
 	{
-		return "DROP TABLE IF EXISTS "+ quote( table );
+		return "DROP TABLE IF EXISTS " + quote( table );
 	}
 
 	public String structureSql( String table ) throws SQLException
@@ -57,28 +57,28 @@ public class ExportRepository extends AbstractRepository
 	/** Passes every row of the table to the sink as an INSERT statement, binary columns are left empty. */
 	public void insertStatements( String table, Consumer<String> sink ) throws SQLException
 	{
-		try( ResultSet rs = dbc.executeQuery( "SELECT * FROM "+ quote( table ) ) )
+		try ( ResultSet rs = dbc.executeQuery( "SELECT * FROM " + quote( table ) ) )
 		{
 			ResultSetMetaData rsm = rs.getMetaData();
 
-			while( rs.next() )
+			while ( rs.next() )
 			{
 				List<String> values = new ArrayList<String>();
 
-				for( int d=1; d<=rsm.getColumnCount(); d++ )
+				for ( int d = 1; d <= rsm.getColumnCount(); d++ )
 				{
 					TableColumn column = new TableColumn( null );
 					column.setType( rsm.getColumnType( d ) );
 
-					if( column.isBinary() )
+					if ( column.isBinary() )
 						values.add( "''" );
-					else if( rs.getString( d ) != null )
+					else if ( rs.getString( d ) != null )
 						values.add( dialect().literal( rs.getString( d ) ) );
 					else
 						values.add( "NULL" );
 				}
 
-				sink.accept( "INSERT INTO "+ quote( table ) +" VALUES("+ String.join( ",", values ) +");" );
+				sink.accept( "INSERT INTO " + quote( table ) + " VALUES(" + String.join( ",", values ) + ");" );
 			}
 		}
 	}

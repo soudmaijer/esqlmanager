@@ -16,105 +16,112 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
 public class SyntaxDocument extends DefaultStyledDocument
-{	
+{
 	private static final Logger log = LogManager.getLogger( SyntaxDocument.class );
 
 	Vector keywords = new Vector();
-	
+
 	public SyntaxDocument()
-	{	
-     	try
+	{
+		try
 		{
 			SAXBuilder saxbuilder = new SAXBuilder();
-		  	Document driverData = saxbuilder.build(new File("conf/syntax.xml"));
-			
-    		List list = null;
+			Document driverData = saxbuilder.build( new File( "conf/syntax.xml" ) );
 
-    		if( driverData.hasRootElement() )
-				list = driverData.getRootElement().getChildren("keyword");
-	
-			for(int i = 0; i < list.size(); i++)
-			{		
-				keywords.add ( ((Element)list.get(i)).getText()	);
+			List list = null;
+
+			if ( driverData.hasRootElement() )
+				list = driverData.getRootElement().getChildren( "keyword" );
+
+			for ( int i = 0; i < list.size(); i++ )
+			{
+				keywords.add( ( ( Element ) list.get( i ) ).getText() );
 			}
 		}
-		catch(Exception exception)
+		catch ( Exception exception )
 		{
-		   log.warn( "Warning: syntax.xml could not be loaded, no syntax highlighting will be available!" );
-		}		
-	}	
-	
-	public void append ( String text )
-	{	text = text.replaceAll("'", " ' ");
-		text = text.replaceAll("\"", " \" ");
-		text = text.replaceAll("`", " ` ");	
-		StringTokenizer st = new StringTokenizer (text, " ");
+			log.warn( "Warning: syntax.xml could not be loaded, no syntax highlighting will be available!" );
+		}
+	}
 
-		boolean inquote  = false;
+	public void append( String text )
+	{
+		text = text.replaceAll( "'", " ' " );
+		text = text.replaceAll( "\"", " \" " );
+		text = text.replaceAll( "`", " ` " );
+		StringTokenizer st = new StringTokenizer( text, " " );
+
+		boolean inquote = false;
 		String qstr = "";
-		
-		while ( st.hasMoreTokens( ) )
-		{	String t = st.nextToken();
-		
-			if( t.indexOf("'") != -1 && !inquote)
-			{	this.appendKeyword(  t.substring( 0, t.indexOf("'") ));
-				this.append(t.substring( t.indexOf("'") , t.length()) + " ", new Color(71,134,41) , false );
+
+		while ( st.hasMoreTokens() )
+		{
+			String t = st.nextToken();
+
+			if ( t.indexOf( "'" ) != -1 && !inquote )
+			{
+				this.appendKeyword( t.substring( 0, t.indexOf( "'" ) ) );
+				this.append( t.substring( t.indexOf( "'" ), t.length() ) + " ", new Color( 71, 134, 41 ), false );
 				qstr = "'";
 				inquote = true;
 			}
-			else if( t.indexOf("\"") != -1 && !inquote)
-			{	this.appendKeyword(  t.substring( 0, t.indexOf("\"") ));
-				this.append(t.substring( t.indexOf("\"") , t.length()) + " ", new Color(71,134,41) , false );
+			else if ( t.indexOf( "\"" ) != -1 && !inquote )
+			{
+				this.appendKeyword( t.substring( 0, t.indexOf( "\"" ) ) );
+				this.append( t.substring( t.indexOf( "\"" ), t.length() ) + " ", new Color( 71, 134, 41 ), false );
 				qstr = "\"";
 				inquote = true;
 			}
-			else if( t.indexOf("`") != -1 && !inquote)
-			{	this.appendKeyword(  t.substring( 0, t.indexOf("`") ));
-				this.append(t.substring( t.indexOf("`") , t.length()) + " ", new Color(71,134,41) , false );
+			else if ( t.indexOf( "`" ) != -1 && !inquote )
+			{
+				this.appendKeyword( t.substring( 0, t.indexOf( "`" ) ) );
+				this.append( t.substring( t.indexOf( "`" ), t.length() ) + " ", new Color( 71, 134, 41 ), false );
 				qstr = "`";
 				inquote = true;
-			}			
+			}
 			else if ( inquote )
-			{	if( t.indexOf(qstr) == -1 )
-				{	
-					this.append(t + " ", new Color(71,134,41), false );
+			{
+				if ( t.indexOf( qstr ) == -1 )
+				{
+					this.append( t + " ", new Color( 71, 134, 41 ), false );
 				}
 				else
-				{	
-					this.append(t.substring( 0, t.indexOf(qstr) + 1 ) + " ", new Color(71,134,41) , false );
-					this.appendKeyword( t.substring( t.indexOf(qstr) + 1, t.length() ) + " ");
+				{
+					this.append( t.substring( 0, t.indexOf( qstr ) + 1 ) + " ", new Color( 71, 134, 41 ), false );
+					this.appendKeyword( t.substring( t.indexOf( qstr ) + 1, t.length() ) + " " );
 					inquote = false;
 				}
-			}						
+			}
 			else
 			{
 				this.appendKeyword( t + " " );
 			}
-		}		
+		}
 	}
-	
-	public void appendKeyword ( String text )
-	{	for( int i = 0; i < keywords.size(); i ++ )
-		{	
-			if( keywords.get( i ).toString().equalsIgnoreCase( text.trim() ) )
-			{	
-				this.append( text, Color.blue, true );		
+
+	public void appendKeyword( String text )
+	{
+		for ( int i = 0; i < keywords.size(); i++ )
+		{
+			if ( keywords.get( i ).toString().equalsIgnoreCase( text.trim() ) )
+			{
+				this.append( text, Color.blue, true );
 				return;
 			}
 		}
-		this.append( text, Color.black, false );					
+		this.append( text, Color.black, false );
 	}
-	
+
 	private void append( String text, Color c, boolean bold )
-	{	
-		SimpleAttributeSet sas = new SimpleAttributeSet ();
-		StyleConstants.setBold(sas, bold);
-		StyleConstants.setForeground(sas, c);
+	{
+		SimpleAttributeSet sas = new SimpleAttributeSet();
+		StyleConstants.setBold( sas, bold );
+		StyleConstants.setForeground( sas, c );
 		try
-		{	
-			this.insertString(this.getLength(), text, sas);	
+		{
+			this.insertString( this.getLength(), text, sas );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 		}
 	}

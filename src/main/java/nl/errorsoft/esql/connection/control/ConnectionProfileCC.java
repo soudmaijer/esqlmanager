@@ -22,45 +22,45 @@ public class ConnectionProfileCC
 	public ConnectionProfileCC( ESQLManagerCC jmcc )
 	{
 		this.jmcc = jmcc;
-		
+
 		try
 		{
 			cp = new ConnectionProfile();
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
-			log.error("An error occured while loading profiles.xml file!");
+			log.error( "An error occured while loading profiles.xml file!" );
 		}
 	}
-	
+
 	public void startUI( ESQLManagerUI jmui, boolean autoConnect )
 	{
 		// Create Frame.
-		jmui.updateStatus("Starting profile manager...", true );
-		ConnectionProfile [] cpa = cp.getProfiles();
+		jmui.updateStatus( "Starting profile manager...", true );
+		ConnectionProfile[] cpa = cp.getProfiles();
 		log.info( "Loaded {} connection profile(s) from conf/profiles.xml", cpa.length );
 		boolean conLastUsed = false;
-		
-		if( autoConnect )
+
+		if ( autoConnect )
 		{
-			for( int i=0; i<cpa.length; i++ )
+			for ( int i = 0; i < cpa.length; i++ )
 			{
-				if( cpa[i].isAutoConnect() )
+				if ( cpa[i].isAutoConnect() )
 				{
 					connect( cpa[i] );
-					conLastUsed = true ;
+					conLastUsed = true;
 				}
 			}
 		}
-		if( !conLastUsed )
+		if ( !conLastUsed )
 		{
-			cpui = new ConnectionProfileUI( jmui,this );
+			cpui = new ConnectionProfileUI( jmui, this );
 			cpui.loadProfiles( cp.getProfiles() );
-			jmcc.updateStatus("Ready...", false );
+			jmcc.updateStatus( "Ready...", false );
 			cpui.setVisible( true );
 		}
 	}
-	
+
 	public void connect( ConnectionProfile selcp )
 	{
 		try
@@ -69,20 +69,20 @@ public class ConnectionProfileCC
 			jmcc.dispatchConnectionWindowUI( selcp );
 			cpui.dispose();
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
-			cpui.showErrorMessage("Error while connecting to selected connectionprofile!");
+			cpui.showErrorMessage( "Error while connecting to selected connectionprofile!" );
 		}
 	}
-	
+
 	public void addProfile( String name, ServerType type, String host, String port, String username, String password, String databases, boolean autoConnect )
-	{	
+	{
 		try
 		{
-			jmcc.updateStatus("Adding profile...", true );
+			jmcc.updateStatus( "Adding profile...", true );
 			ConnectionProfile cpt = new ConnectionProfile();
-			
-			if( !cp.profileExists( name ) )
+
+			if ( !cp.profileExists( name ) )
 			{
 				cpt.setName( name );
 				cpt.setHost( host );
@@ -95,21 +95,22 @@ public class ConnectionProfileCC
 				cp.addProfile( cpt );
 				cpui.loadProfiles( cp.getProfiles() );
 				cpui.setSelectedProfile( cpt );
-				jmcc.updateStatus("Ready...", false );
-				cpui.showMessage("Profile added succesfully!");
+				jmcc.updateStatus( "Ready...", false );
+				cpui.showMessage( "Profile added succesfully!" );
 			}
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
-			cpui.showErrorMessage("Error while adding profile!");
+			cpui.showErrorMessage( "Error while adding profile!" );
 		}
 	}
 
-	public void editProfile( ConnectionProfile cpt, String name, ServerType type, String host, String port, String username, String password, String databases, boolean autoConnect )
-	{	
+	public void editProfile( ConnectionProfile cpt, String name, ServerType type, String host, String port, String username, String password, String databases,
+		boolean autoConnect )
+	{
 		try
 		{
-			jmcc.updateStatus("Saving profile...", true );
+			jmcc.updateStatus( "Saving profile...", true );
 			cpt.setName( name );
 			cpt.setHost( host );
 			cpt.setPort( port );
@@ -119,27 +120,27 @@ public class ConnectionProfileCC
 			cpt.setServerType( type );
 			cpt.setAutoConnect( autoConnect );
 			cp.editProfile( cpt );
-			jmcc.updateStatus("Ready...", false );
-			cpui.showMessage("Saved changes!");
+			jmcc.updateStatus( "Ready...", false );
+			cpui.showMessage( "Saved changes!" );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
-			cpui.showErrorMessage("Error while saving profile!");
+			cpui.showErrorMessage( "Error while saving profile!" );
 		}
 	}
-	
+
 	public void deleteProfile( ConnectionProfile cp )
 	{
 		try
 		{
-			jmcc.updateStatus("Deleting profile...", true );
+			jmcc.updateStatus( "Deleting profile...", true );
 			this.cp.deleteProfile( cp );
 			cpui.loadProfiles( this.cp.getProfiles() );
-			jmcc.updateStatus("Ready...", false );
+			jmcc.updateStatus( "Ready...", false );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
-			cpui.showErrorMessage("Error while deleting profile!");
-		}		
+			cpui.showErrorMessage( "Error while deleting profile!" );
+		}
 	}
 }

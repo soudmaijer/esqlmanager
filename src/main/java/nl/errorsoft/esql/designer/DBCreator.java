@@ -20,274 +20,310 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 
-
 import java.io.*;
 
 public class DBCreator extends JDialog implements MouseListener
-{	private JMenuBar menu;
+{
+	private JMenuBar menu;
 	private static final Logger log = LogManager.getLogger( DBCreator.class );
 
-	
-	private JMenu file = new JMenu("File");
-	private JMenuItem file_new = new JMenuItem("New Model...");
-	private JMenuItem file_opn = new JMenuItem("Open Model...");
-	private JMenuItem file_sav = new JMenuItem("Save Model");
-	private JMenuItem file_sva = new JMenuItem("Save Model As...");
-	private JMenuItem file_ext = new JMenuItem("Close");
-	
-	private JMenu edit = new JMenu("Edit");
-	private JMenuItem edit_del = new JMenuItem("Delete Selected");
-	private JMenuItem edit_sla = new JMenuItem("Select All");
-	private JMenuItem edit_dsa = new JMenuItem("Deselect All");
-	
+	private JMenu file = new JMenu( "File" );
+	private JMenuItem file_new = new JMenuItem( "New Model..." );
+	private JMenuItem file_opn = new JMenuItem( "Open Model..." );
+	private JMenuItem file_sav = new JMenuItem( "Save Model" );
+	private JMenuItem file_sva = new JMenuItem( "Save Model As..." );
+	private JMenuItem file_ext = new JMenuItem( "Close" );
+
+	private JMenu edit = new JMenu( "Edit" );
+	private JMenuItem edit_del = new JMenuItem( "Delete Selected" );
+	private JMenuItem edit_sla = new JMenuItem( "Select All" );
+	private JMenuItem edit_dsa = new JMenuItem( "Deselect All" );
+
 	private ModelBrowser mb;
 	private ModelViewer mv;
-	
+
 	private Properties properties;
-	
+
 	private ESQLManagerUI eui;
 	private ConnectionWindowUI cwui;
 
-	public DBCreator (ESQLManagerUI eui, ConnectionWindowUI cwui)
-	{	super(eui, true);
-	
+	public DBCreator( ESQLManagerUI eui, ConnectionWindowUI cwui )
+	{
+		super( eui, true );
+
 		this.eui = eui;
 		this.cwui = cwui;
-	
-		this.setSize(640,480);
-		this.setTitle("eSQLDesigner");	
-		
-		mv = new ModelViewer( new ModelViewerControl(this) );
-		
-		JScrollPane jsp = new JScrollPane(mv);
-		
-		this.getContentPane().add(jsp);
-		jsp.getViewport().setBackground(Color.white);
-		jsp.setBorder( null );
-		
-		menu = new JMenuBar();
-		this.setJMenuBar(menu);
-		
-		file.add(file_new);
-		file.add(file_opn);
-		file.addSeparator();
-		file.add(file_sav);
-		file.add(file_sva);
-		file.addSeparator();
-		file.add(file_ext);
-		
-		file.setMnemonic('F');
-		file_new.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK) );
-		file_new.setMnemonic('N');
-		file_opn.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK) );
-		file_new.setMnemonic('O');
-		file_sav.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK) );
-		file_new.setMnemonic('S');
-		file_new.setMnemonic('A');
-		file_ext.setMnemonic('X');
 
-		edit.add(edit_sla);
-		edit.add(edit_dsa);
+		this.setSize( 640, 480 );
+		this.setTitle( "eSQLDesigner" );
+
+		mv = new ModelViewer( new ModelViewerControl( this ) );
+
+		JScrollPane jsp = new JScrollPane( mv );
+
+		this.getContentPane().add( jsp );
+		jsp.getViewport().setBackground( Color.white );
+		jsp.setBorder( null );
+
+		menu = new JMenuBar();
+		this.setJMenuBar( menu );
+
+		file.add( file_new );
+		file.add( file_opn );
+		file.addSeparator();
+		file.add( file_sav );
+		file.add( file_sva );
+		file.addSeparator();
+		file.add( file_ext );
+
+		file.setMnemonic( 'F' );
+		file_new.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_N, ActionEvent.CTRL_MASK ) );
+		file_new.setMnemonic( 'N' );
+		file_opn.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) );
+		file_new.setMnemonic( 'O' );
+		file_sav.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) );
+		file_new.setMnemonic( 'S' );
+		file_new.setMnemonic( 'A' );
+		file_ext.setMnemonic( 'X' );
+
+		edit.add( edit_sla );
+		edit.add( edit_dsa );
 		edit.addSeparator();
-		edit.add(edit_del);
-		
-		edit.setMnemonic('E');
-		edit_sla.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK) );
-		edit_sla.setMnemonic('S');
-		edit_dsa.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK) );
-		edit_dsa.setMnemonic('D');		
-		edit_del.setAccelerator( KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0) );
-		
-		file_opn.addMouseListener(this);		
-		file_ext.addMouseListener(this);
-		edit_sla.addMouseListener(this);
-		edit_dsa.addMouseListener(this);
-		edit_del.addMouseListener(this);
-		file_sav.addMouseListener(this);
-		file_sva.addMouseListener(this);
-		file_new.addMouseListener(this);
-		
+		edit.add( edit_del );
+
+		edit.setMnemonic( 'E' );
+		edit_sla.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_A, ActionEvent.CTRL_MASK ) );
+		edit_sla.setMnemonic( 'S' );
+		edit_dsa.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_D, ActionEvent.CTRL_MASK ) );
+		edit_dsa.setMnemonic( 'D' );
+		edit_del.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_DELETE, 0 ) );
+
+		file_opn.addMouseListener( this );
+		file_ext.addMouseListener( this );
+		edit_sla.addMouseListener( this );
+		edit_dsa.addMouseListener( this );
+		edit_del.addMouseListener( this );
+		file_sav.addMouseListener( this );
+		file_sva.addMouseListener( this );
+		file_new.addMouseListener( this );
+
 		buildMenu();
-		
-		properties = new Properties(eui, cwui.getControlClass().getConnectionProfile().getServerType());
-		
-		this.setLocation( eui.getLocation().x + (int)((eui.getSize().width - this.getSize().width) / 2), eui.getLocation().y + (int)((eui.getSize().height - this.getSize().height) / 2) );
-		
+
+		properties = new Properties( eui, cwui.getControlClass().getConnectionProfile().getServerType() );
+
+		this.setLocation( eui.getLocation().x + ( int ) ( ( eui.getSize().width - this.getSize().width ) / 2 ),
+			eui.getLocation().y + ( int ) ( ( eui.getSize().height - this.getSize().height ) / 2 ) );
+
 		this.updateTitle();
-		
+
 		this.setVisible( true );
 	}
-	
+
 	public void updateTitle()
 	{
-		this.setTitle("eSQLDesigner - '" + mv.getModel().getName() + "'");
+		this.setTitle( "eSQLDesigner - '" + mv.getModel().getName() + "'" );
 	}
-	
+
 	public void buildMenu()
-	{	menu.removeAll();
-		menu.add(file);
-		menu.add(edit);
-		menu.add(mv.getModelMenu());		
-		
-		this.getContentPane().add( mv.getToolbar(), BorderLayout.NORTH );	
+	{
+		menu.removeAll();
+		menu.add( file );
+		menu.add( edit );
+		menu.add( mv.getModelMenu() );
+
+		this.getContentPane().add( mv.getToolbar(), BorderLayout.NORTH );
 	}
-	
-	public void generate ()
+
+	public void generate()
 	{
 		Generate g = new Generate( eui, cwui, mv.getModel() );
 	}
-	
-	public void showProperties ( Object src )
-	{	properties.showProperties(src);
-		properties.setVisible( true );	
+
+	public void showProperties( Object src )
+	{
+		properties.showProperties( src );
+		properties.setVisible( true );
 	}
-	
-	public void openModel ()
-	{	if( mv.isInPlaceMode() )
+
+	public void openModel()
+	{
+		if ( mv.isInPlaceMode() )
 		{
 			mv.exitPlaceMode();
 		}
-	
+
 		JFileChooser jfc = new JFileChooser();
-		jfc.setDialogTitle("Open existing model");
-		
-		ModelFilter mf = new ModelFilter("edm", "eSQLManager Database Models (*.edm)");
+		jfc.setDialogTitle( "Open existing model" );
+
+		ModelFilter mf = new ModelFilter( "edm", "eSQLManager Database Models (*.edm)" );
 		jfc.addChoosableFileFilter( mf );
-		
-		jfc.showOpenDialog(this);
-		
+
+		jfc.showOpenDialog( this );
+
 		File f = jfc.getSelectedFile();
-		if( f != null && f.exists() )
-		{	
+		if ( f != null && f.exists() )
+		{
 			try
 			{
-				Model m = mv.getModel().loadModel(f);
-				if( m != null )
-				{	
+				Model m = mv.getModel().loadModel( f );
+				if ( m != null )
+				{
 					mv.setModel( m );
-					m.setFile(f);
+					m.setFile( f );
 				}
 			}
-			catch( Exception ex )
-			{	log.error( ex.getMessage(), ex );
+			catch ( Exception ex )
+			{
+				log.error( ex.getMessage(), ex );
 			}
 		}
-		
+
 		mv.resize();
 	}
-	
-	public void saveCurrentModel ( boolean auto )
-	{	if( auto && mv.getModel().getFile() != null )
-		{	String xml = mv.getModel().getModelXML();
+
+	public void saveCurrentModel( boolean auto )
+	{
+		if ( auto && mv.getModel().getFile() != null )
+		{
+			String xml = mv.getModel().getModelXML();
 			try
 			{
-				try( PrintWriter out = new PrintWriter( new FileWriter(mv.getModel().getFile()) ) )
-				{	out.println(xml);
+				try ( PrintWriter out = new PrintWriter( new FileWriter( mv.getModel().getFile() ) ) )
+				{
+					out.println( xml );
 				}
 			}
-			catch( Exception ex )
-			{	log.error( ex.getMessage(), ex );
-			}	
+			catch ( Exception ex )
+			{
+				log.error( ex.getMessage(), ex );
+			}
 		}
 		else
-		{	JFileChooser jfc = new JFileChooser();
-			jfc.setDialogTitle("Save model as");
-		
-			ModelFilter mf = new ModelFilter("edm", "eSQLManager Database Models (*.edm)");
+		{
+			JFileChooser jfc = new JFileChooser();
+			jfc.setDialogTitle( "Save model as" );
+
+			ModelFilter mf = new ModelFilter( "edm", "eSQLManager Database Models (*.edm)" );
 			jfc.addChoosableFileFilter( mf );
-		
-			if( mv.getModel().getFile() != null )
-			{	
-				jfc.setSelectedFile(mv.getModel().getFile());	
+
+			if ( mv.getModel().getFile() != null )
+			{
+				jfc.setSelectedFile( mv.getModel().getFile() );
 			}
 			else
-			{	
-				jfc.setSelectedFile(new File(mv.getModel().getName() + ".edm"));	
+			{
+				jfc.setSelectedFile( new File( mv.getModel().getName() + ".edm" ) );
 			}
-			
-			jfc.showSaveDialog(this);
-			
+
+			jfc.showSaveDialog( this );
+
 			File f = jfc.getSelectedFile();
-			if( f != null )
+			if ( f != null )
 			{
 				String xml = mv.getModel().getModelXML();
 				try
 				{
-					try( PrintWriter out = new PrintWriter( new FileWriter(f) ) )
-					{	out.println(xml);
+					try ( PrintWriter out = new PrintWriter( new FileWriter( f ) ) )
+					{
+						out.println( xml );
 					}
-					
+
 					mv.getModel().setFile( f );
 				}
-				catch( Exception ex )
-				{	log.error( ex.getMessage(), ex );
-				}				
+				catch ( Exception ex )
+				{
+					log.error( ex.getMessage(), ex );
+				}
 			}
 		}
 	}
-	
-	public void newModel ()
-	{	int result = JOptionPane.showConfirmDialog(this,"Do you want to save the current model before continuing?","New model",JOptionPane.YES_NO_CANCEL_OPTION);
-		if(result == JOptionPane.YES_OPTION)
-		{	saveCurrentModel( true );
-			mv.resetModel();	
+
+	public void newModel()
+	{
+		int result = JOptionPane.showConfirmDialog( this, "Do you want to save the current model before continuing?", "New model",
+			JOptionPane.YES_NO_CANCEL_OPTION );
+		if ( result == JOptionPane.YES_OPTION )
+		{
+			saveCurrentModel( true );
+			mv.resetModel();
 		}
 		else if ( result == JOptionPane.NO_OPTION )
-		{	mv.resetModel();
+		{
+			mv.resetModel();
 		}
 	}
-	
+
 	public ImageLoader getImageList()
 	{
 		return cwui.getControlClass().getImageLoader();
 	}
-	
-	public void mousePressed( MouseEvent e ){}
-	public void mouseClicked( MouseEvent e ){}
-	public void mouseEntered( MouseEvent e ){}
-	public void mouseExited( MouseEvent e ){}
-	public void mouseReleased( MouseEvent e ) 
-	{	if( e.getSource() == file_ext )
-		{	int result = JOptionPane.showConfirmDialog(this,"Do you want to save the current model before continuing?","New model",JOptionPane.YES_NO_CANCEL_OPTION);
-			if(result == JOptionPane.YES_OPTION)
-			{	saveCurrentModel( true );
+
+	public void mousePressed( MouseEvent e )
+	{
+	}
+	public void mouseClicked( MouseEvent e )
+	{
+	}
+	public void mouseEntered( MouseEvent e )
+	{
+	}
+	public void mouseExited( MouseEvent e )
+	{
+	}
+	public void mouseReleased( MouseEvent e )
+	{
+		if ( e.getSource() == file_ext )
+		{
+			int result = JOptionPane.showConfirmDialog( this, "Do you want to save the current model before continuing?", "New model",
+				JOptionPane.YES_NO_CANCEL_OPTION );
+			if ( result == JOptionPane.YES_OPTION )
+			{
+				saveCurrentModel( true );
 				this.dispose();
 			}
 			else if ( result == JOptionPane.NO_OPTION )
-			{	
+			{
 				this.dispose();
 			}
 		}
-		if( e.getSource() == file_new )
-		{	newModel();
-		}		
-		if( e.getSource() == file_opn )
-		{	int result = JOptionPane.showConfirmDialog(this,"Do you want to save the current model before continuing?","Open model",JOptionPane.YES_NO_CANCEL_OPTION);
-			if(result == JOptionPane.YES_OPTION)
-			{	saveCurrentModel( true );
+		if ( e.getSource() == file_new )
+		{
+			newModel();
+		}
+		if ( e.getSource() == file_opn )
+		{
+			int result = JOptionPane.showConfirmDialog( this, "Do you want to save the current model before continuing?", "Open model",
+				JOptionPane.YES_NO_CANCEL_OPTION );
+			if ( result == JOptionPane.YES_OPTION )
+			{
+				saveCurrentModel( true );
 				openModel();
 			}
 			else if ( result == JOptionPane.NO_OPTION )
-			{	openModel();
+			{
+				openModel();
 			}
-		}		  
-		if( e.getSource() == edit_sla )
-		{	mv.getModel().selectAll();
 		}
-		if( e.getSource() == edit_dsa )
-		{	mv.getModel().deselectAll();
-		}		
-		if( e.getSource() == edit_del )
-		{	mv.removeSelectedObjects();
-		}	
-		if( e.getSource() == file_sav )
+		if ( e.getSource() == edit_sla )
+		{
+			mv.getModel().selectAll();
+		}
+		if ( e.getSource() == edit_dsa )
+		{
+			mv.getModel().deselectAll();
+		}
+		if ( e.getSource() == edit_del )
+		{
+			mv.removeSelectedObjects();
+		}
+		if ( e.getSource() == file_sav )
 		{
 			saveCurrentModel( true );
-		}		
-		if( e.getSource() == file_sva )
+		}
+		if ( e.getSource() == file_sva )
 		{
 			saveCurrentModel( false );
 		}
-		updateTitle();							 
-	}	
+		updateTitle();
+	}
 }

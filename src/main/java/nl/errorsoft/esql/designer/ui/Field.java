@@ -7,7 +7,7 @@ public class Field
 	private String dfault;
 	private String comment;
 	private nl.errorsoft.esql.domain.DataType type;
-	
+
 	public boolean primary = false;
 	public boolean index = false;
 	public boolean unique = false;
@@ -15,57 +15,69 @@ public class Field
 	public boolean notnull = false;
 	public boolean unsigned = false;
 	public boolean autoincrement = false;
-	public boolean zerofill = false;	
-	
-	public Field ( String name, nl.errorsoft.esql.domain.DataType type, String length, String dfault, String comment )
-	{	this.name = name;
+	public boolean zerofill = false;
+
+	public Field( String name, nl.errorsoft.esql.domain.DataType type, String length, String dfault, String comment )
+	{
+		this.name = name;
 		this.type = type;
 		this.length = length;
 		this.dfault = dfault;
 		this.comment = comment;
 	}
-	
+
 	public String getName()
-	{	return name;
+	{
+		return name;
 	}
-	
+
 	public void setName( String name )
-	{	this.name = name;
+	{
+		this.name = name;
 	}
-	
+
 	public nl.errorsoft.esql.domain.DataType getType()
-	{	return type;
+	{
+		return type;
 	}
-	
+
 	public void setType( nl.errorsoft.esql.domain.DataType type )
-	{	this.type = type;
+	{
+		this.type = type;
 	}
-	
+
 	public String getLength()
-	{	return length;
+	{
+		return length;
 	}
-	
+
 	public void setLength( String length )
-	{	this.length = length;
+	{
+		this.length = length;
 	}
-	
+
 	public String getDefault()
-	{	return dfault;
+	{
+		return dfault;
 	}
-	
+
 	public void setDefault( String dfault )
-	{	this.dfault = dfault;
+	{
+		this.dfault = dfault;
 	}
-	
+
 	public String getComment()
-	{	return comment;
+	{
+		return comment;
 	}
-	
-	public void setComment(String comment)
-	{	this.comment = comment;
+
+	public void setComment( String comment )
+	{
+		this.comment = comment;
 	}
-	
+
 	public String toString()
-	{	return name;
+	{
+		return name;
 	}
 }

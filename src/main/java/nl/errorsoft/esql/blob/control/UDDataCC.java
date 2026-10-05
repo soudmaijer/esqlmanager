@@ -16,7 +16,7 @@ import nl.errorsoft.esql.blob.BlobService;
 import java.util.*;
 
 public class UDDataCC implements Observer
-{	
+{
 	private static final Logger log = LogManager.getLogger( UDDataCC.class );
 
 	private ConnectionWindowCC cwcc;
@@ -26,7 +26,7 @@ public class UDDataCC implements Observer
 	private TableData cell;
 
 	public UDDataCC( ConnectionWindowCC cwcc )
-	{	
+	{
 		this.cwcc = cwcc;
 	}
 
@@ -45,7 +45,7 @@ public class UDDataCC implements Observer
 		this.cell = cell;
 		udif = new UploadFileUI( this, parent );
 	}
-	
+
 	public void downloadFile( String fileLocation )
 	{
 		try
@@ -54,10 +54,10 @@ public class UDDataCC implements Observer
 			udd.addObserver( this );
 			udd.download( table, row, cell, fileLocation );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			log.error( e.getMessage(), e );
-		}		
+		}
 	}
 
 	public void uploadFile( String fileLocation )
@@ -66,16 +66,16 @@ public class UDDataCC implements Observer
 		{
 			BlobService udd = new BlobService( cwcc.getDatabaseConnection() );
 			udd.addObserver( this );
-			udd.upload(  table, row, cell, fileLocation  );
+			udd.upload( table, row, cell, fileLocation );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			log.error( e.getMessage(), e );
 		}
 	}
-	
-   public void update(Observable o, Object arg) 
- 	{ 
-   	udif.setProgressValue( ((Integer)arg).intValue() );
-   }		
+
+	public void update( Observable o, Object arg )
+	{
+		udif.setProgressValue( ( ( Integer ) arg ).intValue() );
+	}
 }

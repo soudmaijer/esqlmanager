@@ -28,15 +28,15 @@ public class TableService
 
 	// Structure
 
-	public TableColumn [] loadColumns( Table table ) throws Exception
+	public TableColumn[] loadColumns( Table table ) throws Exception
 	{
 		table.setColumns( repository.loadColumns( table ) );
 		return table.getColumns();
 	}
 
-	public TableIndex [] loadIndexes( Table table ) throws Exception
+	public TableIndex[] loadIndexes( Table table ) throws Exception
 	{
-		if( table.getColumns() == null )
+		if ( table.getColumns() == null )
 			loadColumns( table );
 
 		table.setIndexes( repository.loadIndexes( table ) );
@@ -66,16 +66,19 @@ public class TableService
 	/** Applies the parts that changed; a null type means the database has no table types. */
 	public void modifyTable( Table table, String name, String type, String comment ) throws Exception
 	{
-		if( !table.getName().equalsIgnoreCase( name ) )
-		{	repository.renameTable( table, name );
+		if ( !table.getName().equalsIgnoreCase( name ) )
+		{
+			repository.renameTable( table, name );
 			table.setName( name );
 		}
-		if( type != null && !type.equalsIgnoreCase( table.getType() ) )
-		{	repository.setTableType( table, type );
+		if ( type != null && !type.equalsIgnoreCase( table.getType() ) )
+		{
+			repository.setTableType( table, type );
 			table.setType( type );
 		}
-		if( !comment.equals( table.getComment() == null ? "" : table.getComment() ) )
-		{	repository.setTableComment( table, comment );
+		if ( !comment.equals( table.getComment() == null ? "" : table.getComment() ) )
+		{
+			repository.setTableComment( table, comment );
 			table.setComment( comment );
 		}
 	}
@@ -102,7 +105,8 @@ public class TableService
 
 	// Columns
 
-	public void addColumn( Table table, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned, boolean nullable ) throws Exception
+	public void addColumn( Table table, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned,
+		boolean nullable ) throws Exception
 	{
 		CreateColumn column = createColumn( name, length, defaultValue, type, auto, unsigned, nullable );
 		column.primary = primary;
@@ -110,13 +114,14 @@ public class TableService
 		repository.addColumn( table, column );
 	}
 
-	public void editColumn( TableColumn old, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned, boolean nullable ) throws Exception
+	public void editColumn( TableColumn old, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned,
+		boolean nullable ) throws Exception
 	{
 		repository.modifyColumn( old, createColumn( name, length, defaultValue, type, auto, unsigned, nullable ) );
 
-		if( old.isPrimary() && !primary )
+		if ( old.isPrimary() && !primary )
 			repository.dropIndex( old.getTable(), "PRIMARY" );
-		if( !old.isPrimary() && primary )
+		if ( !old.isPrimary() && primary )
 			repository.addIndex( old.getTable(), "PRIMARY", "INDEX", List.of( name ) );
 	}
 
@@ -139,18 +144,18 @@ public class TableService
 
 	// Indexes
 
-	public void addIndex( Table table, TableIndex index, TableColumn [] columns, String type ) throws Exception
+	public void addIndex( Table table, TableIndex index, TableColumn[] columns, String type ) throws Exception
 	{
-		if( columns == null || columns.length <= 0 )
+		if ( columns == null || columns.length <= 0 )
 			return;
 
 		repository.addIndex( table, index.getName(), indexType( type ), columnNames( columns ) );
 		loadIndexes( table );
 	}
 
-	public void modifyIndex( Table table, TableIndex index, TableColumn [] columns, String type ) throws Exception
+	public void modifyIndex( Table table, TableIndex index, TableColumn[] columns, String type ) throws Exception
 	{
-		if( columns == null || columns.length <= 0 )
+		if ( columns == null || columns.length <= 0 )
 			return;
 
 		repository.modifyIndex( table, index.getName(), indexType( type ), columnNames( columns ) );
@@ -168,11 +173,11 @@ public class TableService
 		return type == null || type.length() <= 0 ? "INDEX" : type;
 	}
 
-	private List<String> columnNames( TableColumn [] columns )
+	private List<String> columnNames( TableColumn[] columns )
 	{
 		List<String> names = new ArrayList<String>();
 
-		for( TableColumn column : columns )
+		for ( TableColumn column : columns )
 			names.add( column.getName() );
 
 		return names;
@@ -181,38 +186,38 @@ public class TableService
 	// Rows
 
 	/** Loads the columns, indexes and row count of the table and returns one page of its rows. */
-	public TableData [][] loadPage( Table table, int skip, int show ) throws Exception
+	public TableData[][] loadPage( Table table, int skip, int show ) throws Exception
 	{
 		loadColumns( table );
 		loadIndexes( table );
 		return repository.readPage( table, skip, show );
 	}
 
-	public void insertRow( Table table, TableData [] row ) throws Exception
+	public void insertRow( Table table, TableData[] row ) throws Exception
 	{
 		repository.insertRow( table, row );
 		table.setRowCount( table.getRowCount() + 1 );
 	}
 
 	/** Returns the number of changed rows, zero when the value is the same. */
-	public int changeCell( Table table, TableData [] row, TableData cell, Object newValue ) throws Exception
+	public int changeCell( Table table, TableData[] row, TableData cell, Object newValue ) throws Exception
 	{
-		if( cell.getData().equals( newValue.toString() ) )
+		if ( cell.getData().equals( newValue.toString() ) )
 			return 0;
-		else if( cell.getTableColumn().isBinary() )
-			throw new Exception("Editing of binary data is not supported yet!");
+		else if ( cell.getTableColumn().isBinary() )
+			throw new Exception( "Editing of binary data is not supported yet!" );
 
 		return repository.updateCell( table, row, cell, newValue.toString() );
 	}
 
-	public void deleteRow( Table table, TableData [] row ) throws Exception
+	public void deleteRow( Table table, TableData[] row ) throws Exception
 	{
 		repository.deleteRow( table, row );
 		table.setRowCount( table.getRowCount() - 1 );
 	}
 
 	/** The condition that selects the given row, for statements that handle a single row. */
-	public String rowFilter( TableData [] row ) throws Exception
+	public String rowFilter( TableData[] row ) throws Exception
 	{
 		return repository.rowFilter( row );
 	}

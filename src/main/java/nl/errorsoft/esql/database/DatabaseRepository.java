@@ -39,7 +39,7 @@ public class DatabaseRepository extends AbstractRepository
 
 	public void create( String name ) throws SQLException
 	{
-		executeUpdate( "CREATE DATABASE "+ quote( name ) );
+		executeUpdate( "CREATE DATABASE " + quote( name ) );
 	}
 
 	public void drop( Database database ) throws SQLException

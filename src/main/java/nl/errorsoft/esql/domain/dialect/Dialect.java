@@ -66,7 +66,7 @@ public interface Dialect
 	String quote( String identifier );
 
 	/** Storage engines a table can be created with, empty when the server has no such choice. */
-	String [] getTableTypes();
+	String[] getTableTypes();
 
 	/** The statements that create a table, including its indexes and comment. */
 	List<String> createTableSql( String table, List<CreateColumn> columns, String tableType, String comment );

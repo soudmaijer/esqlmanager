@@ -15,7 +15,7 @@ public class DatabaseService
 	private static final Logger log = LogManager.getLogger( DatabaseService.class );
 
 	private final DatabaseRepository repository;
-	private final String [] profileFilter;
+	private final String[] profileFilter;
 
 	public DatabaseService( DatabaseConnection dbc )
 	{
@@ -28,21 +28,21 @@ public class DatabaseService
 	{
 		List<Database> all = new ArrayList<Database>();
 
-		for( String name : repository.listNames() )
+		for ( String name : repository.listNames() )
 			all.add( new Database( name ) );
 
 		log.info( "Found {} database(s) on the server", all.size() );
 
-		if( profileFilter.length == 0 )
+		if ( profileFilter.length == 0 )
 			return all;
 
 		List<Database> shown = new ArrayList<Database>();
 
-		for( Database database : all )
+		for ( Database database : all )
 		{
-			for( String wanted : profileFilter )
+			for ( String wanted : profileFilter )
 			{
-				if( database.getName().equalsIgnoreCase( wanted ) )
+				if ( database.getName().equalsIgnoreCase( wanted ) )
 				{
 					shown.add( database );
 					break;
@@ -83,12 +83,12 @@ public class DatabaseService
 		repository.drop( database );
 	}
 
-	private static String [] splitFilter( String databases )
+	private static String[] splitFilter( String databases )
 	{
 		List<String> names = new ArrayList<String>();
 
-		for( String name : databases.split( "," ) )
-			if( !name.trim().isEmpty() )
+		for ( String name : databases.split( "," ) )
+			if ( !name.trim().isEmpty() )
 				names.add( name.trim() );
 
 		return names.toArray( new String[0] );

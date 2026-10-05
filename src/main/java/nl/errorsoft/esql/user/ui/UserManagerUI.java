@@ -65,7 +65,11 @@ public class UserManagerUI extends JDialog
 
 		initTree();
 		users.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
-		users.addListSelectionListener( e -> { if( !e.getValueIsAdjusting() ) userSelected(); } );
+		users.addListSelectionListener( e ->
+		{
+			if ( !e.getValueIsAdjusting() )
+				userSelected();
+		} );
 		tree.addTreeSelectionListener( ( TreeSelectionEvent e ) -> showGrants() );
 		apply.addActionListener( e -> applyGrants() );
 		loadUsers();
@@ -94,9 +98,9 @@ public class UserManagerUI extends JDialog
 	/** The root is the server, databases are added below it and load their tables when they are opened. */
 	private void initTree() throws Exception
 	{
-		DefaultMutableTreeNode root = (DefaultMutableTreeNode)treeModel.getRoot();
+		DefaultMutableTreeNode root = ( DefaultMutableTreeNode ) treeModel.getRoot();
 
-		for( String database : cc.getDatabaseNames() )
+		for ( String database : cc.getDatabaseNames() )
 		{
 			DefaultMutableTreeNode node = new DefaultMutableTreeNode( GrantTarget.database( database ) );
 			node.add( new DefaultMutableTreeNode( LOADING ) );
@@ -110,7 +114,7 @@ public class UserManagerUI extends JDialog
 		{
 			public void treeWillExpand( TreeExpansionEvent event )
 			{
-				loadTables( (DefaultMutableTreeNode)event.getPath().getLastPathComponent() );
+				loadTables( ( DefaultMutableTreeNode ) event.getPath().getLastPathComponent() );
 			}
 
 			public void treeWillCollapse( TreeExpansionEvent event )
@@ -121,20 +125,20 @@ public class UserManagerUI extends JDialog
 
 	private void loadTables( DefaultMutableTreeNode databaseNode )
 	{
-		if( databaseNode.getChildCount() != 1 || !LOADING.equals( ( (DefaultMutableTreeNode)databaseNode.getFirstChild() ).getUserObject() ) )
+		if ( databaseNode.getChildCount() != 1 || !LOADING.equals( ( ( DefaultMutableTreeNode ) databaseNode.getFirstChild() ).getUserObject() ) )
 			return;
 
 		try
 		{
-			String database = ( (GrantTarget)databaseNode.getUserObject() ).getDatabase();
+			String database = ( ( GrantTarget ) databaseNode.getUserObject() ).getDatabase();
 			databaseNode.removeAllChildren();
 
-			for( String table : cc.getTableNames( database ) )
+			for ( String table : cc.getTableNames( database ) )
 				databaseNode.add( new DefaultMutableTreeNode( GrantTarget.table( database, table ) ) );
 
 			treeModel.nodeStructureChanged( databaseNode );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			showError( "Can't load the tables", e );
 		}
@@ -147,15 +151,15 @@ public class UserManagerUI extends JDialog
 
 		try
 		{
-			for( DatabaseUser user : cc.listUsers() )
+			for ( DatabaseUser user : cc.listUsers() )
 				userModel.addElement( user );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			showError( "Can't load the users", e );
 		}
 
-		if( selected != null )
+		if ( selected != null )
 			users.setSelectedValue( selected, true );
 
 		userSelected();
@@ -174,11 +178,11 @@ public class UserManagerUI extends JDialog
 	{
 		TreePath path = tree.getSelectionPath();
 
-		if( path == null )
+		if ( path == null )
 			return null;
 
-		Object object = ( (DefaultMutableTreeNode)path.getLastPathComponent() ).getUserObject();
-		return object instanceof GrantTarget ? (GrantTarget)object : null;
+		Object object = ( ( DefaultMutableTreeNode ) path.getLastPathComponent() ).getUserObject();
+		return object instanceof GrantTarget ? ( GrantTarget ) object : null;
 	}
 
 	private void showGrants()
@@ -188,18 +192,18 @@ public class UserManagerUI extends JDialog
 		GrantTarget target = selectedTarget();
 		apply.setEnabled( user != null && target != null );
 
-		if( user != null && target != null )
+		if ( user != null && target != null )
 		{
 			try
 			{
 				Set<String> granted = cc.getGrants( user, target );
 
-				for( String privilege : cc.getPrivileges( target.getScope() ) )
+				for ( String privilege : cc.getPrivileges( target.getScope() ) )
 					privilegePanel.add( new JCheckBox( privilege, granted.contains( privilege ) ) );
 
 				message.setText( user + " on " + describe( target ) );
 			}
-			catch( Exception e )
+			catch ( Exception e )
 			{
 				showError( "Can't read the privileges", e );
 			}
@@ -212,11 +216,11 @@ public class UserManagerUI extends JDialog
 	{
 		Set<String> selected = new LinkedHashSet<String>();
 
-		for( Component component : privilegePanel.getComponents() )
+		for ( Component component : privilegePanel.getComponents() )
 		{
-			JCheckBox box = (JCheckBox)component;
+			JCheckBox box = ( JCheckBox ) component;
 
-			if( box.isSelected() )
+			if ( box.isSelected() )
 				selected.add( box.getText() );
 		}
 
@@ -226,7 +230,7 @@ public class UserManagerUI extends JDialog
 			showGrants();
 			message.setText( "Privileges saved for " + users.getSelectedValue() + " on " + describe( selectedTarget() ) );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			showError( "Can't save the privileges", e );
 		}
@@ -241,7 +245,7 @@ public class UserManagerUI extends JDialog
 		form.add( new JLabel( "Name" ) );
 		form.add( name );
 
-		if( cc.usesHost() )
+		if ( cc.usesHost() )
 		{
 			form.add( new JLabel( "Host" ) );
 			form.add( host );
@@ -249,10 +253,10 @@ public class UserManagerUI extends JDialog
 		form.add( new JLabel( "Password" ) );
 		form.add( password );
 
-		if( JOptionPane.showConfirmDialog( this, form, "Add user", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE ) != JOptionPane.OK_OPTION )
+		if ( JOptionPane.showConfirmDialog( this, form, "Add user", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE ) != JOptionPane.OK_OPTION )
 			return;
 
-		if( name.getText().trim().length() == 0 )
+		if ( name.getText().trim().length() == 0 )
 		{
 			message.setText( "A user needs a name" );
 			return;
@@ -265,7 +269,7 @@ public class UserManagerUI extends JDialog
 			loadUsers();
 			message.setText( "Created user " + user );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			showError( "Can't create the user", e );
 		}
@@ -275,7 +279,8 @@ public class UserManagerUI extends JDialog
 	{
 		JPasswordField password = new JPasswordField( 16 );
 
-		if( JOptionPane.showConfirmDialog( this, password, "New password for " + users.getSelectedValue(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE ) != JOptionPane.OK_OPTION )
+		if ( JOptionPane.showConfirmDialog( this, password, "New password for " + users.getSelectedValue(), JOptionPane.OK_CANCEL_OPTION,
+			JOptionPane.PLAIN_MESSAGE ) != JOptionPane.OK_OPTION )
 			return;
 
 		try
@@ -283,7 +288,7 @@ public class UserManagerUI extends JDialog
 			cc.changePassword( users.getSelectedValue(), new String( password.getPassword() ) );
 			message.setText( "Changed the password of " + users.getSelectedValue() );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			showError( "Can't change the password", e );
 		}
@@ -293,7 +298,7 @@ public class UserManagerUI extends JDialog
 	{
 		DatabaseUser user = users.getSelectedValue();
 
-		if( JOptionPane.showConfirmDialog( this, "Delete user " + user + "?", "Delete user", JOptionPane.YES_NO_OPTION ) != JOptionPane.YES_OPTION )
+		if ( JOptionPane.showConfirmDialog( this, "Delete user " + user + "?", "Delete user", JOptionPane.YES_NO_OPTION ) != JOptionPane.YES_OPTION )
 			return;
 
 		try
@@ -302,7 +307,7 @@ public class UserManagerUI extends JDialog
 			loadUsers();
 			message.setText( "Deleted user " + user );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			showError( "Can't delete the user", e );
 		}
@@ -310,11 +315,14 @@ public class UserManagerUI extends JDialog
 
 	private String describe( GrantTarget target )
 	{
-		switch( target.getScope() )
+		switch ( target.getScope() )
 		{
-			case GLOBAL: return "the server";
-			case DATABASE: return "database " + target.getDatabase();
-			default: return "table " + target.getDatabase() + "." + target.getTable();
+			case GLOBAL :
+				return "the server";
+			case DATABASE :
+				return "database " + target.getDatabase();
+			default :
+				return "table " + target.getDatabase() + "." + target.getTable();
 		}
 	}
 

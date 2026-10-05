@@ -29,6 +29,9 @@ eSQLManager changelog
 - Cleaned up: resources are closed with try-with-resources, deprecated API calls replaced.
 - Tests: JUnit and Testcontainers run the same scenarios against PostgreSQL 17 and MySQL 8.
 - Documentation: README with a feature list per database and a screenshot, CLAUDE.md with the design decisions.
+- Architecture: packages per feature (table, database, importexport, blob, user, designer, query, connection, app), each with
+  controller, service and repository layers. SQL only runs in repositories, which ask the Dialect. The domain classes are plain data.
+- Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added.
 
 build #64 - RC3
 

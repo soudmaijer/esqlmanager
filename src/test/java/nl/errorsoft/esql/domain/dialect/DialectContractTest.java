@@ -56,7 +56,7 @@ abstract class DialectContractTest
 	@BeforeEach
 	void connect() throws Exception
 	{
-		if( connection == null )
+		if ( connection == null )
 		{
 			connection = new DatabaseConnection();
 			connection.connect( profile(), "" );
@@ -69,7 +69,7 @@ abstract class DialectContractTest
 	@AfterAll
 	static void disconnect() throws Exception
 	{
-		if( connection != null )
+		if ( connection != null )
 			connection.close();
 
 		connection = null;
@@ -94,10 +94,11 @@ abstract class DialectContractTest
 
 		TableIndex index = new TableIndex( table );
 		index.setName( "u_years" );
-		service().addIndex( table, index, new TableColumn[] { table.getTableColumn( "years" ) }, "UNIQUE" );
+		service().addIndex( table, index, new TableColumn[]{table.getTableColumn( "years" )}, "UNIQUE" );
 		assertTrue( table.getTableIndex( "u_years" ).isUnique() );
 
-		service().modifyIndex( table, table.getTableIndex( "u_years" ), new TableColumn[] { table.getTableColumn( "years" ), table.getTableColumn( "name" ) }, "INDEX" );
+		service().modifyIndex( table, table.getTableIndex( "u_years" ), new TableColumn[]{table.getTableColumn( "years" ), table.getTableColumn( "name" )},
+			"INDEX" );
 		assertFalse( table.getTableIndex( "u_years" ).isUnique() );
 		assertEquals( 2, table.getTableIndex( "u_years" ).getTableColumns().length );
 
@@ -120,7 +121,7 @@ abstract class DialectContractTest
 		insert( table, "third", null );
 
 		File file = dir.resolve( "dump.sql" ).toFile();
-		runSynchronously( new ExportService( connection, new Object[] { table }, file.getAbsolutePath(), true, true, false, true, true ) );
+		runSynchronously( new ExportService( connection, new Object[]{table}, file.getAbsolutePath(), true, true, false, true, true ) );
 		runSynchronously( new ImportService( connection, database, file.getAbsolutePath() ) );
 
 		TableData[][] rows = service().loadPage( table, 0, 100 );
@@ -204,7 +205,7 @@ abstract class DialectContractTest
 	@Test
 	void showsServerStatusVariablesProcessesAndRunsMaintenance() throws Exception
 	{
-		for( String query : Arrays.asList( dialect.getStatusQuery(), dialect.getVariablesQuery() ) )
+		for ( String query : Arrays.asList( dialect.getStatusQuery(), dialect.getVariablesQuery() ) )
 		{
 			java.sql.ResultSet rs = connection.executeQuery( query );
 			assertTrue( rs.next(), query );
@@ -242,7 +243,7 @@ abstract class DialectContractTest
 		note.type = new DataType( "text", false, false, false, false, false, false, false, false );
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 
-		for( String statement : dialect.createTableSql( name, Arrays.asList( id, title, note ), engine, comment ) )
+		for ( String statement : dialect.createTableSql( name, Arrays.asList( id, title, note ), engine, comment ) )
 			connection.executeUpdate( statement );
 	}
 
@@ -266,7 +267,7 @@ abstract class DialectContractTest
 		table.setColumns( columns );
 		TableData[] row = new TableData[2];
 
-		for( int i = 0; i < 2; i++ )
+		for ( int i = 0; i < 2; i++ )
 		{
 			row[i] = new TableData();
 			row[i].setTableColumn( columns[i + 1] );
@@ -291,7 +292,11 @@ abstract class DialectContractTest
 	private void runSynchronously( Runnable work )
 	{
 		java.util.concurrent.atomic.AtomicReference<Object> failure = new java.util.concurrent.atomic.AtomicReference<Object>();
-		( (java.util.Observable)work ).addObserver( ( o, arg ) -> { if( arg instanceof Exception ) failure.set( arg ); } );
+		( ( java.util.Observable ) work ).addObserver( ( o, arg ) ->
+		{
+			if ( arg instanceof Exception )
+				failure.set( arg );
+		} );
 		work.run();
 		assertEquals( null, failure.get() );
 	}

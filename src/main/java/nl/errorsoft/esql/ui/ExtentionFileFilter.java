@@ -10,44 +10,47 @@ public class ExtentionFileFilter extends FileFilter
 	String[] extensions;
 	String desc;
 
-	public ExtentionFileFilter(String desc,String[] extensions)
+	public ExtentionFileFilter( String desc, String[] extensions )
 	{
-		this.extensions=extensions!=null?extensions:new String[]{};
-		this.desc=desc==null?extList():desc+" ("+extList()+")";
+		this.extensions = extensions != null ? extensions : new String[]{};
+		this.desc = desc == null ? extList() : desc + " (" + extList() + ")";
 	}
 
 	private String extList()
 	{
-		int len=extensions.length;
-		if(len>0)
+		int len = extensions.length;
+		if ( len > 0 )
 		{
-			String ret=extensions[0];
+			String ret = extensions[0];
 
-			for(int j=1; j<len; ret+=", "+extensions[j++]);
-				return ret;
+			for ( int j = 1; j < len; ret += ", " + extensions[j++] );
+			return ret;
 		}
-		else return "";
+		else
+			return "";
 	}
 
-	public boolean accept(File f)
+	public boolean accept( File f )
 	{
-		if (f.isDirectory()) {
-			return true;	
-    	}
-
-		if(f.isFile())
+		if ( f.isDirectory() )
 		{
-			String fname=f.getName().toLowerCase();
+			return true;
+		}
 
-			for(int j=extensions.length; j-->0;)
+		if ( f.isFile() )
+		{
+			String fname = f.getName().toLowerCase();
+
+			for ( int j = extensions.length; j-- > 0; )
 			{
-				if(fname.endsWith(extensions[j]))
+				if ( fname.endsWith( extensions[j] ) )
 					return true;
 			}
 		}
 		return false;
 	}
 	public String getDescription()
-	{    return desc;
+	{
+		return desc;
 	}
 }

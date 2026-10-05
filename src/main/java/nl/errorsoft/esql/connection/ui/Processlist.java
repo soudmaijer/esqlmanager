@@ -35,13 +35,13 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 	private DefaultTableModel dtm;
 	ConnectionWindowCC cwcc;
 	DatabaseConnection m;
-	
+
 	public Processlist( ConnectionWindowCC cwcc, JFrame parent )
 	{
 		super( parent, false );
 		this.cwcc = cwcc;
 		initComponents();
-		
+
 		this.cp = cwcc.getConnectionProfile();
 		this.jm = jm;
 		this.addWindowListener( new WindowAdapter()
@@ -50,123 +50,125 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 			{
 				refresh = false;
 			}
-			
-		});
-		this.setTitle( cp.getUsername() +"@"+ cp.getHost() +" - active processes");
+
+		} );
+		this.setTitle( cp.getUsername() + "@" + cp.getHost() + " - active processes" );
 		this.setSize( 400, 200 );
-		this.setLocation(parent.getLocation().x + (int)((parent.getSize().width - this.getSize().width) / 2), parent.getLocation().y + (int)((parent.getSize().height - this.getSize().height) / 2));
+		this.setLocation( parent.getLocation().x + ( int ) ( ( parent.getSize().width - this.getSize().width ) / 2 ),
+			parent.getLocation().y + ( int ) ( ( parent.getSize().height - this.getSize().height ) / 2 ) );
 		this.setVisible( true );
-		
+
 		Thread t = new Thread( this );
 		t.start();
 	}
-	
+
 	public void run()
 	{
 		try
 		{
 			m = new DatabaseConnection();
-			m.connect( cp, "" );			
+			m.connect( cp, "" );
 			int selRow = 0;
 			DefaultTableModel dtm = null;
 
-			while( refresh )
+			while ( refresh )
 			{
-				if( !m.getConnection().isClosed() )
+				if ( !m.getConnection().isClosed() )
 				{
-					if( jtable.getSelectedRow() > 0 )
+					if ( jtable.getSelectedRow() > 0 )
 						selRow = jtable.getSelectedRow();
-					
+
 					dtm = new DefaultTableModel();
-					dtm.addColumn("Id");
-					dtm.addColumn("User");
-					dtm.addColumn("Host");
-					dtm.addColumn("Database"); 
-					dtm.addColumn("Command");
-					dtm.addColumn("Time");
-					dtm.addColumn("Info");					
-					
+					dtm.addColumn( "Id" );
+					dtm.addColumn( "User" );
+					dtm.addColumn( "Host" );
+					dtm.addColumn( "Database" );
+					dtm.addColumn( "Command" );
+					dtm.addColumn( "Time" );
+					dtm.addColumn( "Info" );
+
 					// Get processes and add all.
-					for( ServerProcess process : new ServerService( m ).getProcesses() )
+					for ( ServerProcess process : new ServerService( m ).getProcesses() )
 					{
-						dtm.addRow( new Object [] { process.getId(), process.getUser(), process.getHost(), process.getDatabase(), process.getCommand(), process.getTime(), process.getInfo() } );
+						dtm.addRow( new Object[]{process.getId(), process.getUser(), process.getHost(), process.getDatabase(), process.getCommand(),
+							process.getTime(), process.getInfo()} );
 					}
 					jtable.setModel( dtm );
 					jtable.setRowSelectionInterval( selRow, selRow );
-										
-					Runnable doAppend = new Runnable() 
+
+					Runnable doAppend = new Runnable()
 					{
-						public void run() 
-						{	jtable.updateUI();
+						public void run()
+						{
+							jtable.updateUI();
 						}
-					};           
-					SwingUtilities.invokeLater(doAppend);					
-					
-					
-					for( int i=5; i>0; i-- )
+					};
+					SwingUtilities.invokeLater( doAppend );
+
+					for ( int i = 5; i > 0; i-- )
 					{
-						this.lblInterval.setText( Integer.toString(i) );
+						this.lblInterval.setText( Integer.toString( i ) );
 						Thread.sleep( 1000 );
-						
+
 					}
 				}
 			}
 			m.close();
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			log.error( e.getMessage(), e );
 		}
 	}
-	
+
 	public void initComponents()
 	{
 		jtable = new JTable()
 		{
-			public boolean isCellEditable(int row, int col) 
+			public boolean isCellEditable( int row, int col )
 			{
 				return false;
 			}
 		};
 		jtable.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
 		jtable.setAutoResizeMode( jtable.AUTO_RESIZE_OFF );
-		
+
 		jsp = new JScrollPane( jtable );
 		jsp.getViewport().setBackground( UIManager.getColor( "Table.background" ) );
 		this.getContentPane().add( jsp, BorderLayout.CENTER );
-		
+
 		JPanel p = new JPanel();
-		btnKillProcess = new JButton("Kill process");
+		btnKillProcess = new JButton( "Kill process" );
 		btnKillProcess.addActionListener( this );
 		p.add( btnKillProcess );
 		this.getContentPane().add( p, BorderLayout.SOUTH );
-		
+
 		JPanel p1 = new JPanel();
-		JLabel lblIntervalMsg = new JLabel("Refreshing in:");
+		JLabel lblIntervalMsg = new JLabel( "Refreshing in:" );
 		p.add( lblIntervalMsg );
 		lblInterval = new JLabel();
 		p.add( lblInterval );
 	}
-	
+
 	public void actionPerformed( ActionEvent e )
 	{
 		Object source = e.getSource();
-		
-		if( source == btnKillProcess )
+
+		if ( source == btnKillProcess )
 		{
-			DefaultTableModel d = (DefaultTableModel)jtable.getModel();
-			
-			if( jtable.getSelectedRow() > -1 )
+			DefaultTableModel d = ( DefaultTableModel ) jtable.getModel();
+
+			if ( jtable.getSelectedRow() > -1 )
 			{
 				try
 				{
 					new ServerService( m ).killProcess( jtable.getValueAt( jtable.getSelectedRow(), 0 ).toString() );
 				}
-				catch( Exception ae )
+				catch ( Exception ae )
 				{
 					log.error( ae.getMessage(), ae );
 				}
-			}	
+			}
 		}
 	}
 }

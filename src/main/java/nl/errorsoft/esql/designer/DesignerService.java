@@ -25,24 +25,24 @@ public class DesignerService
 	 */
 	public void generate( List<DesignedDatabase> model, Runnable step ) throws Exception
 	{
-		for( DesignedDatabase designed : model )
+		for ( DesignedDatabase designed : model )
 		{
 			Database database = new Database( designed.name() );
 
-			if( !databases.exists( database ) )
+			if ( !databases.exists( database ) )
 				databases.createDatabase( database.getName() );
 
 			databases.use( database );
 			step.run();
 
-			for( DesignedTable table : designed.tables() )
+			for ( DesignedTable table : designed.tables() )
 			{
 				step.run();
 
-				if( !tables.exists( database, table.name() ) )
+				if ( !tables.exists( database, table.name() ) )
 					tables.createTable( database, table.name(), table.columns(), table.type(), table.comment() );
 
-				for( int i = 0; i < table.columns().size(); i++ )
+				for ( int i = 0; i < table.columns().size(); i++ )
 					step.run();
 			}
 		}

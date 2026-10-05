@@ -11,7 +11,7 @@ import javax.swing.table.*;
 public class TableListViewMouseListener extends MouseAdapter
 {
 	private TableListView tlv;
-	
+
 	public TableListViewMouseListener( TableListView tlv )
 	{
 		this.tlv = tlv;
@@ -19,7 +19,7 @@ public class TableListViewMouseListener extends MouseAdapter
 
 	public void mouseClicked( MouseEvent e )
 	{
-		if( e.getClickCount() == 2 )
+		if ( e.getClickCount() == 2 )
 		{
 			tlv.tableSelected();
 		}

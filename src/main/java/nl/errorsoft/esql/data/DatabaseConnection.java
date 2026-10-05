@@ -14,8 +14,8 @@ public class DatabaseConnection
 	private String serverDescription = "";
 	private static final Logger log = LogManager.getLogger( DatabaseConnection.class );
 
-	private String driver	= "";
-	private String url		= "";
+	private String driver = "";
+	private String url = "";
 	private String database = "";
 	private String schema;
 
@@ -42,12 +42,12 @@ public class DatabaseConnection
 	{
 		this.driver = driver;
 	}
-	
+
 	public void setConnectionProfile( ConnectionProfile cp )
 	{
 		this.cp = cp;
-	}	
-	
+	}
+
 	public ConnectionProfile getConnectionProfile()
 	{
 		return cp;
@@ -57,20 +57,21 @@ public class DatabaseConnection
 	public void connect( ConnectionProfile _cp, String database ) throws Exception, SQLException
 	{
 		this.cp = _cp;
-		this.database 	= cp.getServerType().getDialect().getConnectionDatabase( cp, database );
+		this.database = cp.getServerType().getDialect().getConnectionDatabase( cp, database );
 		this.schema = null;
-		this. url = cp.getServerType().getConnectionURL( cp, this.database );
-		
-		if( connection != null )
+		this.url = cp.getServerType().getConnectionURL( cp, this.database );
+
+		if ( connection != null )
 			this.close();
-		
+
 		Class.forName( cp.getServerType().getDriverName() ).getDeclaredConstructor().newInstance();
 		log.info( "Connecting to {} as {}", url, cp.getUsername() );
 		connection = java.sql.DriverManager.getConnection( url, cp.getUsername(), cp.getPassword() );
-		
+
 		DatabaseMetaData meta = connection.getMetaData();
-		serverDescription = meta.getDatabaseProductName() +" "+ meta.getDatabaseMajorVersion() +"."+ meta.getDatabaseMinorVersion();
-		log.info( "Connected to {} {} using driver {} {}", meta.getDatabaseProductName(), meta.getDatabaseProductVersion(), meta.getDriverName(), meta.getDriverVersion() );
+		serverDescription = meta.getDatabaseProductName() + " " + meta.getDatabaseMajorVersion() + "." + meta.getDatabaseMinorVersion();
+		log.info( "Connected to {} {} using driver {} {}", meta.getDatabaseProductName(), meta.getDatabaseProductVersion(), meta.getDriverName(),
+			meta.getDriverVersion() );
 	}
 
 	// The name and version of the server, for display.
@@ -94,7 +95,7 @@ public class DatabaseConnection
 	// The schema tables are looked up in, null when the server type has none.
 	public String getSchema() throws SQLException
 	{
-		if( schema == null )
+		if ( schema == null )
 			schema = cp.getServerType().getDialect().getSchema( this );
 
 		return schema;
@@ -140,33 +141,37 @@ public class DatabaseConnection
 	public void close()
 	{
 		try
-		{ if (this.statement != null) this.statement.close();
-		}
-		catch( java.sql.SQLException sql )
 		{
+			if ( this.statement != null )
+				this.statement.close();
 		}
-		
-		try
-		{ if (this.preparedStatement != null) this.preparedStatement.close();
-		}
-		catch( java.sql.SQLException sql )
+		catch ( java.sql.SQLException sql )
 		{
 		}
 
 		try
-		{	connection.close();
+		{
+			if ( this.preparedStatement != null )
+				this.preparedStatement.close();
+		}
+		catch ( java.sql.SQLException sql )
+		{
+		}
+
+		try
+		{
+			connection.close();
 			log.info( "Connection to {} closed", url );
 		}
-		catch( Exception sql )
+		catch ( Exception sql )
 		{
 		}
 	}
-	
 
 	/** A value as a literal that can safely be put in a statement, escaped the way this server expects. */
 	public String formatFieldValue( String in )
 	{
-		if( in == null )
+		if ( in == null )
 			return "NULL";
 
 		return this.getConnectionProfile().getServerType().getDialect().literal( in );

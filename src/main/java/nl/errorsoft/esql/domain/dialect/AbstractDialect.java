@@ -45,7 +45,7 @@ public abstract class AbstractDialect implements Dialect
 
 	public Vector<Table> listTables( DatabaseConnection dbc, Database db ) throws SQLException
 	{
-		return listTablesFromMetaData( dbc, db, db.getName(), getSchema( dbc ), new String[] { "TABLE", "VIEW" } );
+		return listTablesFromMetaData( dbc, db, db.getName(), getSchema( dbc ), new String[]{"TABLE", "VIEW"} );
 	}
 
 	public String selectPage( String quotedTable, String orderBy, int skip, int show )
@@ -58,7 +58,7 @@ public abstract class AbstractDialect implements Dialect
 		return "\"" + identifier.replace( "\"", "\"\"" ) + "\"";
 	}
 
-	public String [] getTableTypes()
+	public String[] getTableTypes()
 	{
 		return new String[0];
 	}
@@ -68,27 +68,27 @@ public abstract class AbstractDialect implements Dialect
 		List<String> definitions = new ArrayList<String>();
 		List<String> primary = new ArrayList<String>();
 
-		for( CreateColumn column : columns )
+		for ( CreateColumn column : columns )
 		{
 			definitions.add( quote( column.name ) + " " + columnDefinition( column ) );
 
-			if( column.primary )
+			if ( column.primary )
 				primary.add( quote( column.name ) );
-			if( column.unique )
+			if ( column.unique )
 				definitions.add( "UNIQUE (" + quote( column.name ) + ")" );
 		}
 
-		if( !primary.isEmpty() )
+		if ( !primary.isEmpty() )
 			definitions.add( "PRIMARY KEY (" + String.join( ", ", primary ) + ")" );
 
 		List<String> statements = new ArrayList<String>();
 		statements.add( "CREATE TABLE " + quote( table ) + " (" + String.join( ", ", definitions ) + ")" );
 
-		for( CreateColumn column : columns )
-			if( column.index )
+		for ( CreateColumn column : columns )
+			if ( column.index )
 				statements.addAll( addIndexSql( table, table + "_" + column.name + "_idx", "INDEX", Arrays.asList( column.name ) ) );
 
-		if( comment.trim().length() > 0 )
+		if ( comment.trim().length() > 0 )
 			statements.addAll( setTableCommentSql( table, comment ) );
 
 		return statements;
@@ -113,7 +113,7 @@ public abstract class AbstractDialect implements Dialect
 	{
 		String statement = "ALTER TABLE " + quote( table ) + " ADD COLUMN " + quote( column.name ) + " " + columnDefinition( column );
 
-		if( column.primary )
+		if ( column.primary )
 			statement += " PRIMARY KEY";
 
 		return Arrays.asList( statement );
@@ -125,13 +125,13 @@ public abstract class AbstractDialect implements Dialect
 		String name = quote( column.name );
 		List<String> statements = new ArrayList<String>();
 
-		if( !oldName.equals( column.name ) )
+		if ( !oldName.equals( column.name ) )
 			statements.add( alter + " RENAME COLUMN " + quote( oldName ) + " TO " + name );
 
 		statements.add( alter + " ALTER COLUMN " + name + " TYPE " + columnType( column ) );
 		statements.add( alter + " ALTER COLUMN " + name + ( column.notnull ? " SET NOT NULL" : " DROP NOT NULL" ) );
 
-		if( column.defaultval.trim().length() > 0 )
+		if ( column.defaultval.trim().length() > 0 )
 			statements.add( alter + " ALTER COLUMN " + name + " SET DEFAULT " + literal( column.defaultval ) );
 		else
 			statements.add( alter + " ALTER COLUMN " + name + " DROP DEFAULT" );
@@ -143,14 +143,15 @@ public abstract class AbstractDialect implements Dialect
 	{
 		List<String> quoted = new ArrayList<String>();
 
-		for( String column : columns )
+		for ( String column : columns )
 			quoted.add( quote( column ) );
 
-		if( name.equals( "PRIMARY" ) )
+		if ( name.equals( "PRIMARY" ) )
 			return Arrays.asList( "ALTER TABLE " + quote( table ) + " ADD PRIMARY KEY (" + String.join( ", ", quoted ) + ")" );
 
-		if( "FULLTEXT".equalsIgnoreCase( type ) )
-			return Arrays.asList( "CREATE INDEX " + quote( name ) + " ON " + quote( table ) + " USING GIN (to_tsvector('simple', " + String.join( " || ' ' || ", quoted ) + "))" );
+		if ( "FULLTEXT".equalsIgnoreCase( type ) )
+			return Arrays.asList( "CREATE INDEX " + quote( name ) + " ON " + quote( table ) + " USING GIN (to_tsvector('simple', "
+				+ String.join( " || ' ' || ", quoted ) + "))" );
 
 		String unique = "UNIQUE".equalsIgnoreCase( type ) ? "UNIQUE " : "";
 		return Arrays.asList( "CREATE " + unique + "INDEX " + quote( name ) + " ON " + quote( table ) + " (" + String.join( ", ", quoted ) + ")" );
@@ -158,7 +159,7 @@ public abstract class AbstractDialect implements Dialect
 
 	public List<String> dropIndexSql( DatabaseConnection dbc, String table, String name ) throws SQLException
 	{
-		if( name.equals( "PRIMARY" ) )
+		if ( name.equals( "PRIMARY" ) )
 			return Arrays.asList( "ALTER TABLE " + quote( table ) + " DROP CONSTRAINT " + quote( primaryKeyName( dbc, table ) ) );
 
 		return Arrays.asList( "DROP INDEX " + quote( name ) );
@@ -200,7 +201,7 @@ public abstract class AbstractDialect implements Dialect
 		List<String> definitions = new ArrayList<String>();
 		ResultSet rs = dmd.getColumns( catalog, getSchema( dbc ), table, "%" );
 
-		while( rs.next() )
+		while ( rs.next() )
 		{
 			String definition = quote( rs.getString( "COLUMN_NAME" ) ) + " ";
 			String defaultValue = rs.getString( "COLUMN_DEF" );
@@ -208,12 +209,12 @@ public abstract class AbstractDialect implements Dialect
 
 			definition += identity ? identityType( rs.getString( "TYPE_NAME" ) ) : typeWithSize( rs );
 
-			if( identity )
+			if ( identity )
 				definition += " GENERATED BY DEFAULT AS IDENTITY";
-			else if( defaultValue != null )
+			else if ( defaultValue != null )
 				definition += " DEFAULT " + defaultValue;
 
-			if( rs.getInt( "NULLABLE" ) == DatabaseMetaData.columnNoNulls )
+			if ( rs.getInt( "NULLABLE" ) == DatabaseMetaData.columnNoNulls )
 				definition += " NOT NULL";
 
 			definitions.add( definition );
@@ -223,12 +224,12 @@ public abstract class AbstractDialect implements Dialect
 		Map<Integer, String> primary = new TreeMap<Integer, String>();
 		rs = dmd.getPrimaryKeys( catalog, getSchema( dbc ), table );
 
-		while( rs.next() )
+		while ( rs.next() )
 			primary.put( rs.getInt( "KEY_SEQ" ), quote( rs.getString( "COLUMN_NAME" ) ) );
 
 		rs.close();
 
-		if( !primary.isEmpty() )
+		if ( !primary.isEmpty() )
 			definitions.add( "PRIMARY KEY (" + String.join( ", ", primary.values() ) + ")" );
 
 		return "CREATE TABLE " + quote( table ) + " (" + String.join( ", ", definitions ) + ")";
@@ -236,12 +237,16 @@ public abstract class AbstractDialect implements Dialect
 
 	private String identityType( String typeName )
 	{
-		switch( typeName )
+		switch ( typeName )
 		{
-			case "serial": return "integer";
-			case "bigserial": return "bigint";
-			case "smallserial": return "smallint";
-			default: return typeName;
+			case "serial" :
+				return "integer";
+			case "bigserial" :
+				return "bigint";
+			case "smallserial" :
+				return "smallint";
+			default :
+				return typeName;
 		}
 	}
 
@@ -250,12 +255,12 @@ public abstract class AbstractDialect implements Dialect
 		String type = rs.getString( "TYPE_NAME" );
 		int size = rs.getInt( "COLUMN_SIZE" );
 
-		if( type.equals( "bpchar" ) )
+		if ( type.equals( "bpchar" ) )
 			type = "char";
 
-		if( ( type.equals( "varchar" ) || type.equals( "char" ) ) && size > 0 && size < Integer.MAX_VALUE )
+		if ( ( type.equals( "varchar" ) || type.equals( "char" ) ) && size > 0 && size < Integer.MAX_VALUE )
 			return type + "(" + size + ")";
-		if( type.equals( "numeric" ) && size > 0 && size < 1000 )
+		if ( type.equals( "numeric" ) && size > 0 && size < 1000 )
 			return type + "(" + size + "," + rs.getInt( "DECIMAL_DIGITS" ) + ")";
 
 		return type;
@@ -297,11 +302,11 @@ public abstract class AbstractDialect implements Dialect
 	{
 		String definition = columnType( column );
 
-		if( column.defaultval.trim().length() > 0 )
+		if ( column.defaultval.trim().length() > 0 )
 			definition += " DEFAULT " + literal( column.defaultval );
-		if( column.notnull )
+		if ( column.notnull )
 			definition += " NOT NULL";
-		if( column.autoincrement )
+		if ( column.autoincrement )
 			definition += " GENERATED BY DEFAULT AS IDENTITY";
 
 		return definition;
@@ -311,7 +316,7 @@ public abstract class AbstractDialect implements Dialect
 	{
 		String type = column.type.getName();
 
-		if( column.length.trim().length() > 0 )
+		if ( column.length.trim().length() > 0 )
 			type += " (" + column.length + ")";
 
 		return type;
@@ -329,7 +334,7 @@ public abstract class AbstractDialect implements Dialect
 
 		try
 		{
-			if( rs.next() )
+			if ( rs.next() )
 				return rs.getString( "PK_NAME" );
 		}
 		finally
@@ -340,34 +345,34 @@ public abstract class AbstractDialect implements Dialect
 	}
 
 	/** Lists tables through DatabaseMetaData and counts the rows of each of them. */
-	protected Vector<Table> listTablesFromMetaData( DatabaseConnection dbc, Database db, String catalog, String schema, String [] types ) throws SQLException
+	protected Vector<Table> listTablesFromMetaData( DatabaseConnection dbc, Database db, String catalog, String schema, String[] types ) throws SQLException
 	{
 		Vector<Table> tables = new Vector<Table>();
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
 		ResultSet rs = dmd.getTables( catalog, schema, "%", types );
 
-		while( rs.next() )
+		while ( rs.next() )
 		{
 			Table table = new Table( db );
-			table.setName( rs.getString("TABLE_NAME") );
-			table.setType( rs.getString("TABLE_TYPE") );
-			table.setComment( rs.getString("REMARKS") );
+			table.setName( rs.getString( "TABLE_NAME" ) );
+			table.setType( rs.getString( "TABLE_TYPE" ) );
+			table.setComment( rs.getString( "REMARKS" ) );
 			tables.add( table );
 		}
 		rs.close();
 
-		for( Table table : tables )
+		for ( Table table : tables )
 		{
 			try
 			{
-				rs = dbc.executeQuery( "SELECT count(*) AS cnt FROM "+ quote( table.getName() ) );
+				rs = dbc.executeQuery( "SELECT count(*) AS cnt FROM " + quote( table.getName() ) );
 
-				if( rs.first() )
-					table.setRowCount( rs.getInt("cnt") );
+				if ( rs.first() )
+					table.setRowCount( rs.getInt( "cnt" ) );
 
 				rs.close();
 			}
-			catch( SQLException e )
+			catch ( SQLException e )
 			{
 				// A table we cannot count (no rights, broken view) is still listed, without a row count.
 			}

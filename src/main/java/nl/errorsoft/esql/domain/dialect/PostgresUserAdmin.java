@@ -39,7 +39,7 @@ public class PostgresUserAdmin implements UserAdmin
 		List<DatabaseUser> users = new ArrayList<DatabaseUser>();
 		ResultSet rs = dbc.executeQuery( "SELECT rolname FROM pg_roles WHERE rolname !~ '^pg_' ORDER BY rolname" );
 
-		while( rs.next() )
+		while ( rs.next() )
 			users.add( new DatabaseUser( rs.getString( 1 ), null ) );
 
 		rs.close();
@@ -63,11 +63,14 @@ public class PostgresUserAdmin implements UserAdmin
 
 	public List<String> getPrivileges( GrantTarget.Scope scope )
 	{
-		switch( scope )
+		switch ( scope )
 		{
-			case GLOBAL: return ROLE_ATTRIBUTES;
-			case DATABASE: return DATABASE_PRIVILEGES;
-			default: return TABLE_PRIVILEGES;
+			case GLOBAL :
+				return ROLE_ATTRIBUTES;
+			case DATABASE :
+				return DATABASE_PRIVILEGES;
+			default :
+				return TABLE_PRIVILEGES;
 		}
 	}
 
@@ -75,32 +78,36 @@ public class PostgresUserAdmin implements UserAdmin
 	{
 		Set<String> granted = new LinkedHashSet<String>();
 
-		switch( target.getScope() )
+		switch ( target.getScope() )
 		{
-			case GLOBAL:
-				try( PreparedStatement ps = dbc.getConnection().prepareStatement( "SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolreplication FROM pg_roles WHERE rolname = ?" ) )
+			case GLOBAL :
+				try ( PreparedStatement ps = dbc.getConnection()
+					.prepareStatement( "SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolreplication FROM pg_roles WHERE rolname = ?" ) )
 				{
 					ps.setString( 1, user.getName() );
 
-					try( ResultSet rs = ps.executeQuery() )
+					try ( ResultSet rs = ps.executeQuery() )
 					{
-						if( rs.next() )
+						if ( rs.next() )
 						{
-							for( int i = 0; i < ROLE_ATTRIBUTES.size(); i++ )
-								if( rs.getBoolean( i + 1 ) )
+							for ( int i = 0; i < ROLE_ATTRIBUTES.size(); i++ )
+								if ( rs.getBoolean( i + 1 ) )
 									granted.add( ROLE_ATTRIBUTES.get( i ) );
 						}
 					}
 				}
 				break;
-			case DATABASE:
-				collect( dbc, granted, "SELECT a.privilege_type FROM pg_database d, aclexplode(d.datacl) a JOIN pg_roles r ON r.oid = a.grantee WHERE d.datname = ? AND r.rolname = ?",
+			case DATABASE :
+				collect( dbc, granted,
+					"SELECT a.privilege_type FROM pg_database d, aclexplode(d.datacl) a JOIN pg_roles r ON r.oid = a.grantee WHERE d.datname = ? AND r.rolname = ?",
 					target.getDatabase(), user.getName() );
 				break;
-			default:
+			default :
 				dbc.useDatabase( target.getDatabase() );
-				collect( dbc, granted, "SELECT a.privilege_type FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, aclexplode(c.relacl) a JOIN pg_roles r ON r.oid = a.grantee "
-					+ "WHERE n.nspname = current_schema() AND c.relname = ? AND r.rolname = ?", target.getTable(), user.getName() );
+				collect( dbc, granted,
+					"SELECT a.privilege_type FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, aclexplode(c.relacl) a JOIN pg_roles r ON r.oid = a.grantee "
+						+ "WHERE n.nspname = current_schema() AND c.relname = ? AND r.rolname = ?",
+					target.getTable(), user.getName() );
 		}
 		return granted;
 	}
@@ -109,18 +116,18 @@ public class PostgresUserAdmin implements UserAdmin
 	{
 		String role = dialect.quote( user.getName() );
 
-		if( target.getScope() == GrantTarget.Scope.GLOBAL )
+		if ( target.getScope() == GrantTarget.Scope.GLOBAL )
 		{
 			StringBuilder attributes = new StringBuilder();
 
-			for( String attribute : ROLE_ATTRIBUTES )
+			for ( String attribute : ROLE_ATTRIBUTES )
 				attributes.append( privileges.contains( attribute ) ? " " : " NO" ).append( attribute );
 
 			dbc.executeUpdate( "ALTER ROLE " + role + " WITH" + attributes );
 			return;
 		}
 
-		if( target.getScope() == GrantTarget.Scope.TABLE )
+		if ( target.getScope() == GrantTarget.Scope.TABLE )
 			dbc.useDatabase( target.getDatabase() );
 
 		String object = target.getScope() == GrantTarget.Scope.DATABASE
@@ -128,11 +135,11 @@ public class PostgresUserAdmin implements UserAdmin
 			: "TABLE " + dialect.quote( target.getTable() );
 		Set<String> current = getGrants( dbc, user, target );
 
-		for( String privilege : getPrivileges( target.getScope() ) )
+		for ( String privilege : getPrivileges( target.getScope() ) )
 		{
-			if( privileges.contains( privilege ) && !current.contains( privilege ) )
+			if ( privileges.contains( privilege ) && !current.contains( privilege ) )
 				dbc.executeUpdate( "GRANT " + privilege + " ON " + object + " TO " + role );
-			else if( !privileges.contains( privilege ) && current.contains( privilege ) )
+			else if ( !privileges.contains( privilege ) && current.contains( privilege ) )
 				dbc.executeUpdate( "REVOKE " + privilege + " ON " + object + " FROM " + role );
 		}
 	}
@@ -144,14 +151,14 @@ public class PostgresUserAdmin implements UserAdmin
 
 	private void collect( DatabaseConnection dbc, Set<String> into, String sql, String first, String second ) throws SQLException
 	{
-		try( PreparedStatement ps = dbc.getConnection().prepareStatement( sql ) )
+		try ( PreparedStatement ps = dbc.getConnection().prepareStatement( sql ) )
 		{
 			ps.setString( 1, first );
 			ps.setString( 2, second );
 
-			try( ResultSet rs = ps.executeQuery() )
+			try ( ResultSet rs = ps.executeQuery() )
 			{
-				while( rs.next() )
+				while ( rs.next() )
 					into.add( rs.getString( 1 ) );
 			}
 		}

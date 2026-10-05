@@ -21,12 +21,12 @@ public class ColumnWidths
 	{
 		int rows = Math.min( table.getRowCount(), ROWS_TO_MEASURE );
 
-		for( int col=0; col<table.getColumnCount(); col++ )
+		for ( int col = 0; col < table.getColumnCount(); col++ )
 		{
 			TableColumn column = table.getColumnModel().getColumn( col );
 			int width = headerWidth( table, column, col );
 
-			for( int row=0; row<rows; row++ )
+			for ( int row = 0; row < rows; row++ )
 			{
 				TableCellRenderer renderer = table.getCellRenderer( row, col );
 				Component cell = table.prepareRenderer( renderer, row, col );
@@ -41,7 +41,7 @@ public class ColumnWidths
 	{
 		TableCellRenderer renderer = column.getHeaderRenderer();
 
-		if( renderer == null )
+		if ( renderer == null )
 			renderer = table.getTableHeader().getDefaultRenderer();
 
 		Component header = renderer.getTableCellRendererComponent( table, column.getHeaderValue(), false, false, -1, col );

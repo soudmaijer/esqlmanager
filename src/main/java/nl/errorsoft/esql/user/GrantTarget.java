@@ -51,11 +51,14 @@ public class GrantTarget
 
 	public String toString()
 	{
-		switch( scope )
+		switch ( scope )
 		{
-			case GLOBAL: return "Global";
-			case DATABASE: return database;
-			default: return table;
+			case GLOBAL :
+				return "Global";
+			case DATABASE :
+				return database;
+			default :
+				return table;
 		}
 	}
 }

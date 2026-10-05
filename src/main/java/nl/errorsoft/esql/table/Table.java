@@ -6,7 +6,7 @@ import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
 
 /** A table or view: plain data, loaded and changed through the table service. */
-public class Table 
+public class Table
 {
 	private String name;
 	private String type;
@@ -16,39 +16,39 @@ public class Table
 	private TableColumn tca[];
 	private TableIndex tia[];
 
-	public Table( Database db ) 
+	public Table( Database db )
 	{
 		this.db = db;
 	}
 
-	public void setColumns( TableColumn [] tca )
+	public void setColumns( TableColumn[] tca )
 	{
 		this.tca = tca;
 	}
 
-	public TableColumn [] getColumns()
+	public TableColumn[] getColumns()
 	{
 		return this.tca;
 	}
 
-	public void setIndexes( TableIndex [] tia )
+	public void setIndexes( TableIndex[] tia )
 	{
 		this.tia = tia;
 	}
 
-	public TableIndex [] getIndexes()
+	public TableIndex[] getIndexes()
 	{
-		if( tia == null )
+		if ( tia == null )
 			return new TableIndex[0];
 		return this.tia;
 	}
 
 	public TableColumn getTableColumn( String name )
 	{
-		if( tca != null )
+		if ( tca != null )
 		{
-			for( int i=0; i<tca.length; i++ )
-				if( tca[i].getName().equals( name ) )
+			for ( int i = 0; i < tca.length; i++ )
+				if ( tca[i].getName().equals( name ) )
 					return tca[i];
 		}
 		return null;
@@ -56,10 +56,10 @@ public class Table
 
 	public TableIndex getTableIndex( String name )
 	{
-		if( tia != null )
+		if ( tia != null )
 		{
-			for( int i=0; i<tia.length; i++ )
-				if( tia[i].getName().equals( name ) )
+			for ( int i = 0; i < tia.length; i++ )
+				if ( tia[i].getName().equals( name ) )
 					return tia[i];
 		}
 		return null;

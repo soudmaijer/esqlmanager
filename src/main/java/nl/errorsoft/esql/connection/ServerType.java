@@ -29,17 +29,17 @@ public class ServerType
 	private String fieldCloseChar = "";
 	private String dataOpenChar = "";
 	private String dataCloseChar = "";
-	private DataType [] dt;
+	private DataType[] dt;
 
 	public ServerType( int type )
 	{
 		this.type = type;
 		DatabaseDriver d = new DatabaseDriver();
-		DatabaseDriver [] da = d.getDatabaseDrivers();
-		
-		for( int i=0; i<da.length; i++ )
+		DatabaseDriver[] da = d.getDatabaseDrivers();
+
+		for ( int i = 0; i < da.length; i++ )
 		{
-			if( type == da[i].getId() )
+			if ( type == da[i].getId() )
 			{
 				description = da[i].getDriverName();
 				connectionURL = da[i].getDriverURL();
@@ -51,7 +51,7 @@ public class ServerType
 			}
 		}
 	}
-	
+
 	public String getFieldOpenChar()
 	{
 		return fieldOpenChar;
@@ -70,17 +70,17 @@ public class ServerType
 	public String getDataCloseChar()
 	{
 		return dataCloseChar;
-	}	
-	
+	}
+
 	public String getConnectionURL( ConnectionProfile cp, String database )
 	{
 		String url = connectionURL;
-		
-		url = url.replace("@host", cp.getHost() );		
-		url = url.replace("@port", cp.getPort() );
-		url = url.replace("@username", cp.getUsername() );
-		url = url.replace("@password", cp.getPassword() );
-		url = url.replace("@database", getDialect().getConnectionDatabase( cp, database ) );
+
+		url = url.replace( "@host", cp.getHost() );
+		url = url.replace( "@port", cp.getPort() );
+		url = url.replace( "@username", cp.getUsername() );
+		url = url.replace( "@password", cp.getPassword() );
+		url = url.replace( "@database", getDialect().getConnectionDatabase( cp, database ) );
 
 		return url;
 	}
@@ -94,12 +94,12 @@ public class ServerType
 	{
 		return driverName;
 	}
-	
+
 	public int getType()
 	{
 		return type;
 	}
-	
+
 	public String getDescription()
 	{
 		return description;
@@ -109,54 +109,59 @@ public class ServerType
 	{
 		return description;
 	}
-	
-	public DataType [] getDataTypes()
-	{	
-		if( dt!= null && dt.length != 0)
-		{	return dt;
+
+	public DataType[] getDataTypes()
+	{
+		if ( dt != null && dt.length != 0 )
+		{
+			return dt;
 		}
 		try
-		{	SAXBuilder builder = new SAXBuilder();
-			org.jdom.Document sdata = builder.build( new File("conf/datatypes.xml") );
-			
+		{
+			SAXBuilder builder = new SAXBuilder();
+			org.jdom.Document sdata = builder.build( new File( "conf/datatypes.xml" ) );
+
 			// The file holds the datatypes of every server, pick the section of this one.
-			for( Object driver : sdata.getRootElement().getChildren("driver") )
+			for ( Object driver : sdata.getRootElement().getChildren( "driver" ) )
 			{
-				if( Integer.parseInt( ((Element)driver).getAttributeValue("id") ) != this.getType() )
+				if ( Integer.parseInt( ( ( Element ) driver ).getAttributeValue( "id" ) ) != this.getType() )
 					continue;
-				
-				java.util.List types = ((Element)driver).getChildren("type");
-				this.dt = new DataType [types.size()];
-				
-				for( int i=0; i<types.size(); i++ )
-				{	Element type = (Element)types.get(i);
-					this.dt[i] = new DataType( type.getChildText("name"), flag( type, "primary" ), flag( type, "index" ), flag( type, "unique" ), flag( type, "binary" ),
+
+				java.util.List types = ( ( Element ) driver ).getChildren( "type" );
+				this.dt = new DataType[types.size()];
+
+				for ( int i = 0; i < types.size(); i++ )
+				{
+					Element type = ( Element ) types.get( i );
+					this.dt[i] = new DataType( type.getChildText( "name" ), flag( type, "primary" ), flag( type, "index" ), flag( type, "unique" ),
+						flag( type, "binary" ),
 						flag( type, "notnull" ), flag( type, "unsigned" ), flag( type, "autoincrement" ), flag( type, "zerofill" ) );
 				}
 				return this.dt;
 			}
 			log.warn( "No datatypes specified for server type {}", this.getType() );
 		}
-		catch(Exception e)
-		{	log.error( e.getMessage(), e );
-		}	
+		catch ( Exception e )
+		{
+			log.error( e.getMessage(), e );
+		}
 		return new DataType[0];
-	}	
+	}
 
 	private boolean flag( Element type, String name )
 	{
 		return "true".equalsIgnoreCase( type.getChildText( name ) );
 	}
 
-	public static ServerType [] getServerTypes()
+	public static ServerType[] getServerTypes()
 	{
-		ServerType [] st = new ServerType[4];
-		
+		ServerType[] st = new ServerType[4];
+
 		st[0] = new ServerType( ServerType.MY_SQL );
 		st[1] = new ServerType( ServerType.MS_SQL_SERVER );
 		st[2] = new ServerType( ServerType.POSTGRES );
 		st[3] = new ServerType( ServerType.ORACLE );
-		
+
 		return st;
 	}
 }

@@ -97,7 +97,38 @@ Start the application, choose **PostgreSQL** as server type, and connect with us
 
 The tests start PostgreSQL 17 and MySQL 8 with Testcontainers, so they need Docker and are skipped without it. They run the same scenarios against every dialect: tables, columns, indexes, export and import, editing data, users and privileges, databases, server status and the process list.
 
-Design decisions and the intended architecture are described in `CLAUDE.md`.
+Design decisions and the architecture are described in `CLAUDE.md`. Format the code with `./mvnw spotless:apply`.
+
+## Project layout
+
+```
+src/main/java/nl/errorsoft/esql
+  table/ database/ importexport/ blob/ user/ designer/ query/ connection/
+             one package per feature: data, service and repository, with
+             control/ and ui/ below it for the controllers and Swing windows
+  app/       main window, settings and start up
+  ui/        Swing parts shared by features
+  data/      the database connection and the repository base class
+  domain/    shared types, including dialect/ with the per-database behaviour
+src/main/resources/log4j2.xml`: messages go to the console and to the output panel. Executed queries are logged at `debug` level, set the `nl.errorsoft.esql.data` logger to `info` to hide them.
+
+## Try it with a local PostgreSQL
+
+```sh
+docker run -d --name esql-pg -e POSTGRES_PASSWORD=test -p 5432:5432 postgres:17
+```
+
+Start the application, choose **PostgreSQL** as server type, and connect with user `postgres`, password `test` and port `5432`.
+
+## Development
+
+```sh
+./mvnw test
+```
+
+The tests start PostgreSQL 17 and MySQL 8 with Testcontainers, so they need Docker and are skipped without it. They run the same scenarios against every dialect: tables, columns, indexes, export and import, editing data, users and privileges, databases, server status and the process list.
+
+Design decisions and the architecture are described in `CLAUDE.md`. Format the code with `./mvnw spotless:apply`.
 
 ## Project layout
 

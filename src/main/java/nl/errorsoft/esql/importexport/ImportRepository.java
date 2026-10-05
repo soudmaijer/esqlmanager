@@ -21,7 +21,7 @@ public class ImportRepository extends AbstractRepository
 	/** A statement that returns a result, such as moving a sequence, cannot go through executeUpdate. */
 	public void run( String statement ) throws SQLException
 	{
-		if( statement.trim().toUpperCase().startsWith( "SELECT" ) )
+		if ( statement.trim().toUpperCase().startsWith( "SELECT" ) )
 			dbc.execute( statement );
 		else
 			executeUpdate( statement );

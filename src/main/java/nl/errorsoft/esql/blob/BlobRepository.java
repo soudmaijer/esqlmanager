@@ -22,8 +22,8 @@ public class BlobRepository extends AbstractRepository
 	{
 		useDatabase( table.getDatabase().getName() );
 
-		try( PreparedStatement statement = dbc.getConnection().prepareStatement(
-			"UPDATE "+ quote( table.getName() ) +" SET "+ quote( column ) +" = ? WHERE "+ rowCondition ) )
+		try ( PreparedStatement statement = dbc.getConnection().prepareStatement(
+			"UPDATE " + quote( table.getName() ) + " SET " + quote( column ) + " = ? WHERE " + rowCondition ) )
 		{
 			statement.setBinaryStream( 1, content, length );
 			statement.execute();
@@ -35,12 +35,12 @@ public class BlobRepository extends AbstractRepository
 	{
 		useDatabase( table.getDatabase().getName() );
 
-		try( ResultSet rs = dbc.executeQuery( "SELECT * FROM "+ quote( table.getName() ) +" WHERE "+ rowCondition ) )
+		try ( ResultSet rs = dbc.executeQuery( "SELECT * FROM " + quote( table.getName() ) + " WHERE " + rowCondition ) )
 		{
-			if( !rs.first() )
+			if ( !rs.first() )
 				return false;
 
-			try( InputStream content = rs.getBinaryStream( column ) )
+			try ( InputStream content = rs.getBinaryStream( column ) )
 			{
 				content.transferTo( target );
 			}

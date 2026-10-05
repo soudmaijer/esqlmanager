@@ -11,13 +11,18 @@ public class Dialects
 
 	public static Dialect forType( int serverType )
 	{
-		switch( serverType )
+		switch ( serverType )
 		{
-			case ServerType.MY_SQL: return MY_SQL;
-			case ServerType.POSTGRES: return POSTGRES;
-			case ServerType.MS_SQL_SERVER: return SQL_SERVER;
-			case ServerType.ORACLE: return ORACLE;
-			default: throw new IllegalArgumentException( "Unknown server type: "+ serverType );
+			case ServerType.MY_SQL :
+				return MY_SQL;
+			case ServerType.POSTGRES :
+				return POSTGRES;
+			case ServerType.MS_SQL_SERVER :
+				return SQL_SERVER;
+			case ServerType.ORACLE :
+				return ORACLE;
+			default :
+				throw new IllegalArgumentException( "Unknown server type: " + serverType );
 		}
 	}
 }

@@ -32,13 +32,13 @@ public class ImportService extends Observable implements Runnable
 		{
 			progress( 10 );
 
-			if( importToDatabase instanceof Database )
-				repository.switchDatabase( ((Database)importToDatabase).getName() );
+			if ( importToDatabase instanceof Database )
+				repository.switchDatabase( ( ( Database ) importToDatabase ).getName() );
 
 			runScript( Path.of( file ) );
 			progress( 100 );
 		}
-		catch( Exception e )
+		catch ( Exception e )
 		{
 			setChanged();
 			notifyObservers( e );
@@ -47,15 +47,15 @@ public class ImportService extends Observable implements Runnable
 
 	private void runScript( Path script ) throws Exception
 	{
-		try( BufferedReader reader = Files.newBufferedReader( script, StandardCharsets.UTF_8 ) )
+		try ( BufferedReader reader = Files.newBufferedReader( script, StandardCharsets.UTF_8 ) )
 		{
 			StringBuilder statement = new StringBuilder();
 			String line;
 
-			while( ( line = reader.readLine() ) != null )
+			while ( ( line = reader.readLine() ) != null )
 			{
 				// A script switches database with the psql meta command, it is not SQL a server understands.
-				if( statement.length() == 0 && line.startsWith( CONNECT ) )
+				if ( statement.length() == 0 && line.startsWith( CONNECT ) )
 				{
 					repository.switchDatabase( line.substring( CONNECT.length() ).replaceAll( "^[\"`]|[\"`];?$", "" ) );
 					continue;
@@ -63,7 +63,7 @@ public class ImportService extends Observable implements Runnable
 
 				statement.append( line ).append( "\n" );
 
-				if( line.endsWith( ";" ) )
+				if ( line.endsWith( ";" ) )
 				{
 					repository.run( statement.toString() );
 					statement.setLength( 0 );

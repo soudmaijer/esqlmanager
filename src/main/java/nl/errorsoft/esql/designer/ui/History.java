@@ -6,30 +6,30 @@ public class History
 	private String summary;
 	private String date;
 	private boolean locked;
-	
-	public History ( String name, String summary, String date, boolean locked )
+
+	public History( String name, String summary, String date, boolean locked )
 	{
 		this.name = name;
 		this.summary = summary;
 		this.date = date;
 	}
-	
-	public String getName ()
+
+	public String getName()
 	{
 		return name;
 	}
-	
-	public String getSummary ()
+
+	public String getSummary()
 	{
 		return summary;
 	}
-	
-	public String getDate ()
+
+	public String getDate()
 	{
-		return date;	
+		return date;
 	}
-	
-	public boolean isLocked ()
+
+	public boolean isLocked()
 	{
 		return locked;
 	}

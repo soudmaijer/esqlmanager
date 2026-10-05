@@ -46,7 +46,7 @@ public abstract class AbstractRepository
 
 	protected void executeAll( List<String> statements ) throws SQLException
 	{
-		for( String statement : statements )
+		for ( String statement : statements )
 			dbc.executeUpdate( statement );
 	}
 }

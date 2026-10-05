@@ -1,7 +1,8 @@
 package nl.errorsoft.esql.domain;
 
 public class CreateColumn
-{	public String name = "";
+{
+	public String name = "";
 
 	public boolean primary = false;
 	public boolean index = false;
@@ -11,17 +12,19 @@ public class CreateColumn
 	public boolean unsigned = false;
 	public boolean autoincrement = false;
 	public boolean zerofill = false;
-	
+
 	public DataType type = null;
-	
+
 	public String defaultval = "";
 	public String length = "";
 
-	public CreateColumn ( String name )
-	{	this.name = name;
+	public CreateColumn( String name )
+	{
+		this.name = name;
 	}
-	
+
 	public String toString()
-	{	return name;
+	{
+		return name;
 	}
 }

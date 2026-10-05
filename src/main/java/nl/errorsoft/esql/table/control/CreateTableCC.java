@@ -17,96 +17,110 @@ import nl.errorsoft.esql.database.Database;
 import java.util.Vector;
 
 public class CreateTableCC
-{	private ConnectionWindowCC cwcc;
+{
+	private ConnectionWindowCC cwcc;
 	private static final Logger log = LogManager.getLogger( CreateTableCC.class );
 
-	
-	public CreateTableCC ( ConnectionWindowCC cwcc )
-	{	
+	public CreateTableCC( ConnectionWindowCC cwcc )
+	{
 		try
-		{	if( !cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports( Dialect.Feature.CREATE_TABLE ) )   	   	
-			{	cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-	   		return;
-	   	}
-	   }
-	   catch( Exception e )
-	   {
-	   }
+		{
+			if ( !cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports( Dialect.Feature.CREATE_TABLE ) )
+			{
+				cwcc.getUI().showErrorMessage( "This feature is only available for MySQL" );
+				return;
+			}
+		}
+		catch ( Exception e )
+		{
+		}
 		this.cwcc = cwcc;
 	}
-	
-	/* 
+
+	/*
 	 	List all databases, so user can choose database to create table on
 	*/
-	public Vector getDatabases ()
-	{	try
+	public Vector getDatabases()
+	{
+		try
 		{
-			DatabaseCC dbc = new DatabaseCC(cwcc);
+			DatabaseCC dbc = new DatabaseCC( cwcc );
 			return dbc.getDatabases();
 		}
-		catch(Exception e)
-		{	log.error( e.getMessage(), e );
+		catch ( Exception e )
+		{
+			log.error( e.getMessage(), e );
 			return null;
 		}
 	}
-	
-	/* 
+
+	/*
 	 	List all tabletypes, empty when the server has no such choice
-    */
-	public String [] getTableTypes ()
-	{	return cwcc.getConnectionProfile().getServerType().getDialect().getTableTypes();
+	*/
+	public String[] getTableTypes()
+	{
+		return cwcc.getConnectionProfile().getServerType().getDialect().getTableTypes();
 	}
-	
-	/* 
+
+	/*
 	 	List all datatypes
-    */
-	public DataType [] getDatatypes ()
-	{	return cwcc.getConnectionProfile().getServerType().getDataTypes();
+	*/
+	public DataType[] getDatatypes()
+	{
+		return cwcc.getConnectionProfile().getServerType().getDataTypes();
 	}
-	
+
 	/*
 		Save and close, moet in de domein class!!!!!!!!!
 	*/
-	public void createTable ( String name, String database, String comment, String type, CreateTable ct, Vector columns )
-	{	if(name.trim().length() == 0)
-		{	ct.showErrorMessage("Tablename missing. You must enter a tablename in order to create a table.");
+	public void createTable( String name, String database, String comment, String type, CreateTable ct, Vector columns )
+	{
+		if ( name.trim().length() == 0 )
+		{
+			ct.showErrorMessage( "Tablename missing. You must enter a tablename in order to create a table." );
 			return;
 		}
-		if(columns.size() == 0)
-		{	ct.showErrorMessage("You didn't add any columns to the table. Please add some fields to the table prior to generating it.");
+		if ( columns.size() == 0 )
+		{
+			ct.showErrorMessage( "You didn't add any columns to the table. Please add some fields to the table prior to generating it." );
 			return;
 		}
 		try
-		{	java.util.List<CreateColumn> list = new java.util.ArrayList<CreateColumn>();
-			for(int i = 0; i < columns.size(); i++)
-			{	list.add((CreateColumn)columns.get(i));
+		{
+			java.util.List<CreateColumn> list = new java.util.ArrayList<CreateColumn>();
+			for ( int i = 0; i < columns.size(); i++ )
+			{
+				list.add( ( CreateColumn ) columns.get( i ) );
 			}
 			new TableService( cwcc.getDatabaseConnection() ).createTable( new Database( database ), name, list, type, comment );
 			ct.dispose();
 			cwcc.reloadSelectedDatabase();
 		}
-		catch(Exception e)
-		{	ct.showErrorMessage(e.getMessage());
+		catch ( Exception e )
+		{
+			ct.showErrorMessage( e.getMessage() );
 		}
 	}
-	
+
 	public void modifyTable( CreateTable ct, Table t, String tableName, String tableType, String tableComment )
 	{
 		try
-		{	
+		{
 			new TableService( cwcc.getDatabaseConnection() ).modifyTable( t, tableName, tableType, tableComment );
 			ct.dispose();
 			//cwcc.reloadSelectedDatabase();
 		}
-		catch(Exception e)
-		{	ct.showErrorMessage(e.getMessage());
+		catch ( Exception e )
+		{
+			ct.showErrorMessage( e.getMessage() );
 		}
 	}
-	
+
 	/*
 		Close
 	*/
 	public void closeDialog( CreateTable ct )
-	{	ct.dispose();
+	{
+		ct.dispose();
 	}
 }
