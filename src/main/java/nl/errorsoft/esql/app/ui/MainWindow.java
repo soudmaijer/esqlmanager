@@ -71,6 +71,8 @@ public class MainWindow extends JFrame implements ActionListener {
 	// Statusbar
 	private JPanel statusbar;
 	private StatusLight statusLight;
+	private static final int MINIMUM_WIDTH = 640;
+	private static final int MINIMUM_HEIGHT = 420;
 	private static final String NO_CONNECTION = "No connection";
 	private JLabel statusMsg;
 	private JLabel statusInfo;
@@ -109,6 +111,8 @@ public class MainWindow extends JFrame implements ActionListener {
 			}
 		});
 		this.pack();
+		// Below this the toolbar wraps and the output panel, the desktop and the status bar no longer fit; the window cannot be made smaller.
+		this.setMinimumSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT));
 
 		// Fix found on Sun forum: http://forum.java.sun.com/thread.outputScroll?forum=57&thread=158893
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();

@@ -1,6 +1,11 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Main window cannot be made too small
+
+- The main window has a minimum size (640 x 420), so the toolbar, the desktop, the output panel and the status bar at
+  the bottom always fit.
+
 05-10-2026: Server icons in the profile list
 
 - Connect dialog: the selected profile in the list keeps its coloured server icon when the list does not have the
