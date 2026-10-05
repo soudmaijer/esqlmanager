@@ -47,6 +47,17 @@ eSQLManager changelog
 - Designer foreign keys (backend): a model holds foreign keys between tables, saves them in model files of version 0.2
   (0.1 files still open) and Generate creates them after all tables exist. Model files are written with JDOM, so names
   with < & " no longer break them. The dialects add and drop foreign keys, on MySQL only for InnoDB tables.
+- Designer look: tables are cards with a coloured header, an icon per field (key, link for foreign key columns), the type
+  right aligned, a soft shadow and a hover row, in the colours of the light or dark theme. The database is a pill and a
+  comment a note. The header shows the storage engine only on servers that have them (no more "(InnoDB)" on PostgreSQL).
+  A subtle dotted grid can be switched off in View > Show Grid.
+- Designer relations: foreign keys are drawn from column to column as orthogonal lines with rounded corners, a crow's
+  foot at the many side and a bar at the one side. Clicking a line selects it, hovering highlights it.
+- Designer foreign keys: drag from the field icon of a column onto a column of another table, or use "Add Foreign Key..."
+  in the table menu or the Foreign Keys tab of the table properties. The dialog supports several column pairs, a name
+  and the ON DELETE and ON UPDATE actions, and checks that the columns exist and their types fit. Double click a line to
+  edit it, Delete removes it.
+- Designer export: File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram.
 
 build #64 - RC3
 

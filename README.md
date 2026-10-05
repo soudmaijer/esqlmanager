@@ -37,6 +37,8 @@ Each database has its own dialect (`nl.errorsoft.esql.domain.dialect`) that deci
 | Export as SQL (structure and data) | yes | yes | no | no |
 | Import an SQL script | yes | yes | no | no |
 | Database designer: draw a model and generate it | yes | yes | no | no |
+| Designer foreign keys: drag from column to column, edit and generate | yes | yes | no | no |
+| Designer export as PlantUML and Mermaid | yes | yes | yes | yes |
 | User manager: accounts and passwords | yes | yes (roles) | no | no |
 | User manager: privileges per server, database and table | yes | yes | no | no |
 | Process list, with ending a process | yes | yes | no | no |
@@ -46,6 +48,89 @@ Each database has its own dialect (`nl.errorsoft.esql.domain.dialect`) that deci
 | Status bar with server, account and the last action | yes | yes | yes | yes |
 
 PostgreSQL shows the tables of the connection's current schema (normally `public`), and has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects.
+
+## Database designer
+
+The designer (Tools > Database Designer) draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme.
+
+* Drag from the icon of a column onto a column of another table to create a foreign key, or use "Add Foreign Key..." in the table's context menu or the Foreign Keys tab of its properties. The dialog takes several column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions.
+* Foreign keys are drawn from column to column with a crow's foot at the many side. Double click a line to edit it, select it and press Delete to remove it.
+* Shift-drag links a table or a note to a database.
+* File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram. For the shop model:
+
+```plantuml
+@startuml
+' database: shop
+hide circle
+skinparam linetype ortho
+
+entity "customers" as customers {
+  * id : int <<PK>>
+  --
+  name : varchar(100)
+  email : varchar(200)
+}
+
+entity "orders" as orders {
+  * id : int <<PK>>
+  --
+  customer_id : int <<FK>>
+  ordered_at : timestamp
+  status : varchar(20)
+}
+
+entity "order_lines" as order_lines {
+  * id : int <<PK>>
+  --
+  order_id : int <<FK>>
+  product_id : int <<FK>>
+  quantity : int
+  price : numeric(10,2)
+}
+
+entity "products" as products {
+  * id : int <<PK>>
+  --
+  name : varchar(100)
+  price : numeric(10,2)
+}
+
+orders }o--|| customers : fk_orders_customer_id
+order_lines }o--|| orders : fk_order_lines_order_id
+order_lines }o--|| products : fk_order_lines_product_id
+@enduml
+```
+
+```mermaid
+erDiagram
+    %% database: shop
+    customers {
+        int id PK
+        varchar(100) name
+        varchar(200) email
+    }
+    orders {
+        int id PK
+        int customer_id FK
+        timestamp ordered_at
+        varchar(20) status
+    }
+    order_lines {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        numeric price
+    }
+    products {
+        int id PK
+        varchar(100) name
+        numeric price
+    }
+    customers ||--o{ orders : "fk_orders_customer_id"
+    orders ||--o{ order_lines : "fk_order_lines_order_id"
+    products ||--o{ order_lines : "fk_order_lines_product_id"
+```
 
 ## Requirements
 
