@@ -69,9 +69,11 @@ The SQL query opens as a tab of the connection window ("Query", "Query 2", ...).
 
 Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export and Import on a database, Edit, Indexes and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 
-On PostgreSQL the tree is server > databases > schemas > tables: a database shows its schemas (`public` and the others, system schemas left out) and a schema its tables. A schema has its own menu (Reload tables, Create table, Open in designer, Export, Drop schema), a database has Create schema and Reload schemas. PostgreSQL has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects. MySQL stays server > databases > tables.
+On PostgreSQL the tree is server > databases > schemas > tables: a database shows its schemas (`public` and the others, system schemas left out) and a schema its tables. A schema has its own menu (Reload tables, Create table, Open in designer, Export, Import, Drop schema), a database has Create schema and Reload schemas. PostgreSQL has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects. MySQL stays server > databases > tables.
 
-Known gaps with schemas: the user manager grants table privileges without a schema, the export and import windows list only the tables of the current schema, the query tab has no schema picker (plain names follow the `search_path`), and Open in designer on a database node reads its current schema (use the schema node for another schema).
+Export and import work per schema: exporting a database takes every schema, the script names `schema.table` and creates missing schemas, and importing into a schema node puts unqualified tables there. The query tab has a schema picker next to the database (it sets the `search_path`).
+
+Known gaps with schemas: the user manager grants table privileges without a schema, and Open in designer on a database node reads its current schema (use the schema node for another schema).
 
 ## Database designer
 

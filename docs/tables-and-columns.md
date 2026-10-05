@@ -30,8 +30,8 @@ Add field, Edit field and Drop field are in the toolbar and in the context menu 
 
 ## Export and import
 
-* **Export** (context menu of a database or table) writes the structure, the data or both as an SQL script. On servers that cannot switch database in SQL the script uses `\connect`.
-* **Import** runs an SQL script against the selected database. A progress window shows how far it is.
+* **Export** (context menu of a database, schema or table) writes the structure, the data or both as an SQL script. The export window opens at the node that was selected; on PostgreSQL its tree shows the schemas of a database and the tables of a schema. Exporting a PostgreSQL database takes every schema in it. The script names each table as `schema.table` and creates its schema when it is missing, so importing it restores the tables into the schema they came from. On servers that cannot switch database in SQL the script uses `\connect`.
+* **Import** (context menu of the server, a database or a schema) runs an SQL script against the selected database. On PostgreSQL a schema can be selected: table names the script does not qualify go into that schema, and the connection is set back to its previous schema afterwards. A progress window shows how far it is.
 
 ## Users and server
 

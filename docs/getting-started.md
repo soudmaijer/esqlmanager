@@ -23,7 +23,7 @@ Several connections can be open at the same time. Window > Tile horizontal, Tile
 * **Tree** on the left: the server, its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Double click a database to list its tables, double click a table to open its data. Right click any node for its context menu, which only lists what the server supports:
   * server: Create database, New query, Users, Process list, Show status, Show variables, Reload databases;
   * database: Open, Create table, Open in designer, Export, Import, Drop database, Reload tables (PostgreSQL: Create schema and Reload schemas);
-  * schema (PostgreSQL): New query, Create table, Open in designer, Export, Drop schema, Reload tables;
+  * schema (PostgreSQL): New query, Create table, Open in designer, Export, Import, Drop schema, Reload tables;
   * table: Open, Edit table, Indexes, Add field, Export, the maintenance commands, Empty table, Drop table, Reload columns;
   * column: Add field, Edit field, Drop field.
 * **Tabs** on the right: the table list or the table data in the first tab, query tabs ("Query", "Query 2", ...) and this help. Every tab has a close button.
