@@ -3,8 +3,6 @@ package nl.errorsoft.esql.dialect;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Vector;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.database.Database;
@@ -14,6 +12,7 @@ import nl.errorsoft.esql.table.Table;
 /**
  * Everything that differs between database servers. Callers ask the dialect
  * instead of checking which server type they are talking to.
+ * A dialect never runs SQL: it writes statements and reads result rows, the repositories run them.
  */
 public interface Dialect {
 	/** Table maintenance commands, named after the MySQL ones. */
@@ -40,17 +39,32 @@ public interface Dialect {
 	 */
 	String getConnectionDatabase(ConnectionProfile cp, String requested);
 
-	/** Names of the databases on the server. */
-	List<String> listDatabases(DatabaseConnection dbc) throws SQLException;
+	/** How a connection makes another database the active one. */
+	enum DatabaseSwitch {
+		/** {@link java.sql.Connection#setCatalog}. */
+		CATALOG,
+		/** Connect again, to the other database. */
+		RECONNECT,
+		/** The database is part of the connection, there is nothing to switch. */
+		NONE
+	}
 
-	/** Makes the given database the active one for the connection. */
-	void useDatabase(DatabaseConnection dbc, String database) throws SQLException;
+	/** A query whose first column is the name of a database, null when the profile's database is the only one. */
+	String listDatabasesSql();
 
-	/** The schema that tables are looked up in, or null when the server has no schema concept. */
-	String getSchema(DatabaseConnection dbc) throws SQLException;
+	DatabaseSwitch databaseSwitch();
 
-	/** The tables and views of the active database. */
-	Vector<Table> listTables(DatabaseConnection dbc, Database db) throws SQLException;
+	/** A query returning the schema that tables are looked up in, null when the server has no schema concept. */
+	String currentSchemaSql();
+
+	/** A query listing the tables of the active database with their row counts, read with {@link #readTable}; null to use the JDBC metadata. */
+	String listTablesSql();
+
+	/** The table in the current row of {@link #listTablesSql}. */
+	Table readTable(ResultSet row, Database db) throws SQLException;
+
+	/** The table types asked from {@link java.sql.DatabaseMetaData#getTables} when there is no {@link #listTablesSql}. */
+	String[] metadataTableTypes();
 
 	/**
 	 * A query returning one page of a table, or null when the server cannot page in SQL.
@@ -85,9 +99,15 @@ public interface Dialect {
 	 */
 	List<String> addIndexSql(String table, String name, String type, List<String> columns);
 
-	List<String> dropIndexSql(DatabaseConnection dbc, String table, String name) throws SQLException;
+	/**
+	 * Drops an index.
+	 * @param name the index name, "PRIMARY" for the primary key.
+	 * @param primaryKeyName the name the server gave the primary key constraint, used when name is PRIMARY.
+	 */
+	List<String> dropIndexSql(String table, String name, String primaryKeyName);
 
-	List<String> modifyIndexSql(DatabaseConnection dbc, String table, String name, String type, List<String> columns) throws SQLException;
+	/** Replaces an index, see {@link #dropIndexSql} for the names. */
+	List<String> modifyIndexSql(String table, String name, String primaryKeyName, String type, List<String> columns);
 
 	/** The referential actions a foreign key may have, anything else is refused so no text from a model ends up in a statement. */
 	List<String> REFERENTIAL_ACTIONS = List.of("NO ACTION", "CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT");
@@ -103,20 +123,23 @@ public interface Dialect {
 
 	List<String> dropForeignKeySql(String table, String name);
 
+	/** A query with the table name as its one parameter, returning the storage engine of the table; null when the server has no table types. */
+	String tableTypeSql();
+
 	/**
 	 * Checks that the table can hold a foreign key, before one is added.
+	 * @param tableType the storage engine read with {@link #tableTypeSql}, null when there is none.
 	 * @throws nl.errorsoft.esql.error.EsqlException when it can't, such as a MySQL table that is not InnoDB.
 	 */
-	void checkForeignKeyTable(DatabaseConnection dbc, String table) throws SQLException;
+	void checkForeignKeyTable(String table, String tableType);
 
 	/**
-	 * Runs a maintenance command on a table.
-	 * @return the message to show the user.
+	 * The statement of a maintenance command on a table.
 	 * @throws UnsupportedOperationException when the server has no such command.
 	 */
-	String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException;
+	MaintenanceStatement maintenanceSql(Maintenance command, String table);
 
-	/** The maintenance commands that {@link #maintain} can run on this server, empty when it has none. */
+	/** The maintenance commands that {@link #maintenanceSql} has a statement for on this server, empty when it has none. */
 	java.util.Set<Maintenance> maintenanceCommands();
 
 	/** A text value as an SQL literal. */
@@ -124,14 +147,22 @@ public interface Dialect {
 
 	String createDatabaseSql(String database);
 
-	/** Removes a database, also when the connection is using it. */
-	void dropDatabase(DatabaseConnection dbc, String database) throws SQLException;
+	String dropDatabaseSql(String database);
+
+	/** The database to switch to before dropping the one the connection is using, null when the server can drop it while in use. */
+	String databaseToLeaveFor(String database);
 
 	/** The statement that makes a database the active one in a script, understood by {@link #useDatabaseSql} consumers such as Import. */
 	String useDatabaseSql(String database);
 
-	/** Statements to run after the rows of a table have been loaded, such as moving auto numbering past the highest value. */
-	List<String> afterDataLoadSql(DatabaseConnection dbc, String table) throws SQLException;
+	/** A query with the table name as its one parameter, returning the auto numbered columns that need {@link #afterDataLoadSql}; null when none do. */
+	String autoNumberedColumnsSql();
+
+	/**
+	 * Statements to run after the rows of a table have been loaded, such as moving auto numbering past the highest value.
+	 * @param autoNumberedColumns the columns found with {@link #autoNumberedColumnsSql}.
+	 */
+	List<String> afterDataLoadSql(String table, List<String> autoNumberedColumns);
 
 	/**
 	 * A column of an existing table as the designer models it, read from the current row of {@link java.sql.DatabaseMetaData#getColumns}:
@@ -139,8 +170,18 @@ public interface Dialect {
 	 */
 	CreateColumn readColumn(ResultSet columns) throws SQLException;
 
-	/** The CREATE TABLE statement of an existing table. */
-	String createTableDdl(DatabaseConnection dbc, String table) throws SQLException;
+	/** A query whose second column is the CREATE TABLE statement of an existing table, null when it is built from the metadata with {@link #createTableDdl}. */
+	String showCreateTableSql(String table);
+
+	/** A column definition for CREATE TABLE, from the current row of {@link java.sql.DatabaseMetaData#getColumns}. */
+	String columnDdl(ResultSet columns) throws SQLException;
+
+	/**
+	 * The CREATE TABLE statement of an existing table, from its metadata.
+	 * @param columnDefinitions made with {@link #columnDdl}.
+	 * @param primaryKey the primary key columns in key order.
+	 */
+	String createTableDdl(String table, List<String> columnDefinitions, List<String> primaryKey);
 
 	/** The account and privilege management of this server. */
 	UserAdmin getUserAdmin();
@@ -151,9 +192,11 @@ public interface Dialect {
 	/** A query returning the configuration settings of the server, null when there are none. */
 	String getVariablesQuery();
 
-	/** The connections that are active on the server. */
-	List<ServerProcess> listProcesses(DatabaseConnection dbc) throws SQLException;
+	/** A query listing the connections that are active on the server, read with {@link #readProcess}. */
+	String listProcessesSql();
 
-	/** Ends a process on the server. */
-	void killProcess(DatabaseConnection dbc, String processId) throws SQLException;
+	ServerProcess readProcess(ResultSet row) throws SQLException;
+
+	/** The statement that ends a process on the server. */
+	String killProcessSql(String processId);
 }

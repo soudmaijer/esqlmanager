@@ -1,6 +1,8 @@
 package nl.errorsoft.esql.server;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import nl.errorsoft.esql.jdbc.AbstractRepository;
@@ -13,11 +15,18 @@ public class ServerRepository extends AbstractRepository {
 	}
 
 	public List<ServerProcess> listProcesses() throws SQLException {
-		return dialect().listProcesses(dbc);
+		List<ServerProcess> processes = new ArrayList<>();
+
+		try (ResultSet rs = dbc.executeQuery(dialect().listProcessesSql())) {
+			while (rs.next()) {
+				processes.add(dialect().readProcess(rs));
+			}
+		}
+		return processes;
 	}
 
 	public void killProcess(String id) throws SQLException {
-		dialect().killProcess(dbc, id);
+		dbc.execute(dialect().killProcessSql(id));
 	}
 
 	public String statusQuery() {

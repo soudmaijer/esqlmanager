@@ -1,20 +1,16 @@
 package nl.errorsoft.esql.dialect.postgres;
 
 import nl.errorsoft.esql.dialect.AbstractDialect;
+import nl.errorsoft.esql.dialect.MaintenanceStatement;
 import nl.errorsoft.esql.dialect.UserAdmin;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.connection.ServerType;
-import nl.errorsoft.esql.table.Table;
 
 /**
  * PostgreSQL has one database per connection, so switching database means connecting again.
@@ -36,20 +32,16 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	/** Rows loaded with explicit ids leave the sequence behind, so the next insert would reuse an id. */
-	public List<String> afterDataLoadSql(DatabaseConnection dbc, String table) throws SQLException {
+	public String autoNumberedColumnsSql() {
+		return "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND ( is_identity = 'YES' OR column_default LIKE 'nextval%' )";
+	}
+
+	public List<String> afterDataLoadSql(String table, List<String> autoNumberedColumns) {
 		List<String> statements = new ArrayList<>();
 
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement(
-			"SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND ( is_identity = 'YES' OR column_default LIKE 'nextval%' )")) {
-			ps.setString(1, table);
-
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					String column = quote(rs.getString(1));
-					statements.add("SELECT setval(pg_get_serial_sequence(" + literal(quote(table)) + ", " + literal(rs.getString(1))
-						+ "), (SELECT max(" + column + ") FROM " + quote(table) + "))");
-				}
-			}
+		for (String column : autoNumberedColumns) {
+			statements.add("SELECT setval(pg_get_serial_sequence(" + literal(quote(table)) + ", " + literal(column) + "), (SELECT max(" + quote(column)
+				+ ") FROM " + quote(table) + "))");
 		}
 		return statements;
 	}
@@ -58,27 +50,17 @@ public class PostgresDialect extends AbstractDialect {
 		return java.util.EnumSet.of(Maintenance.OPTIMIZE, Maintenance.ANALYZE);
 	}
 
-	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
+	public MaintenanceStatement maintenanceSql(Maintenance command, String table) {
 		return switch (command) {
-			case OPTIMIZE -> {
-				dbc.executeUpdate("VACUUM " + quote(table));
-				yield "Vacuumed " + table;
-			}
-			case ANALYZE -> {
-				dbc.executeUpdate("ANALYZE " + quote(table));
-				yield "Analyzed " + table;
-			}
-			default -> super.maintain(dbc, command, table);
+			case OPTIMIZE -> new MaintenanceStatement("VACUUM " + quote(table), null, "Vacuumed " + table);
+			case ANALYZE -> new MaintenanceStatement("ANALYZE " + quote(table), null, "Analyzed " + table);
+			default -> super.maintenanceSql(command, table);
 		};
 	}
 
 	/** PostgreSQL does not drop the database the connection is using, so move to another one first. */
-	public void dropDatabase(DatabaseConnection dbc, String database) throws SQLException {
-		if (database.equals(dbc.getDatabase())) {
-			dbc.useDatabase(database.equals(DEFAULT_DATABASE) ? "template1" : DEFAULT_DATABASE);
-		}
-
-		super.dropDatabase(dbc, database);
+	public String databaseToLeaveFor(String database) {
+		return database.equals(DEFAULT_DATABASE) ? "template1" : DEFAULT_DATABASE;
 	}
 
 	public String getStatusQuery() {
@@ -89,25 +71,17 @@ public class PostgresDialect extends AbstractDialect {
 		return "SELECT name, setting, unit, short_desc FROM pg_settings ORDER BY name";
 	}
 
-	public List<ServerProcess> listProcesses(DatabaseConnection dbc) throws SQLException {
-		List<ServerProcess> processes = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery(
-			"SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' AND pid <> pg_backend_pid() ORDER BY pid")) {
-
-			while (rs.next()) {
-				processes.add(new ServerProcess(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6),
-					rs.getString(7)));
-			}
-
-		}
-		return processes;
+	public String listProcessesSql() {
+		return "SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' AND pid <> pg_backend_pid() ORDER BY pid";
 	}
 
-	public void killProcess(DatabaseConnection dbc, String processId) throws SQLException {
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement("SELECT pg_terminate_backend(?)")) {
-			ps.setInt(1, Integer.parseInt(processId));
-			ps.execute();
-		}
+	public ServerProcess readProcess(ResultSet rs) throws SQLException {
+		return new ServerProcess(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7));
+	}
+
+	public String killProcessSql(String processId) {
+		// The pid is a number, parsing it keeps anything else out of the statement.
+		return "SELECT pg_terminate_backend(" + Integer.parseInt(processId) + ")";
 	}
 
 	public UserAdmin getUserAdmin() {
@@ -131,40 +105,20 @@ public class PostgresDialect extends AbstractDialect {
 		return first.length() > 0 ? first : DEFAULT_DATABASE;
 	}
 
-	public List<String> listDatabases(DatabaseConnection dbc) throws SQLException {
-		List<String> names = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery("SELECT datname FROM pg_database WHERE datallowconn AND NOT datistemplate ORDER BY datname")) {
-
-			while (rs.next()) {
-				names.add(rs.getString(1));
-			}
-
-		}
-		return names;
+	public String listDatabasesSql() {
+		return "SELECT datname FROM pg_database WHERE datallowconn AND NOT datistemplate ORDER BY datname";
 	}
 
-	public void useDatabase(DatabaseConnection dbc, String database) throws SQLException {
-		if (database.equals(dbc.getDatabase())) {
-			return;
-		}
-
-		try {
-			dbc.connect(dbc.getConnectionProfile(), database);
-		} catch (SQLException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new SQLException(e.getMessage(), e);
-		}
+	public DatabaseSwitch databaseSwitch() {
+		return DatabaseSwitch.RECONNECT;
 	}
 
-	public String getSchema(DatabaseConnection dbc) throws SQLException {
-		try (ResultSet rs = dbc.executeQuery("SELECT current_schema()")) {
-			return rs.next() ? rs.getString(1) : "public";
-		}
+	public String currentSchemaSql() {
+		return "SELECT current_schema()";
 	}
 
-	public Vector<Table> listTables(DatabaseConnection dbc, Database db) throws SQLException {
-		return listTablesFromMetaData(dbc, db, null, getSchema(dbc), new String[]{"TABLE", "VIEW", "MATERIALIZED VIEW", "PARTITIONED TABLE"});
+	public String[] metadataTableTypes() {
+		return new String[]{"TABLE", "VIEW", "MATERIALIZED VIEW", "PARTITIONED TABLE"};
 	}
 
 	/** Without an ORDER BY the server may return the rows in any order, and an updated row moves to the end. */

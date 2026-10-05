@@ -19,6 +19,7 @@ import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.dialect.MaintenanceStatement;
 
 /**
  * The only place that runs SQL for tables, their columns, indexes and rows.
@@ -67,7 +68,7 @@ public class TableRepository extends AbstractRepository {
 		List<TableIndex> indexes = new ArrayList<>();
 		useDatabaseOf(table);
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-		String primaryKeyName = primaryKeyName(dmd, table);
+		String primaryKeyName = primaryKeyName(table);
 
 		try (ResultSet rs = dmd.getIndexInfo(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName(), false, false)) {
 			while (rs.next()) {
@@ -115,8 +116,9 @@ public class TableRepository extends AbstractRepository {
 		return null;
 	}
 
-	private String primaryKeyName(DatabaseMetaData dmd, Table table) throws SQLException {
-		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName())) {
+	/** The name the server gave the primary key of the table, null when it has none. */
+	private String primaryKeyName(Table table) throws SQLException {
+		try (ResultSet rs = dbc.getConnection().getMetaData().getPrimaryKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName())) {
 			return rs.next() ? rs.getString("PK_NAME") : null;
 		}
 	}
@@ -124,7 +126,7 @@ public class TableRepository extends AbstractRepository {
 	public boolean exists(Database database, String name) throws SQLException {
 		useDatabase(database.getName());
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), dialect().getSchema(dbc), name,
+		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), dbc.getSchema(), name,
 			new String[]{"TABLE"})) {
 			return rs.next();
 		}
@@ -156,7 +158,16 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	public String maintain(Table table, Dialect.Maintenance maintenance) throws Exception {
-		return dialect().maintain(dbc, maintenance, table.getName());
+		MaintenanceStatement statement = dialect().maintenanceSql(maintenance, table.getName());
+
+		if (statement.resultColumn() == null) {
+			executeUpdate(statement.sql());
+			return statement.message();
+		}
+
+		try (ResultSet rs = dbc.executeQuery(statement.sql())) {
+			return rs.first() ? rs.getString(statement.resultColumn()) : statement.message();
+		}
 	}
 
 	// Columns
@@ -182,19 +193,21 @@ public class TableRepository extends AbstractRepository {
 
 	public void modifyIndex(Table table, String name, String type, List<String> columns) throws Exception {
 		useDatabaseOf(table);
-		executeAll(dialect().modifyIndexSql(dbc, table.getName(), name, type, columns));
+		executeAll(dialect().modifyIndexSql(table.getName(), name, primaryKeyName(table), type, columns));
 	}
 
 	public void dropIndex(Table table, String name) throws Exception {
 		useDatabaseOf(table);
-		executeAll(dialect().dropIndexSql(dbc, table.getName(), name));
+		executeAll(dialect().dropIndexSql(table.getName(), name, primaryKeyName(table)));
 	}
 
 	// Foreign keys
 
 	public void addForeignKey(Table table, TableForeignKey key) throws Exception {
 		useDatabaseOf(table);
-		dialect().checkForeignKeyTable(dbc, table.getName());
+		String typeSql = dialect().tableTypeSql();
+		String tableType = typeSql == null ? null : queryStrings(typeSql, table.getName()).stream().findFirst().orElse(null);
+		dialect().checkForeignKeyTable(table.getName(), tableType);
 		executeAll(dialect().addForeignKeySql(table.getName(), key.name(), key.columns(), key.referencedTable(), key.referencedColumns(), key.onDelete(),
 			key.onUpdate()));
 	}

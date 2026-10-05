@@ -77,13 +77,37 @@ public class DatabaseConnection implements AutoCloseable {
 
 	// Makes the given database the active one, the way the server type needs it.
 	public void useDatabase(String database) throws SQLException {
-		cp.getServerType().getDialect().useDatabase(this, database);
+		switch (cp.getServerType().getDialect().databaseSwitch()) {
+			case CATALOG -> connection.setCatalog(database);
+			case RECONNECT -> reconnect(database);
+			case NONE -> {
+				// The database is part of the connection.
+			}
+		}
+	}
+
+	private void reconnect(String database) throws SQLException {
+		if (database.equals(this.database)) {
+			return;
+		}
+
+		try {
+			connect(cp, database);
+		} catch (SQLException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage(), e);
+		}
 	}
 
 	// The schema tables are looked up in, null when the server type has none.
 	public String getSchema() throws SQLException {
-		if (schema == null) {
-			schema = cp.getServerType().getDialect().getSchema(this);
+		String sql = cp.getServerType().getDialect().currentSchemaSql();
+
+		if (schema == null && sql != null) {
+			try (ResultSet rs = executeQuery(sql)) {
+				schema = rs.next() ? rs.getString(1) : null;
+			}
 		}
 
 		return schema;

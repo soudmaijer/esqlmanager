@@ -197,15 +197,16 @@ abstract class DialectContractTest {
 	@Test
 	void createsAndSwitchesDatabases() throws Exception {
 		String name = "db_" + System.nanoTime();
-		assertFalse(dialect.listDatabases(connection).contains(name));
+		var databases = new ConnectionContext(connection).databases();
+		assertFalse(databases.exists(new Database(name)));
 
-		new ConnectionContext(connection).databases().createDatabase(name);
-		assertTrue(dialect.listDatabases(connection).contains(name));
+		databases.createDatabase(name);
+		assertTrue(databases.exists(new Database(name)));
 
 		// The connection is using the database that is dropped.
 		connection.useDatabase(name);
-		new ConnectionContext(connection).databases().dropDatabase(new Database(name));
-		assertFalse(dialect.listDatabases(connection).contains(name));
+		databases.dropDatabase(new Database(name));
+		assertFalse(databases.exists(new Database(name)));
 		connection.useDatabase(DATABASE);
 	}
 
@@ -220,7 +221,7 @@ abstract class DialectContractTest {
 		// Another connection is active, and can be ended.
 		try (DatabaseConnection other = new DatabaseConnection()) {
 			other.connect(profile(), "");
-			List<nl.errorsoft.esql.server.ServerProcess> processes = dialect.listProcesses(connection);
+			List<ServerProcess> processes = new ConnectionContext(connection).servers().getProcesses();
 			assertFalse(processes.isEmpty());
 		}
 
@@ -229,7 +230,13 @@ abstract class DialectContractTest {
 		Table table = table(name);
 		// Every command the dialect offers (and so the tree menu shows) runs.
 		for (Dialect.Maintenance command : dialect.maintenanceCommands()) {
-			assertNotNull(dialect.maintain(connection, command, name), command.name());
+			String message = switch (command) {
+				case OPTIMIZE -> service().optimizeTable(table);
+				case ANALYZE -> service().analyseTable(table);
+				case CHECK -> service().checkTable(table);
+				case REPAIR -> service().repairTable(table);
+			};
+			assertNotNull(message, command.name());
 		}
 		service().dropTable(table);
 	}

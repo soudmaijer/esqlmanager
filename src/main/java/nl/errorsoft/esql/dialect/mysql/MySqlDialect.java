@@ -1,17 +1,15 @@
 package nl.errorsoft.esql.dialect.mysql;
 
 import nl.errorsoft.esql.dialect.AbstractDialect;
+import nl.errorsoft.esql.dialect.MaintenanceStatement;
 import nl.errorsoft.esql.dialect.UserAdmin;
 
 import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
@@ -42,22 +40,18 @@ public class MySqlDialect extends AbstractDialect {
 		return "SHOW VARIABLES";
 	}
 
-	public List<ServerProcess> listProcesses(DatabaseConnection dbc) throws SQLException {
-		List<ServerProcess> processes = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery("SHOW PROCESSLIST")) {
-
-			while (rs.next()) {
-				processes.add(new ServerProcess(rs.getString("Id"), rs.getString("User"), rs.getString("Host"), rs.getString("db"),
-					rs.getString("Command"), rs.getString("Time"), rs.getString("Info")));
-			}
-
-		}
-		return processes;
+	public String listProcessesSql() {
+		return "SHOW PROCESSLIST";
 	}
 
-	public void killProcess(DatabaseConnection dbc, String processId) throws SQLException {
+	public ServerProcess readProcess(ResultSet rs) throws SQLException {
+		return new ServerProcess(rs.getString("Id"), rs.getString("User"), rs.getString("Host"), rs.getString("db"), rs.getString("Command"),
+			rs.getString("Time"), rs.getString("Info"));
+	}
+
+	public String killProcessSql(String processId) {
 		// The id is a number, parsing it keeps anything else out of the statement.
-		dbc.executeUpdate("KILL " + Long.parseLong(processId));
+		return "KILL " + Long.parseLong(processId);
 	}
 
 	public UserAdmin getUserAdmin() {
@@ -72,15 +66,8 @@ public class MySqlDialect extends AbstractDialect {
 		return java.util.EnumSet.allOf(Maintenance.class);
 	}
 
-	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
-		String message = "";
-
-		try (ResultSet rs = dbc.executeQuery(command + " TABLE " + quote(table))) {
-			if (rs.first()) {
-				message = rs.getString("Msg_Text");
-			}
-		}
-		return message;
+	public MaintenanceStatement maintenanceSql(Maintenance command, String table) {
+		return new MaintenanceStatement(command + " TABLE " + quote(table), "Msg_Text", "");
 	}
 
 	public String createDatabaseSql(String database) {
@@ -91,11 +78,8 @@ public class MySqlDialect extends AbstractDialect {
 		return "USE " + quote(database);
 	}
 
-	public String createTableDdl(DatabaseConnection dbc, String table) throws SQLException {
-		try (ResultSet rs = dbc.executeQuery("SHOW CREATE TABLE " + quote(table))) {
-			rs.first();
-			return rs.getString(2);
-		}
+	public String showCreateTableSql(String table) {
+		return "SHOW CREATE TABLE " + quote(table);
 	}
 
 	public String quote(String identifier) {
@@ -168,7 +152,7 @@ public class MySqlDialect extends AbstractDialect {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " ADD " + type + " " + quote(name) + " " + cols);
 	}
 
-	public List<String> dropIndexSql(DatabaseConnection dbc, String table, String name) {
+	public List<String> dropIndexSql(String table, String name, String primaryKeyName) {
 		if (name.equals("PRIMARY")) {
 			return Arrays.asList("ALTER TABLE " + quote(table) + " DROP PRIMARY KEY");
 		}
@@ -177,7 +161,7 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	/** Dropping and adding in one statement keeps an AUTO_INCREMENT primary key valid in between. */
-	public List<String> modifyIndexSql(DatabaseConnection dbc, String table, String name, String type, List<String> columns) {
+	public List<String> modifyIndexSql(String table, String name, String primaryKeyName, String type, List<String> columns) {
 		String drop = name.equals("PRIMARY") ? "DROP PRIMARY KEY" : "DROP INDEX " + quote(name);
 		String add = addIndexSql(table, name, type, columns).get(0).substring(("ALTER TABLE " + quote(table) + " ").length());
 
@@ -189,18 +173,14 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	/** Only InnoDB enforces foreign keys, other engines accept the statement and silently ignore the key. */
-	public void checkForeignKeyTable(DatabaseConnection dbc, String table) throws SQLException {
-		String sql = "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
-
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
-			ps.setString(1, table);
-
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next() && !"InnoDB".equalsIgnoreCase(rs.getString(1))) {
-					throw new EsqlException("Table " + table + " uses the " + rs.getString(1) + " engine, foreign keys need InnoDB.");
-				}
-			}
+	public void checkForeignKeyTable(String table, String tableType) {
+		if (tableType != null && !"InnoDB".equalsIgnoreCase(tableType)) {
+			throw new EsqlException("Table " + table + " uses the " + tableType + " engine, foreign keys need InnoDB.");
 		}
+	}
+
+	public String tableTypeSql() {
+		return "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
 	}
 
 	/** The driver reports types in upper case with the sign attached (INT UNSIGNED) and defaults as plain text. */
@@ -257,32 +237,21 @@ public class MySqlDialect extends AbstractDialect {
 		return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'";
 	}
 
-	public List<String> listDatabases(DatabaseConnection dbc) throws SQLException {
-		List<String> names = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery("SHOW DATABASES")) {
-
-			while (rs.next()) {
-				names.add(rs.getString(1));
-			}
-
-		}
-		return names;
+	public String listDatabasesSql() {
+		return "SHOW DATABASES";
 	}
 
-	public Vector<Table> listTables(DatabaseConnection dbc, Database db) throws SQLException {
-		Vector<Table> tables = new Vector<>();
-		try (ResultSet rs = dbc.executeQuery("SHOW TABLE STATUS")) {
+	public String listTablesSql() {
+		return "SHOW TABLE STATUS";
+	}
 
-			while (rs.next()) {
-				Table table = new Table(db);
-				table.setName(rs.getString("Name"));
-				table.setType(rs.getString("Engine"));
-				table.setRowCount(rs.getInt("Rows"));
-				table.setComment(rs.getString("Comment"));
-				tables.add(table);
-			}
-		}
-		return tables;
+	public Table readTable(ResultSet rs, Database db) throws SQLException {
+		Table table = new Table(db);
+		table.setName(rs.getString("Name"));
+		table.setType(rs.getString("Engine"));
+		table.setRowCount(rs.getInt("Rows"));
+		table.setComment(rs.getString("Comment"));
+		return table;
 	}
 
 	public String selectPage(String quotedTable, String orderBy, int skip, int show) {

@@ -2,9 +2,6 @@ package nl.errorsoft.esql.dialect.oracle;
 
 import nl.errorsoft.esql.dialect.AbstractDialect;
 
-import java.util.ArrayList;
-import java.util.List;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.ServerType;
 
@@ -26,13 +23,13 @@ public class OracleDialect extends AbstractDialect {
 		return cp.getDatabases();
 	}
 
-	public List<String> listDatabases(DatabaseConnection dbc) {
-		List<String> names = new ArrayList<>();
-		names.add(dbc.getConnectionProfile().getDatabases());
-		return names;
+	/** The SID of the profile is the only database. */
+	public String listDatabasesSql() {
+		return null;
 	}
 
-	public void useDatabase(DatabaseConnection dbc, String database) {
-		// The SID is part of the connection, there is nothing to switch.
+	/** The SID is part of the connection, there is nothing to switch. */
+	public DatabaseSwitch databaseSwitch() {
+		return DatabaseSwitch.NONE;
 	}
 }

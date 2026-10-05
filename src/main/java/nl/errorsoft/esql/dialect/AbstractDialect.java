@@ -6,12 +6,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
@@ -35,16 +31,24 @@ public abstract class AbstractDialect implements Dialect {
 		return requested;
 	}
 
-	public void useDatabase(DatabaseConnection dbc, String database) throws SQLException {
-		dbc.getConnection().setCatalog(database);
+	public DatabaseSwitch databaseSwitch() {
+		return DatabaseSwitch.CATALOG;
 	}
 
-	public String getSchema(DatabaseConnection dbc) throws SQLException {
+	public String currentSchemaSql() {
 		return null;
 	}
 
-	public Vector<Table> listTables(DatabaseConnection dbc, Database db) throws SQLException {
-		return listTablesFromMetaData(dbc, db, db.getName(), getSchema(dbc), new String[]{"TABLE", "VIEW"});
+	public String listTablesSql() {
+		return null;
+	}
+
+	public Table readTable(ResultSet row, Database db) throws SQLException {
+		throw new UnsupportedOperationException("Tables are listed from the metadata on this server");
+	}
+
+	public String[] metadataTableTypes() {
+		return new String[]{"TABLE", "VIEW"};
 	}
 
 	public String selectPage(String quotedTable, String orderBy, int skip, int show) {
@@ -157,16 +161,19 @@ public abstract class AbstractDialect implements Dialect {
 		return Arrays.asList("CREATE " + unique + "INDEX " + quote(name) + " ON " + quote(table) + " (" + String.join(", ", quoted) + ")");
 	}
 
-	public List<String> dropIndexSql(DatabaseConnection dbc, String table, String name) throws SQLException {
+	public List<String> dropIndexSql(String table, String name, String primaryKeyName) {
 		if (name.equals("PRIMARY")) {
-			return Arrays.asList("ALTER TABLE " + quote(table) + " DROP CONSTRAINT " + quote(primaryKeyName(dbc, table)));
+			if (primaryKeyName == null) {
+				throw new EsqlException("Table " + table + " has no primary key");
+			}
+			return Arrays.asList("ALTER TABLE " + quote(table) + " DROP CONSTRAINT " + quote(primaryKeyName));
 		}
 
 		return Arrays.asList("DROP INDEX " + quote(name));
 	}
 
-	public List<String> modifyIndexSql(DatabaseConnection dbc, String table, String name, String type, List<String> columns) throws SQLException {
-		List<String> statements = new ArrayList<>(dropIndexSql(dbc, table, name));
+	public List<String> modifyIndexSql(String table, String name, String primaryKeyName, String type, List<String> columns) {
+		List<String> statements = new ArrayList<>(dropIndexSql(table, name, primaryKeyName));
 		statements.addAll(addIndexSql(table, name, type, columns));
 		return statements;
 	}
@@ -183,7 +190,11 @@ public abstract class AbstractDialect implements Dialect {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " DROP CONSTRAINT " + quote(name));
 	}
 
-	public void checkForeignKeyTable(DatabaseConnection dbc, String table) throws SQLException {
+	public String tableTypeSql() {
+		return null;
+	}
+
+	public void checkForeignKeyTable(String table, String tableType) {
 	}
 
 	private String referentialAction(String clause, String action) {
@@ -207,7 +218,11 @@ public abstract class AbstractDialect implements Dialect {
 		return String.join(", ", quoted);
 	}
 
-	public List<String> afterDataLoadSql(DatabaseConnection dbc, String table) throws SQLException {
+	public String autoNumberedColumnsSql() {
+		return null;
+	}
+
+	public List<String> afterDataLoadSql(String table, List<String> autoNumberedColumns) {
 		return new ArrayList<>();
 	}
 
@@ -215,8 +230,12 @@ public abstract class AbstractDialect implements Dialect {
 		return "CREATE DATABASE " + quote(database);
 	}
 
-	public void dropDatabase(DatabaseConnection dbc, String database) throws SQLException {
-		dbc.executeUpdate("DROP DATABASE " + quote(database));
+	public String dropDatabaseSql(String database) {
+		return "DROP DATABASE " + quote(database);
+	}
+
+	public String databaseToLeaveFor(String database) {
+		return null;
 	}
 
 	/** Not every server can switch database with a statement, so scripts use the psql meta command that Import understands. */
@@ -224,43 +243,35 @@ public abstract class AbstractDialect implements Dialect {
 		return "\\connect " + quote(database);
 	}
 
-	/** Builds the statement from JDBC metadata, for servers that cannot show it themselves. */
-	public String createTableDdl(DatabaseConnection dbc, String table) throws SQLException {
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-		String catalog = dbc.getConnection().getCatalog();
-		List<String> definitions = new ArrayList<>();
-		try (ResultSet rs = dmd.getColumns(catalog, getSchema(dbc), table, "%")) {
+	/** Servers that cannot show the statement themselves get one built from the JDBC metadata. */
+	public String showCreateTableSql(String table) {
+		return null;
+	}
 
-			while (rs.next()) {
-				String definition = quote(rs.getString("COLUMN_NAME")) + " ";
-				String defaultValue = rs.getString("COLUMN_DEF");
-				boolean identity = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
+	public String columnDdl(ResultSet rs) throws SQLException {
+		String definition = quote(rs.getString("COLUMN_NAME")) + " ";
+		String defaultValue = rs.getString("COLUMN_DEF");
+		boolean identity = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
 
-				definition += identity ? identityType(rs.getString("TYPE_NAME")) : typeWithSize(rs);
+		definition += identity ? identityType(rs.getString("TYPE_NAME")) : typeWithSize(rs);
 
-				if (identity) {
-					definition += " GENERATED BY DEFAULT AS IDENTITY";
-				} else if (defaultValue != null) {
-					definition += " DEFAULT " + defaultValue;
-				}
-
-				if (rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls) {
-					definition += " NOT NULL";
-				}
-
-				definitions.add(definition);
-			}
+		if (identity) {
+			definition += " GENERATED BY DEFAULT AS IDENTITY";
+		} else if (defaultValue != null) {
+			definition += " DEFAULT " + defaultValue;
 		}
 
-		Map<Integer, String> primary = new TreeMap<>();
-		try (ResultSet keys = dmd.getPrimaryKeys(catalog, getSchema(dbc), table)) {
-			while (keys.next()) {
-				primary.put(keys.getInt("KEY_SEQ"), quote(keys.getString("COLUMN_NAME")));
-			}
+		if (rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls) {
+			definition += " NOT NULL";
 		}
+		return definition;
+	}
 
-		if (!primary.isEmpty()) {
-			definitions.add("PRIMARY KEY (" + String.join(", ", primary.values()) + ")");
+	public String createTableDdl(String table, List<String> columnDefinitions, List<String> primaryKey) {
+		List<String> definitions = new ArrayList<>(columnDefinitions);
+
+		if (!primaryKey.isEmpty()) {
+			definitions.add("PRIMARY KEY (" + quoteAll(primaryKey) + ")");
 		}
 
 		return "CREATE TABLE " + quote(table) + " (" + String.join(", ", definitions) + ")";
@@ -340,11 +351,15 @@ public abstract class AbstractDialect implements Dialect {
 		return null;
 	}
 
-	public List<ServerProcess> listProcesses(DatabaseConnection dbc) throws SQLException {
+	public String listProcessesSql() {
 		throw new UnsupportedOperationException("The process list is not available on this server");
 	}
 
-	public void killProcess(DatabaseConnection dbc, String processId) throws SQLException {
+	public ServerProcess readProcess(ResultSet row) throws SQLException {
+		throw new UnsupportedOperationException("The process list is not available on this server");
+	}
+
+	public String killProcessSql(String processId) {
 		throw new UnsupportedOperationException("Processes cannot be ended on this server");
 	}
 
@@ -357,8 +372,8 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/** Without a command of its own the server does nothing, PostgreSQL overrides this with VACUUM and ANALYZE. */
-	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
-		throw new UnsupportedOperationException(command + " is not available on " + dbc.getConnectionProfile().getServerType().getDescription());
+	public MaintenanceStatement maintenanceSql(Maintenance command, String table) {
+		throw new UnsupportedOperationException(command + " is not available on this server");
 	}
 
 	/** The type, size, default and nullability of a column as used in CREATE TABLE and ALTER TABLE. */
@@ -391,41 +406,5 @@ public abstract class AbstractDialect implements Dialect {
 	/** A text value as an SQL literal. */
 	public String literal(String value) {
 		return "'" + value.replace("'", "''") + "'";
-	}
-
-	private String primaryKeyName(DatabaseConnection dbc, String table) throws SQLException {
-		try (ResultSet rs = dbc.getConnection().getMetaData().getPrimaryKeys(dbc.getConnection().getCatalog(), getSchema(dbc), table)) {
-			if (rs.next()) {
-				return rs.getString("PK_NAME");
-			}
-		}
-		throw new SQLException("Table " + table + " has no primary key");
-	}
-
-	/** Lists tables through DatabaseMetaData and counts the rows of each of them. */
-	protected Vector<Table> listTablesFromMetaData(DatabaseConnection dbc, Database db, String catalog, String schema, String[] types) throws SQLException {
-		Vector<Table> tables = new Vector<>();
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-		try (ResultSet rs = dmd.getTables(catalog, schema, "%", types)) {
-
-			while (rs.next()) {
-				Table table = new Table(db);
-				table.setName(rs.getString("TABLE_NAME"));
-				table.setType(rs.getString("TABLE_TYPE"));
-				table.setComment(rs.getString("REMARKS"));
-				tables.add(table);
-			}
-		}
-
-		for (Table table : tables) {
-			try (ResultSet counted = dbc.executeQuery("SELECT count(*) AS cnt FROM " + quote(table.getName()))) {
-				if (counted.first()) {
-					table.setRowCount(counted.getInt("cnt"));
-				}
-			} catch (SQLException e) {
-				// A table we cannot count (no rights, broken view) is still listed, without a row count.
-			}
-		}
-		return tables;
 	}
 }
