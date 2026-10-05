@@ -1,7 +1,6 @@
 package nl.errorsoft.esql.domain;
 
-public class CreateColumn
-{
+public class CreateColumn {
 	public String name = "";
 
 	public boolean primary = false;
@@ -18,13 +17,11 @@ public class CreateColumn
 	public String defaultval = "";
 	public String length = "";
 
-	public CreateColumn( String name )
-	{
+	public CreateColumn(String name) {
 		this.name = name;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return name;
 	}
 }

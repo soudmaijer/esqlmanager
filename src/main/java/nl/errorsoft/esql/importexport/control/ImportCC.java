@@ -107,10 +107,6 @@ public class ImportCC implements Observer {
 		}
 	}
 
-	public ImageLoader getImageLoader() {
-		return cwcc.getImageLoader();
-	}
-
 	/*
 	 * @description: starts the Import ui for the option: Import data as CSV comma-seperated
 	 */

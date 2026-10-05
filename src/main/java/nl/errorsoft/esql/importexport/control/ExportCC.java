@@ -103,10 +103,6 @@ public class ExportCC implements Observer {
 		}
 	}
 
-	public ImageLoader getImageLoader() {
-		return cwcc.getImageLoader();
-	}
-
 	/*
 	 * @description: starts the export ui for the option: Export data as CSV comma-seperated
 	 */

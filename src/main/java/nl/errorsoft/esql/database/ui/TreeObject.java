@@ -1,7 +1,6 @@
 package nl.errorsoft.esql.database.ui;
 
-public class TreeObject
-{
+public class TreeObject {
 	private boolean root;
 	private boolean database;
 	private boolean table;
@@ -11,8 +10,7 @@ public class TreeObject
 
 	private String name;
 
-	public TreeObject( String name, boolean root, boolean database, boolean table, boolean field, boolean key )
-	{
+	public TreeObject(String name, boolean root, boolean database, boolean table, boolean field, boolean key) {
 		this.root = root;
 		this.database = database;
 		this.table = table;
@@ -21,48 +19,39 @@ public class TreeObject
 		this.name = name;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 
-	public boolean isDatabase()
-	{
+	public boolean isDatabase() {
 		return database;
 	}
 
-	public boolean isTable()
-	{
+	public boolean isTable() {
 		return table;
 	}
 
-	public boolean isRoot()
-	{
+	public boolean isRoot() {
 		return root;
 	}
 
-	public boolean isField()
-	{
+	public boolean isField() {
 		return field;
 	}
 
-	public boolean isKey()
-	{
+	public boolean isKey() {
 		return key;
 	}
 
-	public boolean isUser()
-	{
+	public boolean isUser() {
 		return user;
 	}
 
-	public void setUser( boolean user )
-	{
+	public void setUser(boolean user) {
 		this.user = user;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return name;
 	}
 }

@@ -2,6 +2,8 @@
 
 package nl.errorsoft.esql.database.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.database.control.DatabaseCC;
@@ -23,7 +25,7 @@ public class DatabaseTreeView extends JTree {
 	public DatabaseTreeView(DatabaseCC dcc, String title) {
 		this.dcc = dcc;
 		this.rootNode = new DefaultMutableTreeNode(title);
-		this.setCellRenderer(new DatabaseTreeViewCellRenderer(dcc.getImageLoader()));
+		this.setCellRenderer(new DatabaseTreeViewCellRenderer(ApplicationContext.get().imageLoader()));
 	}
 
 	public void addDatabase(Database db) {

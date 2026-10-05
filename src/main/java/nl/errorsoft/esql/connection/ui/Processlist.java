@@ -1,4 +1,6 @@
 package nl.errorsoft.esql.connection.ui;
+
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.connection.ServerService;
 
@@ -64,7 +66,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 		try {
 			m = new DatabaseConnection();
 			m.connect(cp, "");
-			servers = new ConnectionContext(m).servers();
+			servers = ApplicationContext.get().connection(m).servers();
 			int selRow = 0;
 			DefaultTableModel dtm = null;
 
@@ -105,6 +107,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 					}
 				}
 			}
+			ApplicationContext.get().release(m);
 			m.close();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);

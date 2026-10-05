@@ -1,8 +1,7 @@
 package nl.errorsoft.esql.connection;
 
 /** A connection that is active on the server, as shown in the process list. */
-public class ServerProcess
-{
+public class ServerProcess {
 	private final String id;
 	private final String user;
 	private final String host;
@@ -11,8 +10,7 @@ public class ServerProcess
 	private final String time;
 	private final String info;
 
-	public ServerProcess( String id, String user, String host, String database, String command, String time, String info )
-	{
+	public ServerProcess(String id, String user, String host, String database, String command, String time, String info) {
 		this.id = id;
 		this.user = user;
 		this.host = host;
@@ -22,39 +20,32 @@ public class ServerProcess
 		this.info = info;
 	}
 
-	public String getId()
-	{
+	public String getId() {
 		return id;
 	}
 
-	public String getUser()
-	{
+	public String getUser() {
 		return user;
 	}
 
-	public String getHost()
-	{
+	public String getHost() {
 		return host;
 	}
 
-	public String getDatabase()
-	{
+	public String getDatabase() {
 		return database;
 	}
 
-	public String getCommand()
-	{
+	public String getCommand() {
 		return command;
 	}
 
 	/** Seconds the process has been in its current state. */
-	public String getTime()
-	{
+	public String getTime() {
 		return time;
 	}
 
-	public String getInfo()
-	{
+	public String getInfo() {
 		return info;
 	}
 }

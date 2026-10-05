@@ -60,7 +60,4 @@ public class DatabaseCC {
 		cwcc.selectTableInTree(table);
 	}
 
-	public ImageLoader getImageLoader() {
-		return cwcc.getImageLoader();
-	}
 }

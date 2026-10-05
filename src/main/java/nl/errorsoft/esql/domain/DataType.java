@@ -2,8 +2,7 @@
 
 package nl.errorsoft.esql.domain;
 
-public class DataType
-{
+public class DataType {
 	String name;
 	public boolean primary;
 	public boolean index;
@@ -14,9 +13,8 @@ public class DataType
 	public boolean autoincrement;
 	public boolean zerofill;
 
-	public DataType( String name, boolean primary, boolean index, boolean unique, boolean binary, boolean notnull, boolean unsigned, boolean autoincrement,
-		boolean zerofill )
-	{
+	public DataType(String name, boolean primary, boolean index, boolean unique, boolean binary, boolean notnull, boolean unsigned, boolean autoincrement,
+		boolean zerofill) {
 		this.name = name;
 		this.primary = primary;
 		this.index = index;
@@ -28,13 +26,11 @@ public class DataType
 		this.zerofill = zerofill;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return name;
 	}
 }

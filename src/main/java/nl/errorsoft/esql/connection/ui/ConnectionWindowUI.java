@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -115,7 +117,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		});
 
 		// Get Imageloader
-		imgLoader = cwcc.getImageLoader();
+		imgLoader = ApplicationContext.get().imageLoader();
 
 		/******************************************************************
 		 *

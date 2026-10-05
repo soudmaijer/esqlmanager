@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.designer.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 
@@ -57,27 +59,27 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		jPanel2.setBorder(new javax.swing.border.TitledBorder("Checking Model"));
 		jLabel1.setText("Checking Databases");
 		jPanel2.add(jLabel1);
-		jLabel1.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_off")));
+		jLabel1.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_off")));
 		jLabel1.setBounds(20, 30, 160, 15);
 
 		jLabel2.setText("Checking Tables");
 		jPanel2.add(jLabel2);
-		jLabel2.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_off")));
+		jLabel2.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_off")));
 		jLabel2.setBounds(20, 50, 160, 15);
 
 		jLabel3.setText("Checking Columns");
 		jPanel2.add(jLabel3);
-		jLabel3.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_off")));
+		jLabel3.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_off")));
 		jLabel3.setBounds(20, 70, 160, 15);
 
 		jLabel4.setText("Checking Relations");
 		jPanel2.add(jLabel4);
-		jLabel4.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_off")));
+		jLabel4.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_off")));
 		jLabel4.setBounds(20, 90, 160, 15);
 
 		jLabel5.setText("Checking Model");
 		jPanel2.add(jLabel5);
-		jLabel5.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_off")));
+		jLabel5.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_off")));
 		jLabel5.setBounds(20, 110, 160, 15);
 
 		jPanel2.add(progress);
@@ -207,21 +209,21 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 			}
 
 			if (db_error) {
-				jLabel1.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
+				jLabel1.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
 			} else {
-				jLabel1.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_good")));
+				jLabel1.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_good")));
 			}
 
 			if (tb_error) {
-				jLabel2.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
+				jLabel2.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
 			} else {
-				jLabel2.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_good")));
+				jLabel2.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_good")));
 			}
 
 			if (fd_error) {
-				jLabel3.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
+				jLabel3.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
 			} else {
-				jLabel3.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_good")));
+				jLabel3.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_good")));
 			}
 
 			progress.setValue(0);
@@ -239,23 +241,23 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 			}
 
 			if (ref_error) {
-				jLabel4.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
+				jLabel4.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
 			} else {
-				jLabel4.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_good")));
+				jLabel4.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_good")));
 			}
 
 			// Cheat past the model :)
-			jLabel5.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_good")));
+			jLabel5.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_good")));
 
 			if (db_error == false && tb_error == false && fd_error == false) {
 				generate.setEnabled(true);
 			}
 		} else {
-			jLabel1.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
-			jLabel2.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
-			jLabel3.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
-			jLabel4.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
-			jLabel5.setIcon(new ImageIcon(cwui.getControlClass().getImageLoader().getImage("check_error")));
+			jLabel1.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
+			jLabel2.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
+			jLabel3.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
+			jLabel4.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
+			jLabel5.setIcon(new ImageIcon(ApplicationContext.get().imageLoader().getImage("check_error")));
 		}
 	}
 

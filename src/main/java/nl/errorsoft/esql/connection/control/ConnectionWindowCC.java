@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.data.DatabaseConnection;
 
 import nl.errorsoft.esql.connection.ConnectionContext;
@@ -39,7 +41,6 @@ public class ConnectionWindowCC extends Thread {
 	private ConnectionWindow cw;
 	private ConnectionWindowUI cwui;
 	private TableCC tbcc;
-	private ConnectionContext context;
 
 	public ConnectionWindowCC(ESQLManagerCC jmcc, nl.errorsoft.esql.connection.ConnectionProfile cp) {
 		this.jmcc = jmcc;
@@ -100,6 +101,7 @@ public class ConnectionWindowCC extends Thread {
 	public void closeUI() {
 		// Stop database connection
 		try {
+			ApplicationContext.get().release(cw.getDatabaseConnection());
 			cw.stop();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -320,7 +322,7 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Starting query window...", true);
 			DatabaseCC dbcc = new DatabaseCC(this);
-			QueryUI qu = new QueryUI(this, jmcc.getUI(), new Syntax(), jmcc.getImageLoader(), dbcc.getDatabases(), cwui.getDatabase());
+			QueryUI qu = new QueryUI(this, jmcc.getUI(), new Syntax(), ApplicationContext.get().imageLoader(), dbcc.getDatabases(), cwui.getDatabase());
 			jmcc.updateStatus("Ready...", false);
 			qu.setVisible(true);
 		} catch (Exception e) {
@@ -478,18 +480,9 @@ public class ConnectionWindowCC extends Thread {
 		return jmcc.getUI();
 	}
 
-	public ImageLoader getImageLoader() {
-		return jmcc.getImageLoader();
-	}
-
 	/** The services of this connection, created on first use. Fails when the connection is lost. */
 	public ConnectionContext getContext() throws Exception {
-		DatabaseConnection connection = getDatabaseConnection();
-
-		if (context == null) {
-			context = new ConnectionContext(connection);
-		}
-		return context;
+		return ApplicationContext.get().connection(getDatabaseConnection());
 	}
 
 	public nl.errorsoft.esql.data.DatabaseConnection getDatabaseConnection() throws Exception {

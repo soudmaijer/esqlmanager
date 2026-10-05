@@ -2,6 +2,8 @@
 
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.query.ui.UndoHandler;
 import nl.errorsoft.esql.ui.ColumnWidths;
 import nl.errorsoft.esql.ui.ExtentionFileFilter;
@@ -76,7 +78,7 @@ public class TableDataView extends JPanel implements ActionListener {
 	*/
 	public TableDataView(TableCC tcc) {
 		this.tcc = tcc;
-		this.imgLoader = tcc.getImageLoader();
+		this.imgLoader = ApplicationContext.get().imageLoader();
 		this.setLayout(new BorderLayout());
 
 		tbData = new JTable(stm) {
@@ -497,7 +499,7 @@ public class TableDataView extends JPanel implements ActionListener {
 
 		stm = new SortableTableModel();
 		tcm = new DefaultTableColumnModel();
-		HeaderRenderer hr = new HeaderRenderer(tcc.getImageLoader());
+		HeaderRenderer hr = new HeaderRenderer(ApplicationContext.get().imageLoader());
 
 		for (int i = 0; i < columns.length; i++) {
 			javax.swing.table.TableColumn tempCol = new javax.swing.table.TableColumn(i);

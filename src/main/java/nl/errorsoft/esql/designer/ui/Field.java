@@ -1,7 +1,6 @@
 package nl.errorsoft.esql.designer.ui;
 
-public class Field
-{
+public class Field {
 	private String name;
 	private String length;
 	private String dfault;
@@ -17,8 +16,7 @@ public class Field
 	public boolean autoincrement = false;
 	public boolean zerofill = false;
 
-	public Field( String name, nl.errorsoft.esql.domain.DataType type, String length, String dfault, String comment )
-	{
+	public Field(String name, nl.errorsoft.esql.domain.DataType type, String length, String dfault, String comment) {
 		this.name = name;
 		this.type = type;
 		this.length = length;
@@ -26,58 +24,47 @@ public class Field
 		this.comment = comment;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 
-	public void setName( String name )
-	{
+	public void setName(String name) {
 		this.name = name;
 	}
 
-	public nl.errorsoft.esql.domain.DataType getType()
-	{
+	public nl.errorsoft.esql.domain.DataType getType() {
 		return type;
 	}
 
-	public void setType( nl.errorsoft.esql.domain.DataType type )
-	{
+	public void setType(nl.errorsoft.esql.domain.DataType type) {
 		this.type = type;
 	}
 
-	public String getLength()
-	{
+	public String getLength() {
 		return length;
 	}
 
-	public void setLength( String length )
-	{
+	public void setLength(String length) {
 		this.length = length;
 	}
 
-	public String getDefault()
-	{
+	public String getDefault() {
 		return dfault;
 	}
 
-	public void setDefault( String dfault )
-	{
+	public void setDefault(String dfault) {
 		this.dfault = dfault;
 	}
 
-	public String getComment()
-	{
+	public String getComment() {
 		return comment;
 	}
 
-	public void setComment( String comment )
-	{
+	public void setComment(String comment) {
 		this.comment = comment;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return name;
 	}
 }

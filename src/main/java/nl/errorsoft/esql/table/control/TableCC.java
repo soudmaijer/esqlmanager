@@ -130,10 +130,6 @@ public class TableCC {
 		tdv.saveSelectedRow();
 	}
 
-	public ImageLoader getImageLoader() {
-		return cwcc.getImageLoader();
-	}
-
 	public void insertRow(Table table, TableData[] rowData) throws Exception {
 		service().insertRow(table, rowData);
 	}

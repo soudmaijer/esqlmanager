@@ -4,8 +4,7 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import java.io.*;
 
-public class FieldObject
-{
+public class FieldObject {
 	private String name;
 	private String comment = "";
 	private String length = "";
@@ -20,9 +19,8 @@ public class FieldObject
 	public boolean autoincrement = false;
 	public boolean zerofill = false;
 
-	public FieldObject( String name, boolean primary, boolean index, boolean unique, boolean binary, boolean notnull, boolean unsigned, boolean autoincrement,
-		boolean zerofill )
-	{
+	public FieldObject(String name, boolean primary, boolean index, boolean unique, boolean binary, boolean notnull, boolean unsigned, boolean autoincrement,
+		boolean zerofill) {
 		this.name = name;
 		this.primary = primary;
 		this.index = index;
@@ -34,13 +32,11 @@ public class FieldObject
 		this.zerofill = zerofill;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return this.name;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return name;
 	}
 }

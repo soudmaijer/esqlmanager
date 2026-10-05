@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.app.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ESQLManager;
@@ -80,7 +82,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		this.jmcc = jmcc;
 
 		// Get Imageloader
-		imgLoader = jmcc.getImageLoader();
+		imgLoader = ApplicationContext.get().imageLoader();
 
 		// Create components.
 		initComponents();

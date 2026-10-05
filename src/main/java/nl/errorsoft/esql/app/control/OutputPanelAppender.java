@@ -15,32 +15,28 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 /**
  * Shows the application log in the output panel at the bottom of the main window.
  */
-public class OutputPanelAppender extends AbstractAppender
-{
+public class OutputPanelAppender extends AbstractAppender {
 	private final ESQLManagerUI ui;
 
-	private OutputPanelAppender( Layout<? extends Serializable> layout, ESQLManagerUI ui )
-	{
-		super( "OutputPanel", null, layout, true, Property.EMPTY_ARRAY );
+	private OutputPanelAppender(Layout<? extends Serializable> layout, ESQLManagerUI ui) {
+		super("OutputPanel", null, layout, true, Property.EMPTY_ARRAY);
 		this.ui = ui;
 	}
 
-	public void append( LogEvent event )
-	{
-		ui.print( new String( getLayout().toByteArray( event ) ) );
+	public void append(LogEvent event) {
+		ui.print(new String(getLayout().toByteArray(event)));
 	}
 
 	/** Attaches the output panel to the root logger. */
-	public static void install( ESQLManagerUI ui )
-	{
-		LoggerContext context = ( LoggerContext ) LogManager.getContext( false );
+	public static void install(ESQLManagerUI ui) {
+		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
-		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern( "%d{HH:mm:ss} %-5level %msg%n" ).setConfiguration( config ).build();
-		Appender appender = new OutputPanelAppender( layout, ui );
+		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n").setConfiguration(config).build();
+		Appender appender = new OutputPanelAppender(layout, ui);
 
 		appender.start();
-		config.addAppender( appender );
-		config.getRootLogger().addAppender( appender, null, null );
+		config.addAppender(appender);
+		config.getRootLogger().addAppender(appender, null, null);
 		context.updateLoggers();
 	}
 }
