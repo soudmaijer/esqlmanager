@@ -56,6 +56,15 @@ eSQLManager changelog
   designer"), on the right, with the paging buttons of the table data on the left of the same bar.
 - Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
   with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
+- SQL query: opens as a tab of the connection window instead of a separate window (several tabs, "Query 2", ...), with the result of
+  the last statement that returned rows below the editor. Open and save .sql files.
+- SQL query: "Run selection" runs the selected text or the statement at the caret (Cmd/Ctrl+Enter), "Run all" every statement in
+  order (Cmd/Ctrl+Shift+Enter). Statements are split on ; outside strings, quoted names, dollar quotes and comments. The outcome of
+  each statement is logged, the status bar shows the total time or which statement failed; running stops at the first error.
+- SQL query: auto completion (Ctrl+Space, Cmd+Space, Cmd/Ctrl+Shift+Space, and after a period) of keywords, functions, the tables of
+  the database and their columns; aliases are resolved, names that need quotes are inserted quoted.
+- Connection window: the Create database and Drop database toolbar buttons are gone, the context menus of the tree still have them.
+- Disconnect asks "Disconnect from <connection>?" with the buttons Disconnect and Cancel.
 - Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.
 - Designer foreign keys (backend): a model holds foreign keys between tables, saves them in model files of version 0.2
   (0.1 files still open) and Generate creates them after all tables exist. Model files are written with JDOM, so names

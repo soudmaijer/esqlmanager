@@ -23,7 +23,9 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Insert rows | yes | yes | yes | yes |
 | Delete rows | yes | yes | yes | yes |
 | Upload and download binary data (blobs) | yes | yes | yes | yes |
-| Run your own SQL with syntax highlighting | yes | yes | yes | yes |
+| SQL query tabs with syntax highlighting, opening and saving .sql files | yes | yes | yes | yes |
+| Run selection or the statement at the caret, run all statements of a script | yes | yes | yes | yes |
+| Auto completion of keywords, tables and columns (aliases resolved) | yes | yes | yes | yes |
 | Create a database | yes | yes | yes | no |
 | Drop a database | yes | yes | yes | no |
 | Create a table | yes | yes | no | no |
@@ -47,6 +49,8 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Server variables | yes | yes | no | no |
 | Output panel with connection details and executed queries | yes | yes | yes | yes |
 | Status bar with server, account and the last action | yes | yes | yes | yes |
+
+The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
 PostgreSQL shows the tables of the connection's current schema (normally `public`), and has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects.
 
