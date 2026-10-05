@@ -2,6 +2,14 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Spacing in dialogs, length of integer columns, pending state in Generate
+
+- Connect to server, Upload and Download no longer have empty space above the buttons: the filler row of a form
+  takes no height and the error line only shows while there is a message.
+- Table editor: an existing column shows a length only for types that take one (varchar, decimal, ...), integer
+  columns no longer show "10".
+- Generate (designer): the checks show a dash until they have run, then done or failed.
+
 05-10-2026: Dialog layout fixes found on screen
 
 - The application starts again: the Tools menu items were enabled before the window list existed.

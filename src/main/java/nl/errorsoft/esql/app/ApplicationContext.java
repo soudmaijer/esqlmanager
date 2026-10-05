@@ -77,6 +77,7 @@ public final class ApplicationContext {
 			images.addIcon("des_check", "check", 16, false);
 			images.addIcon("imgDesigner", "workflow", 16, false);
 			images.addIcon("check_off", "check-off", 16, false);
+			images.addIcon("check_pending", "check-pending", 16, false);
 			images.addIcon("check_good", "check-good", 16, false);
 			images.addIcon("check_error", "check-error", 16, false);
 			images.addIcon("dbimg", "database", 16, false);

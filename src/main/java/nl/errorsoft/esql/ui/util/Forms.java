@@ -224,11 +224,11 @@ public final class Forms {
 		public JPanel done() {
 			GridBagConstraints c = constraints(0, 2, 1);
 			c.weighty = 1;
-			panel.add(new JPanel() {
-				{
-					setOpaque(false);
-				}
-			}, c);
+			c.insets = new Insets(0, 0, 0, 0);
+			JPanel filler = new JPanel();
+			filler.setOpaque(false);
+			filler.setPreferredSize(new Dimension(0, 0));
+			panel.add(filler, c);
 			return panel;
 		}
 

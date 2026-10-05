@@ -529,7 +529,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		} else if (selected instanceof TableColumn tc) {
 			columnName.setText(tc.getName());
 			selectTypeNamed(tc.getNativeTypeName());
-			length.setText(String.valueOf(tc.getSize()));
+			length.setText(tc.getLength());
 			defaultval.setText(tc.getDefault());
 			columnComment.setText(tc.getComment());
 			primary.setSelected(tc.isPrimary());
@@ -646,7 +646,7 @@ public class TableEditor extends JPanel implements EditorTab {
 			return switch (column) {
 				case NAME -> existing.getName();
 				case TYPE -> existing.getNativeTypeName();
-				case LENGTH -> String.valueOf(existing.getSize());
+				case LENGTH -> existing.getLength();
 				case NOT_NULL -> !existing.isNullable();
 				case PRIMARY -> existing.isPrimary();
 				case AUTO_INCREMENT -> existing.isAutoIncrement();

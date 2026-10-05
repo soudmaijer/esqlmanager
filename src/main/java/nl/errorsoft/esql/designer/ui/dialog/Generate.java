@@ -70,7 +70,7 @@ public class Generate extends JDialog {
 		JPanel steps = new JPanel();
 		steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
 		for (int i = 0; i < STEPS.length; i++) {
-			checks[i] = new JLabel(STEPS[i], ApplicationContext.get().imageLoader().getIcon("check_off"), SwingConstants.LEADING);
+			checks[i] = new JLabel(STEPS[i], ApplicationContext.get().imageLoader().getIcon("check_pending"), SwingConstants.LEADING);
 			checks[i].setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
 			steps.add(checks[i]);
 		}

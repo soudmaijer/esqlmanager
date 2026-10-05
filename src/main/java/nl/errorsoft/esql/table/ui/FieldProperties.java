@@ -86,20 +86,13 @@ public class FieldProperties extends FormDialog implements ActionListener {
 			autoIncrement.setSelected(column.isAutoIncrement());
 			notnull.setSelected(!column.isNullable());
 			unsigned.setSelected(unsigned.isEnabled() && !column.isSigned());
-			// The server reports a size for every type, only types that are written with a length show it.
-			length.setText(takesLength(column.getNativeTypeName()) ? Integer.toString(column.getSize()) : "");
+			length.setText(column.getLength());
 			dfault.setText(column.getDefault());
 			comment.setText(column.getComment());
 		}
 
 		pack();
 		setLocationRelativeTo(parent);
-	}
-
-	/** True for the types that are written with a length, such as varchar(50) or decimal(10,2). */
-	private static boolean takesLength(String typeName) {
-		String type = typeName == null ? "" : typeName.toLowerCase();
-		return type.contains("char") || type.contains("binary") || type.contains("decimal") || type.contains("numeric") || type.equals("bit");
 	}
 
 	public void actionPerformed(ActionEvent e) {

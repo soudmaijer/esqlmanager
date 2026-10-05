@@ -37,6 +37,7 @@ public class FormDialog extends JDialog {
 		setResizable(false);
 		Color red = UIManager.getColor("Actions.Red");
 		error.setForeground(red != null ? red : Color.RED);
+		error.setVisible(false);
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowOpened(WindowEvent e) {
@@ -91,7 +92,14 @@ public class FormDialog extends JDialog {
 
 	/** Shows a message in red inside the dialog, null or empty clears it. */
 	public void showError(String message) {
-		error.setText(message == null || message.isEmpty() ? " " : message);
+		boolean show = message != null && !message.isEmpty();
+		error.setText(show ? message : " ");
+		if (error.isVisible() != show) {
+			error.setVisible(show);
+			if (isDisplayable()) {
+				pack();
+			}
+		}
 	}
 
 	public boolean isAccepted() {

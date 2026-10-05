@@ -137,6 +137,13 @@ public class TableColumn {
 		this.comment = comment == null ? "" : comment;
 	}
 
+	/** The size as written in a column definition: the server reports a size for every type, only types that are written with a length have one. */
+	public String getLength() {
+		String type = nativeTypeName == null ? "" : nativeTypeName.toLowerCase();
+		boolean takesLength = type.contains("char") || type.contains("binary") || type.contains("decimal") || type.contains("numeric") || type.equals("bit");
+		return takesLength ? Integer.toString(size) : "";
+	}
+
 	public int getSize() {
 		return this.size;
 	}
