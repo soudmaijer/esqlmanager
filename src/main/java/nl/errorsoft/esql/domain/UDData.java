@@ -1,6 +1,8 @@
 
 package nl.errorsoft.esql.domain;
 
+import nl.errorsoft.esql.table.*;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

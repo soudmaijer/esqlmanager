@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.ui.*;
+
 import nl.errorsoft.esql.domain.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -534,7 +537,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 							cwcc.tableSelected( (Table)selectedNode.getUserObject(), true );
 					}
 				}
-				else if( selectedNode.getUserObject() instanceof nl.errorsoft.esql.domain.TableColumn )
+				else if( selectedNode.getUserObject() instanceof nl.errorsoft.esql.table.TableColumn )
 				{
 					cwcc.fieldSelected();
 				}
@@ -804,9 +807,9 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 						dblabel.setText( ((Database)selected).getName() );	
 						dbmenu.show(dtv,e.getX(), e.getY());
 					}
-					else if( selected instanceof nl.errorsoft.esql.domain.TableColumn )
+					else if( selected instanceof nl.errorsoft.esql.table.TableColumn )
 					{	
-						fdlabel.setText( ((nl.errorsoft.esql.domain.TableColumn)selected).getName() );
+						fdlabel.setText( ((nl.errorsoft.esql.table.TableColumn)selected).getName() );
 						fdmenu.show(dtv, e.getX(), e.getY());
 					}
 					else

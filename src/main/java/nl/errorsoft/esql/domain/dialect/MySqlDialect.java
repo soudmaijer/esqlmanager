@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.domain.dialect;
 
+import nl.errorsoft.esql.table.*;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
 import nl.errorsoft.esql.domain.ServerProcess;
 import nl.errorsoft.esql.domain.ServerType;
-import nl.errorsoft.esql.domain.Table;
+import nl.errorsoft.esql.table.Table;
 
 public class MySqlDialect extends AbstractDialect
 {

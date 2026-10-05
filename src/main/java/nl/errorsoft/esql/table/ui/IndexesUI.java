@@ -3,7 +3,12 @@
  *
  * Created on 9 april 2003, 20:53
  */
-package nl.errorsoft.esql.gui;
+package nl.errorsoft.esql.table.ui;
+
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.gui.*;
+import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.control.*;
 
 import nl.errorsoft.esql.control.*;
 import nl.errorsoft.esql.domain.*;

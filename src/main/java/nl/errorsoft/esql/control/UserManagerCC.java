@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.control;
 
+import nl.errorsoft.esql.table.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -7,7 +9,7 @@ import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.Database;
 import nl.errorsoft.esql.domain.DatabaseUser;
 import nl.errorsoft.esql.domain.GrantTarget;
-import nl.errorsoft.esql.domain.Table;
+import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.domain.dialect.UserAdmin;
 import nl.errorsoft.esql.gui.ESQLManagerUI;

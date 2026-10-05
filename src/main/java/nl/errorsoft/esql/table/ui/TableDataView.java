@@ -1,6 +1,11 @@
 //Source file: d:\\roseoutput\\esql\\esql\\table\\TableDataView.java
 
-package nl.errorsoft.esql.gui;
+package nl.errorsoft.esql.table.ui;
+
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.gui.*;
+import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.control.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -141,7 +146,7 @@ public class TableDataView extends JPanel implements ActionListener
 				{
 					if( tbData.getSelectedColumn() > -1 && tbData.getSelectedRow() > -1 )
 					{
-						nl.errorsoft.esql.domain.TableColumn tempTc = ((nl.errorsoft.esql.domain.TableColumn)(tbData.getTableHeader().getColumnModel().getColumn( tbData.getSelectedColumn() ).getHeaderValue() ) );
+						nl.errorsoft.esql.table.TableColumn tempTc = ((nl.errorsoft.esql.table.TableColumn)(tbData.getTableHeader().getColumnModel().getColumn( tbData.getSelectedColumn() ).getHeaderValue() ) );
 						
 						if( tempTc.isBinary() )
 						{	 enableBinaryDataEditor();
@@ -416,7 +421,7 @@ public class TableDataView extends JPanel implements ActionListener
 	   		TableData tempData = new TableData();
 	   		tempData.setNewRow( true );
 	   		tempData.setData( new String() );
-	   		tempData.setTableColumn( (nl.errorsoft.esql.domain.TableColumn)tbData.getColumnModel().getColumn(i).getHeaderValue() );
+	   		tempData.setTableColumn( (nl.errorsoft.esql.table.TableColumn)tbData.getColumnModel().getColumn(i).getHeaderValue() );
 
 	   		newData.insertElementAt( tempData, i );
 	   	}
@@ -535,7 +540,7 @@ public class TableDataView extends JPanel implements ActionListener
    	lblRows.setText( " Total:  "+ table.getRowCount() );
    }  
    
-   public void loadData( Table table, nl.errorsoft.esql.domain.TableColumn[] columns, TableData [][] tda )
+   public void loadData( Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableData [][] tda )
    {
    	this.table = table;
    	showRecordCount();

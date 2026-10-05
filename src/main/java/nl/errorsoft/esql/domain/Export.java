@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.domain;
 
+import nl.errorsoft.esql.table.*;
+
 import java.sql.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.dialect.Dialect;

@@ -2,6 +2,8 @@
 
 package nl.errorsoft.esql.gui;
 
+import nl.errorsoft.esql.table.*;
+
 import javax.swing.*;
 import javax.swing.tree.*;
 import nl.errorsoft.esql.control.*;
@@ -68,7 +70,7 @@ public class DatabaseTreeView extends JTree
    	}
 	}	
 
-	public void deleteTableColumn( nl.errorsoft.esql.domain.TableColumn tc )
+	public void deleteTableColumn( nl.errorsoft.esql.table.TableColumn tc )
 	{
    	for( int i=0; i<rootNode.getChildCount();i++ )
    	{
@@ -136,7 +138,7 @@ public class DatabaseTreeView extends JTree
    	SwingUtilities.invokeLater( new Runnable(){ public void run() { updateUI(); }} );
 	}
 
-   public void loadTableColumns( Table table, nl.errorsoft.esql.domain.TableColumn[] columns )
+   public void loadTableColumns( Table table, nl.errorsoft.esql.table.TableColumn[] columns )
    {
    	for( int i=0; i<rootNode.getChildCount();i++ )
    	{

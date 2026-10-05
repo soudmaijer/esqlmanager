@@ -2,6 +2,9 @@
 
 package nl.errorsoft.esql.control;
 
+import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.ui.*;
+
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;

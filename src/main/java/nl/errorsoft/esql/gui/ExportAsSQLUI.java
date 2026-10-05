@@ -1,4 +1,6 @@
 package nl.errorsoft.esql.gui;
+
+import nl.errorsoft.esql.table.*;
 /*
  * ExportAsSQLUI.java
  *

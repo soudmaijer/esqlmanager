@@ -1,4 +1,8 @@
-package nl.errorsoft.esql.control;
+package nl.errorsoft.esql.table.control;
+
+import nl.errorsoft.esql.control.*;
+import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.ui.*;
 
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.gui.*;

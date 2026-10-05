@@ -103,7 +103,8 @@ Design decisions and the intended architecture are described in `CLAUDE.md`.
 
 ```
 src/main/java/nl/errorsoft/esql
-  control/   use-case controllers
+  table/     the table feature: data, service, repository, with control/ and ui/ below it
+  control/   use-case controllers (not yet moved into features)
   data/      the database connection
   domain/    model classes, including dialect/ with the per-database behaviour
   gui/       Swing windows and components

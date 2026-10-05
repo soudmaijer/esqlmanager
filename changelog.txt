@@ -1,29 +1,8 @@
 
-eSQLManager change history - 1.x
-----------------------------
+eSQLManager changelog
+---------------------
 
-
-****************************************************************************
-
-PLEASE FOLLOW THESE GUIDELINES FOR CHANGES CLASSES / CHANGELOG:
-
-- Increase the class file version number, and implement changes.
-- Specify what you did? bugfix or functionality change?
-- Specify what class(es) you modified and the old version number.
-- Give a description what you did.
-
-Fixes:
-
-- Main.java (0.12): changed System.oud to System.out.
-
-****************************************************************************
-
-
-> version 1.0 (released scheduled for 01/08/2003) <
-
-Changes (since):
-
-Modernisation (Maven, Java 25, PostgreSQL support)
+05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
 - Build: Maven with the Maven wrapper, standard src/main/java and src/main/resources layout, Java 25, UTF-8 sources.
   The old dist and lib folders are gone, JDBC drivers (MySQL, PostgreSQL, SQL Server, Oracle) come from Maven Central.

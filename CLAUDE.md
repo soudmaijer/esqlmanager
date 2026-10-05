@@ -77,7 +77,7 @@ The code is moving from layers by technical type (`gui`, `control`, `domain`, `d
 
 Status per feature:
 
-* `table`: done in `nl.errorsoft.esql.table` (`TableRepository`, `TableService`, `QueryResult`). `Table` is plain data. `TableCC`, `IndexesCC`, `CreateTableCC` call `TableService`. The data classes and the controllers still live in `domain`, `control` and `gui`, moving them into `table/` is the next step.
+* `table`: done, in `nl.errorsoft.esql.table` (data classes, `TableRepository`, `TableService`, `QueryResult`), `table.control` (`TableCC`, `IndexesCC`, `CreateTableCC`) and `table.ui` (`TableDataView`, `TableListView`, `CreateTable`, `FieldProperties`, `IndexesUI`). A feature has its data, service and repository in its own package and `control` and `ui` as subpackages.
 * `database`, `importexport` (`Export`, `Import`, `UDData`), `designer`, `user`, `connection`: not done.
 
 ## Known technical debt

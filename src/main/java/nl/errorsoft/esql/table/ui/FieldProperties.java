@@ -1,4 +1,8 @@
-package nl.errorsoft.esql.gui;
+package nl.errorsoft.esql.table.ui;
+
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.gui.*;
+import nl.errorsoft.esql.table.*;
 
 import nl.errorsoft.esql.control.*;
 import nl.errorsoft.esql.domain.*;
@@ -41,7 +45,7 @@ public class FieldProperties extends JDialog implements ActionListener
 	private String db;
 	private String table;
 	private String field;
-	private nl.errorsoft.esql.domain.TableColumn column;
+	private nl.errorsoft.esql.table.TableColumn column;
 	public boolean edit;
 	public boolean add;
 	private JPanel properties;
@@ -50,7 +54,7 @@ public class FieldProperties extends JDialog implements ActionListener
 	JButton addIndex;
 	JButton dropIndex;
 	
-	public FieldProperties( JFrame parent, ConnectionWindowCC cwcc, nl.errorsoft.esql.domain.TableColumn column, boolean add, boolean edit )
+	public FieldProperties( JFrame parent, ConnectionWindowCC cwcc, nl.errorsoft.esql.table.TableColumn column, boolean add, boolean edit )
 	{	
 		super(parent, true);
 		this.cwcc = cwcc;

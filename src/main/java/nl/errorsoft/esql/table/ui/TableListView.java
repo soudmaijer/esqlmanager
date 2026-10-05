@@ -1,4 +1,8 @@
-package nl.errorsoft.esql.gui;
+package nl.errorsoft.esql.table.ui;
+
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.gui.*;
+import nl.errorsoft.esql.table.*;
 
 import javax.swing.*;
 import javax.swing.table.*;

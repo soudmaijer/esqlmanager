@@ -1,4 +1,7 @@
-package nl.errorsoft.esql.domain;
+package nl.errorsoft.esql.table;
+
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.domain.*;
 
 /** A table or view: plain data, loaded and changed through the table service. */
 public class Table 

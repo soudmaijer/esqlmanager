@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.domain.dialect;
 
+import nl.errorsoft.esql.table.*;
+
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,7 +16,7 @@ import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
 import nl.errorsoft.esql.domain.ServerProcess;
-import nl.errorsoft.esql.domain.Table;
+import nl.errorsoft.esql.table.Table;
 
 /**
  * Plain JDBC and ANSI SQL behaviour that works on any database. Dialects override what is different.

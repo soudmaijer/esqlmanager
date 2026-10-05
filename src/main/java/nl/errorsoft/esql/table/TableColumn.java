@@ -1,6 +1,9 @@
 //Source file: d:\\roseoutput\\esql\\esql\\table\\TableColumn.java
 
-package nl.errorsoft.esql.domain;
+package nl.errorsoft.esql.table;
+
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.domain.*;
 
 import java.util.Vector;
 

@@ -1,6 +1,10 @@
 //Source file: d:\\roseoutput\\esql\\esql\\table\\TableCC.java
 
-package nl.errorsoft.esql.control;
+package nl.errorsoft.esql.table.control;
+
+import nl.errorsoft.esql.control.*;
+import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.ui.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

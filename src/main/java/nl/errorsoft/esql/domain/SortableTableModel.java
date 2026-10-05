@@ -2,6 +2,8 @@
 
 package nl.errorsoft.esql.domain;
 
+import nl.errorsoft.esql.table.*;
+
 import javax.swing.table.DefaultTableModel;
 
 public class SortableTableModel extends DefaultTableModel

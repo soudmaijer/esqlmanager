@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.domain.dialect;
 
+import nl.errorsoft.esql.table.*;
+
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Vector;
@@ -8,7 +10,7 @@ import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
 import nl.errorsoft.esql.domain.ServerProcess;
-import nl.errorsoft.esql.domain.Table;
+import nl.errorsoft.esql.table.Table;
 
 /**
  * Everything that differs between database servers. Callers ask the dialect

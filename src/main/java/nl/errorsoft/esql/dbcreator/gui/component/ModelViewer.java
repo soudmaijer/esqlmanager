@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.dbcreator.gui.component;
 
+import nl.errorsoft.esql.table.*;
+
 import java.awt.AWTEvent;
 import java.awt.BasicStroke;
 import java.awt.Color;

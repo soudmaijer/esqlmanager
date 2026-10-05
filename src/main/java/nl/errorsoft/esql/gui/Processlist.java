@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.gui;
 
+import nl.errorsoft.esql.table.*;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

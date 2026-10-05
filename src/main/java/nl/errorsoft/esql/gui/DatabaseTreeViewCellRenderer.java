@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.gui;
 
+import nl.errorsoft.esql.table.*;
+
 import javax.swing.tree.*;
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +35,7 @@ class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer
 			else
 				setIcon(imgldr.getIcon("tbimg"));
 		}
-		else if( node.getUserObject() instanceof nl.errorsoft.esql.domain.TableColumn )
+		else if( node.getUserObject() instanceof nl.errorsoft.esql.table.TableColumn )
 		{
 			TableColumn temp = (TableColumn)node.getUserObject();
 			

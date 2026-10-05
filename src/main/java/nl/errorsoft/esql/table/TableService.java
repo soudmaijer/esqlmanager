@@ -1,15 +1,18 @@
 package nl.errorsoft.esql.table;
 
+import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.domain.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.DataType;
-import nl.errorsoft.esql.domain.Table;
-import nl.errorsoft.esql.domain.TableColumn;
-import nl.errorsoft.esql.domain.TableData;
-import nl.errorsoft.esql.domain.TableIndex;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.domain.dialect.Dialect;
 
 /** Application logic for tables, columns, indexes and rows. Controllers call this, it calls the repository. */
