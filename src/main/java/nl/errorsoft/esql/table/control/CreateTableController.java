@@ -7,14 +7,12 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
-import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableDefinition;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.ui.TableEditorTab;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Opens the table editor as a tab of the connection window ("New table", "Edit orders") and saves what it holds. */

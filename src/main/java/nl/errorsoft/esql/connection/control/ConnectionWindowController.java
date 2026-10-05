@@ -9,7 +9,6 @@ import nl.errorsoft.esql.table.control.CreateTableController;
 import nl.errorsoft.esql.table.control.IndexesController;
 import nl.errorsoft.esql.table.control.TableController;
 import nl.errorsoft.esql.table.ui.dialog.FieldPropertiesDialog;
-import nl.errorsoft.esql.table.ui.TableDataTab;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
@@ -18,7 +17,6 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionContext;
 
 import nl.errorsoft.esql.query.control.QueryController;
-import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.DatabaseInfo;
@@ -41,7 +39,6 @@ import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.designer.ui.diagram.ModelFactory;
 import nl.errorsoft.esql.query.ui.QueryTab;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.user.control.UserManagerController;
 
 import org.apache.logging.log4j.LogManager;

@@ -1,5 +1,3 @@
-//Source file: d:\\roseoutput\\esql\\esql\\table\\TableRow.java
-
 package nl.errorsoft.esql.table;
 
 public class TableData {
@@ -8,9 +6,6 @@ public class TableData {
 	private boolean nullData = true;
 	private nl.errorsoft.esql.table.TableColumn tc;
 
-	/**
-	* @roseuid 3E05A70B0344
-	*/
 	public TableData() {
 	}
 

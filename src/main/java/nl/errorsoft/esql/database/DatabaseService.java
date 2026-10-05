@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.error.EsqlException;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 
 /** Application logic for databases and their schemas: which ones are shown, creating and dropping them. */

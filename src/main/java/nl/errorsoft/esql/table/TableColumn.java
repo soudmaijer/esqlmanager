@@ -1,8 +1,4 @@
-//Source file: d:\\roseoutput\\esql\\esql\\table\\TableColumn.java
-
 package nl.errorsoft.esql.table;
-
-import java.util.Vector;
 
 public class TableColumn {
 	private Table table;
@@ -24,9 +20,6 @@ public class TableColumn {
 	private int indexPosition;
 	private String comment = "";
 
-	/**
-	* @roseuid 3E05A70B02A3
-	*/
 	public TableColumn(Table table) {
 		this.table = table;
 	}

@@ -14,7 +14,6 @@ import nl.errorsoft.esql.ui.component.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
@@ -37,7 +36,6 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;

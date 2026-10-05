@@ -1,5 +1,3 @@
-//Source file: d:\\roseoutput\\esql\\esql\\table\\TableDataTab.java
-
 package nl.errorsoft.esql.table.ui;
 
 import nl.errorsoft.esql.ui.util.Forms;
@@ -7,7 +5,6 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.query.ui.UndoListener;
 import nl.errorsoft.esql.ui.table.ColumnWidths;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
 import nl.errorsoft.esql.ui.table.HeaderListener;
@@ -20,23 +17,14 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.control.TableController;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.undo.UndoManager;
-import javax.swing.event.UndoableEditListener;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 
 public class TableDataTab extends JPanel implements ActionListener {
-	private static final Logger log = LogManager.getLogger(TableDataTab.class);
-
 	private int skip;
 	private int show;
 	private Table table;
@@ -44,7 +32,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private MultiLineCellEditor mlce;
 	private SortableTableModel stm;
 	private TableColumnModel tcm;
-	private JLabel lblSpace;
 	private JLabel lblRows;
 	private JTable tbData;
 	private JScrollPane jsp;
@@ -71,16 +58,12 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private JButton btnUpdateRowData;
 	private JButton btnSaveCellData;
 	private JButton btnCloseCellData;
-	private UndoManager ndo;
-	private UndoableEditListener undoHandler;
+	private UndoManager undoManager;
 	private HeaderListener headerListener;
 	private TableData editingCell;
 	private int editingRow;
 	private int editingCol;
 
-	/**
-	* @roseuid 3E05A84602EC
-	*/
 	public TableDataTab(TableController tableController) {
 		this.tableController = tableController;
 		this.setLayout(new BorderLayout());
@@ -237,23 +220,22 @@ public class TableDataTab extends JPanel implements ActionListener {
 		cellData.setLineWrap(false);
 		cellData.setWrapStyleWord(true);
 		// One undo history for the editor, cleared whenever another cell is shown in it.
-		ndo = new UndoManager();
-		undoHandler = new UndoListener(ndo);
-		cellData.getDocument().addUndoableEditListener(undoHandler);
+		undoManager = new UndoManager();
+		cellData.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
 		int menu = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menu), "undo", () -> {
-			if (ndo.canUndo()) {
-				ndo.undo();
+			if (undoManager.canUndo()) {
+				undoManager.undo();
 			}
 		});
 		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Y, menu), "redo", () -> {
-			if (ndo.canRedo()) {
-				ndo.redo();
+			if (undoManager.canRedo()) {
+				undoManager.redo();
 			}
 		});
 		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menu | InputEvent.SHIFT_DOWN_MASK), "redo", () -> {
-			if (ndo.canRedo()) {
-				ndo.redo();
+			if (undoManager.canRedo()) {
+				undoManager.redo();
 			}
 		});
 		jspText = new JScrollPane(cellData, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -262,7 +244,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 		jcep = new JPanel();
 		jcep.setLayout(new BorderLayout());
 
-		// Make copy.
 		ImageLoader images = ApplicationContext.get().imageLoader();
 		btnUpdateRowData = new JButton(images.getIcon("imgUpdateRow"));
 		btnUpdateRowData.setToolTipText("Update changes");
@@ -333,7 +314,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		cellData.setEnabled(true);
 		cellData.setText(editingCell.getEditText());
-		ndo.discardAllEdits();
+		undoManager.discardAllEdits();
 
 		if (editingCell.getTableColumn().isWritable()) {
 			btnUpdateRowData.setEnabled(true);

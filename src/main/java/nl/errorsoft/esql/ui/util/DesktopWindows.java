@@ -3,25 +3,30 @@ package nl.errorsoft.esql.ui.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.swing.*;
-import javax.swing.event.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.beans.PropertyVetoException;
+
+import javax.swing.DesktopManager;
+import javax.swing.JComponent;
+import javax.swing.JDesktopPane;
+import javax.swing.JInternalFrame;
 
 /** Arranges the internal frames on the desktop of the main window (tile, cascade, keep inside) and opens links in the browser. */
-public class DesktopWindows {
+public final class DesktopWindows {
 	private static final Logger log = LogManager.getLogger(DesktopWindows.class);
 
-	protected static final int UNUSED_HEIGHT = 0;
-	protected static int nextX; // Next X position
-	protected static int nextY; // Next Y position
-	protected static final int DEFAULT_OFFSETX = 24;
-	protected static final int DEFAULT_OFFSETY = 24;
-	protected static int offsetX = DEFAULT_OFFSETX;
-	protected static int offsetY = DEFAULT_OFFSETY;
+	/** How far each cascaded frame is moved from the previous one. */
+	private static final int CASCADE_OFFSET = 24;
+	// Where the next cascaded frame goes; only touched on the event thread.
+	private static int nextX;
+	private static int nextY;
 
-	// Layout all of the children of this container
-	// so that they are tiled.
+	private DesktopWindows() {
+	}
+
+	/** Tiles the visible frames in a grid of about as many rows as columns. */
 	public static void tileVertical(JDesktopPane desktop) {
 		DesktopManager manager = desktop.getDesktopManager();
 		if (manager == null) {
@@ -50,8 +55,7 @@ public class DesktopWindows {
 			Dimension paneSize = desktop.getSize();
 			int columnWidth = paneSize.width / columns;
 
-			// We leave some space at the bottom that doesn't get covered
-			int availableHeight = paneSize.height - UNUSED_HEIGHT;
+			int availableHeight = paneSize.height;
 			int mainHeight = availableHeight / rows;
 			int smallerHeight = availableHeight / (rows + 1);
 			int rowHeight = mainHeight;
@@ -82,80 +86,73 @@ public class DesktopWindows {
 				}
 			}
 		}
-	} // end of TileAll
+	}
 
-	public static final void tileHorizontal(JDesktopPane desktop) {
-		int _resizableCnt = 0;
-		JInternalFrame _allFrames[] = desktop.getAllFrames();
-		for (int _x = 0; _x < _allFrames.length; _x++) {
-			JInternalFrame _frame = _allFrames[_x];
-			if ((_frame.isVisible()) && (!_frame.isIcon())) {
-				if (!_frame.isResizable()) {
-					try {
-						_frame.setMaximum(false);
-					} catch (Exception _e) {
-						// OK, to take no action here
-					}
-				}
-				if (_frame.isResizable()) {
-					_resizableCnt++;
+	/** Stacks the open frames over the full width, the minimized ones stay in a row at the bottom. */
+	public static void tileHorizontal(JDesktopPane desktop) {
+		JInternalFrame[] frames = desktop.getAllFrames();
+		int resizable = 0;
+		for (JInternalFrame frame : frames) {
+			if (frame.isVisible() && !frame.isIcon()) {
+				if (frame.isResizable()) {
+					resizable++;
+				} else {
+					unmaximize(frame);
 				}
 			}
-		} // End for
-		int _width = desktop.getBounds().width;
-		int _height = arrangeIcons(desktop);
-		if (_resizableCnt != 0) {
-			int _fHeight = _height / _resizableCnt;
-			int _yPos = 0;
-			for (int _x = 0; _x < _allFrames.length; _x++) {
-				JInternalFrame _frame = _allFrames[_x];
-				if ((_frame.isVisible()) &&
-					(_frame.isResizable()) &&
-					(!_frame.isIcon())) {
-					_frame.setSize(_width, _fHeight);
-					_frame.setLocation(0, _yPos);
-					_yPos += _fHeight;
-				}
-			} // End for
+		}
+		int width = desktop.getBounds().width;
+		int height = arrangeIcons(desktop);
+		if (resizable == 0) {
+			return;
+		}
+		int frameHeight = height / resizable;
+		int y = 0;
+		for (JInternalFrame frame : frames) {
+			if (frame.isVisible() && frame.isResizable() && !frame.isIcon()) {
+				frame.setSize(width, frameHeight);
+				frame.setLocation(0, y);
+				y += frameHeight;
+			}
 		}
 	}
 
-	public static final int arrangeIcons(JDesktopPane desktop) {
-		int _iconCnt = 0;
-		JInternalFrame _allFrames[] = desktop.getAllFrames();
-		for (int _x = 0; _x < _allFrames.length; _x++) {
-			if ((_allFrames[_x].isVisible()) && (_allFrames[_x].isIcon())) {
-				_iconCnt++;
+	private static void unmaximize(JInternalFrame frame) {
+		try {
+			frame.setMaximum(false);
+		} catch (PropertyVetoException e) {
+			// The frame keeps its size when it refuses, tiling the others still works.
+			log.debug("{} was not restored: {}", frame.getTitle(), e.getMessage());
+		}
+	}
+
+	/**
+	 * Puts the icons of the minimized frames in rows at the bottom of the desktop.
+	 * @return the height above the icons, what is left for the open frames
+	 */
+	public static int arrangeIcons(JDesktopPane desktop) {
+		int height = desktop.getBounds().height;
+		int width = desktop.getBounds().width;
+		int y = height;
+		int x = 0;
+		for (JInternalFrame frame : desktop.getAllFrames()) {
+			if (frame.isVisible() && frame.isIcon()) {
+				Dimension icon = frame.getDesktopIcon().getSize();
+				if (y == height) {
+					y = height - icon.height;
+				}
+				if (x + icon.width > width && x != 0) {
+					x = 0;
+					y -= icon.height;
+				}
+				frame.getDesktopIcon().setLocation(x, y);
+				x += icon.width;
 			}
 		}
-		int _height = desktop.getBounds().height;
-		int _yPos = _height;
-		if (_iconCnt != 0) {
-			int _width = desktop.getBounds().width;
-			int _xPos = 0;
-			for (int _x = 0; _x < _allFrames.length; _x++) {
-				JInternalFrame _frame = _allFrames[_x];
-				if ((_frame.isVisible()) && (_frame.isIcon())) {
-					Dimension _dim = _frame.getDesktopIcon().getSize();
-					int _iWidth = _dim.width;
-					int _iHeight = _dim.height;
-					if (_yPos == _height) {
-						_yPos = _height - _iHeight;
-					}
-					if ((_xPos + _iWidth > _width) && (_xPos != 0)) {
-						_xPos = 0;
-						_yPos -= _iHeight;
-					}
-					_frame.getDesktopIcon().setLocation(_xPos, _yPos);
-					_xPos += _iWidth;
-				} // End if
-			} // End for
-		} // End if
-		return (_yPos);
-	} // End method
+		return y;
+	}
 
-	// Layout all of the children of this container
-	// so that they are cascaded.
+	/** Cascades the visible frames from the top left corner. */
 	public static void cascadeAll(JDesktopPane desktop) {
 		Component[] comps = desktop.getComponents();
 		int count = comps.length;
@@ -180,7 +177,7 @@ public class DesktopWindows {
 				if (jif.isIconifiable()) {
 					try {
 						jif.setIcon(true);
-					} catch (java.beans.PropertyVetoException e) {
+					} catch (PropertyVetoException e) {
 						// The frame refused to be iconified (it asks something first); it simply stays open.
 						log.debug("{} was not minimized: {}", jif.getTitle(), e.getMessage());
 					}
@@ -189,9 +186,8 @@ public class DesktopWindows {
 		}
 	}
 
-	// Place a component so that it is cascaded
-	// relative to the previous one
-	protected static void cascade(Component comp, JDesktopPane desktop) {
+	/** Places a frame a little right of and below the previous one, back at the corner when it would not fit. */
+	private static void cascade(Component comp, JDesktopPane desktop) {
 		Dimension paneSize = desktop.getSize();
 		int targetWidth = 3 * paneSize.width / 4;
 		int targetHeight = 3 * paneSize.height / 4;
@@ -211,8 +207,8 @@ public class DesktopWindows {
 		manager.setBoundsForFrame((JComponent) comp, nextX, nextY,
 			targetWidth, targetHeight);
 
-		nextX += offsetX;
-		nextY += offsetY;
+		nextX += CASCADE_OFFSET;
+		nextY += CASCADE_OFFSET;
 	}
 
 	/** Keeps the frames that are not maximized inside the desktop, so a smaller window never hides a title bar outside it. */

@@ -1,14 +1,11 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
 import nl.errorsoft.esql.designer.ui.dialog.ForeignKeyDialog;
-import nl.errorsoft.esql.designer.ui.dialog.GenerateDialog;
-import nl.errorsoft.esql.designer.ui.dialog.DesignerPropertiesDialog;
 import nl.errorsoft.esql.table.Table;
 
 import nl.errorsoft.esql.database.Database;
 
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -16,7 +13,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -25,7 +21,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLayeredPane;
@@ -35,7 +30,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JToolBar;
 import nl.errorsoft.esql.ui.util.ToolbarButtons;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;

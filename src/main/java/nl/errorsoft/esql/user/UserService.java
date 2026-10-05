@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.table.Table;

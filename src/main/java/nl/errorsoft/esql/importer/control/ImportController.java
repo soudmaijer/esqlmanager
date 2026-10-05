@@ -13,7 +13,6 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.control.DatabaseController;
 import nl.errorsoft.esql.importer.ui.dialog.ImportSqlDialog;
 import nl.errorsoft.esql.job.ui.dialog.ImportExportProgressDialog;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -6,20 +6,11 @@ import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.ui.TableDataTab;
 
-import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.server.ServerService;
-
-import nl.errorsoft.esql.database.Database;
-
-import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.blob.control.BlobTransferController;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 
-import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.table.QueryResult;
 import nl.errorsoft.esql.table.TableService;
-import java.util.Vector;
 
 public class TableController {
 	private TableDataTab tableDataTab;

@@ -2,7 +2,6 @@ package nl.errorsoft.esql.ui.util;
 
 import java.io.File;
 import javax.swing.filechooser.*;
-import javax.swing.JFileChooser;
 
 public class ExtensionFileFilter extends FileFilter {
 

@@ -1,7 +1,5 @@
 package nl.errorsoft.esql.app.control;
 
-import nl.errorsoft.esql.ui.dialog.Dialogs;
-
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.connection.control.ConnectionProfileController;
@@ -17,13 +15,10 @@ import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.BuildInfo;
-import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.ui.util.EscapeToClose;
-import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.app.ui.MainWindow;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.settings.ui.dialog.SettingsDialog;
 import nl.errorsoft.esql.app.ui.SplashWindow;
 

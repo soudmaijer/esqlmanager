@@ -4,8 +4,6 @@ import nl.errorsoft.esql.ui.util.ToolbarButtons;
 
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 
-import org.apache.logging.log4j.LogManager;
-
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
@@ -28,7 +26,6 @@ import nl.errorsoft.esql.table.ui.TableDataTab;
 import nl.errorsoft.esql.table.ui.TableListTab;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;

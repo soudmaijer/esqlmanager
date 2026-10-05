@@ -1,5 +1,3 @@
-//Source file: d:\\roseoutput\\esql\\esql\\table\\SortableTableModel.java
-
 package nl.errorsoft.esql.ui.table;
 
 import nl.errorsoft.esql.table.TableData;
@@ -10,9 +8,6 @@ public class SortableTableModel extends DefaultTableModel {
 	private int[] indexes;
 	private SortItem[] si;
 
-	/**
-	* @roseuid 3E05A70C0178
-	*/
 	public SortableTableModel() {
 
 	}

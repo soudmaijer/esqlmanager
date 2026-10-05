@@ -1,12 +1,10 @@
 package nl.errorsoft.esql.table.ui;
 
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.table.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class TableListMouseListener extends MouseAdapter {
-	private TableListTab tableListTab;
+	private final TableListTab tableListTab;
 
 	public TableListMouseListener(TableListTab tableListTab) {
 		this.tableListTab = tableListTab;

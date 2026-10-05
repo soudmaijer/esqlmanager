@@ -1,5 +1,3 @@
-//Source file: d:\\roseoutput\\esql\\esql\\table\\TableController.java
-
 package nl.errorsoft.esql.table.control;
 
 import nl.errorsoft.esql.ui.dialog.Dialogs;
@@ -13,14 +11,10 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.table.TableService;
 
 public class IndexesController {
-	private static final Logger log = LogManager.getLogger(IndexesController.class);
 
 	private ConnectionWindowController connectionWindowController;
 	private Table t;

@@ -16,8 +16,6 @@ import javax.swing.UIManager;
  * not selected, and the close hover foreground while the mouse is over the close button.
  */
 public class TitleButtonIcon implements Icon {
-	private static final Color BASE = new Color(0x6e6e6e);
-
 	private final FlatSVGIcon icon;
 	private final boolean close;
 	private Color current;
@@ -25,7 +23,7 @@ public class TitleButtonIcon implements Icon {
 	public TitleButtonIcon(String svg, int size, boolean close) {
 		this.close = close;
 		this.icon = new FlatSVGIcon("icons/svg/" + svg + ".svg", size, size, getClass().getClassLoader());
-		icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> color.equals(BASE) && current != null ? current : color));
+		icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> color.equals(ImageLoader.ICON_STROKE) && current != null ? current : color));
 	}
 
 	@Override

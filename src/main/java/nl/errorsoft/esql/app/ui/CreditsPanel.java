@@ -10,6 +10,10 @@ import org.apache.logging.log4j.Logger;
 
 public class CreditsPanel extends Canvas {
 	private static final Logger log = LogManager.getLogger(CreditsPanel.class);
+	// The colours of the splash artwork the credits scroll over.
+	private static final Color BORDER = new Color(0x5B5150);
+	private static final Color HEADING = new Color(0xA24811);
+	private static final Color TEXT = new Color(0x000000);
 	/** Moves the credits up a pixel at a time, on the event thread. */
 	private final Timer scroller = new Timer(45, e -> scroll());
 	private CreditObject root;
@@ -62,7 +66,7 @@ public class CreditsPanel extends Canvas {
 
 		g2.setComposite(old);
 
-		g2.setColor(new Color(Integer.parseInt("5B5150", 16)));
+		g2.setColor(BORDER);
 		g2.drawRect(0, 0, (int) this.getSize().getWidth() - 1, (int) this.getSize().getHeight() - 1);
 
 		g2.setColor(Color.black);
@@ -82,16 +86,16 @@ public class CreditsPanel extends Canvas {
 				if (curr.txt.startsWith("<h>")) {
 					txt = txt.substring(3, txt.length());
 					width = fmb.stringWidth(txt);
-					g2.setColor(new Color(Integer.parseInt("A24811", 16)));
+					g2.setColor(HEADING);
 					g2.setFont(fb);
 				} else {
 					width = fmp.stringWidth(txt);
-					g2.setColor(new Color(Integer.parseInt("000000", 16)));
+					g2.setColor(TEXT);
 					g2.setFont(fp);
 				}
 				g2.drawString(txt, (((int) this.getSize().getWidth()) - width) / 2, y_offset + ((count + 1) * 11));
 			} else {
-				g2.setColor(new Color(Integer.parseInt("5B5150", 16)));
+				g2.setColor(BORDER);
 				g2.drawLine(10, y_offset + (count * 11) + 7, (int) this.getSize().getWidth() - 10, y_offset + (count * 11) + 7);
 			}
 			curr = curr.next;

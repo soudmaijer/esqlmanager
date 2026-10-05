@@ -206,3 +206,4 @@ Known layer and naming problems that are not fixed yet. Do not report them again
 - Some dialogs extend `JDialog` directly instead of `ui.dialog.FormDialog`.
 - `app.ui.CreditsPanel` extends `java.awt.Canvas` (an AWT widget).
 - `ui.util.DesktopWindows` also holds `openInBrowser`, which is not about the desktop.
+- `error.ErrorHandler` shows the error dialog itself (Swing by design): it is the one place that turns a failure into a message, called from controllers and windows.

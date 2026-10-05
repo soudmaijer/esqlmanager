@@ -1,5 +1,3 @@
-//Source file: d:\\roseoutput\\esql\\esql\\table\\MultiLineCellEditor.java
-
 package nl.errorsoft.esql.ui.table;
 
 import java.awt.*;
@@ -13,9 +11,6 @@ public class MultiLineCellEditor extends AbstractCellEditor implements TableCell
 	private JTextArea editorComponent;
 	private JScrollPane pane;
 
-	/**
-	* @roseuid 3E05A70C0100
-	*/
 	public MultiLineCellEditor(JTextArea editorComponent) {
 		this.editorComponent = editorComponent;
 		this.editorComponent.setBorder(emptyBorder);

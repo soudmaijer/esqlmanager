@@ -1,5 +1,3 @@
-//Source file: d:\\roseoutput\\esql\\esql\\database\\DatabaseController.java
-
 package nl.errorsoft.esql.database.control;
 
 import nl.errorsoft.esql.database.Database;
@@ -11,14 +9,10 @@ import nl.errorsoft.esql.table.ui.TableListTab;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 public class DatabaseController {
 	private ConnectionWindowController connectionWindowController;
 
-	/**
-	* @roseuid 3E05A70C031D
-	*/
 	public DatabaseController(ConnectionWindowController connectionWindowController) {
 		this.connectionWindowController = connectionWindowController;
 	}

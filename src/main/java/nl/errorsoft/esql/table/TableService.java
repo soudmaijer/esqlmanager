@@ -3,7 +3,6 @@ package nl.errorsoft.esql.table;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.error.EsqlException;

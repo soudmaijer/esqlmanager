@@ -4,8 +4,6 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.database.Database;
-
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
@@ -13,7 +11,6 @@ import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.dialog.GenerateDialog;
-import nl.errorsoft.esql.designer.ui.diagram.ModelBrowserPanel;
 import nl.errorsoft.esql.designer.ui.diagram.ModelFileFilter;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerCanvas;
 import nl.errorsoft.esql.designer.ui.dialog.DesignerPropertiesDialog;
@@ -54,7 +51,6 @@ public class DesignerWindow extends JInternalFrame {
 	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show grid", true);
 	private JMenuItem view_arrange = new JMenuItem("Arrange automatically");
 
-	private ModelBrowserPanel modelBrowser;
 	private DesignerCanvas canvas;
 
 	private DesignerPropertiesDialog properties;
@@ -227,7 +223,7 @@ public class DesignerWindow extends JInternalFrame {
 	}
 
 	public void generate() {
-		GenerateDialog g = new GenerateDialog(mainWindow, connectionWindow, canvas.getModel());
+		new GenerateDialog(mainWindow, connectionWindow, canvas.getModel());
 	}
 
 	public void showProperties(Object src) {

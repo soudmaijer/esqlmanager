@@ -3,7 +3,6 @@ package nl.errorsoft.esql.importer.ui.dialog;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;

@@ -10,7 +10,6 @@ import nl.errorsoft.esql.table.DataType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 

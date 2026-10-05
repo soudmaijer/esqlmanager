@@ -7,6 +7,8 @@ import javax.swing.UIManager;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class ImageLoader {
+	/** The stroke colour of the Lucide SVGs in icons/svg, replaced by a theme colour when an icon is drawn. */
+	public static final Color ICON_STROKE = new Color(0x6e6e6e);
 	private static final org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ImageLoader.class);
 	private String imgpath;
 	private Image[] images = new Image[0];
@@ -45,10 +47,10 @@ public class ImageLoader {
 
 	/** Registers a vector icon (a file in icons/svg) that follows the theme: grey in the toolbar, the selection colour when it is drawn selected. */
 	public void addIcon(String name, String svg, int size, boolean selected) {
-		Color base = new Color(0x6e6e6e);
 		String key = selected ? "Tree.selectionForeground" : "Actions.Grey";
 		FlatSVGIcon icon = new FlatSVGIcon("icons/svg/" + svg + ".svg", size, size, getClass().getClassLoader());
-		icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> color.equals(base) && UIManager.getColor(key) != null ? UIManager.getColor(key) : color));
+		icon.setColorFilter(
+			new FlatSVGIcon.ColorFilter(color -> color.equals(ICON_STROKE) && UIManager.getColor(key) != null ? UIManager.getColor(key) : color));
 		icons.put(name, icon);
 	}
 

@@ -14,7 +14,6 @@ import nl.errorsoft.esql.database.control.DatabaseController;
 import nl.errorsoft.esql.exporter.ui.dialog.ExportSqlDialog;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.job.ui.dialog.ImportExportProgressDialog;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

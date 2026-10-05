@@ -2,7 +2,6 @@ package nl.errorsoft.esql.server;
 
 import java.util.List;
 
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.QueryResult;
 import nl.errorsoft.esql.table.TableService;
 
