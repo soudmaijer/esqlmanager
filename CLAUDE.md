@@ -39,7 +39,8 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * Use Swing only, no AWT widgets (`Label`, `Button`, ...). New dialogs use layout managers, not null layouts with absolute bounds.
 * Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
 * Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.
-* The syntax highlighter (`query.SyntaxDocument`, used by the output panel and the query editor) must reproduce the text exactly as given, spaces included; plain text takes its colour from the theme.
+* The query editor is an `RSyntaxTextArea` (com.fifesoft) in an `RTextScrollPane` with SQL highlighting, line numbers and the library's undo. `ui.EditorTheme.install` gives it the RSyntaxTextArea theme `idea.xml` or `dark.xml` matching `FlatLaf.isLafDark()` and applies it again when the look and feel changes.
+* The output panel is a plain read-only `JTextArea`: it shows the log exactly as written, with colours from the look and feel.
 * The output panel does not wrap lines (re-wrapping a long log made resizing slow), keeps at most 200000 characters, and the split pane uses continuous layout with `resizeWeight` 1.0.
 * The status bar shows the action on the left and, next to it, the server, account and the last thing the active connection did (`ConnectionWindowCC.showStatusInfo`).
 
@@ -66,7 +67,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Configuration and resources
 
-* `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings, syntax), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).
+* `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).
 * `runtime/conf/profiles.xml` must not contain passwords or local test profiles when committed. Running the application rewrites it (`lastUsed`), so `git checkout runtime/conf/profiles.xml` before committing.
 * JDBC drivers come from Maven Central, no jars in the repository.
 * Images, HTML and `log4j2.xml` are in `src/main/resources`. Images are loaded through `ImageLoader` (cached, paths relative to the classpath root).

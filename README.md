@@ -156,7 +156,7 @@ Everything the application reads and writes at runtime lives in `runtime/`:
 | `runtime/conf/profiles.xml` | Saved connection profiles |
 | `runtime/conf/settings.xml` | Application settings |
 | `runtime/conf/driver.xml` | JDBC driver class and URL per database type |
-| `runtime/conf/datatypes.xml`, `syntax.xml` | Column types and SQL syntax highlighting |
+| `runtime/conf/datatypes.xml` | Column types |
 
 Profiles are normally created in the connection dialog. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
 

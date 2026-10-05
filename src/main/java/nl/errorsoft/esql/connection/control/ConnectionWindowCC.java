@@ -18,7 +18,6 @@ import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.connection.ui.Processlist;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.query.ui.QueryUI;
-import nl.errorsoft.esql.query.ui.Syntax;
 import nl.errorsoft.esql.ui.ImageLoader;
 import nl.errorsoft.esql.user.control.UserManagerCC;
 
@@ -302,7 +301,7 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Starting query window...", true);
 			DatabaseCC dbcc = new DatabaseCC(this);
-			QueryUI qu = new QueryUI(this, jmcc.getUI(), new Syntax(), ApplicationContext.get().imageLoader(), dbcc.getDatabases(), cwui.getDatabase());
+			QueryUI qu = new QueryUI(this, jmcc.getUI(), ApplicationContext.get().imageLoader(), dbcc.getDatabases(), cwui.getDatabase());
 			jmcc.updateStatus("Ready...", false);
 			qu.setVisible(true);
 		} catch (Exception e) {

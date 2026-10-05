@@ -4,7 +4,6 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
-import nl.errorsoft.esql.query.SyntaxDocument;
 import nl.errorsoft.esql.ui.DesktopUtils;
 import nl.errorsoft.esql.ui.ImageLoader;
 import nl.errorsoft.esql.ui.StatusLight;
@@ -17,8 +16,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.*;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.StyleConstants;
 
 public class ESQLManagerUI extends JFrame implements ActionListener {
 	private static final Logger log = LogManager.getLogger(ESQLManagerUI.class);
@@ -69,12 +66,9 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	// Containers etc.
 	private JSplitPane jsplit;
 	private JScrollPane jsp;
-	private JTextPane jta;
+	private JTextArea jta;
 	private JDesktopPane jdp;
 	private ImageLoader imgLoader;
-	private MutableAttributeSet attributeSet;
-
-	SyntaxDocument syndoc = new SyntaxDocument();
 
 	public ESQLManagerUI(ESQLManagerCC jmcc) {
 		this.jmcc = jmcc;
@@ -252,20 +246,18 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		outputPanel.add(outputTitle, BorderLayout.NORTH);
 
 		// No line wrapping: re-wrapping a long log on every width change made resizing slow.
-		jta = new JTextPane() {
-			public boolean getScrollableTracksViewportWidth() {
-				return false;
+		// A plain text area shows the log exactly as written, its colours come from the look and feel.
+		jta = new JTextArea() {
+			@Override
+			public void updateUI() {
+				super.updateUI();
+				// A read-only text area is painted grey by default, the output should look like the other content areas.
+				setBackground(UIManager.getColor("TextArea.background"));
 			}
 		};
-		// A read-only text pane is painted grey by default, the output should look like the other content areas.
-		jta.setBackground(new Color(UIManager.getColor("TextPane.background").getRGB()));
-		jta.setFont(new Font("arial", Font.PLAIN, 11));
+		jta.setLineWrap(false);
+		jta.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		jta.setEditable(false);
-
-		attributeSet = new javax.swing.text.SimpleAttributeSet();
-		StyleConstants.setBold(attributeSet, false);
-		StyleConstants.setForeground(attributeSet, java.awt.Color.black);
-		jta.setDocument(syndoc);
 
 		// DesktopPane.
 		jdp = new JDesktopPane();
@@ -273,7 +265,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 
 		//ScrollPane for tree.
 		jsp = new JScrollPane(jta);
-		jsp.getViewport().setBackground(jta.getBackground());
 		jsp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		jsp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		outputPanel.add(jsp, BorderLayout.CENTER);
@@ -353,22 +344,24 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		}
 
 		try {
-			syndoc.append(s);
+			jta.append(s);
 			trimOutput();
 			jta.setCaretPosition(jta.getDocument().getLength());
-		} catch (Exception e) {
+		} catch (javax.swing.text.BadLocationException e) {
+			// Cannot happen, trimOutput only reads and removes inside the document.
 		}
 	}
 
 	// Keeps the output panel from growing without limit.
 	private void trimOutput() throws javax.swing.text.BadLocationException {
-		int length = syndoc.getLength();
+		javax.swing.text.Document doc = jta.getDocument();
+		int length = doc.getLength();
 
 		if (length > MAX_OUTPUT_CHARS) {
 			int cut = length - MAX_OUTPUT_CHARS / 2;
-			String head = syndoc.getText(cut, Math.min(200, length - cut));
+			String head = doc.getText(cut, Math.min(200, length - cut));
 			int lineEnd = head.indexOf('\n');
-			syndoc.remove(0, lineEnd < 0 ? cut : cut + lineEnd + 1);
+			doc.remove(0, lineEnd < 0 ? cut : cut + lineEnd + 1);
 		}
 	}
 
