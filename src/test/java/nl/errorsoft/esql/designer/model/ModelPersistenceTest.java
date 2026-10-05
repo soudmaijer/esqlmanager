@@ -125,7 +125,7 @@ class ModelPersistenceTest {
 		assertTrue(customer.getFields()[0].primary);
 		assertTrue(customer.getReferences().contains(model.getObjectByIdentifier(1)));
 		assertEquals("Remember the orders", ((CommentObject) model.getObjectByIdentifier(3)).getComment());
-		assertEquals(30, customer.getY());
+		assertEquals(30, customer.cardBounds().y);
 	}
 
 	@Test

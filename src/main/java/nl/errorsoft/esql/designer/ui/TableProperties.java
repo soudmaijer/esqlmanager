@@ -9,6 +9,7 @@ import javax.swing.event.*;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 public class TableProperties extends JTabbedPane implements PropertiesInterface, ActionListener, ListSelectionListener, CaretListener { // General tab
@@ -55,6 +56,8 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 	private JPanel properties;
 	private Field selField = null;
+
+	private JList<ForeignKey> lst_keys = new JList<>();
 
 	// Tableobject
 	private TableObject tb;
@@ -206,6 +209,10 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 		this.tb = tb;
 
+		if (model != null) {
+			this.addTab("Foreign Keys", foreignKeysTab());
+		}
+
 		cmb_types.addActionListener(this);
 		cmb_types.setSelectedIndex(0);
 		lst_fields.addListSelectionListener(this);
@@ -233,6 +240,79 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 			dlm.addElement(f[i]);
 			namesBefore.put(f[i], f[i].getName());
 		}
+	}
+
+	/** The foreign keys of this table on other tables. A change is made in the model straight away. */
+	private JPanel foreignKeysTab() {
+		JPanel panel = new JPanel(new BorderLayout(0, 6));
+		panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		panel.add(new JScrollPane(lst_keys), BorderLayout.CENTER);
+		lst_keys.setCellRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int i, boolean selected, boolean focus) {
+				ForeignKey key = (ForeignKey) value;
+				String text = key.name() + ": " + String.join(", ", key.fromColumns()) + " -> " + key.to().getName() + "(" + String.join(", ", key.toColumns())
+					+ ")";
+				return super.getListCellRendererComponent(list, text, i, selected, focus);
+			}
+		});
+
+		JButton add = new JButton("Add...");
+		JButton edit = new JButton("Edit...");
+		JButton remove = new JButton("Remove");
+		add.addActionListener(e -> {
+			Field[] f = tb.getFields();
+			String column = f.length == 0 ? "" : f[0].getName();
+			TableObject parent = tb;
+			for (Object object : model.getObjects()) {
+				if (object instanceof TableObject other && other != tb) {
+					parent = other;
+					break;
+				}
+			}
+			ForeignKey key = ForeignKeyDialog.edit(this, model, new ForeignKey(tb, column.isEmpty() ? java.util.List.of() : java.util.List.of(column), parent,
+				java.util.List.of(), "", "", ""));
+			if (key != null) {
+				model.addForeignKey(key);
+			}
+			refreshKeys();
+		});
+		edit.addActionListener(e -> {
+			ForeignKey key = lst_keys.getSelectedValue();
+			if (key != null) {
+				ForeignKey edited = ForeignKeyDialog.edit(this, model, key);
+				if (edited != null) {
+					model.removeForeignKey(key);
+					model.addForeignKey(edited);
+				}
+				refreshKeys();
+			}
+		});
+		remove.addActionListener(e -> {
+			ForeignKey key = lst_keys.getSelectedValue();
+			if (key != null) {
+				model.removeForeignKey(key);
+				refreshKeys();
+			}
+		});
+
+		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+		buttons.add(add);
+		buttons.add(edit);
+		buttons.add(remove);
+		panel.add(buttons, BorderLayout.SOUTH);
+		refreshKeys();
+		return panel;
+	}
+
+	private void refreshKeys() {
+		DefaultListModel<ForeignKey> keys = new DefaultListModel<>();
+		for (ForeignKey key : model.foreignKeysOf(tb)) {
+			if (key.from() == tb) {
+				keys.addElement(key);
+			}
+		}
+		lst_keys.setModel(keys);
 	}
 
 	public void saveProperties() {

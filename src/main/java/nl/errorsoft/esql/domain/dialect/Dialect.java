@@ -90,6 +90,9 @@ public interface Dialect {
 
 	List<String> modifyIndexSql(DatabaseConnection dbc, String table, String name, String type, List<String> columns) throws SQLException;
 
+	/** The referential actions a foreign key may have, anything else is refused so no text from a model ends up in a statement. */
+	List<String> REFERENTIAL_ACTIONS = List.of("NO ACTION", "CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT");
+
 	/**
 	 * Adds a foreign key constraint.
 	 * @param onDelete NO ACTION, CASCADE, SET NULL, RESTRICT or SET DEFAULT, empty for the server default.

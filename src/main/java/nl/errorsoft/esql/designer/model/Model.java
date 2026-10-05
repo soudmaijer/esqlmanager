@@ -266,6 +266,10 @@ public class Model implements MouseListener, MouseMotionListener {
 	public void mouseDragged(MouseEvent e) {
 		if (!e.isShiftDown() && !e.isControlDown() && !e.isMetaDown() && !this.locked) {
 			ModelObject tmp = (ModelObject) e.getSource();
+			// A drag that starts on the icon of a field draws a foreign key, it does not move the table.
+			if (tmp instanceof TableObject table && table.handleAt(table.xc, table.yc) >= 0) {
+				return;
+			}
 
 			int xloc = tmp.getX() + (e.getX() - tmp.xc);
 			int yloc = tmp.getY() + (e.getY() - tmp.yc);

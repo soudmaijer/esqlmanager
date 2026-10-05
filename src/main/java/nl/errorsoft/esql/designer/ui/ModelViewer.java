@@ -34,6 +34,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import nl.errorsoft.esql.designer.control.ModelViewerControl;
 import nl.errorsoft.esql.designer.model.ForeignKey;
@@ -103,6 +104,16 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	private ForeignKey hoveredKey;
 	private ModelObject hoveredObject;
 
+	// A foreign key being dragged from a column row: the table, the column and the mouse in viewer coordinates
+	private TableObject linkFrom;
+	private String linkColumn;
+	private Point linkPoint;
+
+	private JMenuItem add_foreign_key = new JMenuItem("Add Foreign Key...");
+	private JPopupMenu connectormenu = new JPopupMenu();
+	private JMenuItem edit_key = new JMenuItem("Edit Foreign Key...");
+	private JMenuItem remove_key = new JMenuItem("Remove Foreign Key");
+
 	/*
 	 	ModelViewer default constructor
 	 */
@@ -122,10 +133,21 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		objectmenu.addSeparator();
 		objectmenu.add(create_table_db);
 		objectmenu.add(create_comment_mo);
+		objectmenu.add(add_foreign_key);
 		objectmenu.addSeparator();
 		objectmenu.add(remove);
 
 		create_comment_mo.addMouseListener(this);
+		add_foreign_key.addActionListener(e -> {
+			if (selected instanceof TableObject table) {
+				addForeignKey(table, firstColumnOf(table), null, null);
+			}
+		});
+
+		connectormenu.add(edit_key);
+		connectormenu.add(remove_key);
+		edit_key.addActionListener(e -> editForeignKey(selectedKey));
+		remove_key.addActionListener(e -> removeForeignKey(selectedKey));
 		remove.addMouseListener(this);
 		props.addMouseListener(this);
 		create_table_db.addMouseListener(this);
@@ -399,6 +421,9 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		if (src != null) {
 			lines.drawLine(src.getX() + (src.getWidth() / 2), src.getY() + (src.getHeight() / 2), refx, refy);
 		}
+		if (linkFrom != null && linkPoint != null) {
+			ConnectorRenderer.paintGhost(lines, linkFrom, linkColumn, linkPoint);
+		}
 		lines.dispose();
 	}
 
@@ -406,6 +431,93 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	private boolean isHighlighted(ForeignKey key) {
 		return key == selectedKey || key == hoveredKey || key.from().isSelected() || key.to().isSelected() || key.from() == hoveredObject
 			|| key.to() == hoveredObject;
+	}
+
+	/**
+	 * Opens the foreign key dialog for a new key and adds the key to the model.
+	 * @param to the referenced table, null to let the user choose (the dialog starts with the first other table).
+	 */
+	public void addForeignKey(TableObject from, String column, TableObject to, String toColumn) {
+		TableObject parent = to != null ? to : firstOtherTable(from);
+		String parentColumn = toColumn != null ? toColumn : ForeignKeyDialog.primaryColumn(parent);
+		ForeignKey initial = new ForeignKey(from, column.isEmpty() ? List.of() : List.of(column), parent, column.isEmpty() ? List.of() : List.of(parentColumn),
+			"",
+			"", "");
+		ForeignKey key = ForeignKeyDialog.edit(this, model, initial);
+		if (key != null) {
+			model.addForeignKey(key);
+			selectedKey = key;
+		}
+		repaint();
+	}
+
+	public void editForeignKey(ForeignKey key) {
+		if (key == null) {
+			return;
+		}
+		ForeignKey edited = ForeignKeyDialog.edit(this, model, key);
+		if (edited != null) {
+			model.removeForeignKey(key);
+			model.addForeignKey(edited);
+			selectedKey = edited;
+		}
+		repaint();
+	}
+
+	public void removeForeignKey(ForeignKey key) {
+		if (key != null) {
+			model.removeForeignKey(key);
+			if (selectedKey == key) {
+				selectedKey = null;
+			}
+			hoveredKey = null;
+			repaint();
+		}
+	}
+
+	private TableObject firstOtherTable(TableObject table) {
+		TableObject first = null;
+		for (Object object : model.getObjects()) {
+			if (object instanceof TableObject other) {
+				if (other != table) {
+					return other;
+				}
+				first = other;
+			}
+		}
+		return first;
+	}
+
+	private static java.awt.Window windowOf(Component component) {
+		return component instanceof java.awt.Window window ? window : SwingUtilities.getWindowAncestor(component);
+	}
+
+	private static String firstColumnOf(TableObject table) {
+		Field[] fields = table.getFields();
+		return fields.length == 0 ? "" : fields[0].getName();
+	}
+
+	/** Ends a foreign key drag: a drop on a table opens the dialog with the column under the mouse as the referenced column. */
+	private void finishLink() {
+		TableObject from = linkFrom;
+		String column = linkColumn;
+		Point point = linkPoint;
+		linkFrom = null;
+		linkColumn = null;
+		linkPoint = null;
+		repaint();
+
+		if (point == null) {
+			return;
+		}
+		for (Component component : getComponents()) {
+			if (component instanceof TableObject table && table.isVisible() && table.cardBounds().contains(point)) {
+				int row = table.rowAt(point.y - table.getY());
+				String toColumn = row >= 0 ? table.getFields()[row].getName() : ForeignKeyDialog.primaryColumn(table);
+				addForeignKey(from, column, table, toColumn);
+				return;
+			}
+		}
 	}
 
 	/** The connector under a point of the viewer, the one painted last wins. */
@@ -535,6 +647,11 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 			if (e.getSource() instanceof ModelObject) {
 				selectedKey = null;
 			}
+			if (e.getSource() instanceof TableObject table && !e.isShiftDown() && !e.isMetaDown() && table.handleAt(e.getX(), e.getY()) >= 0) {
+				linkFrom = table;
+				linkColumn = table.getFields()[table.handleAt(e.getX(), e.getY())].getName();
+				linkPoint = null;
+			}
 			if (e.isMetaDown() && e.getSource() instanceof ModelObject) {
 				ModelObject t = (ModelObject) e.getSource();
 				objectrel.removeAll();
@@ -572,6 +689,7 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 					create_table_db.setEnabled(true);
 				}
 
+				add_foreign_key.setVisible(t instanceof TableObject);
 				objectmenu.show(t, e.getX(), e.getY());
 				selected = t;
 				refs = v;
@@ -584,6 +702,9 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 				selectedKey = connectorAt(e.getPoint());
 				if (selectedKey != null) {
 					requestFocusInWindow();
+					if (e.isPopupTrigger() || e.isMetaDown()) {
+						connectormenu.show(this, e.getX(), e.getY());
+					}
 				}
 			} else if (e.isShiftDown() && e.getSource() instanceof ModelObject) {
 				src = (ModelObject) e.getSource();
@@ -602,6 +723,11 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	}
 
 	public void mouseReleased(MouseEvent e) {
+		if (linkFrom != null) {
+			finishLink();
+			this.resize();
+			return;
+		}
 		if (!placemode) {
 			if (e.getSource() instanceof JMenuItem) {
 				JMenuItem tmp = (JMenuItem) e.getSource();
@@ -684,6 +810,12 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	}
 
 	public void mouseDragged(MouseEvent e) {
+		if (linkFrom != null) {
+			Component source = (Component) e.getSource();
+			linkPoint = new Point(source.getX() + e.getX(), source.getY() + e.getY());
+			repaint();
+			return;
+		}
 		if (!placemode) {
 			if (!e.isMetaDown()) {
 				if (e.isShiftDown() && src != null) {
@@ -744,6 +876,9 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	}
 
 	public void mouseClicked(MouseEvent e) {
+		if (e.getSource() == this && e.getClickCount() == 2 && !e.isMetaDown()) {
+			editForeignKey(connectorAt(e.getPoint()));
+		}
 	}
 	public void mouseEntered(MouseEvent e) {
 		if (e.getSource() instanceof ModelObject object) {
@@ -773,6 +908,10 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 
 	public void eventDispatched(AWTEvent event) {
 		KeyEvent e = (KeyEvent) event;
+		// Keys typed in another window (a dialog of the designer, the main window) are not meant for the model.
+		if (e.getComponent() == null || windowOf(e.getComponent()) != windowOf(this)) {
+			return;
+		}
 		if (e.getID() == 401) {
 			if (e.isControlDown() && e.getKeyCode() == e.VK_A) {
 				this.getModel().selectAll();
@@ -784,7 +923,11 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 				mvc.openModel();
 			}
 			if (e.getKeyCode() == e.VK_DELETE) {
-				this.removeSelectedObjects();
+				if (selectedKey != null) {
+					removeForeignKey(selectedKey);
+				} else {
+					this.removeSelectedObjects();
+				}
 			}
 			if (e.isControlDown() && e.getKeyCode() == e.VK_S) {
 				mvc.saveModel(true);

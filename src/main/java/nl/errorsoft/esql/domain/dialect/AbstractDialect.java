@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
@@ -24,9 +23,6 @@ import nl.errorsoft.esql.table.Table;
  * Plain JDBC and ANSI SQL behaviour that works on any database. Dialects override what is different.
  */
 public abstract class AbstractDialect implements Dialect {
-	/** The referential actions a foreign key may have, anything else is refused so no text from a model ends up in a statement. */
-	private static final Set<String> REFERENTIAL_ACTIONS = Set.of("NO ACTION", "CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT");
-
 	public boolean supports(Feature feature) {
 		return false;
 	}
