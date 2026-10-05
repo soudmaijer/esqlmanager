@@ -44,6 +44,9 @@ eSQLManager changelog
 - Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
   with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
 - Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.
+- Designer foreign keys (backend): a model holds foreign keys between tables, saves them in model files of version 0.2
+  (0.1 files still open) and Generate creates them after all tables exist. Model files are written with JDOM, so names
+  with < & " no longer break them. The dialects add and drop foreign keys, on MySQL only for InnoDB tables.
 
 build #64 - RC3
 

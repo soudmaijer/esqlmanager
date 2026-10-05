@@ -12,6 +12,8 @@ import nl.errorsoft.esql.designer.model.Model;
 import javax.swing.*;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedTable;
+import nl.errorsoft.esql.designer.DesignedForeignKey;
+import nl.errorsoft.esql.designer.model.ForeignKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -306,7 +308,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 						columns.add(toCreateColumn(tbs.getFields()[k]));
 					}
 
-					designedTables.add(new DesignedTable(tbs.getName(), tbs.getType(), tbs.getComment(), columns));
+					designedTables.add(new DesignedTable(tbs.getName(), tbs.getType(), tbs.getComment(), columns, foreignKeysOf(tbs)));
 				}
 				model.add(new DesignedDatabase(d.getName(), designedTables));
 			}
@@ -326,6 +328,18 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		cwui.getControlClass().showDatabaseTree();
 
 		this.dispose();
+	}
+
+	/** The keys the table has on other tables; the keys other tables have on it are generated with those tables. */
+	private List<DesignedForeignKey> foreignKeysOf(TableObject table) {
+		List<DesignedForeignKey> keys = new ArrayList<>();
+
+		for (ForeignKey key : m.foreignKeysOf(table)) {
+			if (key.from() == table) {
+				keys.add(new DesignedForeignKey(key.name(), key.fromColumns(), key.to().getName(), key.toColumns(), key.onDelete(), key.onUpdate()));
+			}
+		}
+		return keys;
 	}
 
 	private CreateColumn toCreateColumn(Field f) {

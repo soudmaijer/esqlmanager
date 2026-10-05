@@ -82,7 +82,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 ## Verifying UI changes
 
 * Retake `docs/screenshot.png` and `docs/designer.png` with a harness that paints the windows in-process against a Postgres container (use a free host port, 5432 is often taken), preferably in a subagent so the images stay out of the main context. Look at the result, check icons, alignment and the status bar.
-* Known designer limits: a relation between two tables cannot be created (`Model.addReference` only allows database-to-table), and the table label always says "(InnoDB)".
+* Known designer limits: the table label always says "(InnoDB)", and foreign keys are not drawn or editable in the UI yet (only the model and generation support them).
 
 ## Tests
 
@@ -110,7 +110,10 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 * `importexport`: SQL export and import (`ExportService`, `ImportService`, with an `ExportRepository` and `ImportRepository`). Services run on their own thread and report progress to a `ProgressListener`.
 * `blob`: uploading and saving binary cells (`BlobService`, `BlobRepository`).
 * `user`: accounts and privileges (`UserService`, `UserRepository`). The SQL itself is in the dialect's `UserAdmin`, which the repository wraps.
-* `designer`: the model designer. `DesignerService` creates the designed databases and tables from `DesignedDatabase` and `DesignedTable`.
+* `designer`: the model designer. `DesignerService` creates the designed databases and tables from `DesignedDatabase` and `DesignedTable`, then adds each table's `DesignedForeignKey`s in a second pass (skipping keys that exist, checking that the columns exist) through `TableService.addForeignKey`.
+  * The model links a table to its database with a generic reference (`Model.addReference`, never table-to-table). Foreign keys are separate: `designer.model.ForeignKey` records in `Model` (`addForeignKey`, `foreignKeysOf`), removed with their table and kept in step with renamed or removed fields (`Model.fieldsEdited`, called by `TableProperties`).
+  * Model files (.edm) are read and written by `designer.model.ModelXml` with JDOM. New files are version 0.2 (with `<foreignkeys>`), 0.1 files still load, missing sections mean empty. `ModelPersistenceTest` has a 0.1 fixture in `src/test/resources/designer`.
+  * Foreign key SQL comes from `Dialect.addForeignKeySql`/`dropForeignKeySql`; actions are checked against a whitelist. `Dialect.checkForeignKeyTable` refuses MySQL tables that are not InnoDB.
 * `query`: statements typed by the user (`QueryService`, `QueryRepository`) and the editor with syntax highlighting.
 * `connection`: profiles, drivers, the connection window, process list, server status and variables (`ServerService`).
 * `app`: main window, settings, start up. `ui`: Swing parts shared by several features (`ImageLoader`, `ColumnWidths`, ...). `data`: `DatabaseConnection` and `AbstractRepository`. `domain`: types shared by features (`CreateColumn`, `DataType`) and `domain.dialect`.

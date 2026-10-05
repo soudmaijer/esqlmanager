@@ -15,6 +15,7 @@ public class Model implements MouseListener, MouseMotionListener {
 	private String comment = "";
 	private String author = "";
 	private Vector modelobjects = new Vector();
+	private final List<ForeignKey> foreignKeys = new ArrayList<>();
 	private boolean locked = false;
 	private int identifier = 1;
 	private File file = null;
@@ -90,6 +91,69 @@ public class Model implements MouseListener, MouseMotionListener {
 		src.addReference(end);
 	}
 
+	/** Adds a foreign key between two tables, a key with the same name on the same table is replaced. */
+	public void addForeignKey(ForeignKey key) {
+		foreignKeys.removeIf(existing -> existing.from() == key.from() && existing.name().equals(key.name()));
+		foreignKeys.add(key);
+	}
+
+	public void removeForeignKey(ForeignKey key) {
+		foreignKeys.remove(key);
+	}
+
+	public List<ForeignKey> getForeignKeys() {
+		return Collections.unmodifiableList(foreignKeys);
+	}
+
+	/** The keys the table has on other tables and the keys other tables have on it. */
+	public List<ForeignKey> foreignKeysOf(TableObject table) {
+		List<ForeignKey> keys = new ArrayList<>();
+
+		for (ForeignKey key : foreignKeys) {
+			if (key.involves(table)) {
+				keys.add(key);
+			}
+		}
+		return keys;
+	}
+
+	/** Keeps the foreign keys in step when a field of a table is renamed. */
+	public void fieldRenamed(TableObject table, String oldName, String newName) {
+		foreignKeys.replaceAll(key -> key.withColumnsRenamed(table, Map.of(oldName, newName)));
+	}
+
+	/** A foreign key that used a removed field can't exist any more, it is removed too. */
+	public void fieldRemoved(TableObject table, String name) {
+		foreignKeys.removeIf(key -> key.usesColumn(table, name));
+	}
+
+	/**
+	 * Updates the foreign keys after the fields of a table were edited.
+	 * @param namesBefore every field the table had before the edit, with the name it had then.
+	 */
+	public void fieldsEdited(TableObject table, Map<Field, String> namesBefore) {
+		List<Field> now = Arrays.asList(table.getFields());
+		Map<String, String> renames = new HashMap<>();
+
+		for (Map.Entry<Field, String> before : namesBefore.entrySet()) {
+			if (!now.contains(before.getKey())) {
+				fieldRemoved(table, before.getValue());
+			} else if (!before.getValue().equals(before.getKey().getName())) {
+				renames.put(before.getValue(), before.getKey().getName());
+			}
+		}
+
+		if (!renames.isEmpty()) {
+			foreignKeys.replaceAll(key -> key.withColumnsRenamed(table, renames));
+		}
+	}
+
+	private void removeForeignKeysOf(ModelObject object) {
+		if (object instanceof TableObject table) {
+			foreignKeys.removeIf(key -> key.involves(table));
+		}
+	}
+
 	public Vector getObjects() {
 		return modelobjects;
 	}
@@ -126,6 +190,7 @@ public class Model implements MouseListener, MouseMotionListener {
 					}
 				}
 				modelobjects.remove(tmp);
+				removeForeignKeysOf(tmp);
 				v.add(tmp);
 			}
 		}
@@ -141,6 +206,7 @@ public class Model implements MouseListener, MouseMotionListener {
 				}
 			}
 			modelobjects.remove(m);
+			removeForeignKeysOf(m);
 		}
 	}
 

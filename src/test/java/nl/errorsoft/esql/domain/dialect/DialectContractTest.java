@@ -29,6 +29,9 @@ import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.TableForeignKey;
+import nl.errorsoft.esql.designer.DesignedDatabase;
+import nl.errorsoft.esql.designer.DesignedForeignKey;
+import nl.errorsoft.esql.designer.DesignedTable;
 import nl.errorsoft.esql.domain.EsqlException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -262,6 +265,41 @@ abstract class DialectContractTest {
 		connection.executeUpdate("INSERT INTO " + dialect.quote(child) + " VALUES (1, 999)");
 
 		service().dropTable(childTable);
+		service().dropTable(table(parent));
+	}
+
+	@Test
+	void designerGeneratesForeignKeysOnceAllTablesExist() throws Exception {
+		String parent = "gen_parent_" + System.nanoTime();
+		String child = "gen_child_" + System.nanoTime();
+		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
+		CreateColumn id = new CreateColumn("id");
+		id.type = INTEGER;
+		id.primary = true;
+		id.notnull = true;
+		CreateColumn parentId = new CreateColumn("parent_id");
+		parentId.type = INTEGER;
+		DesignedForeignKey key = new DesignedForeignKey("fk_gen", List.of("parent_id"), parent, List.of("id"), "SET NULL", "");
+		// The child comes first, so the key can only be added after every table was created.
+		List<DesignedDatabase> model = List.of(new DesignedDatabase(DATABASE,
+			List.of(new DesignedTable(child, engine, "", List.of(id, parentId), List.of(key)), new DesignedTable(parent, engine, "",
+				List.of(id), List.of()))));
+
+		new ConnectionContext(connection).designer().generate(model, () -> {
+		});
+		new ConnectionContext(connection).designer().generate(model, () -> {
+		});
+		connection.useDatabase(DATABASE);
+		assertEquals(List.of("fk_gen"), service().foreignKeyNames(table(child)));
+
+		DesignedForeignKey broken = new DesignedForeignKey("fk_broken", List.of("missing"), parent, List.of("id"), "", "");
+		List<DesignedDatabase> brokenModel = List.of(new DesignedDatabase(DATABASE, List.of(new DesignedTable(child, engine, "", List.of(id), List.of(
+			broken)))));
+		assertThrows(EsqlException.class, () -> new ConnectionContext(connection).designer().generate(brokenModel, () -> {
+		}));
+
+		connection.useDatabase(DATABASE);
+		service().dropTable(table(child));
 		service().dropTable(table(parent));
 	}
 

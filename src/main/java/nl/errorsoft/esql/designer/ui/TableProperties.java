@@ -6,6 +6,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.event.*;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
+import nl.errorsoft.esql.designer.model.Model;
 
 public class TableProperties extends JTabbedPane implements PropertiesInterface, ActionListener, ListSelectionListener, CaretListener { // General tab
 	private JLabel lbl_name = new JLabel("Name");
@@ -56,7 +60,12 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	private TableObject tb;
 	private nl.errorsoft.esql.connection.ServerType serverType;
 
-	public TableProperties(TableObject tb, nl.errorsoft.esql.connection.ServerType serverType) {
+	// The model keeps its foreign keys in step with renamed and removed fields.
+	private final Model model;
+	private final Map<Field, String> namesBefore = new IdentityHashMap<>();
+
+	public TableProperties(TableObject tb, nl.errorsoft.esql.connection.ServerType serverType, Model model) {
+		this.model = model;
 		JPanel general = new JPanel();
 		this.serverType = serverType;
 		general.setLayout(null);
@@ -222,6 +231,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		Field[] f = tb.getFields();
 		for (int i = 0; i < f.length; i++) {
 			dlm.addElement(f[i]);
+			namesBefore.put(f[i], f[i].getName());
 		}
 	}
 
@@ -236,6 +246,10 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		DefaultListModel dtm = (DefaultListModel) lst_fields.getModel();
 		for (int i = 0; i < dtm.getSize(); i++) {
 			tb.addField((Field) dtm.getElementAt(i));
+		}
+
+		if (model != null) {
+			model.fieldsEdited(tb, namesBefore);
 		}
 	}
 

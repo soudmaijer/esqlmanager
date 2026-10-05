@@ -47,12 +47,13 @@ public class Properties extends JDialog implements ActionListener {
 		this.pack();
 	}
 
-	public void showProperties(Object obj) {
+	/** @param model the model the object is part of, so that edits to a table keep its foreign keys right. */
+	public void showProperties(Object obj, Model model) {
 		if (cur != null) {
 			cont.remove(cur);
 		}
 		if (obj instanceof TableObject object) {
-			TableProperties tp = new TableProperties(object, serverType);
+			TableProperties tp = new TableProperties(object, serverType, model);
 			this.setTitle("Properties for '" + object.getName() + "'");
 			this.cont.add(tp);
 			cur = tp;
@@ -63,9 +64,9 @@ public class Properties extends JDialog implements ActionListener {
 			this.cont.add(tp);
 			cur = tp;
 		}
-		if (obj instanceof nl.errorsoft.esql.designer.model.Model model) {
-			ModelProperties mp = new ModelProperties(model);
-			this.setTitle("Properties for '" + model.getName() + "'");
+		if (obj instanceof nl.errorsoft.esql.designer.model.Model shown) {
+			ModelProperties mp = new ModelProperties(shown);
+			this.setTitle("Properties for '" + shown.getName() + "'");
 			this.cont.add(mp);
 			cur = mp;
 		}

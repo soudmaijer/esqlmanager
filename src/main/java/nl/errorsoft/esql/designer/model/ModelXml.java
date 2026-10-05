@@ -66,6 +66,7 @@ final class ModelXml {
 		root.addContent(tables);
 		root.addContent(comments);
 		root.addContent(relations);
+		root.addContent(foreignKeys(model));
 
 		return new XMLOutputter(Format.getPrettyFormat().setEncoding("UTF-8")).outputString(new Document(root));
 	}
@@ -116,6 +117,27 @@ final class ModelXml {
 		element.addContent(text("identifier", cm.getIdentifier()));
 		element.addContent(bounds(cm));
 		return element;
+	}
+
+	private static Element foreignKeys(Model model) {
+		Element keys = new Element("foreignkeys");
+		for (ForeignKey key : model.getForeignKeys()) {
+			Element element = new Element("foreignkey");
+			element.addContent(text("name", key.name()));
+			element.addContent(text("from_identifier", key.from().getIdentifier()));
+			element.addContent(text("to_identifier", key.to().getIdentifier()));
+			element.addContent(text("on_delete", key.onDelete()));
+			element.addContent(text("on_update", key.onUpdate()));
+
+			for (int i = 0; i < key.fromColumns().size(); i++) {
+				Element column = new Element("column");
+				column.setAttribute("from", key.fromColumns().get(i));
+				column.setAttribute("to", key.toColumns().get(i));
+				element.addContent(column);
+			}
+			keys.addContent(element);
+		}
+		return keys;
 	}
 
 	private static Element bounds(ModelObject object) {
@@ -192,9 +214,34 @@ final class ModelXml {
 			}
 		}
 
+		readForeignKeys(model, root);
+
 		// Set last, creating the objects above moved the counter on.
 		model.setIdentifier(number(root, "identifier_offset", model.getIdentifier()));
 		return model;
+	}
+
+	private static void readForeignKeys(Model model, Element root) {
+		for (Element fk : children(root, "foreignkeys", "foreignkey")) {
+			ModelObject from = model.getObjectByIdentifier(number(fk, "from_identifier", -1));
+			ModelObject to = model.getObjectByIdentifier(number(fk, "to_identifier", -1));
+
+			// A key between tables that are not in the file can't be restored, it is left out.
+			if (!(from instanceof TableObject fromTable) || !(to instanceof TableObject toTable)) {
+				continue;
+			}
+
+			List<String> fromColumns = new ArrayList<>();
+			List<String> toColumns = new ArrayList<>();
+			for (Object child : fk.getChildren("column")) {
+				Element column = (Element) child;
+				fromColumns.add(column.getAttributeValue("from", ""));
+				toColumns.add(column.getAttributeValue("to", ""));
+			}
+
+			model.addForeignKey(new ForeignKey(fromTable, fromColumns, toTable, toColumns, text(fk, "name", ""),
+				text(fk, "on_delete", ""), text(fk, "on_update", "")));
+		}
 	}
 
 	private static void place(ModelObject object, Element element) {

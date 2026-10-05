@@ -137,7 +137,7 @@ public class DBCreator extends JDialog implements MouseListener {
 	}
 
 	public void showProperties(Object src) {
-		properties.showProperties(src);
+		properties.showProperties(src, mv.getModel());
 		properties.setVisible(true);
 	}
 
