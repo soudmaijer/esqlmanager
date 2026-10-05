@@ -114,6 +114,24 @@
       <artifactId>rsyntaxtextarea</artifactId>
       <version>4.0.1</version>
     </dependency>
+    <!-- Automatic layout of the designer (Eclipse Layout Kernel, layered algorithm) -->
+    <dependency>
+      <groupId>org.eclipse.elk</groupId>
+      <artifactId>org.eclipse.elk.alg.layered</artifactId>
+      <version>0.12.0</version>
+    </dependency>
+    <!-- ELK's layered algorithm uses the Xtend runtime library without declaring it -->
+    <dependency>
+      <groupId>org.eclipse.xtext</groupId>
+      <artifactId>org.eclipse.xtext.xbase.lib</artifactId>
+      <version>2.44.0</version>
+    </dependency>
+    <!-- ELK asks for any Guava from 15.0 on, a fixed version keeps the build repeatable -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>33.7.2-jre</version>
+    </dependency>
     <!-- JDBC drivers -->
     <dependency>
       <groupId>com.mysql</groupId>
