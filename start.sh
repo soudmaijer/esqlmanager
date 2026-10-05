@@ -16,24 +16,37 @@ if ! docker info >/dev/null 2>&1; then
 	exit 1
 fi
 
-if [ "$(docker ps -q -f "name=^${CONTAINER}$")" ]; then
-	echo "PostgreSQL container ${CONTAINER} is already running."
-elif [ "$(docker ps -aq -f "name=^${CONTAINER}$")" ]; then
-	echo "Starting the existing container ${CONTAINER}..."
-	docker start "${CONTAINER}" >/dev/null
-else
-	echo "Creating PostgreSQL container ${CONTAINER} (${IMAGE})..."
-	# Another PostgreSQL may already own the port. That is fine: keep going and use that server.
-	if ! docker run -d --name "${CONTAINER}" -e POSTGRES_PASSWORD="${PASSWORD}" -p "${PORT}:5432" "${IMAGE}" >/dev/null; then
-		echo "Could not start ${CONTAINER} (port ${PORT} is probably used by another PostgreSQL), continuing without it." >&2
-		docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
-		if [ "${1:-}" = "--db-only" ]; then
-			exit 0
-		fi
-		echo
-		echo "Starting eSQLManager..."
-		exec ./mvnw -q compile exec:exec
+# True when something already listens on the local port.
+port_in_use() {
+	(exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
+}
+
+# The first free port from 5432 up, so the sample database also works next to another PostgreSQL.
+free_port() {
+	local port=5432
+	while port_in_use "${port}"; do
+		port=$((port + 1))
+	done
+	echo "${port}"
+}
+
+if [ "$(docker ps -aq -f "name=^${CONTAINER}$")" ]; then
+	PORT="$(docker port "${CONTAINER}" 5432/tcp 2>/dev/null | head -1 | sed 's/.*://' || true)"
+	if [ -z "${PORT}" ]; then
+		echo "Container ${CONTAINER} has no published port, creating it again..."
+		docker rm -f "${CONTAINER}" >/dev/null
+	elif [ -z "$(docker ps -q -f "name=^${CONTAINER}$")" ]; then
+		echo "Starting the existing container ${CONTAINER}..."
+		docker start "${CONTAINER}" >/dev/null
+	else
+		echo "PostgreSQL container ${CONTAINER} is already running."
 	fi
+fi
+
+if [ -z "$(docker ps -aq -f "name=^${CONTAINER}$")" ]; then
+	PORT="$(free_port)"
+	echo "Creating PostgreSQL container ${CONTAINER} (${IMAGE}) on port ${PORT}..."
+	docker run -d --name "${CONTAINER}" -e POSTGRES_PASSWORD="${PASSWORD}" -p "${PORT}:5432" "${IMAGE}" >/dev/null
 fi
 
 echo -n "Waiting for PostgreSQL"
@@ -90,7 +103,7 @@ cat <<INFO
 Connect from eSQLManager with:
   Server type  PostgreSQL
   Host         localhost
-  Port         ${PORT}
+  Port         ${PORT}   (the first free port from 5432, edit the profile if it differs)
   User         postgres
   Password     ${PASSWORD}
   Database(s)  shop   (optional, also the database the connection is made to)
