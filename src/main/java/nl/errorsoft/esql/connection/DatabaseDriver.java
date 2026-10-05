@@ -1,6 +1,8 @@
 package nl.errorsoft.esql.connection;
 
 import nl.errorsoft.esql.app.DataDirectory;
+import nl.errorsoft.esql.driver.DriverArtifact;
+import nl.errorsoft.esql.driver.DriverSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,6 +24,7 @@ public class DatabaseDriver {
 	private String fieldCloseChar;
 	private String dataOpenChar;
 	private String dataCloseChar;
+	private String driverJar = "";
 	private DatabaseDriver[] drivers;
 	private Document driverData;
 
@@ -69,6 +72,7 @@ public class DatabaseDriver {
 				driver.setFieldCloseChar(required(element, "fieldCloseChar"));
 				driver.setDataOpenChar(required(element, "dataOpenChar"));
 				driver.setDataCloseChar(required(element, "dataCloseChar"));
+				driver.setDriverJar(XmlFiles.childText(element, "driverJar", ""));
 				read.add(driver);
 			} catch (RuntimeException e) {
 				// One bad entry leaves out that driver only, the others can still be used.
@@ -104,6 +108,7 @@ public class DatabaseDriver {
 				drivers[i].setFieldCloseChar(properties.identifierClose());
 				drivers[i].setDataOpenChar(properties.stringOpen());
 				drivers[i].setDataCloseChar(properties.stringClose());
+				drivers[i].setDriverJar(properties.jar());
 			}
 
 			Element driver = XmlFiles.addChild(root, "driver");
@@ -115,6 +120,9 @@ public class DatabaseDriver {
 			XmlFiles.addChild(driver, "fieldCloseChar", drivers[i].getFieldCloseChar());
 			XmlFiles.addChild(driver, "dataOpenChar", drivers[i].getDataOpenChar());
 			XmlFiles.addChild(driver, "dataCloseChar", drivers[i].getDataCloseChar());
+			if (!drivers[i].getDriverJar().isEmpty()) {
+				XmlFiles.addChild(driver, "driverJar", drivers[i].getDriverJar());
+			}
 		}
 
 		XmlFiles.write(DataDirectory.file("conf/driver.xml").toPath(), document);
@@ -133,9 +141,19 @@ public class DatabaseDriver {
 		this.driverClassName = driverClassName;
 	}
 
-	//	public void setDriverFilePath(String driverFilePath) {
-	//		this.driverFilePath = driverFilePath;
-	//	}
+	/** A jar the user chose to load the driver from, empty for the bundled or downloaded driver. */
+	public void setDriverJar(String driverJar) {
+		this.driverJar = driverJar == null ? "" : driverJar.trim();
+	}
+
+	public String getDriverJar() {
+		return driverJar;
+	}
+
+	/** Where the driver of this server type comes from. */
+	public DriverSource driverSource() {
+		return new DriverSource(driverClassName, driverJar, DriverArtifact.forServerType(id));
+	}
 
 	public void setFieldOpenChar(String fieldOpenChar) {
 		this.fieldOpenChar = fieldOpenChar;
@@ -163,10 +181,6 @@ public class DatabaseDriver {
 
 	public String getDriverClassName() {
 		return (this.driverClassName);
-	}
-
-	public String getDriverFilePath() {
-		return "";
 	}
 
 	public String getFieldOpenChar() {

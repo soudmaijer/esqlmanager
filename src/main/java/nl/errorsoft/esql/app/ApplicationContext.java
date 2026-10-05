@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.app;
 
+import nl.errorsoft.esql.driver.DriverService;
 import nl.errorsoft.esql.error.ErrorHandler;
 import nl.errorsoft.esql.settings.Settings;
 
@@ -21,6 +22,7 @@ public final class ApplicationContext {
 	private final ErrorHandler errors = new ErrorHandler();
 	private ImageLoader images;
 	private Settings settings;
+	private DriverService drivers;
 
 	private ApplicationContext() {
 	}
@@ -117,6 +119,14 @@ public final class ApplicationContext {
 			settings = new Settings();
 		}
 		return settings;
+	}
+
+	/** Finds, loads and downloads the JDBC drivers. */
+	public synchronized DriverService drivers() {
+		if (drivers == null) {
+			drivers = new DriverService(DataDirectory.drivers(), DriverService.MAVEN_CENTRAL);
+		}
+		return drivers;
 	}
 
 	/** The services for a connection, created the first time the connection is asked for. */

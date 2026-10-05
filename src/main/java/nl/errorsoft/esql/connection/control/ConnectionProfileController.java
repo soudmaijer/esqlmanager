@@ -7,6 +7,7 @@ import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.database.DatabaseListService;
+import nl.errorsoft.esql.driver.control.DriverDownloadController;
 import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.connection.ui.dialog.ConnectionProfileDialog;
 
@@ -64,7 +65,23 @@ public class ConnectionProfileController {
 		}
 	}
 
+	/** Opens a connection window for the profile, after downloading its driver when the user agrees. */
 	public void connect(ConnectionProfile selectedProfile) {
+		new DriverDownloadController(dialogOrMainWindow()).ensureDriver(selectedProfile.getServerType().driverSource(),
+			() -> connectWithDriver(selectedProfile),
+			() -> {
+				// Declined or failed (reported): the profile dialog stays open.
+			});
+	}
+
+	private Component dialogOrMainWindow() {
+		if (profileDialog != null) {
+			return profileDialog;
+		}
+		return mainController != null ? mainController.getMainWindow() : null;
+	}
+
+	private void connectWithDriver(ConnectionProfile selectedProfile) {
 		try {
 			if (!selectedProfile.isSavePassword() && selectedProfile.getPassword().isEmpty()) {
 				String password = askPassword(selectedProfile);
@@ -89,7 +106,7 @@ public class ConnectionProfileController {
 	private String askPassword(ConnectionProfile profile) {
 		JPasswordField field = new JPasswordField(20);
 		JPanel form = new Forms.Grid().row("&Password:", field).panel();
-		Component parent = profileDialog != null ? profileDialog : mainController.getMainWindow();
+		Component parent = dialogOrMainWindow();
 		boolean accepted = Dialogs.form(parent, "Password for " + profile.getName(), form, "Connect", field, () -> null);
 		return accepted ? new String(field.getPassword()) : null;
 	}
@@ -176,6 +193,19 @@ public class ConnectionProfileController {
 	 */
 	public void testConnection(ConnectionProfile profile, Consumer<TestResult> callback) {
 		invalidate();
+		int asked = generation;
+		new DriverDownloadController(dialogOrMainWindow()).ensureDriver(profile.getServerType().driverSource(), () -> {
+			if (asked == generation) {
+				startTest(profile, callback);
+			}
+		}, () -> {
+			if (asked == generation) {
+				callback.accept(new TestResult(false, "The " + profile.getServerType().getDescription() + " driver is not installed.", List.of()));
+			}
+		});
+	}
+
+	private void startTest(ConnectionProfile profile, Consumer<TestResult> callback) {
 		int started = generation;
 		Session opened = new Session(new DatabaseListService(profile), Executors.newSingleThreadExecutor(Thread.ofVirtual().name("catalog").factory()));
 		session = opened;

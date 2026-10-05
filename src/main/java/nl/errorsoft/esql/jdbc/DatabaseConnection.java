@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.jdbc;
 
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +56,7 @@ public class DatabaseConnection implements AutoCloseable {
 			this.close();
 		}
 
-		Class.forName(profile.getServerType().getDriverName()).getDeclaredConstructor().newInstance();
+		ApplicationContext.get().drivers().load(profile.getServerType().driverSource());
 		log.info("Connecting to {} as {}", url, profile.getUsername());
 		connection = java.sql.DriverManager.getConnection(url, profile.getUsername(), profile.getPassword());
 

@@ -4,6 +4,8 @@ import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.dialect.DialectFactory;
+import nl.errorsoft.esql.driver.DriverArtifact;
+import nl.errorsoft.esql.driver.DriverSource;
 
 import nl.errorsoft.esql.table.DataType;
 
@@ -25,6 +27,7 @@ public class ServerType {
 	private String description;
 	private String connectionURL;
 	private String driverName;
+	private DriverSource driverSource;
 	//ivate String defaultPortNumber;
 	private int type;
 	private String fieldOpenChar = "";
@@ -48,6 +51,7 @@ public class ServerType {
 				description = drivers[i].getDriverName();
 				connectionURL = drivers[i].getDriverURL();
 				driverName = drivers[i].getDriverClassName();
+				this.driverSource = drivers[i].driverSource();
 				fieldOpenChar = drivers[i].getFieldOpenChar();
 				fieldCloseChar = drivers[i].getFieldCloseChar();
 				dataOpenChar = drivers[i].getDataOpenChar();
@@ -97,6 +101,11 @@ public class ServerType {
 			case MS_SQL_SERVER -> "serverSqlServer";
 			default -> "pc";
 		};
+	}
+
+	/** Where the JDBC driver comes from: a jar of the user, the application, or a download (from driver.xml). */
+	public DriverSource driverSource() {
+		return driverSource != null ? driverSource : new DriverSource(driverName, "", DriverArtifact.forServerType(type));
 	}
 
 	public String getDriverName() {

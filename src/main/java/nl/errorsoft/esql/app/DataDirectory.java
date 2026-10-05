@@ -16,6 +16,8 @@ public final class DataDirectory {
 
 	public static final String SEED_PROPERTY = "esql.seed";
 
+	public static final String DRIVERS_PROPERTY = "esql.drivers";
+
 	private static final File ROOT = locate();
 
 	private DataDirectory() {
@@ -24,6 +26,15 @@ public final class DataDirectory {
 	/** The file for a path relative to the runtime directory, such as {@code conf/profiles.xml}. */
 	public static File file(String relativePath) {
 		return new File(ROOT, relativePath);
+	}
+
+	/**
+	 * Where downloaded JDBC drivers are kept: {@code ~/.esqlmanager/drivers}, also in development, so a driver is downloaded once per user. The system
+	 * property {@value #DRIVERS_PROPERTY} points elsewhere.
+	 */
+	public static Path drivers() {
+		String drivers = System.getProperty(DRIVERS_PROPERTY);
+		return drivers != null ? Path.of(drivers) : Path.of(System.getProperty("user.home"), ".esqlmanager", "drivers");
 	}
 
 	private static File locate() {
