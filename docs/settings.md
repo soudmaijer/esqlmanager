@@ -27,7 +27,14 @@ Settings > Preferences also holds:
 
 ## JDBC drivers
 
-Settings > JDBC Driver settings shows the driver class and URL per server type. The drivers for MySQL, PostgreSQL, SQL Server and Oracle are included.
+Settings > JDBC Driver settings shows per server type where its driver comes from, the driver class, the URL and the quote characters.
+
+The PostgreSQL (BSD-2-Clause) and SQL Server (MIT) drivers are included. The MySQL and Oracle drivers are not, because of their licences: MySQL Connector/J is GPLv2 with the Universal FOSS Exception, the Oracle driver (ojdbc11) is under the Oracle Free Use Terms and Conditions (FUTC). They are downloaded from Maven Central when they are first needed:
+
+* Connecting to, or testing a connection with, a MySQL or Oracle server whose driver is missing asks "Download MySQL driver (2.6 MB, licence GPLv2 with the Universal FOSS Exception)?". Download fetches it with a progress window and then goes on with the connection; Cancel stops.
+* The Driver group of JDBC Driver settings shows the status (Bundled, Downloaded, Own jar or Not installed) and has a Download button.
+
+Each driver is downloaded at a fixed version (MySQL Connector/J 26.7.0, ojdbc11 23.26.3.0.0) into `~/.esqlmanager/drivers` and checked against the SHA-256 checksum that is built into eSQLManager, when it is downloaded and every time it is loaded. A file that does not match is deleted. Behind a proxy or without internet, place the jar in that folder yourself, or choose any driver jar under **Own jar**: that jar is then used instead (it is stored in `driver.xml` as `<driverJar>`).
 
 ## Files
 
@@ -37,5 +44,5 @@ The application reads and writes its configuration in `conf/`:
 |---|---|
 | `profiles.xml` | Connection profiles |
 | `settings.xml` | Preferences: appearance, editor font size, default folder and default file encoding |
-| `driver.xml` | JDBC driver class and URL per server type |
+| `driver.xml` | JDBC driver class, URL and own driver jar per server type |
 | `datatypes.xml` | Column types per server type |

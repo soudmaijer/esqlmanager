@@ -190,8 +190,12 @@ Everything the application reads and writes at runtime lives in `runtime/`:
 |---|---|
 | `runtime/conf/profiles.xml` | Saved connection profiles |
 | `runtime/conf/settings.xml` | Application settings |
-| `runtime/conf/driver.xml` | JDBC driver class and URL per database type |
+| `runtime/conf/driver.xml` | JDBC driver class, URL and own driver jar per database type |
 | `runtime/conf/datatypes.xml` | Column types |
+
+### JDBC drivers
+
+The PostgreSQL (BSD-2-Clause) and SQL Server (MIT) drivers are bundled. The MySQL driver (Connector/J, GPLv2 with the Universal FOSS Exception) and the Oracle driver (ojdbc11, Oracle Free Use Terms and Conditions) are not: the first connection to such a server asks to download the driver from Maven Central into `~/.esqlmanager/drivers` (also when running from source). The version and SHA-256 of each driver are pinned in `driver.DriverArtifact`; a file that does not match is deleted. Settings > JDBC Driver settings shows the status per driver, has a Download button and accepts a driver jar of your own.
 
 Profiles are normally created in the connection dialog, which lists the saved profiles at the left (add, remove and duplicate with the buttons above the list) and shows the selected one at the right. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
 
@@ -235,7 +239,9 @@ Two Maven profiles build an application that runs without a Java installation (t
 
 `-Djpackage.type` can also be `pkg`, `exe`, `msi`, `deb` or `rpm`, each needs the packaging tools of its platform. The scripts are `src/package/jlink.sh` and `src/package/jpackage.sh` (sh, so macOS and Linux). The macOS icon is made from `icons/logo.svg` with `rsvg-convert` and `iconutil`; without them the default Java icon is used.
 
-Sizes on macOS (Apple silicon, JDK 25): runtime image 59 MB (19 modules), application image `eSQLManager.app` 89 MB, `.dmg` 71 MB.
+Sizes on macOS (Apple silicon, JDK 25): runtime image 59 MB (19 modules), application image `eSQLManager.app` 78 MB.
+
+The MySQL and Oracle drivers are not in the distribution, they are downloaded on first use (see JDBC drivers above).
 
 The installed application keeps `conf/` and `credits.txt` in `~/.esqlmanager`, copied from the bundled `runtime/` on first start, so profiles and settings survive an update and the application folder can stay read-only.
 
