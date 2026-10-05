@@ -58,8 +58,8 @@ public class ConnectionProfile
 					temp.setUsername( ((org.jdom.Element)profiles.get(i)).getChild("username").getText() );
 					temp.setPassword( ((org.jdom.Element)profiles.get(i)).getChild("password").getText() );
 					temp.setServerType( new ServerType( Integer.parseInt( ((org.jdom.Element)profiles.get(i)).getChild("serverType").getText() ) ) );
-					temp.setLastUsed( new Boolean( ((org.jdom.Element)profiles.get(i)).getChild("lastUsed").getText() ).booleanValue() );
-					temp.setAutoConnect( new Boolean( ((org.jdom.Element)profiles.get(i)).getChild("autoConnect").getText() ).booleanValue() );
+					temp.setLastUsed( Boolean.valueOf( ((org.jdom.Element)profiles.get(i)).getChild("lastUsed").getText() ).booleanValue() );
+					temp.setAutoConnect( Boolean.valueOf( ((org.jdom.Element)profiles.get(i)).getChild("autoConnect").getText() ).booleanValue() );
 					temp.setDatabases( ((org.jdom.Element)profiles.get(i)).getChild("databases").getText() );
 	
 					p[i] = temp;
@@ -134,7 +134,7 @@ public class ConnectionProfile
 			newElement.addContent( new org.jdom.Element("password").setText( cp.getPassword() ) );
 			newElement.addContent( new org.jdom.Element("serverType").setText( Integer.toString( cp.getServerType().getType() ) ) );
 			newElement.addContent( new org.jdom.Element("databases").setText( cp.getDatabases() ) );
-			newElement.addContent( new org.jdom.Element("autoConnect").setText( new Boolean( cp.isAutoConnect() ).toString() ) );
+			newElement.addContent( new org.jdom.Element("autoConnect").setText( Boolean.valueOf( cp.isAutoConnect() ).toString() ) );
 			newElement.addContent( new org.jdom.Element("lastUsed").setText( "false" ) );
 			profileData.getRootElement().addContent( newElement );
 		}
@@ -158,7 +158,7 @@ public class ConnectionProfile
 					((org.jdom.Element)l.get(i)).getChild("password").setText( profile.getPassword() );
 					((org.jdom.Element)l.get(i)).getChild("serverType").setText( Integer.toString( profile.getServerType().getType() ) );
 					((org.jdom.Element)l.get(i)).getChild("databases").setText( profile.getDatabases() );
-					((org.jdom.Element)l.get(i)).getChild("autoConnect").setText( new Boolean( profile.isAutoConnect() ).toString() );
+					((org.jdom.Element)l.get(i)).getChild("autoConnect").setText( Boolean.valueOf( profile.isAutoConnect() ).toString() );
 				}
 				else if( profile.isAutoConnect() )
 					((org.jdom.Element)l.get(i)).getChild("autoConnect").setText("false");

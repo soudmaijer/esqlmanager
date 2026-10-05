@@ -35,7 +35,7 @@ public class Export extends Observable implements Runnable
 		try( PrintWriter pw = new PrintWriter( file, StandardCharsets.UTF_8 ) )
 		{
 			setChanged();
-			notifyObservers( new Integer(10) );
+			notifyObservers( Integer.valueOf(10) );
 		
 			for( int i=0; i<exportObject.length; i++ )
 			{
@@ -75,10 +75,10 @@ public class Export extends Observable implements Runnable
 					dumpTable( pw, table );
 				
 				setChanged();
-	 			notifyObservers( new Integer( ((100/exportObject.length)*(i+1))-1 ) );
+	 			notifyObservers( Integer.valueOf( ((100/exportObject.length)*(i+1))-1 ) );
 			}
 			setChanged();
-			notifyObservers( new Integer(100) );		
+			notifyObservers( Integer.valueOf(100) );		
 		}
 		catch( Exception e )
 		{

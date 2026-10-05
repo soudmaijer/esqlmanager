@@ -30,7 +30,7 @@ public class TableCC
 
 		eu.updateStatus("Starting create table interface...", true );
 		CreateTable ct = new CreateTable( eu, cwcc, this, d, null );
-		ct.show();
+		ct.setVisible( true );
 		eu.updateStatus("Ready...", false );
 		
 	}
@@ -53,7 +53,7 @@ public class TableCC
 			t.setColumns( t.getColumns( t ) );
 		CreateTable ct = new CreateTable( eu, cwcc, this, d, t );
 		eu.updateStatus("Ready...", false );
-		ct.show();
+		ct.setVisible( true );
 	}
 	
 	public void dispatchDownloadFileUI( Table table, TableData [] rowData, TableData cellData )	

@@ -20,7 +20,7 @@ public class DatabaseDriverCC
    {
    	du = new DriverUI( this, emui );
    	du.loadDrivers( getDatabaseDrivers() );
-		du.show();
+		du.setVisible( true );
    }
    
    public DatabaseDriver[] getDatabaseDrivers()

@@ -94,7 +94,7 @@ public class ImportExportProgressUI extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        new JDialog(new javax.swing.JFrame(), true).show();
+        new JDialog(new javax.swing.JFrame(), true).setVisible( true );
     }
 
 

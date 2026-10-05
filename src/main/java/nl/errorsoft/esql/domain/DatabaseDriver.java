@@ -66,7 +66,7 @@ public class DatabaseDriver
 			{
 			   DatabaseDriver temp = new DatabaseDriver();
 
-			   temp.setId( new Integer(((Element)list.get(i)).getChild("id").getText()).intValue() );
+			   temp.setId( Integer.valueOf(((Element)list.get(i)).getChild("id").getText()).intValue() );
 			   temp.setDriverName(((Element)list.get(i)).getChild("driverName").getText());
 			   temp.setDriverURL(((Element)list.get(i)).getChild("driverURL").getText());
 			   temp.setDriverClassName(((Element)list.get(i)).getChild("driverClassName").getText());

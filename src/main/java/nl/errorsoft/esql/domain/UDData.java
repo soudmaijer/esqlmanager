@@ -35,7 +35,7 @@ public class UDData extends Observable
 			pstmt.execute();
 		}
  		setChanged();
- 		notifyObservers( new Integer(100) );		
+ 		notifyObservers( Integer.valueOf(100) );		
 	}	
 	
 	public void downloadData( Table tb, TableData [] rowData, TableData tc, String file ) throws Exception
@@ -65,6 +65,6 @@ public class UDData extends Observable
 	 	}
  		
  		setChanged();
- 		notifyObservers( new Integer(100) );
+ 		notifyObservers( Integer.valueOf(100) );
 	}	
 }

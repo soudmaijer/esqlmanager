@@ -385,9 +385,9 @@ public class Table
 			String name = quote( column.getName() );
 
 			if( column.isPrimary() || column.hasUniqueIndex() )
-				keys.add( name +"="+ dbc.formatFieldValue( cell.getData() ) );
+				keys.add( name +"="+ sqlValue( cell ) );
 			else if( !column.isBinary() )
-				columns.add( cell.isNull() ? name +" IS NULL" : name +"="+ dbc.formatFieldValue( cell.getData() ) );
+				columns.add( cell.isNull() ? name +" IS NULL" : name +"="+ sqlValue( cell ) );
 		}
 
 		java.util.List<String> conditions = keys.isEmpty() ? columns : keys;
@@ -398,6 +398,12 @@ public class Table
 		return String.join( " AND ", conditions );
 	}
 
+	/** The value of a cell as it goes into a statement, an empty cell is NULL and not the text "null". */
+	private String sqlValue( TableData cell )
+	{
+		return cell.isNull() ? "NULL" : dbc.formatFieldValue( cell.getData() );
+	}
+
 	public void insertRow( Table tb, TableData [] rowData ) throws Exception
 	{
 		String sqlColumnName = "";
@@ -406,7 +412,7 @@ public class Table
 		for( int i=0; i<rowData.length; i++ )
 		{
 			sqlColumnName += quote( rowData[i].getTableColumn().getName() );
-			sqlColumnData += dbc.formatFieldValue( rowData[i].getData() );
+			sqlColumnData += sqlValue( rowData[i] );
 
 			if( i<rowData.length-1 )
 			{

@@ -358,7 +358,7 @@ public class ConnectionWindowCC extends Thread
 			DatabaseCC dbcc = new DatabaseCC( this );
 			QueryUI qu = new QueryUI( this, jmcc.getUI(), new Syntax(), jmcc.getImageLoader(), dbcc.getDatabases(), cwui.getDatabase() );
 			jmcc.updateStatus( "Ready...", false );
-			qu.show();
+			qu.setVisible( true );
 		}
 		catch( Exception e )
 		{
@@ -374,7 +374,7 @@ public class ConnectionWindowCC extends Thread
 			jmcc.updateStatus( "Starting field properties interface...", true );
 			FieldProperties fpu = new FieldProperties( jmcc.getUI(), this, cwui.getTableColumn(), add, edit );
 			jmcc.updateStatus( "Ready...", false );
-			fpu.show();
+			fpu.setVisible( true );
 		}
 		catch( Exception e )
 		{

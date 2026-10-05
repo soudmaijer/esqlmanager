@@ -44,7 +44,7 @@ public class TableListView extends JScrollPane
 		for( int i=0; i<v.size();i++ )
 		{
 			data[0] = (Table)v.get(i);
-			data[1] = new Integer( ((Table)v.get(i)).getRowCount() );
+			data[1] = Integer.valueOf( ((Table)v.get(i)).getRowCount() );
 			data[2] = ((Table)v.get(i)).getType();
 			data[3] = ((Table)v.get(i)).getComment();
 						

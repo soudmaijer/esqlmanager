@@ -35,7 +35,7 @@ public class HeaderRenderer extends DefaultTableCellRenderer
 		else
 			value="";
 			
-		Object obj = state.get(new Integer(column));
+		Object obj = state.get(Integer.valueOf(column));
 
 		if(obj != null && ((Integer)obj).intValue() == UP)
 		{	button.setIcon(il.getIcon("sortup"));
@@ -58,25 +58,25 @@ public class HeaderRenderer extends DefaultTableCellRenderer
 	public void setSelectedColumn(int column)
 	{	if(column < 0) return;
 		Integer value = null;
-		Object obj = state.get(new Integer(column));
+		Object obj = state.get(Integer.valueOf(column));
 		if(obj == null)
-		{	value = new Integer(DOWN);
+		{	value = Integer.valueOf(DOWN);
 		}
 		else
 		{	if(((Integer)obj).intValue() == DOWN)
-			{	value = new Integer(UP);
+			{	value = Integer.valueOf(UP);
 			}
 			else
-			{	value = new Integer(DOWN);
+			{	value = Integer.valueOf(DOWN);
 			}
 		}
 		state.clear();
-		state.put(new Integer(column), value);
+		state.put(Integer.valueOf(column), value);
 	}
 	
 	public int getState(int column)
 	{	int retValue;
-		Object obj = state.get(new Integer(column));
+		Object obj = state.get(Integer.valueOf(column));
 		if(obj == null)
 		{	retValue= NONE;
 		}

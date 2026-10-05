@@ -52,7 +52,7 @@ public class ConnectionProfileCC
 			cpui = new ConnectionProfileUI( jmui,this );
 			cpui.loadProfiles( cp.getProfiles() );
 			jmcc.updateStatus("Ready...", false );
-			cpui.show();
+			cpui.setVisible( true );
 		}
 	}
 	

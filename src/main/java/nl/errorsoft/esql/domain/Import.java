@@ -23,7 +23,7 @@ public class Import extends Observable implements Runnable
 		try
 		{
 			setChanged();
-			notifyObservers( new Integer(10) );
+			notifyObservers( Integer.valueOf(10) );
 			String db = "";
 			
 			if( importToDatabase != null && importToDatabase instanceof Database )
@@ -61,7 +61,7 @@ public class Import extends Observable implements Runnable
 			}
 	
 	 		setChanged();
-	 		notifyObservers( new Integer(100) );			
+	 		notifyObservers( Integer.valueOf(100) );			
 		}
 		catch( Exception e )
 		{
