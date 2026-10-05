@@ -33,7 +33,7 @@ public class UserManagerCC {
 
 			emui.updateStatus("Starting usermanager...", true);
 			UserManagerUI ui = new UserManagerUI(emui, this);
-			emui.updateStatus("Ready...", false);
+			emui.showConnectionState();
 			ui.setVisible(true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Start user manager", e);

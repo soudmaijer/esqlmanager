@@ -16,6 +16,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 	private JButton btnConnect;
 	private JButton btnSave;
 	private JButton btnDelete;
+	private JButton btnClose;
 
 	private JPasswordField pw;
 	private JTextField un;
@@ -53,7 +54,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		jc = new JComboBox(new DefaultComboBoxModel());
 		jc.setEditable(true);
 
-		jc.setBounds(100, 10, 205, 21);
+		jc.setBounds(100, 10, 345, 21);
 		this.getContentPane().add(jc);
 
 		JLabel lblServer = new JLabel("Server type: ");
@@ -62,7 +63,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		jcServer = new JComboBox(new DefaultComboBoxModel());
 		jcServer.setEditable(false);
-		jcServer.setBounds(100, 40, 205, 21);
+		jcServer.setBounds(100, 40, 345, 21);
 		this.getContentPane().add(jcServer);
 
 		JLabel j1 = new JLabel("Host: ");
@@ -71,7 +72,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		ip = new JTextField("");
 		ip.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		ip.setBounds(100, 70, 205, 21);
+		ip.setBounds(100, 70, 345, 21);
 		this.getContentPane().add(ip);
 
 		JLabel j2 = new JLabel("Username: ");
@@ -80,7 +81,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		un = new JTextField("");
 		un.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		un.setBounds(100, 100, 205, 21);
+		un.setBounds(100, 100, 345, 21);
 		this.getContentPane().add(un);
 
 		JLabel j3 = new JLabel("Password: ");
@@ -89,7 +90,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		pw = new JPasswordField();
 		pw.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		pw.setBounds(100, 130, 205, 21);
+		pw.setBounds(100, 130, 345, 21);
 		this.getContentPane().add(pw);
 
 		JLabel j4 = new JLabel("Port: ");
@@ -98,20 +99,20 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		pt = new JTextField("");
 		pt.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		pt.setBounds(100, 160, 205, 21);
+		pt.setBounds(100, 160, 345, 21);
 		this.getContentPane().add(pt);
 
 		JLabel j5 = new JLabel("Database(s) ( Comma seperated, example: db1,db2,db3 ): ");
-		j5.setBounds(10, 194, 300, 15);
+		j5.setBounds(10, 194, 435, 15);
 		this.getContentPane().add(j5);
 
 		dbs = new JTextField("");
 		dbs.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		dbs.setBounds(10, 214, 295, 21);
+		dbs.setBounds(10, 214, 435, 21);
 		this.getContentPane().add(dbs);
 
 		chkAutoConnect = new JCheckBox("Auto-connect to this server on startup");
-		chkAutoConnect.setBounds(6, 249, 300, 21);
+		chkAutoConnect.setBounds(6, 249, 435, 21);
 		this.getContentPane().add(chkAutoConnect);
 
 		JPanel jp = new JPanel();
@@ -128,12 +129,17 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		btnDelete = new JButton("Delete");
 		btnDelete.setPreferredSize(new Dimension(95, 23));
 		jp.add(btnDelete);
-		jp.setBounds(5, 284, 400, 30);
+
+		btnClose = new JButton("Close");
+		btnClose.setPreferredSize(new Dimension(95, 23));
+		jp.add(btnClose);
+		jp.setBounds(5, 284, 450, 30);
 		this.getContentPane().add(jp);
 
 		btnSave.addActionListener(this);
 		btnConnect.addActionListener(this);
 		btnDelete.addActionListener(this);
+		btnClose.addActionListener(this);
 
 		for (int t = 0; t < sta.length; t++) {
 			jcServer.addItem(sta[t]);
@@ -141,7 +147,7 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		previousServerType = (ServerType) jcServer.getSelectedItem();
 
-		this.getRootPane().setPreferredSize(new Dimension(320, 320));
+		this.getRootPane().setPreferredSize(new Dimension(460, 320));
 		this.pack();
 		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
 			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
@@ -330,6 +336,8 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 				cpcc.addProfile(getName(), (ServerType) jcServer.getSelectedItem(), getAddress(), getPortAsString(), getUsername(), getPassword(),
 					getDatabases(), chkAutoConnect.isSelected());
 			}
+		} else if (object == btnClose) {
+			this.dispose();
 		} else if (object == btnDelete) {
 			JOptionPane pane = new JOptionPane();
 			int i = pane.showConfirmDialog(this, "Delete selected profile?", this.getTitle(), JOptionPane.YES_NO_OPTION);

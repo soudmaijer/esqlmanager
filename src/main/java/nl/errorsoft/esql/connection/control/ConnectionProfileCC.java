@@ -46,7 +46,7 @@ public class ConnectionProfileCC {
 		if (!conLastUsed) {
 			cpui = new ConnectionProfileUI(jmui, this);
 			cpui.loadProfiles(cp.getProfiles());
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			cpui.setVisible(true);
 		}
 	}
@@ -78,7 +78,7 @@ public class ConnectionProfileCC {
 				cp.addProfile(cpt);
 				cpui.loadProfiles(cp.getProfiles());
 				cpui.setSelectedProfile(cpt);
-				jmcc.updateStatus("Ready...", false);
+				jmcc.showConnectionState();
 				cpui.showMessage("Profile added succesfully!");
 			}
 		} catch (Exception e) {
@@ -99,7 +99,7 @@ public class ConnectionProfileCC {
 			cpt.setServerType(type);
 			cpt.setAutoConnect(autoConnect);
 			cp.editProfile(cpt);
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			cpui.showMessage("Saved changes!");
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cpui, "Edit profile", e);
@@ -111,7 +111,7 @@ public class ConnectionProfileCC {
 			jmcc.updateStatus("Deleting profile...", true);
 			this.cp.deleteProfile(cp);
 			cpui.loadProfiles(this.cp.getProfiles());
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cpui, "Delete profile", e);
 		}

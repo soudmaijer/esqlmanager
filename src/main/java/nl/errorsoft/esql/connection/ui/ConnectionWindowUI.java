@@ -20,6 +20,8 @@ import nl.errorsoft.esql.table.ui.TableListView;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -39,6 +41,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JScrollPane jsp; // ScrolPane for JTree
 	private JSplitPane jsplp; // Tree and jsplData
 	private JTabbedPane tabbedPane; // Contains jsp2
+	private JScrollPane helpPane;
+	private static final String READY = "Ready";
+	private JLabel status;
+	private Component viewTab; // The table data or table list, shown in front of the help
 	private JEditorPane html; // The HTML info data.
 
 	// Root menu.
@@ -339,6 +345,9 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		try {
 			html = new JEditorPane(this.getClass().getResource("/html/help.html"));
 			html.setEditable(false);
+			// The help page is written for a white page, FlatLaf paints a read-only pane grey.
+			html.setBackground(Color.white);
+			html.setForeground(Color.black);
 			html.addHyperlinkListener(new HyperLinkListener(cwcc));
 		} catch (Exception e) {
 			LogManager.getLogger(ConnectionWindowUI.class).warn("The help page could not be loaded: {}", e.getMessage());
@@ -346,7 +355,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		// TabbedPane properties.
 		tabbedPane = new JTabbedPane();
-		tabbedPane.addTab("eSQLManager Help", new JScrollPane(html));
+		tabbedPane.putClientProperty("JTabbedPane.tabClosable", true);
+		tabbedPane.putClientProperty("JTabbedPane.tabCloseCallback", (java.util.function.BiConsumer<JTabbedPane, Integer>) (pane, index) -> closeTab(index));
+		helpPane = new JScrollPane(html);
+		tabbedPane.addTab("eSQLManager Help", helpPane);
 		tabbedPane.setSelectedIndex(0);
 
 		/******************************************************************
@@ -359,12 +371,22 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		jsp.getViewport().setBackground(Color.white);
 
 		// SplitPane properties.
-		jsplp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jsp, tabbedPane);
+		// What this connection did last, below the tabs.
+		status = new JLabel(READY);
+		status.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Component.borderColor")),
+			BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+		status.setForeground(UIManager.getColor("Label.disabledForeground"));
+		status.setPreferredSize(new Dimension(10, 24));
+		JPanel tabsWithStatus = new JPanel(new BorderLayout());
+		tabsWithStatus.add(tabbedPane, BorderLayout.CENTER);
+		tabsWithStatus.add(status, BorderLayout.SOUTH);
+
+		jsplp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jsp, tabsWithStatus);
 		jsplp.setDividerLocation(200);
 		jsplp.setOneTouchExpandable(true);
 
 		// Add SplitPane.
-		getContentPane().add(jsplp);
+		getContentPane().add(jsplp, BorderLayout.CENTER);
 
 		/******************************************************************
 		 *
@@ -557,30 +579,51 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	}
 
 	public void showTableDataView(String tabTitle, TableDataView tdv) {
-		if (this.tabbedPane.getTabCount() == 1) {
-			this.tabbedPane.insertTab(tabTitle, null, tdv, "", 0);
-		}
-
-		this.tabbedPane.setTitleAt(0, tabTitle);
-		this.tabbedPane.setComponentAt(0, tdv);
-		this.tabbedPane.setSelectedIndex(0);
+		showView(tabTitle, tdv);
+		this.tabbedPane.setSelectedComponent(tdv);
 	}
 
 	public void showTableListView(String tabTitle, TableListView tlv) {
-		if (this.tabbedPane.getTabCount() == 1) {
-			this.tabbedPane.insertTab(tabTitle, null, tlv, "", 0);
-		}
-
-		this.tabbedPane.setTitleAt(0, tabTitle);
-		this.tabbedPane.setComponentAt(0, tlv);
+		showView(tabTitle, tlv);
 	}
 
-	public void showHelp() {
-		if (this.tabbedPane.getTabCount() == 1) {
-			this.tabbedPane.setSelectedIndex(0);
+	/** The table data or table list takes the first tab, the help stays available behind it. */
+	private void showView(String tabTitle, Component view) {
+		if (viewTab == null) {
+			this.tabbedPane.insertTab(tabTitle, null, view, "", 0);
 		} else {
-			this.tabbedPane.setSelectedIndex(1);
+			this.tabbedPane.setTitleAt(0, tabTitle);
+			this.tabbedPane.setComponentAt(0, view);
 		}
+
+		viewTab = view;
+	}
+
+	/** Shows the help, also when its tab has been closed. */
+	public void showHelp() {
+		if (this.tabbedPane.indexOfComponent(helpPane) < 0) {
+			this.tabbedPane.addTab("eSQLManager Help", helpPane);
+		}
+
+		this.tabbedPane.setSelectedComponent(helpPane);
+	}
+
+	private void closeTab(int index) {
+		if (this.tabbedPane.getComponentAt(index) == viewTab) {
+			viewTab = null;
+		}
+
+		this.tabbedPane.removeTabAt(index);
+	}
+
+	/** Shows what the connection did last at the bottom of its window. */
+	public void setStatus(String text) {
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(() -> setStatus(text));
+			return;
+		}
+
+		status.setText(text == null || text.isEmpty() ? READY : text);
 	}
 
 	public void showMessage(String message) {
@@ -779,8 +822,9 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	}
 
 	public void removeDataTab() {
-		if (this.tabbedPane.getTabCount() == 2) {
-			this.tabbedPane.removeTabAt(0);
+		if (viewTab != null) {
+			this.tabbedPane.remove(viewTab);
+			viewTab = null;
 		}
 	}
 

@@ -34,6 +34,13 @@ eSQLManager changelog
 - ApplicationContext resolves the image loader, settings and the ConnectionContext of every open connection. A ConnectionContext wires the
   repositories and services of one connection once, controllers no longer create them.
 - Errors: one ErrorHandler logs an error once and shows one message, services and repositories no longer swallow exceptions.
+- Connection profiles: the default profiles are PostgreSQL (port 5432, user postgres, no password stored, selected at start) and MySQL on localhost;
+  the SQL Server profile is gone.
+- start.sh: the sample PostgreSQL container uses the first free port from 5432, so it does not clash with another PostgreSQL on the machine.
+- Version: the title bar and splash show the version from the pom and the commit hash of the build (with -dirty for uncommitted changes) instead of a
+  build number.
+- Connect dialog: has a Close button. The status bar shows a green light and "Connected" while a connection is open and a red light and
+  "No connection" otherwise, instead of "Ready...".
 - Appearance: the look and feel is a preference (Settings > Preferences): follow the system, light, dark or native. On macOS the Mac themes of
   FlatLaf are used, with the menu in the screen menu bar and the title bar following the system.
 - Icons: the GIF icons (also the red and green status light) are replaced by vector icons from Lucide (ISC license, in resources/icons/svg). They scale sharply on high resolution
@@ -41,8 +48,9 @@ eSQLManager changelog
 - Output panel: log lines are shown exactly as written (the first line was indented one space less than the others), and the text colour
   follows the theme.
 - Query editor: RSyntaxTextArea replaces the home-made highlighter (SQL highlighting, line numbers, undo and redo), its colours
-  follow the light and dark theme. The output panel is plain text in a monospaced font, syntax.xml is gone.
-- Status bar: the status light is in front of the message ("Ready..."), the connection info is centred.
+  follow the light and dark theme. The output panel uses the same SQL colouring as the editor, syntax.xml is gone.
+- Status bar: the status light is in front of the message ("Ready..."), the server and account of the active connection are on the right.
+  Each connection window has its own status bar with what that connection did last (for example "shop: 4 table(s) opened in the designer").
 - Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
   with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
 - Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.

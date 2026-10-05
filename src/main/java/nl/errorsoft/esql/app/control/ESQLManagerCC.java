@@ -16,6 +16,7 @@ import nl.errorsoft.esql.designer.ui.DBCreator;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.ESQLManager;
 import nl.errorsoft.esql.connection.ServerType;
+import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -33,6 +34,10 @@ public class ESQLManagerCC {
 	private ESQLManagerUI jmui;
 
 	public ESQLManagerCC() {
+		// Both must happen before the first window or icon exists: macOS reads its desktop properties only once.
+		Appearance.prepareDesktop();
+		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> ApplicationContext.get().errors().report("Unexpected error", error));
+
 		// Start domein class.
 		jm = new ESQLManager();
 
@@ -44,7 +49,7 @@ public class ESQLManagerCC {
 		log.info("Working directory: {}", System.getProperty("user.dir"));
 		// Show splash.
 		showSplashScreen(3000);
-		jmui.updateStatus("Ready...", false);
+		jmui.showConnectionState();
 	}
 
 	public void splashReady() {
@@ -123,6 +128,10 @@ public class ESQLManagerCC {
 		}
 	}
 
+	public void showConnectionState() {
+		jmui.showConnectionState();
+	}
+
 	public void updateStatus(String message, boolean red) {
 		jmui.updateStatus(message, red);
 	}
@@ -136,7 +145,7 @@ public class ESQLManagerCC {
 	}
 
 	public String getTitle() {
-		return getAppName() + " - " + getAppVersion() + " ( build #" + getAppBuild() + " )";
+		return getAppName() + " " + getAppVersion() + " (" + getAppCommit() + ")";
 	}
 
 	public String getAppName() {
@@ -147,8 +156,8 @@ public class ESQLManagerCC {
 		return jm.getAppVersion();
 	}
 
-	public int getAppBuild() {
-		return jm.getAppBuild();
+	public String getAppCommit() {
+		return jm.getAppCommit();
 	}
 
 }

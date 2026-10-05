@@ -39,7 +39,7 @@ public class TableCC {
 		eu.updateStatus("Starting create table interface...", true);
 		CreateTable ct = new CreateTable(eu, cwcc, this, d, null);
 		ct.setVisible(true);
-		eu.updateStatus("Ready...", false);
+		eu.showConnectionState();
 
 	}
 
@@ -54,7 +54,7 @@ public class TableCC {
 			service().loadColumns(t);
 		}
 		CreateTable ct = new CreateTable(eu, cwcc, this, d, t);
-		eu.updateStatus("Ready...", false);
+		eu.showConnectionState();
 		ct.setVisible(true);
 	}
 

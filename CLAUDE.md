@@ -6,7 +6,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 * Maven wrapper only (`./mvnw`), never Gradle. Java 25 (`maven.compiler.release`), sources are UTF-8.
 * Run: `./mvnw compile exec:exec` (starts `nl.errorsoft.esql.Main` with `runtime/` as working directory, see Configuration below).
-* Validate locally: `./start.sh` starts a PostgreSQL 17 container (`esql-pg`, user `postgres`, password `test`, sample database `shop`) and the application, `./start.sh --db-only` only the database, `./stop.sh` removes the container.
+* Validate locally: `./start.sh` starts a PostgreSQL 17 container (`esql-pg`, user `postgres`, password `test`, sample database `shop`, on the first free port from 5432, the script prints it) and the application, `./start.sh --db-only` only the database, `./stop.sh` removes the container.
 * Test: `./mvnw test`. The tests start Postgres 17 and MySQL 8 with Testcontainers and are skipped without Docker.
 * A GUI cannot be started inside the Claude sandbox (no display). Run harnesses with the sandbox disabled, and verify UI work by painting the root pane to a `BufferedImage` in-process.
 
@@ -40,9 +40,9 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
 * Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.
 * The query editor is an `RSyntaxTextArea` (com.fifesoft) in an `RTextScrollPane` with SQL highlighting, line numbers and the library's undo. `ui.EditorTheme.install` gives it the RSyntaxTextArea theme `idea.xml` or `dark.xml` matching `FlatLaf.isLafDark()` and applies it again when the look and feel changes.
-* The output panel is a plain read-only `JTextArea`: it shows the log exactly as written, with colours from the look and feel.
+* The output panel is a read-only `RSyntaxTextArea` with SQL colouring (`ui.editor.EditorTheme`, same theme as the query editor): it shows the log exactly as written.
 * The output panel does not wrap lines (re-wrapping a long log made resizing slow), keeps at most 200000 characters, and the split pane uses continuous layout with `resizeWeight` 1.0.
-* The status bar shows the action on the left and, next to it, the server, account and the last thing the active connection did (`ConnectionWindowCC.showStatusInfo`).
+* The status bar of the application shows the state with its light on the left and the server and account of the active connection on the right (`ConnectionWindowCC.showStatusInfo`). What a connection did last ("shop: 4 table(s) opened in the designer") is shown in the status bar at the bottom of that connection's own window (`ConnectionWindowUI.setStatus`).
 
 ### Logging and output
 
@@ -67,6 +67,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Configuration and resources
 
+* The version in the title bar and splash comes from the pom, the commit from `git-commit-id-maven-plugin`; both are written to `build.properties` by resource filtering (`app.ESQLManager`). A build with uncommitted changes shows `-dirty` after the hash, without git the commit is `unknown`. There is no build counter.
 * `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).
 * `runtime/conf/profiles.xml` must not contain passwords or local test profiles when committed. Running the application rewrites it (`lastUsed`), so `git checkout runtime/conf/profiles.xml` before committing.
 * JDBC drivers come from Maven Central, no jars in the repository.

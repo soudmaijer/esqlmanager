@@ -4,12 +4,15 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
+import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.util.DesktopUtils;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.icon.StatusLight;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -60,13 +63,14 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	// Statusbar
 	private JPanel statusbar;
 	private StatusLight stl;
+	private static final String NO_CONNECTION = "No connection";
 	private JLabel statusMsg;
 	private JLabel statusInfo;
 
 	// Containers etc.
 	private JSplitPane jsplit;
 	private JScrollPane jsp;
-	private JTextArea jta;
+	private RSyntaxTextArea jta;
 	private JDesktopPane jdp;
 	private ImageLoader imgLoader;
 
@@ -216,8 +220,9 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		statusbar = new JPanel();
 		statusbar.setLayout(new BorderLayout());
 		stl = new StatusLight(imgLoader);
+		stl.switchRedLight(true);
 
-		statusMsg = new JLabel("Ready...");
+		statusMsg = new JLabel(NO_CONNECTION);
 		statusMsg.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 8));
 		statusMsg.setPreferredSize(new Dimension(200, 20));
 		JPanel statusState = new JPanel(new BorderLayout());
@@ -225,15 +230,12 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		statusState.add(stl, BorderLayout.WEST);
 		statusState.add(statusMsg, BorderLayout.CENTER);
 
-		statusInfo = new JLabel(" ", SwingConstants.CENTER);
+		statusInfo = new JLabel(" ", SwingConstants.RIGHT);
 		statusInfo.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
 		statusInfo.setForeground(UIManager.getColor("Label.disabledForeground"));
 
-		// An empty strip as wide as the state on the left keeps the database info in the middle of the window.
-		Component balance = Box.createHorizontalStrut(statusState.getPreferredSize().width);
 		statusbar.add(statusState, BorderLayout.WEST);
 		statusbar.add(statusInfo, BorderLayout.CENTER);
-		statusbar.add(balance, BorderLayout.EAST);
 		this.getContentPane().add(statusbar, BorderLayout.SOUTH);
 
 		/*
@@ -246,18 +248,13 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		outputPanel.add(outputTitle, BorderLayout.NORTH);
 
 		// No line wrapping: re-wrapping a long log on every width change made resizing slow.
-		// A plain text area shows the log exactly as written, its colours come from the look and feel.
-		jta = new JTextArea() {
-			@Override
-			public void updateUI() {
-				super.updateUI();
-				// A read-only text area is painted grey by default, the output should look like the other content areas.
-				setBackground(UIManager.getColor("TextArea.background"));
-			}
-		};
+		// The log shows the statements that were run, so it gets the SQL colours of the query editor.
+		jta = new RSyntaxTextArea();
+		jta.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
 		jta.setLineWrap(false);
-		jta.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		jta.setEditable(false);
+		jta.setHighlightCurrentLine(false);
+		EditorTheme.install(jta);
 
 		// DesktopPane.
 		jdp = new JDesktopPane();
@@ -318,6 +315,17 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 
 	public JInternalFrame getSelectedFrame() {
 		return this.jdp.getSelectedFrame();
+	}
+
+	/** The resting state: green and connected while a connection window is open, red when there is none. */
+	public void showConnectionState() {
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(this::showConnectionState);
+			return;
+		}
+
+		boolean connected = jdp.getAllFrames().length > 0;
+		updateStatus(connected ? "Connected" : NO_CONNECTION, !connected);
 	}
 
 	public void updateStatus(final String message, final boolean red) {
@@ -405,6 +413,8 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 			btnTileVertical.setEnabled(false);
 			jmcc.dispatchConnectionProfileUI();
 		}
+
+		showConnectionState();
 	}
 
 	public void actionPerformed(java.awt.event.ActionEvent event) {

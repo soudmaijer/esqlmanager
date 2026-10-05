@@ -69,15 +69,15 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Loading databases...", true);
 			showDatabaseTree();
 			setStatusDetail("");
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			cwui.closeUI(false);
-			jmcc.updateStatus("Can`t connect to server...", false);
+			jmcc.updateStatus("Can`t connect to server...", true);
 			ApplicationContext.get().errors().report("Connect to " + cw.getConnectionProfile().getName(), e);
 		}
 	}
 
-	/** Shows the server and account of this connection, followed by what happened last. */
+	/** Shows the server and account of this connection in the status bar of the application. */
 	public void showStatusInfo() {
 		String info = "";
 
@@ -88,15 +88,13 @@ public class ConnectionWindowCC extends Thread {
 			// Not connected (yet), there is nothing to show.
 		}
 
-		if (info.length() > 0 && statusDetail.length() > 0) {
-			info += "  |  " + statusDetail;
-		}
-
 		jmcc.setStatusInfo(info);
 	}
 
+	/** What this connection did last is shown in the status bar of its own window. */
 	private void setStatusDetail(String detail) {
 		statusDetail = detail;
+		cwui.setStatus(detail);
 		showStatusInfo();
 	}
 
@@ -127,7 +125,7 @@ public class ConnectionWindowCC extends Thread {
 			DatabaseCC dbcc = new DatabaseCC(this);
 			cwui.showDatabaseTreeView(dbcc.getDatabaseTreeView());
 			cwui.showHelp();
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Database tree", e);
 		}
@@ -139,7 +137,7 @@ public class ConnectionWindowCC extends Thread {
 			DatabaseCC dbcc = new DatabaseCC(this);
 			Database db = dbcc.createDatabase(name);
 			cwui.getDatabaseTreeView().addDatabase(db);
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Create database", e);
 		}
@@ -153,7 +151,7 @@ public class ConnectionWindowCC extends Thread {
 			dbcc.dropDatabase(db);
 			cwui.getDatabaseTreeView().deleteDatabase(db);
 			cwui.removeDataTab();
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			this.showDatabaseTree();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Drop database", e);
@@ -167,7 +165,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC dbcc = new TableCC(this);
 			dbcc.dropTable(tb);
 			cwui.getDatabaseTreeView().deleteTable(tb);
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			this.databaseSelected(tb.getDatabase());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Drop table", e);
@@ -207,7 +205,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC dbcc = new TableCC(this);
 			dbcc.dropTableColumn(tb);
 			cwui.getDatabaseTreeView().deleteTableColumn(tb);
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Drop table column", e);
@@ -230,7 +228,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Flushing table data...", true);
 			TableCC tbcc = new TableCC(this);
 			tbcc.flushTable(cwui.getTable());
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Flush selected table", e);
@@ -254,7 +252,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.getDatabaseTreeView().loadTables(database, tables);
 			cwui.databaseSelected();
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Database selected", e);
 		}
@@ -278,7 +276,7 @@ public class ConnectionWindowCC extends Thread {
 
 			// 3th enable buttons.
 			cwui.tableSelected();
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Table selected", e);
 		}
@@ -309,7 +307,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Starting query window...", true);
 			DatabaseCC dbcc = new DatabaseCC(this);
 			QueryUI qu = new QueryUI(this, jmcc.getUI(), ApplicationContext.get().imageLoader(), dbcc.getDatabases(), cwui.getDatabase());
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			qu.setVisible(true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Query", e);
@@ -320,7 +318,7 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Starting field properties interface...", true);
 			FieldProperties fpu = new FieldProperties(jmcc.getUI(), this, cwui.getTableColumn(), add, edit);
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			fpu.setVisible(true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Field", e);
@@ -351,7 +349,7 @@ public class ConnectionWindowCC extends Thread {
 					setStatusDetail("Query affected " + rows + " row(s) in " + millisSince(start) + " ms");
 				}
 			}
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Run custom sql", e);
 		}
@@ -386,7 +384,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.showTableDataView(table.getDatabase().getName() + " : " + table.getName(), tbcc.getTableDataView(table, 0, 50));
 			setStatusDetail(
 				table.getDatabase().getName() + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Table data", e);
 		}
@@ -447,10 +445,10 @@ public class ConnectionWindowCC extends Thread {
 			DesignedDatabase designed = getContext().designer().reverseEngineer(database);
 			Model model = ModelFactory.fromDatabase(designed, cw.getConnectionProfile().getServerType().getDataTypes());
 			setStatusDetail(database.getName() + ": " + designed.tables().size() + " table(s) opened in the designer");
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			new DBCreator(jmcc.getUI(), cwui, model);
 		} catch (Exception e) {
-			jmcc.updateStatus("Ready...", false);
+			jmcc.showConnectionState();
 			ApplicationContext.get().errors().report(cwui, "Open in designer", e);
 		}
 	}

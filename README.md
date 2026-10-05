@@ -182,7 +182,7 @@ The application logs with Log4j 2. The configuration is `src/main/resources/log4
 ./stop.sh             # stop and remove the database container
 ```
 
-The script prints what to fill in: server type **PostgreSQL**, host `localhost`, port `5432`, user `postgres`, password `test`.
+The script prints what to fill in: server type **PostgreSQL**, host `localhost`, user `postgres`, password `test` and the port it prints. The container uses port 5432 when that is free and the next free port otherwise, so it also works next to another PostgreSQL.
 
 ## Development
 
