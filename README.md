@@ -20,6 +20,7 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 |---|---|---|---|---|
 | Saved connection profiles with auto-connect, duplicate, optional saved password | yes | yes | yes | yes |
 | Test connection from the profile dialog | yes | yes | yes | yes |
+| Choose the databases and schemas a profile shows (checkbox tree in the profile dialog) | yes | yes | yes | no |
 | Several connections open at once, tiled or cascaded | yes | yes | yes | yes |
 | JDBC driver configuration | yes | yes | yes | yes |
 | Browse databases, tables, views and columns in a tree | yes | yes | yes | yes |
@@ -194,7 +195,7 @@ Everything the application reads and writes at runtime lives in `runtime/`:
 
 Profiles are normally created in the connection dialog. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
 
-The **Database(s)** field of a profile is an optional comma separated filter. Leave it empty to list every database on the server. For PostgreSQL the first name is also the database the connection is made to, with `postgres` as the default.
+The connection dialog has a second tab, **Databases and schemas**, that is available after Test connection succeeded. Tick the databases (and on PostgreSQL the schemas) the profile should show; nothing ticked shows everything, and the first ticked database is the one the connection is made to (`postgres` by default). The selection is stored in `profiles.xml` as `<databases>db1,db2</databases>` plus an optional `<schemas><database name="db1"><schema>public</schema></database></schemas>`; a database without schema elements shows all its schemas. Unticked schemas are left out of the tree, the export and import windows, the query tab and the designer, but exporting a whole database still includes them, which the export window notes.
 
 Note that `profiles.xml` stores saved passwords in plain text; switch off "Save password" in the profile to be asked for the password when connecting instead. Keep local changes out of version control, for example with `git update-index --skip-worktree runtime/conf/profiles.xml`.
 

@@ -2,6 +2,21 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Choose the databases and schemas of a profile
+
+- Connect to server has two tabs. "Connection" holds the server settings; "Databases and schemas" opens after a
+  successful Test connection and shows a tree with checkboxes of the databases of the server (on PostgreSQL each
+  database opens to its schemas, loaded when you open it). This replaces the free text Databases field.
+- Nothing ticked shows everything. A ticked database without ticked schemas shows all its schemas, ticking a schema
+  ticks its database, unticking a database forgets its schemas. The first ticked database is the one connected to.
+- Changing host, port, user, password or server type disables the tab until you test again; the ticks are kept.
+  A ticked database that no longer exists is dropped when you save.
+- The selection filters the tree, the export and import trees, the query tab schema picker and the user manager.
+  Exporting a whole database still includes unticked schemas, the export window says so. The table count in the
+  database properties counts the shown schemas.
+- profiles.xml keeps <databases> and adds an optional <schemas> element; older files load unchanged.
+- Mnemonics of Server type, Test connection and Duplicate no longer clash with Username and each other.
+
 05-10-2026: Spacing in dialogs, length of integer columns, pending state in Generate
 
 - Connect to server, Upload and Download no longer have empty space above the buttons: the filler row of a form

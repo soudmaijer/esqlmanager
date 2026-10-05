@@ -4,18 +4,19 @@
 
 ## Connecting
 
-Options > Connect (or the Connect button of the toolbar) opens the connection dialog. A profile holds:
+Options > Connect (or the Connect button of the toolbar) opens the connection dialog. The dialog has two tabs. The **Connection** tab holds the settings of a profile:
 
 | Field | Meaning |
 |---|---|
 | Server type | MySQL, PostgreSQL, SQL Server or Oracle. Choosing one fills in the default port and user (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`). |
 | Host and port | Where the server runs. |
 | User and password | The account to log in with. |
-| Database(s) | Optional, a comma separated list of the databases to show. Empty shows every database. On PostgreSQL the first name is the database to connect to, `postgres` when it is empty. |
 | Save password | On by default. When it is off the password is not written to `conf/profiles.xml` and is asked for when you connect (also for auto connect). |
 | Auto connect | Connect with this profile when the application starts. |
 
-**Test connection** connects with the values in the form (the saved profile is not used) and shows "Connected to <server> <version>" in green or the error in red below the form, without opening a window. **Duplicate** saves a copy of the selected profile as "<name> copy" (no auto connect), **Delete** removes it.
+**Test connection** connects with the values in the form (the saved profile is not used) and shows "Connected to <server> <version>" in green or the error in red below the form, without opening a window.
+
+The **Databases and schemas** tab is available after a successful test. It lists the databases of the server with a checkbox (click the box or press the space bar); on PostgreSQL a database opens to show its schemas, which are loaded when you open it. Tick what the profile should show: nothing ticked shows everything, a ticked database without ticked schemas shows all its schemas, ticking a schema ticks its database, and unticking a database forgets its schemas. The first ticked database is the one the connection is made to (`postgres` when nothing is ticked). **Select none** clears the ticks, **Reload** lists the databases again. Changing the host, port, user, password or server type disables the tab until you test again; the ticks are kept. A ticked database that no longer exists is dropped when you save. Schemas that are not ticked are left out of the tree, the export and import windows, the query tab and the designer, but exporting a whole database still includes them. **Duplicate** saves a copy of the selected profile as "<name> copy" (no auto connect), **Delete** removes it.
 
 Profiles are saved in `conf/profiles.xml`. A saved password is stored there in plain text, so only save one on a machine you trust, or turn Save password off.
 
