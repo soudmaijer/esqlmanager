@@ -2,7 +2,6 @@ package nl.errorsoft.esql.designer.ui;
 
 import nl.errorsoft.esql.error.Dialogs;
 
-import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
@@ -25,11 +24,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 import java.awt.event.*;
 
 import java.io.*;
 
-public class DBCreator extends JDialog implements MouseListener {
+/** The model designer, an internal frame on the desktop of the main window next to the connection windows. */
+public class DBCreator extends JInternalFrame implements MouseListener {
 	private JMenuBar menu;
 	private static final Logger log = LogManager.getLogger(DBCreator.class);
 
@@ -68,15 +70,19 @@ public class DBCreator extends JDialog implements MouseListener {
 	 * @param model a model to show, such as one read from an existing database, which is then arranged automatically; null for a new model.
 	 */
 	public DBCreator(ESQLManagerUI eui, ConnectionWindowUI cwui, Model model) {
-		super(eui, true);
-		// Esc does not close this window: a work window with a model that may have unsaved changes.
-		getRootPane().putClientProperty(EscapeToClose.DISABLED, true);
+		super("eSQLDesigner", true, true, true, true);
+		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon("imgDesigner"));
+		this.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
+		this.addInternalFrameListener(new InternalFrameAdapter() {
+			public void internalFrameClosing(InternalFrameEvent e) {
+				close();
+			}
+		});
 
 		this.eui = eui;
 		this.cwui = cwui;
 
 		this.setSize(640, 480);
-		this.setTitle("eSQLDesigner");
 
 		mv = new ModelViewer(new ModelViewerControl(this));
 
@@ -155,12 +161,35 @@ public class DBCreator extends JDialog implements MouseListener {
 			arrangeAutomatically();
 		}
 
-		this.setLocation(eui.getLocation().x + (int) ((eui.getSize().width - this.getSize().width) / 2),
-			eui.getLocation().y + (int) ((eui.getSize().height - this.getSize().height) / 2));
-
 		this.updateTitle();
 
-		this.setVisible(true);
+		eui.addDesignerWindow(this);
+	}
+
+	/** The connection window the designer was opened from; generating the model runs on its connection. */
+	public ConnectionWindowUI getConnectionWindow() {
+		return cwui;
+	}
+
+	/**
+	 * Asks to save the model and closes the designer.
+	 * @return false when the user cancelled
+	 */
+	public boolean close() {
+		Dialogs.SaveChoice choice = Dialogs.askSave(this, "Close designer", "Save model '" + mv.getModel().getName() + "' first?");
+		if (choice == Dialogs.SaveChoice.CANCEL) {
+			return false;
+		}
+		if (choice == Dialogs.SaveChoice.SAVE) {
+			saveCurrentModel(true);
+		}
+		eui.removeDesignerWindow(this);
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return getTitle();
 	}
 
 	/** Places the tables with the automatic layout, referenced tables left of the tables that refer to them. */
@@ -302,13 +331,8 @@ public class DBCreator extends JDialog implements MouseListener {
 	}
 	public void mouseReleased(MouseEvent e) {
 		if (e.getSource() == file_ext) {
-			Dialogs.SaveChoice choice = Dialogs.askSave(this, "Close designer", "Save model '" + mv.getModel().getName() + "' first?");
-			if (choice == Dialogs.SaveChoice.SAVE) {
-				saveCurrentModel(true);
-				this.dispose();
-			} else if (choice == Dialogs.SaveChoice.DISCARD) {
-				this.dispose();
-			}
+			close();
+			return;
 		}
 		if (e.getSource() == file_new) {
 			newModel();

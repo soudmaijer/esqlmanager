@@ -312,7 +312,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	// Close frame.
 	public void closeUI(boolean confirmation) {
 		if (confirmation) {
-			if (Dialogs.confirm(this, "Disconnect", "Disconnect from " + getTitle() + "?", "Disconnect")) {
+			if (Dialogs.confirm(this, "Disconnect", "Disconnect from " + getTitle() + "?", "Disconnect") && cwcc.closeDesigners()) {
 				cwcc.closeUI();
 			}
 		} else {

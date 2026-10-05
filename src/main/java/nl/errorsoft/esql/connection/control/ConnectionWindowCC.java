@@ -106,6 +106,11 @@ public class ConnectionWindowCC extends Thread {
 		return (System.nanoTime() - startNanos) / 1000000;
 	}
 
+	/** Closes the designers opened from this connection; false when the user keeps one open. */
+	public boolean closeDesigners() {
+		return jmcc.getUI().closeDesigners(cwui);
+	}
+
 	public void closeUI() {
 		// Stop database connection
 		try {

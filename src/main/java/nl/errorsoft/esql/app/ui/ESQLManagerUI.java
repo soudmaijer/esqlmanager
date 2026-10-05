@@ -9,6 +9,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.connection.ui.ServerIconRenderer;
+import nl.errorsoft.esql.designer.ui.DBCreator;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.util.DesktopUtils;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
@@ -63,7 +64,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	private JButton btnCascade;
 	private JButton btnTileHorizontal;
 	private JButton btnTileVertical;
-	private JComboBox<ConnectionWindowUI> cmbWindows;
+	private JComboBox<JInternalFrame> cmbWindows; // Connection windows and designers
 
 	// Statusbar
 	private JPanel statusbar;
@@ -214,17 +215,20 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 					return;
 				}
 
-				ConnectionWindowUI window = (ConnectionWindowUI) cmbWindows.getSelectedItem();
+				JInternalFrame window = (JInternalFrame) cmbWindows.getSelectedItem();
 
 				if (window != null) {
-					jdp.getDesktopManager().activateFrame(window);
+					if (window.isIcon()) {
+						window.setIcon(false);
+					}
+					window.setSelected(true);
 				}
 			} catch (Exception ae) {
 				log.error(ae.getMessage(), ae);
 			}
 		});
 
-		cmbWindows.setToolTipText("Active connection window");
+		cmbWindows.setToolTipText("Active window");
 		cmbWindows.setMinimumSize(new Dimension(160, ToolbarButtons.HEIGHT));
 		cmbWindows.setPreferredSize(new Dimension(220, ToolbarButtons.HEIGHT));
 		toolbar.add(cmbWindows);
@@ -338,7 +342,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 			return;
 		}
 
-		boolean connected = jdp.getAllFrames().length > 0;
+		boolean connected = getConnectionWindowCount() > 0;
 		updateStatus(connected ? "Connected" : NO_CONNECTION, !connected);
 	}
 
@@ -407,19 +411,61 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		cmbWindows.setSelectedIndex(cmbWindows.getItemCount() - 1);
 	}
 
+	/** Shows a designer on the desktop, centred and in front, and lists it in the window selector. */
+	public void addDesignerWindow(DBCreator designer) {
+		Dimension desktop = jdp.getSize();
+		designer.setSize(Math.min(designer.getWidth(), desktop.width), Math.min(designer.getHeight(), desktop.height));
+		designer.setLocation((desktop.width - designer.getWidth()) / 2, (desktop.height - designer.getHeight()) / 2);
+		jdp.add(designer);
+		designer.addPropertyChangeListener(JInternalFrame.TITLE_PROPERTY, e -> cmbWindows.repaint());
+		designer.setVisible(true);
+
+		cmbWindows.addItem(designer);
+		cmbWindows.setSelectedItem(designer);
+	}
+
+	public void removeDesignerWindow(DBCreator designer) {
+		cmbWindows.removeItem(designer);
+		designer.dispose();
+	}
+
+	/**
+	 * Closes the designers opened from a connection window, each asking to save its model first.
+	 * @return false when the user cancelled one of them
+	 */
+	public boolean closeDesigners(ConnectionWindowUI cw) {
+		for (JInternalFrame frame : jdp.getAllFrames()) {
+			if (frame instanceof DBCreator designer && designer.getConnectionWindow() == cw && !designer.close()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** The connection window in front, or the one the designer in front belongs to. */
 	public ConnectionWindowUI getConnectionWindow() {
-		return (ConnectionWindowUI) cmbWindows.getSelectedItem();
+		return switch (cmbWindows.getSelectedItem()) {
+			case ConnectionWindowUI cw -> cw;
+			case DBCreator designer -> designer.getConnectionWindow();
+			case null, default -> null;
+		};
 	}
 
 	public int getConnectionWindowCount() {
-		return cmbWindows.getItemCount();
+		int count = 0;
+		for (int i = 0; i < cmbWindows.getItemCount(); i++) {
+			if (cmbWindows.getItemAt(i) instanceof ConnectionWindowUI) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	public void removeConnectionWindow(ConnectionWindowUI cw) {
-		cmbWindows.removeItemAt(cmbWindows.getSelectedIndex());
+		cmbWindows.removeItem(cw);
 		jdp.getDesktopManager().closeFrame(cw);
 
-		if (jdp.getAllFrames().length == 0) {
+		if (getConnectionWindowCount() == 0) {
 			btnConnect.setEnabled(true);
 			btnDisconnect.setEnabled(false);
 			btnCascade.setEnabled(false);
@@ -442,7 +488,10 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		} else if (object == mnuSettings) {
 			jmcc.dispatchSettingsUI();
 		} else if (object == mnuDisconnect || object == btnDisconnect) {
-			((ConnectionWindowUI) jdp.getSelectedFrame()).closeUI(true);
+			ConnectionWindowUI cw = getConnectionWindow();
+			if (cw != null) {
+				cw.closeUI(true);
+			}
 		} else if (object == mnuTileVertical || object == btnTileVertical) {
 			DesktopUtils.tileVertical(jdp);
 		} else if (object == mnuTileHorizontal || object == btnTileHorizontal) {
@@ -456,19 +505,19 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		}
 		// Import sql file.
 		else if (object == mnuImportFromFile) {
-			if (jdp.getAllFrames().length > 0) {
+			if (getConnectionWindowCount() > 0) {
 				jmcc.dispatchImportUI();
 			}
 		}
 		// Export sql file.
 		else if (object == mnuExportToFile) {
-			if (jdp.getAllFrames().length > 0) {
+			if (getConnectionWindowCount() > 0) {
 				jmcc.dispatchExportUI();
 			}
 		}
 		// Start designer
 		else if (object == mnuDesigner) {
-			if (jdp.getAllFrames().length > 0) {
+			if (getConnectionWindowCount() > 0) {
 				jmcc.dispatchDesigner();
 			}
 		}
