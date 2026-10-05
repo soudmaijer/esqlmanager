@@ -6,6 +6,8 @@ New query (in the context menu of the server or a database) or **Run SQL query**
 
 The editor highlights SQL, shows line numbers and has undo. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files.
 
+![A query tab with a result and the completion of the columns of products](query.png)
+
 ## Running statements
 
 | Shortcut | Action |

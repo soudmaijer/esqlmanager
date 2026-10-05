@@ -98,6 +98,25 @@ eSQLManager changelog
   at the bottom right.
 - Process list: ProcesslistCC holds the connection, the refresh thread and the kill action, the window only shows the list.
   The database tree keeps one tree model and only shows what its controller loads.
+- Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
+  for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.
+- Dialogs: one helper for all message boxes. Errors show the error icon, dropping and deleting asks with a warning
+  that names the object and a button named after the action, revoking privileges asks first. Clearer texts and titles
+  (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.
+- Context menus of the database tree are built per node and only show what the server supports (no MySQL, Postgres
+  or SQL Server submenus). New: Open, New query, Users, Export, Import, Indexes and Reload in the menus where they
+  apply; Check and Repair only on MySQL. Right click (ctrl-click on macOS) selects the node under the cursor first.
+- Designer context menus: the empty canvas adds a database, table or note at the click point, selects all, arranges,
+  toggles the grid and opens the model properties. Tables, databases and notes have their own menus (properties,
+  foreign key, link to a database, add a table or note, remove a link, delete), right click selects the object.
+- Toolbars and menu bar are compact, the paging buttons of the table data sit in the centre of the status bar below
+  the tabs, with what the connection did last on the left.
+- Layout fixes after looking at every screen in light and dark: Settings only has the appearance (the auto-update
+  fields and their settings.xml entries are gone), the user manager has padding and a Granted group, the process list
+  opens wide enough for its columns and stops refreshing when it closes, the foreign key dialog centres its labels,
+  the Add field button lines up with the buttons below it, grid lines and tree and desktop backgrounds follow the
+  theme, "separated" is spelled correctly.
+- Documentation: new screenshots (connection window, designer) and a screenshot of the query tab with completion.
 
 build #64 - RC3
 
@@ -191,14 +210,4 @@ Fixes:
 New:
 
 - Added a new interface for managing indexes, available through popup menu. 
-- Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
-  for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.
-- Dialogs: one helper for all message boxes. Errors show the error icon, dropping and deleting asks with a warning
-  that names the object and a button named after the action, revoking privileges asks first. Clearer texts and titles
-  (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.
-- Context menus of the database tree are built per node and only show what the server supports (no MySQL, Postgres
-  or SQL Server submenus). New: Open, New query, Users, Export, Import, Indexes and Reload in the menus where they
-  apply; Check and Repair only on MySQL. Right click (ctrl-click on macOS) selects the node under the cursor first.
-- Designer context menus: the empty canvas adds a database, table or note at the click point, selects all, arranges,
-  toggles the grid and opens the model properties. Tables, databases and notes have their own menus (properties,
-  foreign key, link to a database, add a table or note, remove a link, delete), right click selects the object.
+

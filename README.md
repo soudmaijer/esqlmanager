@@ -6,6 +6,8 @@ A graphical database manager written in Java Swing. It started in 2002 as a grad
 
 ![The model designer with a shop database and its tables](docs/designer.png)
 
+![A query tab with highlighted SQL, a result and the completion popup](docs/query.png)
+
 ## Documentation
 
 The user documentation is in [docs/](docs/index.md): [getting started](docs/getting-started.md), [tables and columns](docs/tables-and-columns.md), [SQL query](docs/query.md), [database designer](docs/designer.md) and [settings](docs/settings.md). The same Markdown pages are the help tab of the application.
