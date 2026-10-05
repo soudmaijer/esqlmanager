@@ -213,6 +213,26 @@ public class DesktopUtils {
 		nextY += offsetY;
 	}
 
+	/** Keeps the frames that are not maximized inside the desktop, so a smaller window never hides a title bar outside it. */
+	public static void keepFramesInside(JDesktopPane desktop) {
+		Dimension size = desktop.getSize();
+		if (size.width <= 0 || size.height <= 0) {
+			return;
+		}
+		for (JInternalFrame frame : desktop.getAllFrames()) {
+			if (frame.isMaximum() || frame.isIcon()) {
+				continue;
+			}
+			int width = Math.min(frame.getWidth(), size.width);
+			int height = Math.min(frame.getHeight(), size.height);
+			int x = Math.max(0, Math.min(frame.getX(), size.width - width));
+			int y = Math.max(0, Math.min(frame.getY(), size.height - height));
+			if (x != frame.getX() || y != frame.getY() || width != frame.getWidth() || height != frame.getHeight()) {
+				frame.setBounds(x, y, width, height);
+			}
+		}
+	}
+
 	/** Opens a web page in the system browser. */
 	public static void openInBrowser(java.net.URI uri) {
 		if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {

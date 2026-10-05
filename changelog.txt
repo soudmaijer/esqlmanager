@@ -4,6 +4,8 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Designer frame stays inside the desktop: when the main window gets smaller, a frame that is not maximized is
+  moved and shrunk to fit (DesktopUtils.keepFramesInside), so its title bar and menu stay reachable.
 - Selected tabs stand out: a darker background and the accent underline, also when the focus is elsewhere
   (TabbedPane defaults in settings.Appearance). A tab that is opened is put in front.
 - Status bar per tab: the message below the tabs of a connection window belongs to the tab it is about; switching

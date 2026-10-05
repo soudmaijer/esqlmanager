@@ -280,6 +280,13 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		// DesktopPane.
 		jdp = new JDesktopPane();
 		jdp.setBackground(UIManager.getColor("Desktop.background"));
+		// A designer that is not maximized stays reachable when the main window gets smaller.
+		jdp.addComponentListener(new java.awt.event.ComponentAdapter() {
+			@Override
+			public void componentResized(java.awt.event.ComponentEvent e) {
+				DesktopUtils.keepFramesInside(jdp);
+			}
+		});
 
 		//ScrollPane for tree.
 		jsp = new JScrollPane(jta);
