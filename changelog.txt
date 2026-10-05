@@ -40,6 +40,8 @@ eSQLManager changelog
   screens and follow the colours of the light and dark theme.
 - Output panel: log lines are shown exactly as written (the first line was indented one space less than the others), and the text colour
   follows the theme.
+- Query editor: RSyntaxTextArea replaces the home-made highlighter (SQL highlighting, line numbers, undo and redo), its colours
+  follow the light and dark theme. The output panel is plain text in a monospaced font, syntax.xml is gone.
 - Status bar: the status light is in front of the message ("Ready..."), the connection info is centred.
 - Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
   with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.

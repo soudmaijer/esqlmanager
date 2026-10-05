@@ -5,6 +5,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.ui.EditorTheme;
 import nl.errorsoft.esql.ui.ExtentionFileFilter;
 import nl.errorsoft.esql.ui.ImageLoader;
 
@@ -15,15 +16,15 @@ import nl.errorsoft.esql.domain.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.undo.UndoManager;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class QueryUI extends JDialog implements ActionListener {
 	private static final Logger log = LogManager.getLogger(QueryUI.class);
 
 	private String db;
-	private JTextPane jt;
-	private UndoManager ndo = new UndoManager();
+	private RSyntaxTextArea jt;
 
 	// Internal toolbar
 	private JToolBar tbQuery;
@@ -32,16 +33,14 @@ public class QueryUI extends JDialog implements ActionListener {
 	private JButton btnClose;
 	private JCheckBox closeOnSuccess;
 	private ImageLoader imgLoader;
-	private Syntax syn;
 	private ConnectionWindowCC cwcc;
 	private JComboBox jcb;
 
-	public QueryUI(ConnectionWindowCC cwcc, JFrame parent, Syntax syn, ImageLoader imgLoader, java.util.Vector databases, Database d) {
+	public QueryUI(ConnectionWindowCC cwcc, JFrame parent, ImageLoader imgLoader, java.util.Vector databases, Database d) {
 		super(parent, false);
 
 		// Set vars
 		this.imgLoader = imgLoader;
-		this.syn = syn;
 		this.cwcc = cwcc;
 		this.setTitle("Run SQL query on `" + cwcc.getTitle() + "`");
 
@@ -87,33 +86,18 @@ public class QueryUI extends JDialog implements ActionListener {
 			parent.getLocation().y + (int) ((parent.getSize().height - this.getSize().height) / 2));
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-		jt = new JTextPane();
-		jt.setBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0));
-		jt.getDocument().addDocumentListener(syn);
-
-		/** Listener for edits on a document. */
-		UndoableEditListener undoHandler = new UndoHandler(ndo);
-		jt.getDocument().addUndoableEditListener(undoHandler);
+		jt = new RSyntaxTextArea();
+		jt.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
+		jt.setHighlightCurrentLine(false);
+		jt.setCodeFoldingEnabled(false);
 		jt.setRequestFocusEnabled(true);
 
-		// Key listeners.
-		jt.addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent evt) {
-				if (evt.getKeyCode() == evt.VK_Z && evt.isControlDown()) {
-					if (ndo.canUndo()) {
-						ndo.undo();
-					}
-				} else if (evt.getKeyCode() == evt.VK_Y && evt.isControlDown()) {
-					if (ndo.canRedo()) {
-						ndo.redo();
-					}
-				}
-			}
-		});
-
-		JScrollPane jsp = new JScrollPane(jt);
-		LineNumber lineNumber = new LineNumber(jt);
-		jsp.setRowHeaderView(lineNumber);
+		// RSyntaxTextArea brings undo and redo with the platform keys.
+		RTextScrollPane jsp = new RTextScrollPane(jt);
+		jsp.setLineNumbersEnabled(true);
+		// After the scroll pane exists, so that the theme also colours the line numbers.
+		EditorTheme.install(jt);
+		jsp.setBorder(new javax.swing.border.EmptyBorder(0, 0, 0, 0));
 		this.getContentPane().add(jsp);
 		jt.requestFocus(true);
 
