@@ -1,0 +1,78 @@
+# eSQLManager
+
+Java Swing database manager (originally an Errorsoft graduation project, 2002-2003), modernised to run on Java 25 with Maven. It manages MySQL and PostgreSQL; SQL Server and Oracle have a dialect for browsing only.
+
+## Build, run, test
+
+* Maven wrapper only (`./mvnw`), never Gradle. Java 25 (`maven.compiler.release`), sources are UTF-8.
+* Run: `./mvnw exec:java`. The working directory is `runtime/` (see Configuration below).
+* Test: `./mvnw test`. The tests start Postgres 17 and MySQL 8 with Testcontainers and are skipped without Docker.
+* A GUI cannot be started inside the Claude sandbox (no display). Run harnesses with the sandbox disabled, and verify UI work by painting the root pane to a `BufferedImage` in-process.
+
+## Design decisions
+
+### Database differences live in a Dialect
+
+* `domain/dialect/Dialect` is the single place that knows how a server differs: quoting, string literals, DDL for tables, columns and indexes, paging, switching database, listing databases and tables, table maintenance, and exporting a table definition. `AbstractDialect` holds ANSI/JDBC-metadata behaviour, `MySqlDialect` and `PostgresDialect` override what differs.
+* Callers ask the dialect. Never branch on the server type (`if type == MY_SQL`) outside `domain/dialect`. Adding a database means adding a `Dialect`, a `<driver>` section in `runtime/conf/datatypes.xml`, and a case in `Dialects.forType`.
+* Optional functionality is declared with `Dialect.supports(Feature)`; the controllers show a message when a feature is missing.
+* `UserAdmin` (per dialect, from `Dialect.getUserAdmin()`) holds account and privilege management. MySQL accounts are `user@host` and privileges are GRANT/REVOKE; PostgreSQL accounts are roles, global privileges are role attributes, database and table privileges come from the object ACLs.
+* PostgreSQL has one database per connection: `useDatabase` reconnects. The profile's "Database(s)" field is a filter, and its first entry is the database to connect to (default `postgres`). Tables are looked up in `current_schema()`.
+* The primary key index is always presented as `PRIMARY`, whatever name the server gave it. `Dialect` methods take the quoted/unquoted name and quote it themselves.
+
+### SQL safety
+
+* Identifiers go through `dialect.quote(...)`, values through `dialect.literal(...)` (or `DatabaseConnection.formatFieldValue`, which delegates to it). Never concatenate a raw name or value into a statement. MySQL escapes backslashes in literals, PostgreSQL does not, which is why this is per dialect.
+* Metadata lookups use `PreparedStatement` parameters.
+* An empty cell is SQL `NULL`, not the text "null" (`TableData.isNull()`).
+* Paging on PostgreSQL and MySQL orders by the primary key so that rows do not move after an update.
+* A script written by Export switches database with `\connect` on servers that cannot do it in SQL; Import understands it.
+
+### UI
+
+* Look and feel is FlatLaf (`FlatLightLaf`), with the system look and feel as fallback. The native macOS look was far too slow when resizing.
+* Use Swing only, no AWT widgets (`Label`, `Button`, ...). New dialogs use layout managers, not null layouts with absolute bounds.
+* Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
+* Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.
+* The output panel does not wrap lines (re-wrapping a long log made resizing slow), keeps at most 200000 characters, and the split pane uses continuous layout with `resizeWeight` 1.0.
+* The status bar shows the action on the left and, next to it, the server, account and the last thing the active connection did (`ConnectionWindowCC.showStatusInfo`).
+
+### Logging and output
+
+* log4j2 only, never `System.out`/`System.err`. `OutputPanelAppender` shows log lines in the output panel. Query text is logged at `debug` in `nl.errorsoft.esql.data`.
+* Log connection start, server product/version and driver, so the output explains what happened.
+
+### Configuration and resources
+
+* `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings, syntax), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).
+* `runtime/conf/profiles.xml` must not contain passwords or local test profiles when committed.
+* JDBC drivers come from Maven Central, no jars in the repository.
+* Images, HTML and `log4j2.xml` are in `src/main/resources`. Images are loaded through `ImageLoader` (cached, paths relative to the classpath root).
+* There is no licensing, registration or auto-update any more; do not reintroduce them.
+
+### Code style
+
+* Match the surrounding code. Most sources use tabs and CRLF line endings; new files use LF. Keep each file's existing line endings when editing.
+* Resources are closed with try-with-resources. No deprecated API in new code (`new Integer`, `Dialog.show()`, ...).
+* No em-dashes in prose or documentation.
+
+## Tests
+
+* `DialectContractTest` runs the same scenarios against every dialect: create and alter tables, indexes, export and import, editing data with hostile text, user management, creating databases. `PostgresDialectTest` and `MySqlDialectTest` supply the container. A new dialect gets a subclass.
+* Prefer a real database over mocks for anything that produces SQL.
+
+## Target architecture (agreed direction, not implemented yet)
+
+The code is still layered by technical type (`gui`, `control`, `domain`, `data`) with domain classes that also run SQL. The agreed target:
+
+* Package by feature (functional packaging), for example `connection`, `database`, `table`, `data` (row editing), `index`, `importexport`, `designer`, `user`, `query`.
+* Inside each feature the layers are strictly UI -> Controller -> Service -> Repository. The UI has no business logic and does not touch JDBC. Controllers translate UI events into service calls. Services hold application logic. Repositories are the only place that runs SQL, and they ask the `Dialect` for the SQL that differs. Dependencies point downwards only.
+* Swing classes only in UI packages. Domain types (`Table`, `TableColumn`, `DatabaseUser`, ...) are plain data without a connection.
+* Do this in steps, one feature at a time, keeping the contract tests green. Start by moving what `Table` does (columns, indexes, data, DDL) into a repository and a service.
+
+## Known technical debt
+
+* Raw `Vector` and other raw types (about 100 lint warnings), `java.util.Observable`/`Observer` for progress reporting.
+* Many dialogs still use null layouts (`ConnectionWindowUI`, `CreateTable`, `IndexesUI`, ...).
+* Domain classes mix data, behaviour and SQL (`Table`, `Database`, `Export`, `Import`, `UDData`).
+* SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.

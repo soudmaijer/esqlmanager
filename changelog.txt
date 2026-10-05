@@ -23,6 +23,34 @@ Fixes:
 
 Changes (since):
 
+Modernisation (Maven, Java 25, PostgreSQL support)
+
+- Build: Maven with the Maven wrapper, standard src/main/java and src/main/resources layout, Java 25, UTF-8 sources.
+  The old dist and lib folders are gone, JDBC drivers (MySQL, PostgreSQL, SQL Server, Oracle) come from Maven Central.
+- Packages: merged esql and nl.errorsoft into nl.errorsoft.esql, the database designer lives under it as dbcreator.
+- Runtime files (conf, credits) are grouped in runtime/, passwords are no longer part of the committed profiles.
+- Dialect layer: everything that differs per database (quoting, literals, DDL, paging, switching database,
+  maintenance, export, process list, status, users) is decided by a Dialect. Callers no longer check the server type.
+- PostgreSQL support with the right defaults (port 5432, user postgres). All features work on PostgreSQL and MySQL:
+  create/modify/drop tables, columns and indexes, import and export as SQL, database designer, user manager
+  (roles and privileges), process list, server status and variables, table maintenance (VACUUM, ANALYZE).
+- User manager rebuilt: a UserAdmin per dialect and a new window. It works on MySQL 8, which the old one did not
+  (it wrote into the mysql.user table).
+- Generated SQL: values are escaped per database and names are quoted by the dialect. The WHERE clause that finds a
+  row for editing, deleting and uploading is built in one place. An empty cell is stored as NULL, not as the text "null".
+- Paging orders by the primary key, so rows no longer move after an update on PostgreSQL.
+- Export/import: one code path, UTF-8, NULL values, auto numbering continues after an import on PostgreSQL.
+- Logging with Log4j 2 instead of System.out, with connection details and queries in the output panel.
+- Look and feel: FlatLaf instead of the native macOS look, which made resizing very slow. Resizing the window and the
+  output panel is fast, the output panel scales with its panel, has a vertical scrollbar and no longer wraps lines.
+- Status bar shows the server, the account and the last action (rows loaded, time taken) instead of a copyright text.
+- Data grids show subtle grid lines and size their columns to the content.
+- Removed: license and registration checks, the auto-updater and its dialog, the dynamic class loader, old unused
+  files and commented out code.
+- Cleaned up: resources are closed with try-with-resources, deprecated API calls replaced.
+- Tests: JUnit and Testcontainers run the same scenarios against PostgreSQL 17 and MySQL 8.
+- Documentation: README with a feature list per database and a screenshot, CLAUDE.md with the design decisions.
+
 build #64 - RC3
 
 - Added a VM version check, VM`s lower than 1.4 won`t be accepted and an error is thrown.
