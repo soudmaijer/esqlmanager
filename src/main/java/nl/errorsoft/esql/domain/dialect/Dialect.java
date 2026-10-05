@@ -24,7 +24,7 @@ public interface Dialect {
 
 	/** Optional functionality that not every database has an implementation for. */
 	enum Feature {
-		DESIGNER, USER_MANAGER, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS
+		DESIGNER, USER_MANAGER, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS, FOREIGN_KEYS
 	}
 
 	int getType();
@@ -89,6 +89,23 @@ public interface Dialect {
 	List<String> dropIndexSql(DatabaseConnection dbc, String table, String name) throws SQLException;
 
 	List<String> modifyIndexSql(DatabaseConnection dbc, String table, String name, String type, List<String> columns) throws SQLException;
+
+	/**
+	 * Adds a foreign key constraint.
+	 * @param onDelete NO ACTION, CASCADE, SET NULL, RESTRICT or SET DEFAULT, empty for the server default.
+	 * @param onUpdate as onDelete.
+	 * @throws nl.errorsoft.esql.domain.EsqlException when an action is not one of the allowed ones.
+	 */
+	List<String> addForeignKeySql(String table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
+		String onUpdate);
+
+	List<String> dropForeignKeySql(String table, String name);
+
+	/**
+	 * Checks that the table can hold a foreign key, before one is added.
+	 * @throws nl.errorsoft.esql.domain.EsqlException when it can't, such as a MySQL table that is not InnoDB.
+	 */
+	void checkForeignKeyTable(DatabaseConnection dbc, String table) throws SQLException;
 
 	/**
 	 * Runs a maintenance command on a table.

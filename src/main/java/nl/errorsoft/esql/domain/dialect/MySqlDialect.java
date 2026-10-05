@@ -2,6 +2,7 @@ package nl.errorsoft.esql.domain.dialect;
 
 import nl.errorsoft.esql.table.*;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.CreateColumn;
+import nl.errorsoft.esql.domain.EsqlException;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.connection.ServerProcess;
 import nl.errorsoft.esql.connection.ServerType;
@@ -173,6 +175,25 @@ public class MySqlDialect extends AbstractDialect {
 		String add = addIndexSql(table, name, type, columns).get(0).substring(("ALTER TABLE " + quote(table) + " ").length());
 
 		return Arrays.asList("ALTER TABLE " + quote(table) + " " + drop + ", " + add);
+	}
+
+	public List<String> dropForeignKeySql(String table, String name) {
+		return Arrays.asList("ALTER TABLE " + quote(table) + " DROP FOREIGN KEY " + quote(name));
+	}
+
+	/** Only InnoDB enforces foreign keys, other engines accept the statement and silently ignore the key. */
+	public void checkForeignKeyTable(DatabaseConnection dbc, String table) throws SQLException {
+		String sql = "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
+
+		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
+			ps.setString(1, table);
+
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next() && !"InnoDB".equalsIgnoreCase(rs.getString(1))) {
+					throw new EsqlException("Table " + table + " uses the " + rs.getString(1) + " engine, foreign keys need InnoDB.");
+				}
+			}
+		}
 	}
 
 	protected String columnDefinition(CreateColumn column) {

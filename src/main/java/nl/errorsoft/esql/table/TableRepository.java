@@ -193,6 +193,36 @@ public class TableRepository extends AbstractRepository {
 		executeAll(dialect().dropIndexSql(dbc, table.getName(), name));
 	}
 
+	// Foreign keys
+
+	public void addForeignKey(Table table, TableForeignKey key) throws Exception {
+		useDatabaseOf(table);
+		dialect().checkForeignKeyTable(dbc, table.getName());
+		executeAll(dialect().addForeignKeySql(table.getName(), key.name(), key.columns(), key.referencedTable(), key.referencedColumns(), key.onDelete(),
+			key.onUpdate()));
+	}
+
+	public void dropForeignKey(Table table, String name) throws Exception {
+		useDatabaseOf(table);
+		executeAll(dialect().dropForeignKeySql(table.getName(), name));
+	}
+
+	/** The names of the foreign keys the table has on other tables. */
+	public List<String> loadForeignKeyNames(Table table) throws SQLException {
+		useDatabaseOf(table);
+		List<String> names = new ArrayList<>();
+
+		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName())) {
+			while (rs.next()) {
+				String name = rs.getString("FK_NAME");
+				if (name != null && !names.contains(name)) {
+					names.add(name);
+				}
+			}
+		}
+		return names;
+	}
+
 	// Rows
 
 	/** Reads one page of rows and sets the row count and the column metadata on the table. The columns must be loaded first. */

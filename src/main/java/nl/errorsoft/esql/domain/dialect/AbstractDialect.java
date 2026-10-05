@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
+import nl.errorsoft.esql.domain.EsqlException;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.connection.ServerProcess;
 import nl.errorsoft.esql.table.Table;
@@ -22,6 +24,9 @@ import nl.errorsoft.esql.table.Table;
  * Plain JDBC and ANSI SQL behaviour that works on any database. Dialects override what is different.
  */
 public abstract class AbstractDialect implements Dialect {
+	/** The referential actions a foreign key may have, anything else is refused so no text from a model ends up in a statement. */
+	private static final Set<String> REFERENTIAL_ACTIONS = Set.of("NO ACTION", "CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT");
+
 	public boolean supports(Feature feature) {
 		return false;
 	}
@@ -164,6 +169,42 @@ public abstract class AbstractDialect implements Dialect {
 		List<String> statements = new ArrayList<>(dropIndexSql(dbc, table, name));
 		statements.addAll(addIndexSql(table, name, type, columns));
 		return statements;
+	}
+
+	public List<String> addForeignKeySql(String table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
+		String onUpdate) {
+		String statement = "ALTER TABLE " + quote(table) + " ADD CONSTRAINT " + quote(name) + " FOREIGN KEY (" + quoteAll(columns) + ") REFERENCES "
+			+ quote(refTable) + " (" + quoteAll(refColumns) + ")" + referentialAction("ON DELETE", onDelete) + referentialAction("ON UPDATE", onUpdate);
+
+		return Arrays.asList(statement);
+	}
+
+	public List<String> dropForeignKeySql(String table, String name) {
+		return Arrays.asList("ALTER TABLE " + quote(table) + " DROP CONSTRAINT " + quote(name));
+	}
+
+	public void checkForeignKeyTable(DatabaseConnection dbc, String table) throws SQLException {
+	}
+
+	private String referentialAction(String clause, String action) {
+		if (action == null || action.isBlank()) {
+			return "";
+		}
+
+		String normalised = action.trim().toUpperCase().replaceAll("\\s+", " ");
+		if (!REFERENTIAL_ACTIONS.contains(normalised)) {
+			throw new EsqlException("'" + action + "' is not a foreign key action, use one of NO ACTION, CASCADE, SET NULL, RESTRICT or SET DEFAULT.");
+		}
+		return " " + clause + " " + normalised;
+	}
+
+	private String quoteAll(List<String> names) {
+		List<String> quoted = new ArrayList<>();
+
+		for (String name : names) {
+			quoted.add(quote(name));
+		}
+		return String.join(", ", quoted);
 	}
 
 	public List<String> afterDataLoadSql(DatabaseConnection dbc, String table) throws SQLException {

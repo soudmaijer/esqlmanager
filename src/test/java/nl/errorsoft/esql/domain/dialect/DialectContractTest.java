@@ -5,6 +5,7 @@ import nl.errorsoft.esql.connection.ServerProcess;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -27,6 +28,10 @@ import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableIndex;
+import nl.errorsoft.esql.table.TableForeignKey;
+import nl.errorsoft.esql.domain.EsqlException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicReference;
 import nl.errorsoft.esql.domain.ProgressListener;
@@ -222,6 +227,48 @@ abstract class DialectContractTest {
 		assertNotNull(service().optimizeTable(table));
 		assertNotNull(service().analyseTable(table));
 		service().dropTable(table);
+	}
+
+	@Test
+	void addsAndDropsForeignKeys() throws Exception {
+		assertTrue(dialect.supports(Dialect.Feature.FOREIGN_KEYS));
+		String parent = "fk_parent_" + System.nanoTime();
+		String child = "fk_child_" + System.nanoTime();
+		createTable(parent, "");
+		CreateColumn id = new CreateColumn("id");
+		id.type = INTEGER;
+		id.primary = true;
+		id.notnull = true;
+		CreateColumn parentId = new CreateColumn("parent_id");
+		parentId.type = INTEGER;
+		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
+		service().createTable(database, child, Arrays.asList(id, parentId), engine, "");
+		Table childTable = table(child);
+
+		service().addForeignKey(childTable, new TableForeignKey("fk_child_parent", List.of("parent_id"), parent, List.of("id"), "cascade", "NO ACTION"));
+
+		try (ResultSet rs = connection.getConnection().getMetaData().getImportedKeys(connection.getConnection().getCatalog(), connection.getSchema(),
+			child)) {
+			assertTrue(rs.next());
+			assertEquals(parent, rs.getString("PKTABLE_NAME"));
+			assertEquals("parent_id", rs.getString("FKCOLUMN_NAME"));
+			assertEquals("id", rs.getString("PKCOLUMN_NAME"));
+		}
+		assertEquals(List.of("fk_child_parent"), service().foreignKeyNames(childTable));
+		assertThrows(SQLException.class, () -> connection.executeUpdate("INSERT INTO " + dialect.quote(child) + " VALUES (1, 999)"));
+
+		service().dropForeignKey(childTable, "fk_child_parent");
+		assertTrue(service().foreignKeyNames(childTable).isEmpty());
+		connection.executeUpdate("INSERT INTO " + dialect.quote(child) + " VALUES (1, 999)");
+
+		service().dropTable(childTable);
+		service().dropTable(table(parent));
+	}
+
+	@Test
+	void refusesUnknownForeignKeyActions() {
+		assertThrows(EsqlException.class, () -> dialect.addForeignKeySql("a", "fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", ""));
+		assertFalse(dialect.addForeignKeySql("a", "fk", List.of("b"), "c", List.of("d"), "", null).get(0).contains("ON "));
 	}
 
 	private void createTable(String name, String comment) throws Exception {

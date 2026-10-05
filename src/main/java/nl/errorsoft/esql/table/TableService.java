@@ -165,6 +165,24 @@ public class TableService {
 		return names;
 	}
 
+	// Foreign keys
+
+	public void addForeignKey(Table table, TableForeignKey key) throws Exception {
+		if (key.columns().isEmpty() || key.columns().size() != key.referencedColumns().size()) {
+			throw new EsqlException("Foreign key " + key.name() + " needs as many referenced columns as columns, and at least one.");
+		}
+
+		repository.addForeignKey(table, key);
+	}
+
+	public void dropForeignKey(Table table, String name) throws Exception {
+		repository.dropForeignKey(table, name);
+	}
+
+	public List<String> foreignKeyNames(Table table) throws Exception {
+		return repository.loadForeignKeyNames(table);
+	}
+
 	// Rows
 
 	/** Loads the columns, indexes and row count of the table and returns one page of its rows. */

@@ -111,7 +111,8 @@ public class PostgresDialect extends AbstractDialect {
 
 	public boolean supports(Feature feature) {
 		return feature == Feature.DESIGNER || feature == Feature.PROCESS_LIST || feature == Feature.SERVER_STATUS || feature == Feature.USER_MANAGER
-			|| feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT;
+			|| feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT
+			|| feature == Feature.FOREIGN_KEYS;
 	}
 
 	/** The profile's database list is a filter, so the first entry is where we connect to. */
