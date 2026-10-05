@@ -52,7 +52,7 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
  * are at the bottom; the tab asks before it discards changes.
  */
 public class TableEditorTab extends JPanel implements EditorTab {
-	private static final String[] COLUMN_TITLES = {"Name", "Type", "Length", "Not null", "Primary Key", "Auto Increment", "Default"};
+	private static final String[] COLUMN_TITLES = {"Name", "Type", "Length", "Not null", "Primary key", "Auto increment", "Default"};
 	private static final int NAME = 0;
 	private static final int TYPE = 1;
 	private static final int LENGTH = 2;
@@ -87,9 +87,9 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final JTextField length = new JTextField(16);
 	private final JTextField defaultval = new JTextField(16);
 	private final JTextField columnComment = new JTextField(16);
-	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary Key");
+	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary key");
 	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "Not &null");
-	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "Auto &Increment");
+	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "Auto &increment");
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "Unsi&gned");
 	private final JComponent[] columnFields;
 	private final JLabel problem = new JLabel(" ");
@@ -245,7 +245,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		Forms.Grid grid = new Forms.Grid();
 		grid.row("Col&umn name:", columnName).row("Typ&e:", columnType).row("&Length:", length).row("De&fault:", defaultval);
 		if (createTableController.supportsColumnComments()) {
-			grid.row("Comment:", columnComment);
+			grid.row("C&omment:", columnComment);
 		}
 		grid.full(checks);
 		columnGroup.add(grid.panel(), BorderLayout.CENTER);
@@ -279,8 +279,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	}
 
 	private JPanel bottom() {
-		Color red = UIManager.getColor("Actions.Red");
-		problem.setForeground(red != null ? red : Color.RED);
+		problem.setForeground(Forms.errorColor());
 		save.addActionListener(e -> save());
 		cancel.addActionListener(e -> createTableController.cancel(this));
 

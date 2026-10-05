@@ -7,7 +7,6 @@ import nl.errorsoft.esql.table.Table;
 
 import nl.errorsoft.esql.database.Database;
 
-import java.awt.AWTEvent;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -18,8 +17,6 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
-import java.awt.Toolkit;
-import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -40,15 +37,16 @@ import nl.errorsoft.esql.ui.util.ToolbarButtons;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
-public class DesignerCanvas extends JLayeredPane implements MouseListener, MouseMotionListener, ActionListener, AWTEventListener { //	Model for this component
+public class DesignerCanvas extends JLayeredPane implements MouseListener, MouseMotionListener, ActionListener { //	Model for this component
 	private Model model;
 
 	// DesignerCanvasController
-	private DesignerCanvasController canvasController;
+	private final DesignerCanvasController canvasController;
 
 	// Variables for positioning
 	private int srcx = 0;
@@ -139,26 +137,24 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		attach_comment.setEnabled(false);
 		show_properties.setEnabled(false);
 
-		attach_table.addMouseListener(this);
-		attach_comment.addMouseListener(this);
+		attach_table.addActionListener(e -> attachTable());
+		attach_comment.addActionListener(e -> attachNote());
 		create_database.addActionListener(this);
 		create_table.addActionListener(this);
 		create_comment.addActionListener(this);
 		show_properties.addActionListener(this);
 		show_model_properties.addActionListener(this);
 
-		Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.KEY_EVENT_MASK);
+		btn_add_database.setIcon(ApplicationContext.get().imageLoader().getIcon("add_database"));
+		btn_add_table.setIcon(ApplicationContext.get().imageLoader().getIcon("add_table"));
+		btn_add_comment.setIcon(ApplicationContext.get().imageLoader().getIcon("add_comment"));
+		btn_properties.setIcon(ApplicationContext.get().imageLoader().getIcon("des_properties"));
 
-		btn_add_database.setIcon(canvasController.getImageList().getIcon("add_database"));
-		btn_add_table.setIcon(canvasController.getImageList().getIcon("add_table"));
-		btn_add_comment.setIcon(canvasController.getImageList().getIcon("add_comment"));
-		btn_properties.setIcon(canvasController.getImageList().getIcon("des_properties"));
+		btn_new.setIcon(ApplicationContext.get().imageLoader().getIcon("des_new"));
+		btn_save.setIcon(ApplicationContext.get().imageLoader().getIcon("des_save"));
+		btn_open.setIcon(ApplicationContext.get().imageLoader().getIcon("des_open"));
 
-		btn_new.setIcon(canvasController.getImageList().getIcon("des_new"));
-		btn_save.setIcon(canvasController.getImageList().getIcon("des_save"));
-		btn_open.setIcon(canvasController.getImageList().getIcon("des_open"));
-
-		btn_export.setIcon(canvasController.getImageList().getIcon("des_check"));
+		btn_export.setIcon(ApplicationContext.get().imageLoader().getIcon("des_check"));
 
 		btn_add_database.setToolTipText("Add new database");
 		btn_add_table.setToolTipText("Add new table");
@@ -246,9 +242,12 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public void showModelProperties() {
 		model.lock();
-		canvasController.showModelPropertiesDialog(model);
-		canvasController.updateTitle();
-		model.unlock();
+		try {
+			canvasController.showModelPropertiesDialog(model);
+			canvasController.updateTitle();
+		} finally {
+			model.unlock();
+		}
 	}
 
 	/*
@@ -470,10 +469,6 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return first;
 	}
 
-	private static java.awt.Window windowOf(Component component) {
-		return component instanceof java.awt.Window window ? window : SwingUtilities.getWindowAncestor(component);
-	}
-
 	private static String firstColumnOf(TableObject table) {
 		DesignerColumn[] fields = table.getFields();
 		return fields.length == 0 ? "" : fields[0].getName();
@@ -606,14 +601,40 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public boolean showProperties() {
 		model.lock();
-		List<ModelObject> v = this.getModel().getSelectedObjects();
-		if (v.size() == 1 && (v.get(0) instanceof DatabaseObject || v.get(0) instanceof TableObject)) {
-			canvasController.showPropertiesDialog(model.getSelectedObjects());
-			model.unlock();
-			return true;
-		} else {
-			model.unlock();
+		try {
+			List<ModelObject> v = this.getModel().getSelectedObjects();
+			if (v.size() == 1 && (v.get(0) instanceof DatabaseObject || v.get(0) instanceof TableObject)) {
+				canvasController.showPropertiesDialog(model.getSelectedObjects());
+				return true;
+			}
 			return false;
+		} finally {
+			model.unlock();
+		}
+	}
+
+	/** Model > Attach table (F4): a new table linked to the selected database. */
+	private void attachTable() {
+		List<ModelObject> v = this.getModel().getSelectedObjects();
+		if (!placemode && v.size() == 1 && v.get(0) instanceof DatabaseObject database) {
+			this.createTableObject("New Table", database);
+		}
+	}
+
+	/** Model > Attach comment (F5): a new note linked to the selected object. */
+	private void attachNote() {
+		List<ModelObject> v = this.getModel().getSelectedObjects();
+		if (!placemode && v.size() == 1) {
+			this.createCommentObject("New comment", v.get(0));
+		}
+	}
+
+	/** Edit > Delete selected (Delete): the selected connector, or else the selected cards. */
+	public void deleteSelection() {
+		if (selectedKey != null) {
+			removeForeignKey(selectedKey);
+		} else {
+			removeSelectedObjects();
 		}
 	}
 
@@ -666,21 +687,6 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			return;
 		}
 		if (!placemode) {
-			if (e.getSource() instanceof JMenuItem) {
-				JMenuItem tmp = (JMenuItem) e.getSource();
-				if (tmp == attach_table && attach_table.isEnabled()) {
-					List<ModelObject> v = this.getModel().getSelectedObjects();
-					if (v.size() == 1 && v.get(0) instanceof DatabaseObject) {
-						this.createTableObject("New Table", (DatabaseObject) v.get(0));
-					}
-				} else if (tmp == attach_comment && attach_comment.isEnabled()) {
-					List<ModelObject> v = this.getModel().getSelectedObjects();
-					if (v.size() == 1 && v.get(0) instanceof ModelObject) {
-						this.createCommentObject("New comment", (ModelObject) v.get(0));
-					}
-				}
-			}
-
 			if (e.getSource() instanceof DesignerCanvas) {
 				Rectangle rect = new Rectangle(xpos, ypos, w, h);
 				Component[] cmps = this.getComponents();
@@ -782,10 +788,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		} else if (e.getSource() == show_properties || e.getSource() == btn_properties) {
 			boolean b = this.showProperties();
 			if (e.getSource() == btn_properties && !b) {
-				model.lock();
-				canvasController.showModelPropertiesDialog(this.getModel());
-				canvasController.updateTitle();
-				model.unlock();
+				showModelProperties();
 			}
 		} else if (e.getSource() == show_model_properties) {
 			showModelProperties();
@@ -944,7 +947,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private JMenuItem item(String text, String icon, Runnable action) {
 		JMenuItem item = new JMenuItem(text);
 		if (icon != null) {
-			item.setIcon(canvasController.getImageList().getIcon(icon));
+			item.setIcon(ApplicationContext.get().imageLoader().getIcon(icon));
 		}
 		item.addActionListener(e -> action.run());
 		return item;
@@ -991,50 +994,6 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				hoveredKey = key;
 				setToolTipText(key == null ? null : key.name());
 				repaint();
-			}
-		}
-	}
-
-	public void eventDispatched(AWTEvent event) {
-		KeyEvent e = (KeyEvent) event;
-		// Keys typed in another window (a dialog of the designer, the main window) are not meant for the model.
-		if (e.getComponent() == null || windowOf(e.getComponent()) != windowOf(this)) {
-			return;
-		}
-		if (e.getID() == 401) {
-			if (e.isControlDown() && e.getKeyCode() == e.VK_A) {
-				this.getModel().selectAll();
-			}
-			if (e.isControlDown() && e.getKeyCode() == e.VK_D) {
-				this.getModel().deselectAll();
-			}
-			if (e.isControlDown() && e.getKeyCode() == e.VK_O) {
-				canvasController.openModel();
-			}
-			if (e.getKeyCode() == e.VK_DELETE) {
-				if (selectedKey != null) {
-					removeForeignKey(selectedKey);
-				} else {
-					this.removeSelectedObjects();
-				}
-			}
-			if (e.isControlDown() && e.getKeyCode() == e.VK_S) {
-				canvasController.saveModel(true);
-			}
-			if (e.isControlDown() && e.getKeyCode() == e.VK_N) {
-				canvasController.newModel();
-			}
-			if (e.getKeyCode() == e.VK_F4) {
-				List<ModelObject> v = this.getModel().getSelectedObjects();
-				if (v.size() == 1 && v.get(0) instanceof DatabaseObject) {
-					this.createTableObject("New Table", (DatabaseObject) v.get(0));
-				}
-			}
-			if (e.getKeyCode() == e.VK_F5) {
-				List<ModelObject> v = this.getModel().getSelectedObjects();
-				if (v.size() == 1 && v.get(0) instanceof ModelObject) {
-					this.createCommentObject("New comment", (ModelObject) v.get(0));
-				}
 			}
 		}
 	}

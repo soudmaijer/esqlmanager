@@ -17,7 +17,6 @@ import nl.errorsoft.esql.designer.ui.diagram.ModelBrowserPanel;
 import nl.errorsoft.esql.designer.ui.diagram.ModelFileFilter;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerCanvas;
 import nl.errorsoft.esql.designer.ui.dialog.DesignerPropertiesDialog;
-import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 /** The model designer, an internal frame on the desktop of the main window next to the connection windows. */
-public class DesignerWindow extends JInternalFrame implements MouseListener {
+public class DesignerWindow extends JInternalFrame {
 	private JMenuBar menu;
 	private static final Logger log = LogManager.getLogger(DesignerWindow.class);
 
@@ -135,14 +134,21 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 		edit_del.setMnemonic('L');
 		edit_del.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
-		file_opn.addMouseListener(this);
-		file_ext.addMouseListener(this);
-		edit_sla.addMouseListener(this);
-		edit_dsa.addMouseListener(this);
-		edit_del.addMouseListener(this);
-		file_sav.addMouseListener(this);
-		file_sva.addMouseListener(this);
-		file_new.addMouseListener(this);
+		// Action listeners, so that the keyboard (mnemonics and the accelerators above) works as well as the mouse.
+		file_new.addActionListener(e -> andUpdateTitle(this::newModel));
+		file_opn.addActionListener(e -> andUpdateTitle(this::openWithSave));
+		file_sav.addActionListener(e -> andUpdateTitle(() -> saveCurrentModel(true)));
+		file_sva.addActionListener(e -> andUpdateTitle(() -> saveCurrentModel(false)));
+		file_ext.addActionListener(e -> close());
+		edit_sla.addActionListener(e -> {
+			canvas.getModel().selectAll();
+			canvas.repaint();
+		});
+		edit_dsa.addActionListener(e -> {
+			canvas.getModel().deselectAll();
+			canvas.repaint();
+		});
+		edit_del.addActionListener(e -> canvas.deleteSelection());
 
 		file_plantuml.addActionListener(e -> exportDiagram("PlantUML", "puml", DiagramExporter::plantUml));
 		file_mermaid.addActionListener(e -> exportDiagram("Mermaid", "mmd", DiagramExporter::mermaid));
@@ -307,48 +313,16 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 		canvas.resetModel();
 	}
 
-	public ImageLoader getImageList() {
-		return ApplicationContext.get().imageLoader();
+	/** File > Open: asks to save the current model first. */
+	private void openWithSave() {
+		Dialogs.SaveChoice choice = Dialogs.askSave(this, "Open model", "Save model '" + canvas.getModel().getName() + "' first?");
+		if (choice == Dialogs.SaveChoice.DISCARD || (choice == Dialogs.SaveChoice.SAVE && saveCurrentModel(true))) {
+			openModel();
+		}
 	}
 
-	public void mousePressed(MouseEvent e) {
-	}
-	public void mouseClicked(MouseEvent e) {
-	}
-	public void mouseEntered(MouseEvent e) {
-	}
-	public void mouseExited(MouseEvent e) {
-	}
-	public void mouseReleased(MouseEvent e) {
-		if (e.getSource() == file_ext) {
-			close();
-			return;
-		}
-		if (e.getSource() == file_new) {
-			newModel();
-		}
-		if (e.getSource() == file_opn) {
-			Dialogs.SaveChoice choice = Dialogs.askSave(this, "Open model", "Save model '" + canvas.getModel().getName() + "' first?");
-			boolean saved = choice == Dialogs.SaveChoice.DISCARD || (choice == Dialogs.SaveChoice.SAVE && saveCurrentModel(true));
-			if (saved) {
-				openModel();
-			}
-		}
-		if (e.getSource() == edit_sla) {
-			canvas.getModel().selectAll();
-		}
-		if (e.getSource() == edit_dsa) {
-			canvas.getModel().deselectAll();
-		}
-		if (e.getSource() == edit_del) {
-			canvas.removeSelectedObjects();
-		}
-		if (e.getSource() == file_sav) {
-			saveCurrentModel(true);
-		}
-		if (e.getSource() == file_sva) {
-			saveCurrentModel(false);
-		}
+	private void andUpdateTitle(Runnable action) {
+		action.run();
 		updateTitle();
 	}
 }

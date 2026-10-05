@@ -46,7 +46,7 @@ public class HelpPanel extends JEditorPane {
 		page = name;
 		boolean dark = FlatLaf.isLafDark();
 		// FlatLaf paints a read-only pane grey, the page has the background of its stylesheet.
-		setBackground(dark ? new Color(0x1e1f22) : Color.white);
+		setBackground(Color.decode(dark ? HelpPages.DARK_BACKGROUND : HelpPages.LIGHT_BACKGROUND));
 		try {
 			HTMLEditorKit kit = (HTMLEditorKit) getEditorKit();
 			HTMLDocument document = (HTMLDocument) kit.createDefaultDocument();

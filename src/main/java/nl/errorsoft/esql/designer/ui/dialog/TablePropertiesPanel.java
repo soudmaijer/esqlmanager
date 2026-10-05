@@ -19,6 +19,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -54,10 +55,10 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	private final JTextField txt_default = new JTextField();
 	private final JTextArea txt_fieldcomm = new JTextArea();
 
-	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary Key");
+	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary key");
 	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "N&ot null");
 	private final JCheckBox unique = Forms.mnemonic(new JCheckBox(), "&Unique");
-	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "&Auto Increment");
+	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "&Auto increment");
 	private final JCheckBox index = Forms.mnemonic(new JCheckBox(), "&Index");
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "U&nsigned");
 	private final JCheckBox binary = Forms.mnemonic(new JCheckBox(), "&Binary");
@@ -68,7 +69,9 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	/** True while the form is filled from a field, so that filling it does not write back. */
 	private boolean loading;
 
-	private final JList<DesignerForeignKey> lst_keys = new JList<>();
+	private final JList<DesignerForeignKey> lst_keys = new JList<>(new DefaultListModel<>());
+	/** The foreign keys of this table as they were, and as edited in the tab; the model gets the edited ones on OK, Cancel leaves it alone. */
+	private final List<DesignerForeignKey> keysBefore = new ArrayList<>();
 
 	private final TableObject tb;
 
@@ -435,11 +438,15 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		}
 	}
 
-	/** The foreign keys of this table on other tables. A change is made in the model straight away. */
+	/** The foreign keys of this table on other tables. Changes are kept in the tab and reach the model on OK. */
 	private JPanel foreignKeysTab() {
-		JPanel panel = new JPanel(new BorderLayout(0, 6));
-		panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-		panel.add(new JScrollPane(lst_keys), BorderLayout.CENTER);
+		for (DesignerForeignKey key : model.foreignKeysOf(tb)) {
+			if (key.from() == tb) {
+				keysBefore.add(key);
+				keys().addElement(key);
+			}
+		}
+		lst_keys.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		lst_keys.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int i, boolean selected, boolean focus) {
@@ -450,63 +457,84 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			}
 		});
 
-		JButton add = new JButton("Add...");
-		JButton edit = new JButton("Edit...");
-		JButton remove = new JButton("Remove");
-		add.addActionListener(e -> {
-			DesignerColumn[] f = tb.getFields();
-			String column = f.length == 0 ? "" : f[0].getName();
-			TableObject parent = tb;
-			for (Object object : model.getObjects()) {
-				if (object instanceof TableObject other && other != tb) {
-					parent = other;
-					break;
-				}
-			}
-			DesignerForeignKey key = ForeignKeyDialog.edit(this, model,
-				new DesignerForeignKey(tb, column.isEmpty() ? java.util.List.of() : java.util.List.of(column), parent,
-					java.util.List.of(), "", "", ""));
-			if (key != null) {
-				model.addForeignKey(key);
-			}
-			refreshKeys();
-		});
-		edit.addActionListener(e -> {
-			DesignerForeignKey key = lst_keys.getSelectedValue();
-			if (key != null) {
-				DesignerForeignKey edited = ForeignKeyDialog.edit(this, model, key);
-				if (edited != null) {
-					model.removeForeignKey(key);
-					model.addForeignKey(edited);
-				}
-				refreshKeys();
-			}
-		});
-		remove.addActionListener(e -> {
-			DesignerForeignKey key = lst_keys.getSelectedValue();
-			if (key != null) {
-				model.removeForeignKey(key);
-				refreshKeys();
-			}
-		});
+		JButton add = Forms.button("Add &key...");
+		JButton edit = Forms.button("&Edit...");
+		JButton remove = Forms.button("Remo&ve");
+		add.addActionListener(e -> addKey());
+		edit.addActionListener(e -> editKey());
+		remove.addActionListener(e -> removeKey());
+		Runnable enable = () -> {
+			edit.setEnabled(lst_keys.getSelectedValue() != null);
+			remove.setEnabled(lst_keys.getSelectedValue() != null);
+		};
+		lst_keys.addListSelectionListener(e -> enable.run());
+		enable.run();
 
-		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+		// Lined up with the list: no gap before the first button.
+		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		buttons.add(add);
+		buttons.add(javax.swing.Box.createHorizontalStrut(Forms.GAP));
 		buttons.add(edit);
+		buttons.add(javax.swing.Box.createHorizontalStrut(Forms.GAP));
 		buttons.add(remove);
+
+		JPanel panel = Forms.padded(new JPanel(new BorderLayout(0, Forms.GAP)));
+		panel.add(new JLabel("Foreign keys of this table:"), BorderLayout.NORTH);
+		panel.add(new JScrollPane(lst_keys), BorderLayout.CENTER);
 		panel.add(buttons, BorderLayout.SOUTH);
-		refreshKeys();
 		return panel;
 	}
 
-	private void refreshKeys() {
-		DefaultListModel<DesignerForeignKey> keys = new DefaultListModel<>();
-		for (DesignerForeignKey key : model.foreignKeysOf(tb)) {
-			if (key.from() == tb) {
-				keys.addElement(key);
+	private DefaultListModel<DesignerForeignKey> keys() {
+		return (DefaultListModel<DesignerForeignKey>) lst_keys.getModel();
+	}
+
+	private void addKey() {
+		DesignerColumn[] f = tb.getFields();
+		String column = f.length == 0 ? "" : f[0].getName();
+		TableObject parent = tb;
+		for (Object object : model.getObjects()) {
+			if (object instanceof TableObject other && other != tb) {
+				parent = other;
+				break;
 			}
 		}
-		lst_keys.setModel(keys);
+		DesignerForeignKey key = ForeignKeyDialog.edit(this, model,
+			new DesignerForeignKey(tb, column.isEmpty() ? List.of() : List.of(column), parent, List.of(), "", "", ""));
+		if (key != null) {
+			keys().addElement(key);
+			lst_keys.setSelectedValue(key, true);
+		}
+	}
+
+	private void editKey() {
+		int at = lst_keys.getSelectedIndex();
+		if (at < 0) {
+			return;
+		}
+		DesignerForeignKey edited = ForeignKeyDialog.edit(this, model, keys().get(at));
+		if (edited != null) {
+			keys().set(at, edited);
+		}
+	}
+
+	private void removeKey() {
+		DesignerForeignKey key = lst_keys.getSelectedValue();
+		if (key != null && Dialogs.confirmDestructive(this, "Remove foreign key",
+			"Remove foreign key '" + key.name() + "' from table '" + tb.getName() + "'? It is removed from the model when you save the properties.",
+			"Remove")) {
+			keys().removeElement(key);
+		}
+	}
+
+	/** Puts the keys of the tab in the model in place of the ones the table had. */
+	private void saveKeys() {
+		for (DesignerForeignKey key : keysBefore) {
+			model.removeForeignKey(key);
+		}
+		for (int i = 0; i < keys().getSize(); i++) {
+			model.addForeignKey(keys().get(i));
+		}
 	}
 
 	@Override
@@ -550,6 +578,8 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		}
 
 		if (model != null) {
+			// The keys first, so that renaming or removing a field also reaches the keys added in this dialog.
+			saveKeys();
 			model.fieldsEdited(tb, namesBefore);
 		}
 	}

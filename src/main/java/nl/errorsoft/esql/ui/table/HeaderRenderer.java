@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.ui.table;
 
-import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.app.ApplicationContext;
 
 import java.util.*;
 import java.awt.*;
@@ -13,15 +13,13 @@ public class HeaderRenderer extends DefaultTableCellRenderer {
 	public static final int DOWN = 2;
 
 	private int pushedColumn;
-	private ImageLoader il;
 	private Map<Integer, Integer> state;
 	private JLabel button;
 
-	public HeaderRenderer(ImageLoader il) {
+	public HeaderRenderer() {
 		super();
 		pushedColumn = -1;
 		state = new HashMap<>();
-		this.il = il;
 	}
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 		button = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -39,9 +37,9 @@ public class HeaderRenderer extends DefaultTableCellRenderer {
 		Object obj = state.get(Integer.valueOf(column));
 
 		if (obj != null && ((Integer) obj).intValue() == UP) {
-			button.setIcon(il.getIcon("sortup"));
+			button.setIcon(ApplicationContext.get().imageLoader().getIcon("sortup"));
 		} else if (obj != null && ((Integer) obj).intValue() == DOWN) {
-			button.setIcon(il.getIcon("sortdown"));
+			button.setIcon(ApplicationContext.get().imageLoader().getIcon("sortdown"));
 		} else {
 			button.setIcon(null);
 		}

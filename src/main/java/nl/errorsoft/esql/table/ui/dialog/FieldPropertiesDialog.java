@@ -1,9 +1,8 @@
 package nl.errorsoft.esql.table.ui.dialog;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnOptions;
 import nl.errorsoft.esql.table.DataType;
-import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.ui.dialog.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -40,7 +39,7 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "&Unsigned");
 	private final JCheckBox autoIncrement = Forms.mnemonic(new JCheckBox(), "Auto &increment");
 	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "N&ot null");
-	private final JButton btnCancel = Forms.button("Cancel");
+	private final JButton btnCancel = Forms.button("&Cancel");
 	private final JButton btnSave = Forms.button("&Save");
 
 	public FieldPropertiesDialog(JFrame parent, ConnectionWindowController connectionWindowController, TableColumn column, boolean add, boolean edit) {
@@ -56,7 +55,7 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 		for (int i = 0; i < types.length; i++) {
 			fieldtypes.addItem(types[i]);
 
-			if (edit && currentType.equalsIgnoreCase(types[i].getName())) {
+			if (edit && types[i].getName().equalsIgnoreCase(currentType)) {
 				fieldtypes.setSelectedIndex(i);
 			}
 		}
@@ -123,15 +122,12 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 			return;
 		}
 
-		DataType f = (DataType) fieldtypes.getSelectedItem();
-		CreateColumn definition = TableService.newColumn(name.getText().trim(), size, dfault.getText(), f, autoIncrement.isSelected(), unsigned.isSelected(),
-			!notnull.isSelected());
-		definition.primary = primary.isSelected();
-		definition.comment = comment.getText().trim();
+		ColumnOptions options = new ColumnOptions(name.getText().trim(), size, dfault.getText(), (DataType) fieldtypes.getSelectedItem(),
+			autoIncrement.isSelected(), unsigned.isSelected(), !notnull.isSelected(), primary.isSelected(), comment.getText().trim());
 		if (add) {
-			connectionWindowController.addTableColumn(this, definition);
+			connectionWindowController.addTableColumn(this, options);
 		} else if (edit) {
-			connectionWindowController.editTableColumn(this, column, definition);
+			connectionWindowController.editTableColumn(this, column, options);
 		}
 	}
 }

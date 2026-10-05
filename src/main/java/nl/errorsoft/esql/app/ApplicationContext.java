@@ -58,6 +58,7 @@ public final class ApplicationContext {
 			images.addIcon("imgAddField", "field-add", 16, false);
 			images.addIcon("imgDeleteField", "field-drop", 16, false);
 			images.addIcon("imgSave", "save", 16, false);
+			images.addIcon("imgClose", "window-close", 16, false);
 			images.addIcon("profileNew", "plus", 16, false);
 			images.addIcon("profileRemove", "minus", 16, false);
 			images.addIcon("profileDuplicate", "copy", 16, false);

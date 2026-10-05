@@ -5,7 +5,6 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
-import nl.errorsoft.esql.database.control.DatabaseController;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.CreateColumn;
@@ -63,8 +62,7 @@ public class CreateTableController {
 	*/
 	public List<Database> getDatabases() {
 		try {
-			DatabaseController databaseController = new DatabaseController(connectionWindowController);
-			return databaseController.getDatabases();
+			return connectionWindowController.getContext().databases().getDatabases();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(window(), "Load databases", e);
 			return List.of();
@@ -73,7 +71,7 @@ public class CreateTableController {
 
 	/** True when the server has schemas between databases and tables. */
 	public boolean supportsSchemas() {
-		return connectionWindowController.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS);
+		return connectionWindowController.dialect().supports(Dialect.Feature.SCHEMAS);
 	}
 
 	/** The name of the schema a new table goes in, null for the current schema of the database. */
@@ -107,7 +105,7 @@ public class CreateTableController {
 	 	List all tabletypes, empty when the server has no such choice
 	*/
 	public String[] getTableTypes() {
-		return connectionWindowController.getConnectionProfile().getServerType().getDialect().getTableTypes();
+		return connectionWindowController.dialect().getTableTypes();
 	}
 
 	/*

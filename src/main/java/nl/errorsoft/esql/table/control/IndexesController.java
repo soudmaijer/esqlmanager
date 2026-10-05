@@ -49,7 +49,7 @@ public class IndexesController {
 			if (connectionWindowController.getWindow().selectEditorTab(key)) {
 				return;
 			}
-			indexesTab = new IndexesTab(this, title, connectionWindowController.getConnectionProfile().getServerType().getDialect().indexTypes());
+			indexesTab = new IndexesTab(this, title, connectionWindowController.dialect().indexTypes());
 			indexesTab.loadIndexes(t.getIndexes());
 			connectionWindowController.getWindow().showEditorTab(key, title, indexesTab);
 		});

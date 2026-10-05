@@ -28,8 +28,12 @@ public final class HelpPages {
 	/** Wider images are scaled down, Swing does not fit them to the page. */
 	static final int MAX_IMAGE_WIDTH = 760;
 
+	/** The page background of the help in a light and a dark look and feel, shared with the pane that shows it. */
+	public static final String LIGHT_BACKGROUND = "#ffffff";
+	public static final String DARK_BACKGROUND = "#1e1f22";
+
 	private static final String STYLE = """
-		body { font-family: sans-serif; font-size: 13pt; color: #000000; background-color: #ffffff; margin: 12px; }
+		body { font-family: sans-serif; font-size: 13pt; color: #000000; background-color: %s; margin: 12px; }
 		h1 { font-size: 20pt; margin-top: 4px; margin-bottom: 8px; }
 		h2 { font-size: 16pt; margin-top: 14px; margin-bottom: 6px; }
 		h3 { font-size: 14pt; margin-top: 10px; margin-bottom: 4px; }
@@ -40,7 +44,7 @@ public final class HelpPages {
 		th { background-color: #eef0f3; text-align: left; padding: 3px; }
 		td { padding: 3px; }
 		a { color: #0b57d0; }
-		""";
+		""".formatted(LIGHT_BACKGROUND);
 
 	private static final List<Extension> EXTENSIONS = List.of(TablesExtension.create());
 	private static final Parser PARSER = Parser.builder().extensions(EXTENSIONS).build();
@@ -107,7 +111,8 @@ public final class HelpPages {
 	}
 
 	/** The help stylesheet with dark colours, for a dark look and feel. */
-	private static final String DARK_STYLE = STYLE.replace("color: #000000; background-color: #ffffff", "color: #dfe1e5; background-color: #1e1f22")
+	private static final String DARK_STYLE = STYLE
+		.replace("color: #000000; background-color: " + LIGHT_BACKGROUND, "color: #dfe1e5; background-color: " + DARK_BACKGROUND)
 		.replace("color: #24292f", "color: #e6e6e6").replace("#f3f4f6", "#2b2d30").replace("#eef0f3", "#2b2d30").replace("#0b57d0", "#6ea8fe");
 
 	/** Renders Markdown to a complete HTML page with the help stylesheet. */

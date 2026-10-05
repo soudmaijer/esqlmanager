@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.ui.util;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,6 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.UIManager;
 import javax.swing.Scrollable;
 import javax.swing.ScrollPaneConstants;
 
@@ -25,6 +27,18 @@ public final class Forms {
 	public static final int PADDING = 12;
 	/** Space between rows and between a label and its field. */
 	public static final int GAP = 6;
+
+	/** The colour of a problem message: the theme's red, or a plain red when the look and feel has none. */
+	public static Color errorColor() {
+		Color red = UIManager.getColor("Actions.Red");
+		return red != null ? red : new Color(0xc62828);
+	}
+
+	/** The colour of a message that something worked: the theme's green, or a plain green when the look and feel has none. */
+	public static Color successColor() {
+		Color green = UIManager.getColor("Actions.Green");
+		return green != null ? green : new Color(0x2e7d32);
+	}
 
 	private Forms() {
 	}

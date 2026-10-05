@@ -45,7 +45,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 
 	private final JList<TableIndex> indexList = new JList<>(new DefaultListModel<>());
 	private final JButton jbtnAdd = Forms.button("&Add...");
-	private final JButton jbtnPrimary = Forms.button("Add &Primary");
+	private final JButton jbtnPrimary = Forms.button("Add &primary");
 	private final JList<TableColumn> jlstUsed = new JList<>(new DefaultListModel<>());
 	private final JList<TableColumn> jlstAvail = new JList<>(new DefaultListModel<>());
 	private final JButton jbtnAddToList = new JButton("<");
@@ -276,8 +276,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 	}
 
 	private static Color errorColor() {
-		Color red = UIManager.getColor("Actions.Red");
-		return red != null ? red : Color.RED;
+		return Forms.errorColor();
 	}
 
 	private void moveUsed(int step) {

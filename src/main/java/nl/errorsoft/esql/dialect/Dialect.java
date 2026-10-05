@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.dialect;
 
+import nl.errorsoft.esql.table.TableForeignKey;
 import nl.errorsoft.esql.table.TableName;
 
 import java.sql.ResultSet;
@@ -148,13 +149,11 @@ public interface Dialect {
 	List<String> REFERENTIAL_ACTIONS = List.of("NO ACTION", "CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT");
 
 	/**
-	 * Adds a foreign key constraint.
-	 * @param onDelete NO ACTION, CASCADE, SET NULL, RESTRICT or SET DEFAULT, empty for the server default.
-	 * @param onUpdate as onDelete.
+	 * Adds a foreign key constraint to the table; the referenced table is in the same schema. The actions of the key are NO ACTION, CASCADE, SET NULL,
+	 * RESTRICT or SET DEFAULT, empty or null for the server default.
 	 * @throws nl.errorsoft.esql.error.EsqlException when an action is not one of the allowed ones.
 	 */
-	List<String> addForeignKeySql(TableName table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
-		String onUpdate);
+	List<String> addForeignKeySql(TableName table, TableForeignKey key);
 
 	List<String> dropForeignKeySql(TableName table, String name);
 

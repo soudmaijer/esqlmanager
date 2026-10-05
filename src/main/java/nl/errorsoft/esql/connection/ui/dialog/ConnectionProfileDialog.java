@@ -515,11 +515,7 @@ public class ConnectionProfileDialog extends FormDialog {
 
 	private void showTestResult(ConnectionProfileController.TestResult result) {
 		testing = false;
-		Color color = UIManager.getColor(result.success() ? "Actions.Green" : "Actions.Red");
-		if (color == null) {
-			color = result.success() ? new Color(0x2e7d32) : Color.RED;
-		}
-		showMessage(result.message(), color);
+		showMessage(result.message(), result.success() ? Forms.successColor() : Forms.errorColor());
 		testButton.setEnabled(true);
 		if (result.success()) {
 			picker.showDatabases(serverType().getDialect(), result.databases());

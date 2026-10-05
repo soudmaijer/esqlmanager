@@ -1049,8 +1049,8 @@ abstract class DialectContractTest {
 	@Test
 	void refusesUnknownForeignKeyActions() {
 		assertThrows(EsqlException.class,
-			() -> dialect.addForeignKeySql(TableName.of("a"), "fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", ""));
-		assertFalse(dialect.addForeignKeySql(TableName.of("a"), "fk", List.of("b"), "c", List.of("d"), "", null).get(0).contains("ON "));
+			() -> dialect.addForeignKeySql(TableName.of("a"), new TableForeignKey("fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", "")));
+		assertFalse(dialect.addForeignKeySql(TableName.of("a"), new TableForeignKey("fk", List.of("b"), "c", List.of("d"), "", null)).get(0).contains("ON "));
 	}
 
 	private void createTable(String name, String comment) throws Exception {

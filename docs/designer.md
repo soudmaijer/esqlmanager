@@ -16,7 +16,7 @@ Tools > Database Designer draws a model of databases, tables and notes, and gene
 
 ## Foreign keys
 
-* Drag from the icon of a column onto a column of another table, use "Add foreign key..." in a table's context menu, or the Foreign Keys tab of its properties.
+* Drag from the icon of a column onto a column of another table, use "Add foreign key..." in a table's context menu, or the Foreign keys tab of its properties. Changes in that tab reach the model when the properties are saved; Cancel discards them.
 * The dialog takes one or more column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions. It checks that the columns exist and their types fit.
 * A foreign key is drawn from column to column, with a crow's foot at the many side and a double bar at the referenced table. Double click a line to edit it, select it and press Delete to remove it.
 * On MySQL foreign keys need InnoDB tables.

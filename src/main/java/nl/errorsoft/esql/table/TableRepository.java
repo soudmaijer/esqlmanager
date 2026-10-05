@@ -284,8 +284,7 @@ public class TableRepository extends AbstractRepository {
 			? null
 			: queryStrings(typeSql, table.getSchema() == null ? null : table.getSchema().getName(), table.getName()).stream().findFirst().orElse(null);
 		dialect().checkForeignKeyTable(table.qualifiedName(), tableType);
-		executeAll(dialect().addForeignKeySql(table.qualifiedName(), key.name(), key.columns(), key.referencedTable(), key.referencedColumns(), key.onDelete(),
-			key.onUpdate()));
+		executeAll(dialect().addForeignKeySql(table.qualifiedName(), key));
 	}
 
 	public void dropForeignKey(Table table, String name) throws Exception {

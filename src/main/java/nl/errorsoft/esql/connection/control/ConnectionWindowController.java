@@ -2,7 +2,7 @@ package nl.errorsoft.esql.connection.control;
 
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 
-import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.ColumnOptions;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.CreateTableController;
@@ -280,7 +280,7 @@ public class ConnectionWindowController {
 		}
 	}
 
-	public void addTableColumn(FieldPropertiesDialog fieldPropertiesDialog, CreateColumn column) {
+	public void addTableColumn(FieldPropertiesDialog fieldPropertiesDialog, ColumnOptions options) {
 		Table table = selectedTable("Add column");
 		if (table == null) {
 			return;
@@ -289,7 +289,7 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Adding tablecolumn...", true);
 			TableController tableController = new TableController(this);
-			tableController.addTableColumn(table, column);
+			tableController.addTableColumn(table, options.toColumn());
 			reloadSelectedTable();
 			fieldPropertiesDialog.dispose();
 		} catch (Exception e) {
@@ -297,11 +297,11 @@ public class ConnectionWindowController {
 		}
 	}
 
-	public void editTableColumn(FieldPropertiesDialog fieldPropertiesDialog, TableColumn tbc, CreateColumn column) {
+	public void editTableColumn(FieldPropertiesDialog fieldPropertiesDialog, TableColumn tbc, ColumnOptions options) {
 		try {
 			mainController.updateStatus("Updating tablecolumn...", true);
 			TableController tableController = new TableController(this);
-			tableController.editTableColumn(tbc, column);
+			tableController.editTableColumn(tbc, options.toColumn());
 			reloadSelectedTable();
 			fieldPropertiesDialog.dispose();
 		} catch (Exception e) {

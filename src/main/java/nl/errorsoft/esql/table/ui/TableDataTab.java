@@ -74,7 +74,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private UndoManager ndo;
 	private UndoableEditListener undoHandler;
 	private HeaderListener headerListener;
-	private ImageLoader imgLoader;
 	private TableData editingCell;
 	private int editingRow;
 	private int editingCol;
@@ -84,7 +83,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 	*/
 	public TableDataTab(TableController tableController) {
 		this.tableController = tableController;
-		this.imgLoader = ApplicationContext.get().imageLoader();
 		this.setLayout(new BorderLayout());
 
 		tbData = new JTable(stm) {
@@ -211,12 +209,12 @@ public class TableDataTab extends JPanel implements ActionListener {
 		jtfShow = new JTextField("50");
 		jtfShow.setPreferredSize(new Dimension(40, 20));
 
-		jpInfo.add(new JLabel(" Skip:"));
+		jpInfo.add(new JLabel("Skip:"));
 		jpInfo.add(jtfSkip);
-		jpInfo.add(new JLabel(" Show:"));
+		jpInfo.add(new JLabel("Show:"));
 		jpInfo.add(jtfShow);
 
-		lblRows = new JLabel(" Total:  0");
+		lblRows = new JLabel("Total: 0");
 		jpInfo.add(lblRows);
 
 		/*
@@ -265,16 +263,17 @@ public class TableDataTab extends JPanel implements ActionListener {
 		jcep.setLayout(new BorderLayout());
 
 		// Make copy.
-		btnUpdateRowData = new JButton(imgLoader.getIcon("imgUpdateRow"));
+		ImageLoader images = ApplicationContext.get().imageLoader();
+		btnUpdateRowData = new JButton(images.getIcon("imgUpdateRow"));
 		btnUpdateRowData.setToolTipText("Update changes");
 		btnUpdateRowData.addActionListener(this);
 
-		btnSaveCellData = new JButton(imgLoader.getIcon("imgSave"));
+		btnSaveCellData = new JButton(images.getIcon("imgSave"));
 		btnSaveCellData.setToolTipText("Save data to file");
 		btnSaveCellData.addActionListener(this);
 
-		btnCloseCellData = new JButton(imgLoader.getIcon("imgDeleteRow"));
-		btnCloseCellData.setToolTipText("Close");
+		btnCloseCellData = new JButton(images.getIcon("imgClose"));
+		btnCloseCellData.setToolTipText("Close the cell editor");
 		btnCloseCellData.addActionListener(this);
 
 		JToolBar jtb = new JToolBar();
@@ -308,10 +307,10 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	public void enableBinaryDataEditor() {
-		JLabel lblSaveData = new JLabel("Save cell-data to file:");
-		btnSaveData = new JButton("Download...");
-		JLabel lblAddData = new JLabel("Insert data into cell: ");
-		btnAddData = new JButton("Upload...");
+		btnSaveData = Forms.button("&Download...");
+		JLabel lblSaveData = Forms.label("Save the cell data to a file:", btnSaveData);
+		btnAddData = Forms.button("&Upload...");
+		JLabel lblAddData = Forms.label("Load a file into the cell:", btnAddData);
 
 		JPanel jpButtons = new Forms.Grid().row(lblAddData, left(btnAddData)).row(lblSaveData, left(btnSaveData)).panel();
 		Forms.titled(jpButtons, "Binary data options");
@@ -461,7 +460,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	public void showRecordCount() {
-		lblRows.setText(" Total:  " + table.getRowCount());
+		lblRows.setText("Total: " + table.getRowCount());
 	}
 
 	public void loadData(Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableData[][] tda) {
@@ -470,7 +469,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		stm = new SortableTableModel();
 		tcm = new DefaultTableColumnModel();
-		HeaderRenderer hr = new HeaderRenderer(ApplicationContext.get().imageLoader());
+		HeaderRenderer hr = new HeaderRenderer();
 
 		for (int i = 0; i < columns.length; i++) {
 			javax.swing.table.TableColumn tempCol = new javax.swing.table.TableColumn(i);

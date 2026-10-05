@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.dialect;
 
+import nl.errorsoft.esql.table.TableForeignKey;
 import nl.errorsoft.esql.table.TableName;
 
 import java.sql.DatabaseMetaData;
@@ -232,11 +233,10 @@ public abstract class AbstractDialect implements Dialect {
 		return statements;
 	}
 
-	public List<String> addForeignKeySql(TableName table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
-		String onUpdate) {
-		String statement = "ALTER TABLE " + quote(table) + " ADD CONSTRAINT " + quote(name) + " FOREIGN KEY (" + quoteAll(columns) + ") REFERENCES "
-			+ quote(table.sibling(refTable)) + " (" + quoteAll(refColumns) + ")" + referentialAction("ON DELETE", onDelete)
-			+ referentialAction("ON UPDATE", onUpdate);
+	public List<String> addForeignKeySql(TableName table, TableForeignKey key) {
+		String statement = "ALTER TABLE " + quote(table) + " ADD CONSTRAINT " + quote(key.name()) + " FOREIGN KEY (" + quoteAll(key.columns()) + ") REFERENCES "
+			+ quote(table.sibling(key.referencedTable())) + " (" + quoteAll(key.referencedColumns()) + ")" + referentialAction("ON DELETE", key.onDelete())
+			+ referentialAction("ON UPDATE", key.onUpdate());
 
 		return Arrays.asList(statement);
 	}

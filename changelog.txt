@@ -2,13 +2,24 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Layering and wording issues found in the review
+
+- Designer: the File, Edit and Model menu items work from the keyboard (their shortcuts and mnemonics), not only with
+  the mouse; Delete removes the selected connector or the selected cards.
+- Designer: the Foreign keys tab of the table properties keeps its changes until the properties are saved, Cancel
+  leaves the model alone, and removing a key asks first.
+- Labels in sentence case ("Primary key", "Auto increment", "Add primary", "Checking databases"), mnemonics on
+  Download, Upload, Cancel and the column comment, and the cell editor's close button shows a close icon.
+- Edit field no longer fails on a column whose type the server names differently.
+
 05-10-2026: Errors in settings, profiles and drivers are reported
 
 - A settings.xml that cannot be read is kept as settings.xml.bak and the user is told once that the defaults are
   used; saving the settings reports a failure instead of only logging it.
 - A profiles.xml or datatypes.xml that cannot be read is reported ("profiles.xml cannot be read: ...") instead of
   showing no profiles or types, and a damaged profiles.xml is not overwritten. A profile with an unknown server type
-  is left out with a warning in the log instead of being opened as MySQL (a profile without a server type still is MySQL).
+  is left out with a warning in the log instead of being opened as MySQL (a profile without a server type still is
+  MySQL).
 - driver.xml without a root element or with a bad entry no longer fails: the bad entry is skipped with a warning.
 - The process list shows "Disconnected" when it loses its connection, and Kill, Pause and the interval are
   disabled.
