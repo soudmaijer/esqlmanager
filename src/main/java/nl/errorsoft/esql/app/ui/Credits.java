@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.app.ui;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import java.awt.*;
 import java.io.*;
 
@@ -17,7 +18,7 @@ public class Credits extends Canvas implements Runnable {
 
 	public Credits() {
 		try {
-			try (BufferedReader fin = new BufferedReader(new FileReader("credits.txt"))) {
+			try (BufferedReader fin = new BufferedReader(new FileReader(DataDirectory.file("credits.txt")))) {
 				String in = fin.readLine();
 				root = new CreditObject(in);
 				curr = root;

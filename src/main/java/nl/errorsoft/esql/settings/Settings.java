@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.settings;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.table.Table;
 
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +33,7 @@ public class Settings {
 	public void loadSettings() {
 		try {
 			SAXBuilder builder = new SAXBuilder();
-			org.jdom.Document sdata = builder.build(new File("conf/settings.xml"));
+			org.jdom.Document sdata = builder.build(DataDirectory.file("conf/settings.xml"));
 
 			if (sdata.hasRootElement()) {
 				appearance = Appearance.of(sdata.getRootElement().getChildText("appearance"));
@@ -52,7 +53,7 @@ public class Settings {
 		set = set + "</config>" + '\n';
 
 		try {
-			try (PrintWriter out = new PrintWriter(new FileWriter("conf/settings.xml"))) {
+			try (PrintWriter out = new PrintWriter(new FileWriter(DataDirectory.file("conf/settings.xml")))) {
 				out.println(set);
 			}
 		} catch (Exception e) {

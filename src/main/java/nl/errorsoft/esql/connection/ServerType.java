@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.connection;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.dialect.Dialects;
 
@@ -114,7 +115,7 @@ public class ServerType {
 		}
 		try {
 			SAXBuilder builder = new SAXBuilder();
-			org.jdom.Document sdata = builder.build(new File("conf/datatypes.xml"));
+			org.jdom.Document sdata = builder.build(DataDirectory.file("conf/datatypes.xml"));
 
 			// The file holds the datatypes of every server, pick the section of this one.
 			for (Object driver : sdata.getRootElement().getChildren("driver")) {

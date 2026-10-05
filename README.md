@@ -208,6 +208,22 @@ The application logs with Log4j 2. The configuration is `src/main/resources/log4
 
 The script prints what to fill in: server type **PostgreSQL**, host `localhost`, user `postgres`, password `test` and the port it prints. The container uses port 5432 when that is free and the next free port otherwise, so it also works next to another PostgreSQL.
 
+## Building a distribution
+
+Two Maven profiles build an application that runs without a Java installation (the build itself needs a JDK 25 with `jlink` and `jpackage`):
+
+```
+./mvnw -Pjlink package -DskipTests      # target/runtime-image, a JDK with only the modules the application needs
+./mvnw -Ppackage package -DskipTests    # target/dist/eSQLManager.app (macOS), builds the runtime image when missing
+./mvnw -Ppackage package -DskipTests -Djpackage.type=dmg    # target/dist/eSQLManager-1.0.0.dmg
+```
+
+`-Djpackage.type` can also be `pkg`, `exe`, `msi`, `deb` or `rpm`, each needs the packaging tools of its platform. The scripts are `src/package/jlink.sh` and `src/package/jpackage.sh` (sh, so macOS and Linux). The macOS icon is made from `icons/logo.svg` with `rsvg-convert` and `iconutil`; without them the default Java icon is used.
+
+Sizes on macOS (Apple silicon, JDK 25): runtime image 59 MB (19 modules), application image `eSQLManager.app` 89 MB, `.dmg` 71 MB.
+
+The installed application keeps `conf/` and `credits.txt` in `~/.esqlmanager`, copied from the bundled `runtime/` on first start, so profiles and settings survive an update and the application folder can stay read-only.
+
 ## Development
 
 ```sh

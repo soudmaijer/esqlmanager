@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.connection;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,7 +25,7 @@ public class ConnectionProfile {
 	public ConnectionProfile() {
 		try {
 			SAXBuilder builder = new SAXBuilder();
-			profileData = builder.build(new File("conf/profiles.xml"));
+			profileData = builder.build(DataDirectory.file("conf/profiles.xml"));
 		} catch (Exception e) {
 			log.warn("Warning: profiles.xml could not be loaded, no profiles will be available!");
 		}
@@ -163,7 +164,7 @@ public class ConnectionProfile {
 
 	public void save(org.jdom.Document doc) throws Exception {
 		org.jdom.output.XMLOutputter xmlout = new org.jdom.output.XMLOutputter();
-		try (PrintWriter out = new PrintWriter("conf/profiles.xml", java.nio.charset.StandardCharsets.UTF_8)) {
+		try (PrintWriter out = new PrintWriter(DataDirectory.file("conf/profiles.xml"), java.nio.charset.StandardCharsets.UTF_8)) {
 			xmlout.output(doc, out);
 		}
 	}

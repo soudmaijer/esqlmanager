@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.connection;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,7 +34,7 @@ public class DatabaseDriver {
 
 		try {
 			SAXBuilder saxbuilder = new SAXBuilder();
-			driverData = saxbuilder.build(new File("conf/driver.xml"));
+			driverData = saxbuilder.build(DataDirectory.file("conf/driver.xml"));
 		} catch (Exception exception) {
 			log.warn("Warning: driver.xml could not be loaded, no driver properties will be available!");
 		}
@@ -122,7 +123,7 @@ public class DatabaseDriver {
 	 */
 	public void save(Document document) throws Exception {
 		XMLOutputter xmloutputter = new XMLOutputter();
-		try (PrintWriter out = new PrintWriter("conf/driver.xml", java.nio.charset.StandardCharsets.UTF_8)) {
+		try (PrintWriter out = new PrintWriter(DataDirectory.file("conf/driver.xml"), java.nio.charset.StandardCharsets.UTF_8)) {
 			xmloutputter.output(document, out);
 		}
 	}

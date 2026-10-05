@@ -4,6 +4,10 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Distribution: Maven profiles `jlink` (runtime image with only the needed JDK modules, 59 MB) and `package`
+  (jpackage: eSQLManager.app 89 MB, `-Djpackage.type=dmg` 71 MB), scripts in src/package. The packaged application
+  keeps conf/ and credits.txt in ~/.esqlmanager (app.DataDirectory, seeded from the bundled runtime/); started from
+  runtime/ nothing changes.
 - Designer as an internal frame: the model designer (designer.ui.DBCreator) is a JInternalFrame on the desktop of
   the main window, with its own menu bar, toolbar and frame icon, one per model. The window selector of the toolbar
   lists designers next to the connection windows. Closing it asks to save the model; disconnecting closes the

@@ -233,4 +233,108 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <!-- ./mvnw -Pjlink package: runtime image with only the JDK modules the application needs, in target/runtime-image -->
+    <profile>
+      <id>jlink</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.11.0</version>
+            <executions>
+              <execution>
+                <id>copy-libs</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                  <includeScope>runtime</includeScope>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>jlink</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>sh</executable>
+                  <workingDirectory>${project.basedir}</workingDirectory>
+                  <arguments combine.self="override">
+                    <argument>src/package/jlink.sh</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+      ./mvnw -Ppackage package: application image in target/dist (a macOS .app on macOS), builds the jlink image when it is missing.
+      -Djpackage.type=dmg (or pkg, exe, msi, deb, rpm) makes an installer, which needs the platform's packaging tools.
+    -->
+    <profile>
+      <id>package</id>
+      <properties>
+        <jpackage.type>app-image</jpackage.type>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.11.0</version>
+            <executions>
+              <execution>
+                <id>copy-libs</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                  <includeScope>runtime</includeScope>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>jpackage</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>sh</executable>
+                  <workingDirectory>${project.basedir}</workingDirectory>
+                  <arguments combine.self="override">
+                    <argument>src/package/jpackage.sh</argument>
+                    <argument>${project.version}</argument>
+                    <argument>${jpackage.type}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
