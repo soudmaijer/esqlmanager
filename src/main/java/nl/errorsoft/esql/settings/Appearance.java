@@ -6,7 +6,9 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import java.io.IOException;
+import java.util.Map;
 import javax.swing.UIManager;
+import nl.errorsoft.esql.ui.icon.TitleButtonIcon;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,6 +50,7 @@ public enum Appearance {
 
 	/** Installs this look and feel. Open windows are updated when there are any. */
 	public void apply() {
+		FlatLaf.setGlobalExtraDefaults(FLAT_DEFAULTS);
 		boolean dark = this == DARK || this == SYSTEM && isSystemDark();
 		boolean installed = switch (this) {
 			case NATIVE -> installNative();
@@ -57,7 +60,29 @@ public enum Appearance {
 		if (!installed) {
 			installNative();
 		}
+		installTitleIcons();
 		FlatLaf.updateUI();
+	}
+
+	/**
+	 * FlatLaf defaults of eSQLManager, in FlatLaf properties syntax so that the colours are derived from the theme. The title bar of a connection window is the
+	 * panel background slightly darker, inactive titles use the disabled foreground. Split pane dividers are thin and flat, without grip dots or arrows.
+	 */
+	private static final Map<String, String> FLAT_DEFAULTS = Map.ofEntries(Map.entry("InternalFrame.activeTitleBackground", "darken(@background,4%)"),
+		Map.entry("InternalFrame.activeTitleForeground", "@foreground"), Map.entry("InternalFrame.inactiveTitleBackground", "@background"),
+		Map.entry("InternalFrame.inactiveTitleForeground", "@disabledForeground"), Map.entry("InternalFrame.buttonSize", "36,30"),
+		Map.entry("InternalFrame.buttonHoverBackground", "darken($InternalFrame.activeTitleBackground,8%,derived)"),
+		Map.entry("InternalFrame.buttonPressedBackground", "darken($InternalFrame.activeTitleBackground,14%,derived)"),
+		Map.entry("InternalFrame.activeBorderColor", "$Component.borderColor"), Map.entry("InternalFrame.inactiveBorderColor", "$Component.borderColor"),
+		Map.entry("InternalFrameTitlePane.border", "0,12,0,4"), Map.entry("SplitPane.dividerSize", "5"), Map.entry("SplitPaneDivider.style", "plain"),
+		Map.entry("SplitPaneDivider.gripDotCount", "0"), Map.entry("SplitPaneDivider.draggingColor", "$Component.focusColor"));
+
+	/** The title bar buttons are Lucide icons, coloured by {@link TitleButtonIcon} at paint time so that they follow the theme. */
+	private static void installTitleIcons() {
+		UIManager.put("InternalFrame.iconifyIcon", new TitleButtonIcon("window-minimize", 14, false));
+		UIManager.put("InternalFrame.maximizeIcon", new TitleButtonIcon("window-maximize", 14, false));
+		UIManager.put("InternalFrame.minimizeIcon", new TitleButtonIcon("window-restore", 14, false));
+		UIManager.put("InternalFrame.closeIcon", new TitleButtonIcon("window-close", 14, true));
 	}
 
 	private static boolean setup(FlatLaf laf) {

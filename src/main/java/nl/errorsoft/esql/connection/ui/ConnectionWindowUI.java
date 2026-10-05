@@ -115,7 +115,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		// Windowconstructor
 		this.cwcc = cwcc;
 		this.setTitle(cwcc.getTitle());
-		this.setFrameIcon(new ImageIcon(jmui.getIconImage()));
+		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon("pc"));
 		this.setResizable(true);
 		this.setMaximizable(true);
 		this.setClosable(true);
@@ -382,7 +382,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		jsplp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jsp, tabsWithStatus);
 		jsplp.setDividerLocation(200);
-		jsplp.setOneTouchExpandable(true);
 
 		// Add SplitPane.
 		getContentPane().add(jsplp, BorderLayout.CENTER);

@@ -227,7 +227,6 @@ public class TableDataView extends JPanel implements ActionListener {
 		 */
 
 		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		jsplit.setOneTouchExpandable(true);
 		jsplit.setTopComponent(jsp);
 		this.add(jsplit, BorderLayout.CENTER);
 		navigationBar = toolbar;

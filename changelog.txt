@@ -180,3 +180,5 @@ Fixes:
 New:
 
 - Added a new interface for managing indexes, available through popup menu. 
+- Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
+  for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.

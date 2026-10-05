@@ -1,1 +1,1 @@
-Icons from Lucide (https://lucide.dev), ISC license, version 0.468.0. Combined icons (database-add, table-drop, ...) place a Lucide mark on a base icon.
+Icons from Lucide (https://lucide.dev), ISC license, version 0.468.0. Combined icons (database-add, table-drop, ...) place a Lucide mark on a base icon. The title bar buttons (window-minimize, window-maximize, window-restore, window-close) are Lucide minus, square, copy and x.

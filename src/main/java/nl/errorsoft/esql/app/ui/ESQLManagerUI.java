@@ -267,7 +267,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		outputPanel.add(jsp, BorderLayout.CENTER);
 
 		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jdp, outputPanel);
-		jsplit.setOneTouchExpandable(true);
 		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
 		jsplit.setContinuousLayout(true);
 		// A maximized internal frame must not limit how far the divider can move.
