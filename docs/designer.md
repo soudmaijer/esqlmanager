@@ -23,7 +23,7 @@ Tools > Database Designer draws a model of databases, tables and notes, and gene
 
 ## Opening an existing database
 
-"Open in designer" in the context menu of a database (or the designer button of the toolbar) reads every table of that database, views left out, with its columns, primary key, indexes and the foreign keys between them, into a new model. On PostgreSQL the database reads its current schema (normally `public`) and a schema node reads that schema; generating the model creates the tables in the current schema. The tables are placed automatically: a referenced table left of the tables that refer to it, tables without relations in a grid below. View > Arrange Automatically does the same for any model. On PostgreSQL a database node reads its current schema; use Open in designer on a schema node for another schema.
+"Open in designer" in the context menu of a database (or the designer button of the toolbar) reads every table of that database, views left out, with its columns, primary key, indexes and the foreign keys between them, into a new model. On PostgreSQL the database reads its current schema (normally `public`) and a schema node reads that schema; generating the model creates the tables in the current schema. The tables are placed automatically: a referenced table left of the tables that refer to it, tables without relations in a grid below. View > Arrange Automatically does the same for any model.
 
 ## Saving and generating
 

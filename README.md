@@ -45,9 +45,10 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Index manager (primary key, unique, index, fulltext) | yes | yes | no | no |
 | Table maintenance: optimize, analyze | yes | yes (VACUUM, ANALYZE) | no | no |
 | Table maintenance: check, repair | yes | no | no | no |
-| Export as SQL (structure and data) | yes | yes | no | no |
-| Import an SQL script | yes | yes | no | no |
-| Database designer: draw a model and generate it | yes | yes | no | no |
+| Export as SQL (structure and data) | yes | yes (per schema) | no | no |
+| Import an SQL script | yes | yes (into a schema) | no | no |
+| Schema picker in the query tab | no | yes | no | no |
+| Database designer: draw a model and generate it, in a window on the desktop | yes | yes | no | no |
 | Designer foreign keys: drag from column to column, edit and generate | yes | yes | no | no |
 | Designer context menus (canvas, tables, databases, notes) | yes | yes | yes | yes |
 | Designer export as PlantUML and Mermaid | yes | yes | yes | yes |
@@ -58,12 +59,12 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Server status | yes | yes | no | no |
 | Server variables | yes | yes | no | no |
 | Output panel with connection details and executed queries | yes | yes | yes | yes |
-| Status bar with server, account and the last action | yes | yes | yes | yes |
+| Status bar with server and account, a message bar per tab | yes | yes | yes | yes |
 | Appearance: follow the system, light, dark or native | yes | yes | yes | yes |
 | Brand icons of the servers, the eSQL logo as window and Dock icon | yes | yes | yes | yes |
 | In-app help: the Markdown pages of docs/ in a help tab | yes | yes | yes | yes |
 
-The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
+The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. The bar below the tabs shows the message of the tab in front (a query's outcome, the rows loaded on the table data) and is empty for a tab without one, such as the help. The tab in front has a darker background and a coloured underline. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
 Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export and Import on a database, Edit, Indexes and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 
@@ -75,7 +76,7 @@ Known gaps with schemas: the user manager grants table privileges without a sche
 
 ## Database designer
 
-The designer (Tools > Database Designer) draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
+The designer (Tools > Database Designer) opens as a window on the desktop of eSQLManager, next to the connection windows and listed in the window selector of the toolbar, one per model. It draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
 
 * Drag from the icon of a column onto a column of another table to create a foreign key, or use "Add Foreign Key..." in the table's context menu or the Foreign Keys tab of its properties. The dialog takes several column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions.
 * Foreign keys are drawn from column to column with a crow's foot at the many side. Double click a line to edit it, select it and press Delete to remove it.

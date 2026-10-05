@@ -20,12 +20,12 @@ Each server has a dialect that decides how a feature is carried out. Menus only 
 |---|---|---|---|---|
 | Browse databases, tables and columns, view and edit data | yes | yes | yes | yes |
 | SQL query tabs with completion | yes | yes | yes | yes |
-| Create and drop databases | yes | yes | yes | no |
+| Create and drop databases | yes | yes | not verified | no |
 | Create and change tables, columns and indexes | yes | yes | no | no |
-| Export and import as SQL | yes | yes | no | no |
+| Export and import as SQL (PostgreSQL: per schema) | yes | yes | no | no |
 | Database designer, foreign keys, open in designer | yes | yes | no | no |
 | Users and privileges | yes | yes (roles) | no | no |
 | Process list, server status and variables | yes | yes | no | no |
 | Table maintenance | optimize, analyze, check, repair | VACUUM, ANALYZE | no | no |
 
-A PostgreSQL connection is made to one database. Opening another database in the tree reconnects and shows its schemas (`public` and any others); each schema holds its tables.
+A PostgreSQL connection is made to one database. Opening another database in the tree reconnects and shows its schemas (`public` and any others); each schema holds its tables. Known gaps with schemas: the user manager grants table privileges without a schema, and Open in designer on a database node reads its current schema (use the schema node for another schema).

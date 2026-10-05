@@ -4,19 +4,17 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
-- Designer frame stays inside the desktop: when the main window gets smaller, a frame that is not maximized is
-  moved and shrunk to fit (DesktopUtils.keepFramesInside), so its title bar and menu stay reachable.
+- Designer as an internal frame: the model designer (designer.ui.DBCreator) is a JInternalFrame on the desktop of
+  the main window, with its own menu bar, toolbar and frame icon, one per model. The window selector of the toolbar
+  lists designers next to the connection windows. Closing it asks to save the model; disconnecting closes the
+  designers of that connection first (ESQLManagerUI.closeDesigners). When the main window gets smaller, a frame
+  that is not maximized is moved and shrunk to stay inside the desktop (DesktopUtils.keepFramesInside).
 - Selected tabs stand out: a darker background and the accent underline, also when the focus is elsewhere
   (TabbedPane defaults in settings.Appearance). A tab that is opened is put in front.
-- Status bar per tab: the message below the tabs of a connection window belongs to the tab it is about; switching
-  tabs shows that tab's message, and a query reports in the status of its own query tab. A tab without a message
-  of its own (Help) leaves the bar empty. Tree actions (schemas listed, opened in the designer) only go to the
-  output panel; loading a table or table list is the message of the table view tab.
-- Designer as an internal frame: the model designer (designer.ui.DBCreator) is a JInternalFrame on the desktop of
-  the main window instead of a separate modal window, with its own menu bar, toolbar and frame icon. The window
-  selector of the toolbar lists designers next to the connection windows. Closing it asks to save the model;
-  disconnecting closes the designers of that connection first (ESQLManagerUI.closeDesigners).
-- README and docs screenshots are light only, the dark screenshot is gone.
+- Status bar per tab: the message below the tabs of a connection window belongs to the tab it is about and is shown
+  while that tab is in front: a loaded table or table list on the table view tab, a query's outcome on its query
+  tab. A tab without a message of its own (Help, a new query or editor tab) leaves the bar empty. Tree actions
+  (schemas listed, opened in the designer) go to the output panel.
 - PostgreSQL schemas in export, import and the query tab: the export and import windows show the schemas of a
   database and open at the node selected in the tree; exporting a database takes every schema, the script names
   schema.table and creates missing schemas (Dialect.createSchemaIfMissingSql); importing into a schema (also in
@@ -26,9 +24,6 @@ eSQLManager changelog
 - Designer layout: tables keep their model order within a layer, so the shop model has customers above products and
   the foreign key lines no longer cross.
 - Connection window and designer toolbars: 20px icons and 32x30 buttons, the same as the application toolbar (ui.util.ToolbarButtons).
-- README and docs: the features table lists schemas, appearance, tabs for Create table, Edit table and Indexes,
-  designer context menus and brand icons; SQL Server create and drop database are marked not verified; the known
-  gaps of PostgreSQL schemas are stated.
 - PostgreSQL schemas: the tree is server > databases > schemas > tables (MySQL keeps databases > tables). A
   schema node has Reload tables, Create table, Open in designer, Export and Drop schema, a database has Create
   schema and Reload schemas; menu words come from the dialect. Every statement on a table names schema.table, the
@@ -42,7 +37,8 @@ eSQLManager changelog
 - SQL query: every statement that returns rows gets its own closable result tab, named after the statement with the
   full text as tooltip, and a line with the time it ran, the database, the rows and the duration (at most 20 tabs).
 - Help tab: dark pages in a dark theme, white pages in a light theme.
-- Documentation: new screenshots (connection window, designer) and a screenshot of the query tab with completion.
+- Documentation: README with a features table per server (SQL Server create and drop database not verified) and the
+  known gaps, screenshots of the connection window, the designer and the query tab, in the light appearance only.
 - Layout fixes after looking at every screen in light and dark: Settings only has the appearance (the auto-update
   fields and their settings.xml entries are gone), the user manager has padding and a Granted group, the process list
   opens wide enough for its columns and stops refreshing when it closes, the foreign key dialog centres its labels,
@@ -57,7 +53,7 @@ eSQLManager changelog
   "Indexes orders"), one per table, with Save and Cancel at the bottom; closing with unsaved changes asks first.
   The screens use layout managers instead of absolute positions.
 - Toolbars and menu bar are compact, the paging buttons of the table data sit in the centre of the status bar below
-  the tabs, with what the connection did last on the left.
+  the tabs, with the message of the tab in front on the left.
 - Help: the user documentation is Markdown in docs/ (shown by GitHub and rendered in the help tab with commonmark),
   links between pages stay in the help tab, web links open in the browser. The old HTML help pages are gone.
 - Designer context menus: the empty canvas adds a database, table or note at the click point, selects all, arranges,
@@ -71,8 +67,8 @@ eSQLManager changelog
   (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.
 - Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
   for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.
-- SQL query: opens as a tab of the connection window instead of a separate window (several tabs, "Query 2", ...), with the result of
-  the last statement that returned rows below the editor. Open and save .sql files.
+- SQL query: opens as a tab of the connection window instead of a separate window (several tabs, "Query 2", ...), with a result tab
+  per statement below the editor. Open and save .sql files.
 - SQL query: "Run selection" runs the selected text or the statement at the caret (Cmd/Ctrl+Enter), "Run all" every statement in
   order (Cmd/Ctrl+Shift+Enter). Statements are split on ; outside strings, quoted names, dollar quotes and comments. The outcome of
   each statement is logged, the status bar shows the total time or which statement failed; running stops at the first error.
@@ -85,8 +81,8 @@ eSQLManager changelog
 - Connect dialog: has a Close button. The status bar shows a green light and "Connected" while a connection is open and a red light and
   "No connection" otherwise, instead of "Ready...".
 - Status bar: the status light is in front of the message ("Ready..."), the server and account of the active connection are on the right.
-  Each connection window has its own status bar below the tabs with what that connection did last (for example "shop: 4 table(s) opened in the
-  designer"), on the right, with the paging buttons of the table data on the left of the same bar.
+  Each connection window has its own status bar below the tabs with the message of the tab in front, with the paging buttons of the
+  table data in the same bar.
 - Connection profiles: the default profiles are PostgreSQL (port 5432, user postgres, no password stored, selected at start) and MySQL on localhost;
   the SQL Server profile is gone.
 - start.sh: the sample PostgreSQL container uses the first free port from 5432, so it does not clash with another PostgreSQL on the machine.
