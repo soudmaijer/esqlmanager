@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.app.ui;
 
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
+
 import nl.errorsoft.esql.error.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -62,7 +64,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	private JButton btnTileHorizontal;
 	private JButton btnTileVertical;
 	private JComboBox<ConnectionWindowUI> cmbWindows;
-	private static final int TOOLBAR_BUTTON_SIZE = 30;
 
 	// Statusbar
 	private JPanel statusbar;
@@ -224,13 +225,10 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		});
 
 		cmbWindows.setToolTipText("Active connection window");
-		cmbWindows.setMinimumSize(new Dimension(160, TOOLBAR_BUTTON_SIZE));
-		cmbWindows.setPreferredSize(new Dimension(220, TOOLBAR_BUTTON_SIZE));
+		cmbWindows.setMinimumSize(new Dimension(160, ToolbarButtons.HEIGHT));
+		cmbWindows.setPreferredSize(new Dimension(220, ToolbarButtons.HEIGHT));
 		toolbar.add(cmbWindows);
-		for (JButton button : new JButton[]{btnConnect, btnDisconnect, btnCascade, btnTileHorizontal, btnTileVertical}) {
-			button.setMargin(new Insets(4, 4, 4, 4));
-			button.setFocusable(false);
-		}
+		ToolbarButtons.style(btnConnect, btnDisconnect, btnCascade, btnTileHorizontal, btnTileVertical);
 		this.getContentPane().add(toolbar, BorderLayout.NORTH);
 
 		/*

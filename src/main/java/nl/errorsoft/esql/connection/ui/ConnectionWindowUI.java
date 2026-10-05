@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.ui;
 
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
+
 import nl.errorsoft.esql.error.Dialogs;
 
 import org.apache.logging.log4j.LogManager;
@@ -143,6 +145,8 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		tbTable.add(btnNewRow);
 		tbTable.add(btnDeleteRow);
 		tbTable.add(btnUpdateRow);
+		ToolbarButtons.style(btnRefreshTree, btnUserManager, btnRunQuery, btnDesigner, btnCreateTable, btnDropTable, btnAddField, btnDeleteField, btnNewRow,
+			btnDeleteRow, btnUpdateRow);
 
 		// Disable.
 		this.btnNewRow.setEnabled(false);
