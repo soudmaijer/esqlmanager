@@ -49,6 +49,10 @@ public class QueryUI extends JPanel {
 	private final QueryCC controller;
 	private final RSyntaxTextArea editor;
 	private final JComboBox<Database> databases;
+	/** The schema picker, only on servers with schemas. */
+	private final JComboBox<String> schemas = new JComboBox<>();
+	/** Set while the picker is filled, so that filling it does not switch the schema. */
+	private boolean fillingSchemas;
 	private final JSplitPane split;
 	private final AutoCompletion completion;
 	private static final int MAX_RESULTS = 20;
@@ -100,6 +104,17 @@ public class QueryUI extends JPanel {
 		databases.addActionListener(e -> useSelectedDatabase());
 		toolbar.add(databases);
 
+		if (controller.hasSchemas()) {
+			String term = controller.schemaTerm();
+			toolbar.add(new JLabel(" " + Character.toUpperCase(term.charAt(0)) + term.substring(1) + ": "));
+			schemas.setMaximumSize(new Dimension(200, schemas.getPreferredSize().height));
+			schemas.setPrototypeDisplayValue("information_schema");
+			schemas.setToolTipText("Unqualified table names resolve to this " + term);
+			schemas.addActionListener(e -> useSelectedSchema());
+			controller.setSchemaListener(this::showSchemas);
+			toolbar.add(schemas);
+		}
+
 		bind(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, MENU), "runSelection", this::runSelection);
 		bind(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, MENU | InputEvent.SHIFT_DOWN_MASK), "runAll", this::runAll);
 		// Cmd+Space as in IntelliJ (macOS gives it to Spotlight unless that shortcut is turned off), and Ctrl+Shift+Space / Cmd+Shift+Space.
@@ -149,6 +164,27 @@ public class QueryUI extends JPanel {
 	private void useSelectedDatabase() {
 		if (databases.getSelectedItem() instanceof Database database) {
 			controller.use(database);
+		}
+	}
+
+	/** Fills the picker with the schemas of the chosen database and selects the one names resolve to now. */
+	private void showSchemas(List<String> names, String current) {
+		fillingSchemas = true;
+
+		try {
+			schemas.removeAllItems();
+			names.forEach(schemas::addItem);
+			if (current != null) {
+				schemas.setSelectedItem(current);
+			}
+		} finally {
+			fillingSchemas = false;
+		}
+	}
+
+	private void useSelectedSchema() {
+		if (!fillingSchemas && schemas.getSelectedItem() instanceof String schema) {
+			controller.useSchema(schema);
 		}
 	}
 

@@ -31,6 +31,12 @@ public class QueryService {
 		}
 	}
 
+	/** Makes unqualified names of the statements resolve to the schema of the database, on servers with schemas. */
+	public void useSchema(String database, String schema) throws Exception {
+		repository.switchDatabase(database);
+		repository.switchSchema(schema);
+	}
+
 	/** Runs a statement that changes data and returns the number of affected rows. */
 	public int update(String sql) throws Exception {
 		return repository.update(sql);

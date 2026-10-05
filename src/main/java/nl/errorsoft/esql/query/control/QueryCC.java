@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+
+import javax.swing.SwingUtilities;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +18,7 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Schema;
+import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
@@ -36,6 +40,10 @@ public class QueryCC implements SchemaNames {
 	/** The schema unqualified names resolve to, lower case; "" on servers without schemas. */
 	private volatile String currentSchema = "";
 	private String database = "";
+	/** The schema chosen in the tab, null until one is (and on servers without schemas). */
+	private volatile String chosenSchema;
+	private BiConsumer<List<String>, String> schemaListener = (schemas, current) -> {
+	};
 	private final Map<String, List<String>> columns = new ConcurrentHashMap<>();
 
 	/** The outcome of a run: a result for every statement that returned rows, in order, and whether every statement succeeded. */
@@ -48,6 +56,21 @@ public class QueryCC implements SchemaNames {
 
 	public QueryCC(ConnectionWindowCC cwcc) {
 		this.cwcc = cwcc;
+	}
+
+	/** Whether the server has schemas, so the tab offers a schema next to the database. */
+	public boolean hasSchemas() {
+		return dialect().supports(Dialect.Feature.SCHEMAS);
+	}
+
+	/** What the server calls a schema, for the label of the picker. */
+	public String schemaTerm() {
+		return dialect().schemaTerm();
+	}
+
+	/** Told on the event thread, after a database is chosen, which schemas it has and which one names resolve to. */
+	public void setSchemaListener(BiConsumer<List<String>, String> listener) {
+		this.schemaListener = listener;
 	}
 
 	public List<Database> databases() throws Exception {
@@ -64,6 +87,7 @@ public class QueryCC implements SchemaNames {
 		}
 
 		this.database = database.getName();
+		chosenSchema = null;
 		tables = Map.of();
 		schemaNames = List.of();
 		columns.clear();
@@ -84,11 +108,25 @@ public class QueryCC implements SchemaNames {
 				currentSchema = current == null || schemas.isEmpty() ? "" : current.toLowerCase();
 				schemaNames = schemas.stream().map(Schema::getName).toList();
 				tables = loaded;
+				List<String> names = schemaNames;
+				SwingUtilities.invokeLater(() -> schemaListener.accept(names, current));
 			} catch (Exception e) {
 				// Completion then offers keywords only, running statements still works.
 				log.warn("Could not load the tables of {} for completion: {}", database.getName(), e.getMessage());
 			}
 		});
+	}
+
+	/** Makes unqualified names resolve to the schema, for the statements and the completion. */
+	public void useSchema(String schema) {
+		try {
+			cwcc.getContext().queries().useSchema(database, schema);
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwcc.getUI(), "Change " + schemaTerm(), e);
+			return;
+		}
+		chosenSchema = schema;
+		currentSchema = schema.toLowerCase();
 	}
 
 	/**
@@ -102,6 +140,16 @@ public class QueryCC implements SchemaNames {
 			queries = cwcc.getContext().queries();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(parent, "Run query", e);
+			return new RunResult(List.of(), false);
+		}
+
+		try {
+			// The connection is shared with the tree and other tabs, which may have moved it to another database or schema.
+			if (chosenSchema != null) {
+				queries.useSchema(database, chosenSchema);
+			}
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(parent, "Change " + schemaTerm(), e);
 			return new RunResult(List.of(), false);
 		}
 
@@ -144,7 +192,8 @@ public class QueryCC implements SchemaNames {
 	}
 
 	private String currentDatabase() {
-		return database;
+		String schema = chosenSchema;
+		return schema == null ? database : database + "." + schema;
 	}
 
 	private static Map<String, Table> byName(List<Table> list) {
@@ -207,7 +256,11 @@ public class QueryCC implements SchemaNames {
 
 	@Override
 	public String quote(String name) {
-		return cwcc.getConnectionProfile().getServerType().getDialect().quote(name);
+		return dialect().quote(name);
+	}
+
+	private Dialect dialect() {
+		return cwcc.getConnectionProfile().getServerType().getDialect();
 	}
 
 	private static String firstLine(String sql) {

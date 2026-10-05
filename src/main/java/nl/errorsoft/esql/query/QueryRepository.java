@@ -18,4 +18,8 @@ public class QueryRepository extends AbstractRepository {
 	public void switchDatabase(String name) throws SQLException {
 		useDatabase(name);
 	}
+
+	public void switchSchema(String name) throws SQLException {
+		useSchema(name);
+	}
 }
