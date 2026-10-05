@@ -59,6 +59,19 @@ public final class Forms {
 			return this;
 		}
 
+		/** Adds a label and a field that takes the remaining height, such as a text area. */
+		public Grid area(Component label, Component field) {
+			GridBagConstraints l = constraints(0, 1, 0);
+			l.anchor = GridBagConstraints.NORTHWEST;
+			panel.add(label, l);
+			GridBagConstraints c = constraints(1, 1, 1);
+			c.weighty = 1;
+			c.fill = GridBagConstraints.BOTH;
+			panel.add(field, c);
+			row++;
+			return this;
+		}
+
 		/** Adds a component that spans the whole row. */
 		public Grid full(Component component) {
 			panel.add(component, constraints(0, 2, 1));

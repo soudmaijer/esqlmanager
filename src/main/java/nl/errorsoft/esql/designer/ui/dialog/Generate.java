@@ -18,6 +18,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.designer.model.Model;
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedTable;
 import nl.errorsoft.esql.designer.DesignedForeignKey;
@@ -53,70 +55,40 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		jButton1 = new javax.swing.JButton();
 		generate = new javax.swing.JButton();
 
-		getContentPane().setLayout(null);
-		getRootPane().setPreferredSize(new java.awt.Dimension(257, 216));
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
 		setTitle("Analyze / Generate model");
 
-		jPanel1.setLayout(null);
-
-		jPanel2.setLayout(null);
-
-		jPanel2.setBorder(new javax.swing.border.TitledBorder("Checking Model"));
-		jLabel1.setText("Checking Databases");
-		jPanel2.add(jLabel1);
-		jLabel1.setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
-		jLabel1.setBounds(20, 30, 160, 15);
-
-		jLabel2.setText("Checking Tables");
-		jPanel2.add(jLabel2);
-		jLabel2.setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
-		jLabel2.setBounds(20, 50, 160, 15);
-
-		jLabel3.setText("Checking Columns");
-		jPanel2.add(jLabel3);
-		jLabel3.setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
-		jLabel3.setBounds(20, 70, 160, 15);
-
-		jLabel4.setText("Checking Relations");
-		jPanel2.add(jLabel4);
-		jLabel4.setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
-		jLabel4.setBounds(20, 90, 160, 15);
-
-		jLabel5.setText("Checking Model");
-		jPanel2.add(jLabel5);
-		jLabel5.setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
-		jLabel5.setBounds(20, 110, 160, 15);
-
+		jPanel2.setLayout(new BoxLayout(jPanel2, BoxLayout.Y_AXIS));
+		JLabel[] checks = {jLabel1, jLabel2, jLabel3, jLabel4, jLabel5};
+		String[] texts = {"Checking Databases", "Checking Tables", "Checking Columns", "Checking Relations", "Checking Model"};
+		for (int i = 0; i < checks.length; i++) {
+			checks[i].setText(texts[i]);
+			checks[i].setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
+			checks[i].setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+			jPanel2.add(checks[i]);
+		}
+		jPanel2.add(Box.createVerticalStrut(Forms.GAP));
+		progress.setAlignmentX(LEFT_ALIGNMENT);
+		progress.setPreferredSize(new java.awt.Dimension(200, progress.getPreferredSize().height));
 		jPanel2.add(progress);
-		progress.setBounds(20, 135, 200, 16);
-
-		jPanel1.add(jPanel2);
-		jPanel2.setBounds(10, 10, 240, 170);
+		Forms.titled(jPanel2, "Checking Model");
 
 		jButton1.setText("Close");
 		jButton1.addActionListener(evt -> jButton1ActionPerformed(evt));
-
-		jPanel1.add(jButton1);
-		jButton1.setBounds(168, 185, 80, 23);
-
 		generate.setText("Generate");
 		generate.addActionListener(evt -> generateActionPerformed(evt));
-
 		generate.setEnabled(false);
 
-		jPanel1.add(generate);
-		generate.setBounds(83, 185, 80, 23);
-
-		getContentPane().add(jPanel1);
-		jPanel1.setBounds(0, 0, 260, 410);
+		jPanel1.setLayout(new java.awt.BorderLayout());
+		Forms.padded(jPanel1);
+		jPanel1.add(jPanel2, java.awt.BorderLayout.CENTER);
+		jPanel1.add(Forms.buttonRow(generate, jButton1), java.awt.BorderLayout.SOUTH);
+		setContentPane(jPanel1);
 
 		pack();
 
-		this.setLocation(eui.getLocation().x + (int) ((eui.getSize().width - this.getSize().width) / 2),
-			eui.getLocation().y + (int) ((eui.getSize().height - this.getSize().height) / 2));
+		this.setLocationRelativeTo(eui);
 
 		Thread t = new Thread(this);
 		t.start();

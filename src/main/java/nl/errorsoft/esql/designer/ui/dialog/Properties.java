@@ -7,6 +7,8 @@ import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.designer.model.Model;
 
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -21,33 +23,21 @@ public class Properties extends JDialog implements ActionListener {
 	public Properties(JFrame jm, nl.errorsoft.esql.connection.ServerType serverType) {
 		super(jm, true);
 		this.serverType = serverType;
-		this.setSize(275, 350);
 		this.setTitle("Properties");
 		this.setResizable(false);
 
-		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
-			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
-
-		JPanel jp = new JPanel();
-		jp.setPreferredSize(new Dimension(280, 340));
+		cont = new JPanel(new BorderLayout());
+		cont.setPreferredSize(new Dimension(270, 300));
+		JPanel jp = Forms.padded(new JPanel(new BorderLayout()));
+		jp.add(cont, BorderLayout.CENTER);
+		jp.add(Forms.buttonRow(ok, cancel), BorderLayout.SOUTH);
 		this.setContentPane(jp);
-		this.getContentPane().setLayout(null);
-
-		cont = new JPanel();
-		cont.setBounds(5, 5, 270, 300);
-		this.getContentPane().add(cont);
-		cont.setLayout(new BorderLayout());
-
-		cancel.setBounds(200, 310, 75, 25);
-		this.getContentPane().add(cancel);
-
-		ok.setBounds(120, 310, 75, 25);
-		this.getContentPane().add(ok);
 
 		ok.addActionListener(this);
 		cancel.addActionListener(this);
 
 		this.pack();
+		this.setLocationRelativeTo(jm);
 	}
 
 	/** @param model the model the object is part of, so that edits to a table keep its foreign keys right. */

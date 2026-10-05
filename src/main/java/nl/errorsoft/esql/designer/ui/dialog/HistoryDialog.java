@@ -2,6 +2,8 @@ package nl.errorsoft.esql.designer.ui.dialog;
 
 import javax.swing.*;
 
+import nl.errorsoft.esql.ui.util.Forms;
+
 public class HistoryDialog extends JDialog {
 	private String name = "";
 	private String activity = "";
@@ -20,12 +22,9 @@ public class HistoryDialog extends JDialog {
 	}
 
 	public void initComponents() {
-		JPanel jp = new JPanel();
+		JPanel jp = Forms.padded(new JPanel(new java.awt.BorderLayout()));
 		jp.setPreferredSize(new java.awt.Dimension(320, 200));
-		jp.setLayout(null);
-
-		lbl_name.setBounds(10, 10, 75, 20);
-		jp.add(lbl_name);
+		jp.add(lbl_name, java.awt.BorderLayout.NORTH);
 
 		this.setContentPane(jp);
 	}

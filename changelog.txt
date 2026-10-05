@@ -93,6 +93,11 @@ eSQLManager changelog
 - Create table, Edit table and Indexes open as closable tabs of the connection window ("New table", "Edit orders",
   "Indexes orders"), one per table, with Save and Cancel at the bottom; closing with unsaved changes asks first.
   The screens use layout managers instead of absolute positions.
+- Dialogs: settings, connection profile, driver, field properties, import, export, upload and download, progress and the
+  designer property and generate dialogs use layout managers instead of absolute positions, with padding and the buttons
+  at the bottom right.
+- Process list: ProcesslistCC holds the connection, the refresh thread and the kill action, the window only shows the list.
+  The database tree keeps one tree model and only shows what its controller loads.
 
 build #64 - RC3
 

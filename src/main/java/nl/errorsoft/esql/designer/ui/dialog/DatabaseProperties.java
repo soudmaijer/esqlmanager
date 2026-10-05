@@ -3,6 +3,8 @@ package nl.errorsoft.esql.designer.ui.dialog;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
 
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 
 public class DatabaseProperties extends JTabbedPane implements PropertiesInterface { // General tab
@@ -15,26 +17,15 @@ public class DatabaseProperties extends JTabbedPane implements PropertiesInterfa
 	private DatabaseObject db;
 
 	public DatabaseProperties(DatabaseObject db) {
-		JPanel general = new JPanel();
-		general.setLayout(null);
-
-		lbl_name.setBounds(10, 15, 60, 20);
-		general.add(lbl_name);
-
-		txt_name.setBounds(70, 17, 185, 20);
-		general.add(txt_name);
 		txt_name.setText(db.getName());
-
-		lbl_comm.setBounds(10, 40, 60, 20);
-		general.add(lbl_comm);
-
-		JScrollPane jsp = new JScrollPane(txt_comm);
 		txt_comm.setFont(txt_name.getFont());
 		txt_comm.setLineWrap(true);
 		txt_comm.setWrapStyleWord(true);
-		jsp.setBounds(70, 42, 185, 185);
-		general.add(jsp);
 		txt_comm.setText(db.getDescription());
+		JScrollPane jsp = new JScrollPane(txt_comm);
+		jsp.setPreferredSize(new Dimension(185, 185));
+
+		JPanel general = Forms.padded(new Forms.Grid().row(lbl_name, txt_name).area(lbl_comm, jsp).panel());
 
 		this.addTab("General", general);
 

@@ -6,6 +6,8 @@ import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 import nl.errorsoft.esql.connection.ServerType;
 
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.event.*;
@@ -72,28 +74,10 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 	public TableProperties(TableObject tb, nl.errorsoft.esql.connection.ServerType serverType, Model model) {
 		this.model = model;
-		JPanel general = new JPanel();
 		this.serverType = serverType;
-		general.setLayout(null);
-		general.setOpaque(false);
 
-		lbl_name.setBounds(10, 15, 60, 20);
-		general.add(lbl_name);
-
-		txt_name.setBounds(70, 17, 185, 20);
-		general.add(txt_name);
 		txt_name.setText(tb.getName());
-
-		lbl_comm.setBounds(10, 40, 60, 20);
-		general.add(lbl_comm);
-
-		txt_comm.setBounds(70, 42, 185, 20);
-		general.add(txt_comm);
 		txt_comm.setText(tb.getComment());
-
-		lbl_type.setBounds(10, 65, 60, 20);
-		general.add(lbl_type);
-
 		String[] tableTypes = serverType.getDialect().getTableTypes();
 		for (int i = 0; i < tableTypes.length; i++) {
 			cmb_type.addItem(tableTypes[i]);
@@ -102,108 +86,45 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		// Servers without storage engines have nothing to choose here.
 		lbl_type.setVisible(tableTypes.length > 0);
 		cmb_type.setVisible(tableTypes.length > 0);
-		cmb_type.setBounds(70, 67, 185, 20);
-		general.add(cmb_type);
-
-		lbl_desc.setBounds(10, 90, 60, 20);
-		general.add(lbl_desc);
-
-		JScrollPane jsp = new JScrollPane(txt_desc);
 		txt_desc.setFont(txt_name.getFont());
 		txt_desc.setLineWrap(true);
 		txt_desc.setWrapStyleWord(true);
-		jsp.setBounds(70, 92, 185, 160);
-		general.add(jsp);
 		txt_desc.setText(tb.getDescription());
+		JScrollPane jsp = new JScrollPane(txt_desc);
+		jsp.setPreferredSize(new Dimension(185, 160));
 
+		JPanel general = Forms.padded(
+			new Forms.Grid().row(lbl_name, txt_name).row(lbl_comm, txt_comm).row(lbl_type, cmb_type).area(lbl_desc, jsp).panel());
+		general.setOpaque(false);
 		this.addTab("General", general);
 
-		JPanel fields = new JPanel();
-		fields.setLayout(null);
-
-		lbl_fields.setBounds(10, 5, 60, 20);
-		fields.add(lbl_fields);
-
+		// Fields tab: the list of fields above the editor of the selected field.
 		JScrollPane jsp2 = new JScrollPane(lst_fields);
-		jsp2.setBounds(70, 9, 185, 80);
-		fields.add(jsp2);
+		jsp2.setPreferredSize(new Dimension(185, 80));
+		JPanel fields = Forms.padded(new Forms.Grid().row(lbl_fields, jsp2).fill(tab_field).panel());
 
-		tab_field.setBounds(5, 92, 255, 175);
-		fields.add(tab_field);
-
-		JPanel first = new JPanel();
-		first.setLayout(null);
-
-		lbl_fieldname.setBounds(5, 10, 55, 20);
-		first.add(lbl_fieldname);
-
-		txt_fieldname.setBounds(60, 12, 180, 20);
-		first.add(txt_fieldname);
-
-		lbl_fieldcomm.setBounds(5, 32, 55, 20);
-		first.add(lbl_fieldcomm);
-
-		JScrollPane jsp3 = new JScrollPane(txt_fieldcomm);
 		txt_fieldcomm.setWrapStyleWord(true);
 		txt_fieldcomm.setLineWrap(true);
 		txt_fieldcomm.setFont(lbl_fieldcomm.getFont());
-		jsp3.setBounds(60, 34, 180, 80);
-		first.add(jsp3);
+		JScrollPane jsp3 = new JScrollPane(txt_fieldcomm);
+		jsp3.setPreferredSize(new Dimension(180, 70));
+		JPanel first = Forms
+			.padded(new Forms.Grid().row(lbl_fieldname, txt_fieldname).area(lbl_fieldcomm, jsp3).full(Forms.buttonRow(btn_new, btn_rem)).panel());
 
-		btn_new.setBounds(95, 117, 60, 25);
-		first.add(btn_new);
-
-		btn_rem.setBounds(160, 117, 80, 25);
-		first.add(btn_rem);
-
-		properties = new JPanel();
-		properties.setLayout(null);
-
-		lbl_types.setBounds(5, 10, 55, 20);
-		properties.add(lbl_types);
-
-		cmb_types.setBounds(60, 12, 180, 20);
-		properties.add(cmb_types);
 		nl.errorsoft.esql.table.DataType[] fo = serverType.getDataTypes();
 		for (int i = 0; i < fo.length; i++) {
 			cmb_types.addItem(fo[i]);
 		}
-
-		lbl_length.setBounds(5, 32, 55, 20);
-		properties.add(lbl_length);
-
-		txt_length.setBounds(60, 34, 180, 20);
-		properties.add(txt_length);
-
-		lbl_default.setBounds(5, 54, 55, 20);
-		properties.add(lbl_default);
-
-		txt_default.setBounds(60, 56, 180, 20);
-		properties.add(txt_default);
-
-		primary.setBounds(5, 77, 100, 18);
-		properties.add(primary);
-
-		binary.setBounds(5, 93, 100, 18);
-		properties.add(binary);
-
-		unsigned.setBounds(5, 109, 100, 18);
-		properties.add(unsigned);
-
-		zerofill.setBounds(5, 125, 100, 18);
-		properties.add(zerofill);
-
-		index.setBounds(120, 77, 100, 18);
-		properties.add(index);
-
-		notnull.setBounds(120, 93, 100, 18);
-		properties.add(notnull);
-
-		autoincrement.setBounds(120, 109, 100, 18);
-		properties.add(autoincrement);
-
-		unique.setBounds(120, 125, 100, 18);
-		properties.add(unique);
+		JPanel flags = new JPanel(new GridLayout(4, 2));
+		flags.add(primary);
+		flags.add(index);
+		flags.add(binary);
+		flags.add(notnull);
+		flags.add(unsigned);
+		flags.add(autoincrement);
+		flags.add(zerofill);
+		flags.add(unique);
+		properties = Forms.padded(new Forms.Grid().row(lbl_types, cmb_types).row(lbl_length, txt_length).row(lbl_default, txt_default).full(flags).done());
 
 		tab_field.addTab("Create/Edit", first);
 		tab_field.addTab("Properties", properties);
@@ -447,7 +368,12 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 
 	public void enableComps(boolean b, JComponent cmp) {
 		for (int i = 0; i < cmp.getComponentCount(); i++) {
-			cmp.getComponent(i).setEnabled(b);
+			Component child = cmp.getComponent(i);
+			if (child instanceof JPanel panel) {
+				enableComps(b, panel);
+			} else {
+				child.setEnabled(b);
+			}
 		}
 	}
 

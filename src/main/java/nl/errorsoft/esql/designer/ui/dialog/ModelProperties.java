@@ -2,6 +2,8 @@ package nl.errorsoft.esql.designer.ui.dialog;
 
 import nl.errorsoft.esql.designer.model.Model;
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.event.*;
@@ -25,37 +27,19 @@ public class ModelProperties extends JTabbedPane implements PropertiesInterface 
 	public ModelProperties(Model m) {
 		this.m = m;
 
-		JPanel general = new JPanel();
-		general.setLayout(null);
-
-		lbl_name.setBounds(10, 15, 60, 20);
-		general.add(lbl_name);
-
-		txt_name.setBounds(70, 17, 185, 20);
-		general.add(txt_name);
 		txt_name.setText(m.getName());
-
-		lbl_author.setBounds(10, 40, 60, 20);
-		general.add(lbl_author);
-
-		txt_author.setBounds(70, 42, 185, 20);
-		general.add(txt_author);
 		txt_author.setText(m.getAuthor());
-
 		if (m.getAuthor().trim().length() != 0) {
 			txt_author.setEnabled(false);
 		}
-
-		lbl_comm.setBounds(10, 65, 60, 20);
-		general.add(lbl_comm);
-
-		JScrollPane jsp = new JScrollPane(txt_comm);
 		txt_comm.setFont(txt_name.getFont());
 		txt_comm.setLineWrap(true);
 		txt_comm.setWrapStyleWord(true);
-		jsp.setBounds(70, 67, 185, 135);
-		general.add(jsp);
 		txt_comm.setText(m.getComment());
+		JScrollPane jsp = new JScrollPane(txt_comm);
+		jsp.setPreferredSize(new Dimension(185, 135));
+
+		JPanel general = Forms.padded(new Forms.Grid().row(lbl_name, txt_name).row(lbl_author, txt_author).area(lbl_comm, jsp).panel());
 
 		this.addTab("General", general);
 	}

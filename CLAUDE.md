@@ -37,7 +37,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 ### UI
 
 * Look and feel is FlatLaf, chosen through `app.Appearance` (Follow the system, Light, Dark, Native) and stored in `conf/settings.xml` (`<appearance>`), changed in Settings > Preferences and applied at once. On macOS FlatLaf uses its Mac themes, `Main` sets the screen menu bar and system appearance properties before the first window (`Appearance.prepareDesktop`). The native macOS look was far too slow when resizing, so it is only used when the user picks Native.
-* Use Swing only, no AWT widgets (`Label`, `Button`, ...). New dialogs use layout managers, not null layouts with absolute bounds.
+* Use Swing only, no AWT widgets (`Label`, `Button`, ...). Dialogs use layout managers, not null layouts with absolute bounds; `ui.util.Forms` gives the 12px padding, the button row at the bottom right, titled groups and a label/field grid. Only the designer canvas (`ModelViewer`, its cards, the text inside a `CommentObject`), internal frames placed by `DesktopUtils` and the splash (credits scrolled over a fixed image) place components at absolute positions.
 * Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
 * Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.
 * The query editor is an `RSyntaxTextArea` (com.fifesoft) in an `RTextScrollPane` with SQL highlighting, line numbers and the library's undo. `ui.EditorTheme.install` gives it the RSyntaxTextArea theme `idea.xml` or `dark.xml` matching `FlatLaf.isLafDark()` and applies it again when the look and feel changes.
@@ -136,7 +136,7 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 * `designer.ui.diagram` holds the canvas (`ModelViewer`, the model objects, `ConnectorRenderer`, `ModelBrowser`), `designer.ui.dialog` the property, foreign key, history and generate dialogs, `designer.ui` the window (`DBCreator`).
 * `query`: statements typed by the user (`QueryService`, `QueryRepository`, `SqlScript`, `SqlContext`), the query tab with syntax highlighting and completion (`ui.QueryUI`, `ui.SqlCompletionProvider`, `control.QueryCC`).
 * `connection`: profiles, drivers, server types, the connection window and `ConnectionContext`.
-* `server`: process list, server status and variables (`ServerService`, `ServerRepository`, `ServerProcess`, `server.ui.Processlist`).
+* `server`: process list, server status and variables (`ServerService`, `ServerRepository`, `ServerProcess`). `server.control.ProcesslistCC` opens its own connection, refreshes on a virtual thread and kills processes; `server.ui.Processlist` only shows the rows and the countdown.
 * `app`: main window, credits, splash, start up. `settings`: `Settings`, `Appearance` and `settings.ui.SettingsUI`.
 * `ui`: Swing parts shared by several features: `ui.icon` (`ImageLoader`, `StatusLight`), `ui.table` (`ColumnWidths`, sortable headers, `MultiLineCellEditor`), `ui.editor` (`EditorTheme`), `ui.util` (`DesktopUtils`, file filter, hyperlinks).
 * `jdbc`: `DatabaseConnection` and `AbstractRepository`. `dialect`: `Dialect`, `AbstractDialect`, `Dialects`, `UserAdmin`, the statement records `MaintenanceStatement` and `GrantQuery`, with `mysql`, `postgres`, `sqlserver` and `oracle` sub packages. `error`: `EsqlException` and `ErrorHandler`. `job`: `ProgressListener`. `CreateColumn` and `DataType` are in `table`.
@@ -146,6 +146,4 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 ## Known technical debt
 
-* Many dialogs still use null layouts (`ConnectionWindowUI`, `FieldProperties`, ...).
-* Some windows (`Processlist`, `DatabaseTreeView`) hold more logic than a UI should.
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.
