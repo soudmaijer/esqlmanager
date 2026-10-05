@@ -56,6 +56,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	private JPanel statusbar;
 	private StatusLight stl;
 	private JLabel statusMsg;
+	private JLabel statusInfo;
 
 	// Containers etc.
 	private JSplitPane jsplit;
@@ -240,7 +241,14 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		
 		statusMsg = new JLabel( "Ready..." );
 		statusMsg.setBorder( BorderFactory.createEmptyBorder( 3, 8, 3, 8 ) );
-		statusbar.add( statusMsg, BorderLayout.CENTER );
+		statusMsg.setPreferredSize( new Dimension( 200, 20 ) );
+		statusInfo = new JLabel( " " );
+		statusInfo.setBorder( BorderFactory.createEmptyBorder( 3, 8, 3, 8 ) );
+		statusInfo.setForeground( UIManager.getColor( "Label.disabledForeground" ) );
+		JPanel statusText = new JPanel( new BorderLayout() );
+		statusText.add( statusMsg, BorderLayout.WEST );
+		statusText.add( statusInfo, BorderLayout.CENTER );
+		statusbar.add( statusText, BorderLayout.CENTER );
 		this.getContentPane().add( statusbar, BorderLayout.SOUTH );
 
 		/*
@@ -341,6 +349,17 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		stl.switchRedLight(red);
 		
 		statusMsg.setText( message );
+	}
+
+	/** Shows what the active connection is looking at, next to the action that is going on. */
+	public void setStatusInfo( final String info )
+	{
+		if( !SwingUtilities.isEventDispatchThread() )
+		{
+			SwingUtilities.invokeLater( () -> setStatusInfo( info ) );
+			return;
+		}
+		statusInfo.setText( info.length() == 0 ? " " : info );
 	}
 
 	// Displays messages in output window.

@@ -101,6 +101,11 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			{
 				closeUI(true);
 			}     		
+
+			public void internalFrameActivated(InternalFrameEvent e)
+			{
+				cwcc.showStatusInfo();
+			}
      	});
 				
 		// Get Imageloader

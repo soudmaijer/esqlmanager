@@ -151,6 +151,11 @@ public class ESQLManagerCC
 	{
 		jmui.updateStatus( message, red );
 	}		
+
+	public void setStatusInfo( String info )
+	{
+		jmui.setStatusInfo( info );
+	}
 	
 	public ESQLManagerUI getUI()
 	{

@@ -9,6 +9,7 @@ import java.util.*;
 
 public class ConnectionWindowCC extends Thread
 {
+	private String statusDetail = "";
 	private static final Logger log = LogManager.getLogger( ConnectionWindowCC.class );
 
 	private ESQLManagerCC jmcc;
@@ -38,6 +39,7 @@ public class ConnectionWindowCC extends Thread
 			cw.start();
 			jmcc.updateStatus( "Loading databases...", true );
 			showDatabaseTree();
+			setStatusDetail( "" );
 			jmcc.updateStatus( "Ready...", false );		
 		}
 		catch( Exception e )
@@ -46,6 +48,37 @@ public class ConnectionWindowCC extends Thread
 			cwui.closeUI(false);
 			jmcc.updateStatus( "Can`t connect to server...", false );
 		}
+	}
+	
+	/** Shows the server and account of this connection, followed by what happened last. */
+	public void showStatusInfo()
+	{
+		String info = "";
+		
+		try
+		{
+			info = getDatabaseConnection().getServerDescription() +"  |  "+ cw.getConnectionProfile().getUsername() +"@"+ cw.getConnectionProfile().getHost() +":"+ cw.getConnectionProfile().getPort();
+		}
+		catch( Exception e )
+		{
+			// Not connected (yet), there is nothing to show.
+		}
+		
+		if( info.length() > 0 && statusDetail.length() > 0 )
+			info += "  |  "+ statusDetail;
+		
+		jmcc.setStatusInfo( info );
+	}
+	
+	private void setStatusDetail( String detail )
+	{
+		statusDetail = detail;
+		showStatusInfo();
+	}
+	
+	private long millisSince( long startNanos )
+	{
+		return ( System.nanoTime() - startNanos ) / 1000000;
 	}
 	
 	public void closeUI()
@@ -250,6 +283,7 @@ public class ConnectionWindowCC extends Thread
 			// Show tables in tree.
 			cwui.getDatabaseTreeView().loadTables( database, tables );
 			cwui.databaseSelected();
+			setStatusDetail( database.getName() +": "+ tables.size() +" table(s)" );
 			jmcc.updateStatus( "Ready...", false );
 		}
 		catch( Exception e )
@@ -358,11 +392,14 @@ public class ConnectionWindowCC extends Thread
 		{
 			jmcc.updateStatus( "Executing query...", true );
 			cwui.disableDataEdit();
+			long start = System.nanoTime();
 			
 			if( query.toLowerCase().startsWith("select") || query.toLowerCase().startsWith("show") )
 			{
 				TableCC tcc = new TableCC( this );
-				cwui.showTableDataView( "Query results", tcc.executeQuery( query ) );
+				TableDataView result = tcc.executeQuery( query );
+				cwui.showTableDataView( "Query results", result );
+				setStatusDetail( "Query returned "+ result.getRowCount() +" row(s) in "+ millisSince( start ) +" ms" );
 			}
 			else
 			{
@@ -376,7 +413,8 @@ public class ConnectionWindowCC extends Thread
 				}
 				else
 				{
-					this.getDatabaseConnection().executeUpdate( query );
+					int rows = this.getDatabaseConnection().executeUpdate( query );
+					setStatusDetail( "Query affected "+ rows +" row(s) in "+ millisSince( start ) +" ms" );
 				}				
 			}
 			jmcc.updateStatus( "Ready...", false );
@@ -420,10 +458,12 @@ public class ConnectionWindowCC extends Thread
 		{
 			// Load the tables from the database.
 			jmcc.updateStatus( "Loading table data...", true );
+			long start = System.nanoTime();
 			
 			// Let the Table control class handle the data display creation.
 			tbcc = new TableCC( this );
 			cwui.showTableDataView( table.getDatabase().getName() +" : "+ table.getName(), tbcc.getTableDataView( table, 0, 50 ) );
+			setStatusDetail( table.getDatabase().getName() +"."+ table.getName() +": "+ table.getRowCount() +" row(s), loaded in "+ millisSince( start ) +" ms" );
 			jmcc.updateStatus( "Ready...", false );
 		}
 		catch( Exception e )

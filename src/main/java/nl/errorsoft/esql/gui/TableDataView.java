@@ -525,6 +525,11 @@ public class TableDataView extends JPanel implements ActionListener
   		pane.showMessageDialog( this, message, table.getDatabase() +":"+ table.getName(), JOptionPane.WARNING_MESSAGE );  					
 	}	   
    
+   public int getRowCount()
+   {
+   	return table.getRowCount();
+   }
+   
    public void showRecordCount()
    {
    	lblRows.setText( " Total:  "+ table.getRowCount() );

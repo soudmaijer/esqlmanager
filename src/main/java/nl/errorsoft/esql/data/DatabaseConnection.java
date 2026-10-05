@@ -9,6 +9,7 @@ import java.io.*;
 
 public class DatabaseConnection
 {
+	private String serverDescription = "";
 	private static final Logger log = LogManager.getLogger( DatabaseConnection.class );
 
 	private String driver	= "";
@@ -66,7 +67,14 @@ public class DatabaseConnection
 		connection = java.sql.DriverManager.getConnection( url, cp.getUsername(), cp.getPassword() );
 		
 		DatabaseMetaData meta = connection.getMetaData();
+		serverDescription = meta.getDatabaseProductName() +" "+ meta.getDatabaseMajorVersion() +"."+ meta.getDatabaseMinorVersion();
 		log.info( "Connected to {} {} using driver {} {}", meta.getDatabaseProductName(), meta.getDatabaseProductVersion(), meta.getDriverName(), meta.getDriverVersion() );
+	}
+
+	// The name and version of the server, for display.
+	public String getServerDescription()
+	{
+		return serverDescription;
 	}
 
 	// The database the connection was made to.
