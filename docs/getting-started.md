@@ -12,9 +12,12 @@ Options > Connect (or the Connect button of the toolbar) opens the connection di
 | Host and port | Where the server runs. |
 | User and password | The account to log in with. |
 | Database(s) | Optional, a comma separated list of the databases to show. Empty shows every database. On PostgreSQL the first name is the database to connect to, `postgres` when it is empty. |
+| Save password | On by default. When it is off the password is not written to `conf/profiles.xml` and is asked for when you connect (also for auto connect). |
 | Auto connect | Connect with this profile when the application starts. |
 
-Profiles are saved in `conf/profiles.xml`. Passwords are stored there in plain text, so only save one on a machine you trust.
+**Test connection** connects with the values in the form (the saved profile is not used) and shows "Connected to <server> <version>" in green or the error in red below the form, without opening a window. **Duplicate** saves a copy of the selected profile as "<name> copy" (no auto connect), **Delete** removes it.
+
+Profiles are saved in `conf/profiles.xml`. A saved password is stored there in plain text, so only save one on a machine you trust, or turn Save password off.
 
 Several connections can be open at the same time. Their windows, and the designer windows, sit on the desktop of eSQLManager; the window selector in the toolbar brings one to the front. Window > Tile horizontal, Tile vertical and Cascade arrange them.
 
@@ -22,9 +25,9 @@ Several connections can be open at the same time. Their windows, and the designe
 
 * **Tree** on the left: the server, its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Double click a database to list its tables, double click a table to open its data. Right click any node for its context menu, which only lists what the server supports:
   * server: Create database, New query, Users, Process list, Show status, Show variables, Reload databases;
-  * database: Open, Create table, Open in designer, Export, Import, Drop database, Reload tables (PostgreSQL: Create schema and Reload schemas);
-  * schema (PostgreSQL): New query, Create table, Open in designer, Export, Import, Drop schema, Reload tables;
-  * table: Open, Edit table, Indexes, Add field, Export, the maintenance commands, Empty table, Drop table, Reload columns;
+  * database: Open, Create table, Open in designer, Export, Import, Drop database, Properties, Reload tables (PostgreSQL: Create schema and Reload schemas);
+  * schema (PostgreSQL): New query, Create table, Open in designer, Export, Import, Rename schema, Drop schema, Reload tables;
+  * table: Open, Edit table, Indexes, Add field, Rename table, Duplicate table, Export, the maintenance commands, Empty table, Drop table, Properties, Reload columns;
   * column: Add field, Edit field, Drop field.
 * **Tabs** on the right: the table list or the table data in the first tab, query tabs ("Query", "Query 2", ...) and this help. Every tab has a close button; the tab in front has a darker background and a coloured underline.
 * **Toolbar**: create and drop a table, add and delete a field, insert, update and delete a row, run an SQL query, open the database in the designer, the user manager and refresh the tree. Buttons are enabled when they apply to what is selected.

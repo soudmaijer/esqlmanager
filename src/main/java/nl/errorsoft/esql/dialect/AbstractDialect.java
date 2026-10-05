@@ -129,7 +129,24 @@ public abstract class AbstractDialect implements Dialect {
 			statements.addAll(setTableCommentSql(table, comment));
 		}
 
+		for (CreateColumn column : columns) {
+			statements.addAll(columnCommentSql(table, column, false));
+		}
+
 		return statements;
+	}
+
+	public boolean supportsColumnComments() {
+		return false;
+	}
+
+	/** The statements that set the comment of a column, none where the comment is part of the column definition. @param always write a statement for an empty comment too, to clear it */
+	protected List<String> columnCommentSql(TableName table, CreateColumn column, boolean always) {
+		if (!supportsColumnComments() || (!always && column.comment.isBlank())) {
+			return List.of();
+		}
+		String comment = column.comment.isBlank() ? "NULL" : literal(column.comment);
+		return List.of("COMMENT ON COLUMN " + quote(table) + "." + quote(column.name) + " IS " + comment);
 	}
 
 	public List<String> renameTableSql(TableName table, String newName) {
@@ -151,7 +168,9 @@ public abstract class AbstractDialect implements Dialect {
 			statement += " PRIMARY KEY";
 		}
 
-		return Arrays.asList(statement);
+		List<String> statements = new ArrayList<>(List.of(statement));
+		statements.addAll(columnCommentSql(table, column, false));
+		return statements;
 	}
 
 	public List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column) {
@@ -172,6 +191,7 @@ public abstract class AbstractDialect implements Dialect {
 			statements.add(alter + " ALTER COLUMN " + name + " DROP DEFAULT");
 		}
 
+		statements.addAll(columnCommentSql(table, column, true));
 		return statements;
 	}
 

@@ -18,11 +18,12 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 
 | Feature | MySQL | PostgreSQL | SQL Server | Oracle |
 |---|---|---|---|---|
-| Saved connection profiles with auto-connect | yes | yes | yes | yes |
+| Saved connection profiles with auto-connect, duplicate, optional saved password | yes | yes | yes | yes |
+| Test connection from the profile dialog | yes | yes | yes | yes |
 | Several connections open at once, tiled or cascaded | yes | yes | yes | yes |
 | JDBC driver configuration | yes | yes | yes | yes |
 | Browse databases, tables, views and columns in a tree | yes | yes | yes | yes |
-| Schemas in the tree (server > databases > schemas > tables), create and drop a schema | no | yes | no | no |
+| Schemas in the tree (server > databases > schemas > tables), create, rename and drop a schema | no | yes | no | no |
 | Row count per table | yes | yes | yes | yes |
 | View table data, paged | yes | yes | yes | yes |
 | Sort table data | yes | yes | yes | yes |
@@ -34,19 +35,23 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Run selection or the statement at the caret, run all statements of a script | yes | yes | yes | yes |
 | Query results in tabs, one per statement, with time, database, rows and duration | yes | yes | yes | yes |
 | Auto completion of keywords, tables and columns (aliases resolved) | yes | yes | yes | yes |
-| Create a database | yes | yes | not verified | no |
+| Create a database, with character set and collation (MySQL) or owner and encoding (PostgreSQL) | yes | yes | not verified | no |
 | Drop a database | yes | yes | not verified | no |
 | Create a table | yes | yes | no | no |
 | Create table, Edit table and Indexes as tabs of the connection window | yes | yes | no | no |
 | Modify a table (rename, comment, storage engine) | yes | yes | no | no |
 | Drop a table | yes | yes | yes | yes |
 | Empty a table | yes | yes | yes | yes |
+| Rename and duplicate a table (with or without its data), read-only Properties of a table and a database | yes | yes | no | no |
+| SQL preview in the table editor, comment per column | yes | yes | no | no |
 | Add, modify and drop columns | yes | yes | no | no |
 | Index manager (primary key, unique, index, fulltext) | yes | yes | no | no |
 | Table maintenance: optimize, analyze | yes | yes (VACUUM, ANALYZE) | no | no |
 | Table maintenance: check, repair | yes | no | no | no |
-| Export as SQL (structure and data) | yes | yes (per schema) | no | no |
-| Import an SQL script | yes | yes (into a schema) | no | no |
+| Export as SQL (structure and data, views, IF EXISTS, batch INSERTs, encoding, .gz, transaction) | yes | yes (per schema) | no | no |
+| Export: disable foreign key checks | yes | no | no | no |
+| Import an SQL script (stop or continue on errors, single transaction, encoding, .gz) | yes | yes (into a schema) | no | no |
+| Cancel a running export, import, upload or download | yes | yes | no | no |
 | Schema picker in the query tab | no | yes | no | no |
 | Database designer: draw a model and generate it, in a window on the desktop | yes | yes | no | no |
 | Designer foreign keys: drag from column to column, edit and generate | yes | yes | no | no |
@@ -55,20 +60,23 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Designer: open an existing database (reverse engineering) with automatic layout | yes | yes | no | no |
 | User manager: accounts and passwords | yes | yes (roles) | no | no |
 | User manager: privileges per server, database and table | yes | yes | no | no |
-| Process list, with ending a process | yes | yes | no | no |
+| Process list, with ending a process, pause, hide idle, interval and the full statement | yes | yes | no | no |
 | Server status | yes | yes | no | no |
 | Server variables | yes | yes | no | no |
 | Output panel with connection details and executed queries | yes | yes | yes | yes |
 | Status bar with server and account, a message bar per tab | yes | yes | yes | yes |
 | Appearance: follow the system, light, dark or native | yes | yes | yes | yes |
+| Preferences: editor font size, default folder and file encoding | yes | yes | yes | yes |
 | Brand icons of the servers, the eSQL logo as window and Dock icon | yes | yes | yes | yes |
 | In-app help: the Markdown pages of docs/ in a help tab | yes | yes | yes | yes |
 
 The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. The bar below the tabs shows the message of the tab in front (a query's outcome, the rows loaded on the table data) and is empty for a tab without one, such as the help. The tab in front has a darker background and a coloured underline. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
-Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export and Import on a database, Edit, Indexes and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
+Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export, Import and Properties on a database, Edit, Indexes, Rename, Duplicate, Properties and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 
-On PostgreSQL the tree is server > databases > schemas > tables: a database shows its schemas (`public` and the others, system schemas left out) and a schema its tables. A schema has its own menu (Reload tables, Create table, Open in designer, Export, Import, Drop schema), a database has Create schema and Reload schemas. PostgreSQL has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects. MySQL stays server > databases > tables.
+Export, import and the transfer of a binary cell run in the background with a progress window that has a Cancel button. The export window can wrap the script in a transaction, write views, several rows per `INSERT`, another encoding and gzip (a name ending in `.gz`); the import window can continue after errors and list the failed statements, or run everything in one transaction that is rolled back on an error or cancel.
+
+On PostgreSQL the tree is server > databases > schemas > tables: a database shows its schemas (`public` and the others, system schemas left out) and a schema its tables. A schema has its own menu (Reload tables, Create table, Open in designer, Export, Import, Rename schema, Drop schema), a database has Create schema and Reload schemas. PostgreSQL has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects. MySQL stays server > databases > tables.
 
 Export and import work per schema: exporting a database takes every schema, the script names `schema.table` and creates missing schemas, and importing into a schema node puts unqualified tables there. The query tab has a schema picker next to the database (it sets the `search_path`).
 
@@ -188,7 +196,11 @@ Profiles are normally created in the connection dialog. When you choose a server
 
 The **Database(s)** field of a profile is an optional comma separated filter. Leave it empty to list every database on the server. For PostgreSQL the first name is also the database the connection is made to, with `postgres` as the default.
 
-Note that `profiles.xml` stores passwords in plain text. Keep local changes out of version control, for example with `git update-index --skip-worktree runtime/conf/profiles.xml`.
+Note that `profiles.xml` stores saved passwords in plain text; switch off "Save password" in the profile to be asked for the password when connecting instead. Keep local changes out of version control, for example with `git update-index --skip-worktree runtime/conf/profiles.xml`.
+
+### Preferences
+
+Settings > Preferences holds the appearance (below), the font size of the SQL editors and the output panel (applies at once), the default folder that the export, import and file transfer windows start in, and the default file encoding of the export and import windows. They are stored in `settings.xml`.
 
 ### Appearance
 

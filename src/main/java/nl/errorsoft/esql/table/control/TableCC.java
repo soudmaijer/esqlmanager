@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
@@ -75,14 +75,12 @@ public class TableCC {
 		service().executeUpdate(query);
 	}
 
-	public void addTableColumn(Table tb, String name, String length, String defaultValue, DataType dt, boolean primary, boolean auto, boolean unsigned,
-		boolean nullable) throws Exception {
-		service().addColumn(tb, name, length, defaultValue, dt, primary, auto, unsigned, nullable);
+	public void addTableColumn(Table tb, CreateColumn column) throws Exception {
+		service().addColumn(tb, column);
 	}
 
-	public void editTableColumn(TableColumn tbc, String name, String length, String defaultValue, DataType dt, boolean primary, boolean auto, boolean unsigned,
-		boolean nullable) throws Exception {
-		service().editColumn(tbc, name, length, defaultValue, dt, primary, auto, unsigned, nullable);
+	public void editTableColumn(TableColumn tbc, CreateColumn column) throws Exception {
+		service().editColumn(tbc, column);
 	}
 
 	public void insertNewRow() {

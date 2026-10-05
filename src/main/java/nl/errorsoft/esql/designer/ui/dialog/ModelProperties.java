@@ -26,9 +26,6 @@ public class ModelProperties extends JPanel implements PropertiesInterface {
 
 		txt_name.setText(m.getName());
 		txt_author.setText(m.getAuthor());
-		if (m.getAuthor().trim().length() != 0) {
-			txt_author.setEnabled(false);
-		}
 		txt_comm.setFont(txt_name.getFont());
 		txt_comm.setLineWrap(true);
 		txt_comm.setWrapStyleWord(true);
@@ -40,6 +37,10 @@ public class ModelProperties extends JPanel implements PropertiesInterface {
 
 		setLayout(new BorderLayout());
 		add(general, BorderLayout.CENTER);
+	}
+
+	public String inputProblem() {
+		return ObjectNames.modelProblem(txt_name.getText());
 	}
 
 	public void saveProperties() {

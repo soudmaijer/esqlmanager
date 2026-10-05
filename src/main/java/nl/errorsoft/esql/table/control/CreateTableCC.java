@@ -11,6 +11,7 @@ import nl.errorsoft.esql.error.Dialogs;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.ui.TableEditor;
 
 import java.util.ArrayList;
@@ -73,6 +74,29 @@ public class CreateTableCC {
 	/** The name of the schema a new table goes in, null for the current schema of the database. */
 	public String targetSchemaName() {
 		return schema == null ? null : schema.getName();
+	}
+
+	/** Whether the server keeps a comment per column, so the editor offers the field. */
+	public boolean supportsColumnComments() {
+		return cwcc.dialect().supportsColumnComments();
+	}
+
+	/**
+	 * The statements Save would run, for the SQL preview: the CREATE TABLE of a new table (in the schema this editor was opened for) or the changes of an
+	 * existing one. A problem is returned as a comment line.
+	 */
+	public List<String> previewStatements(Table existing, String database, String name, String comment, String type, List<CreateColumn> columns) {
+		try {
+			TableService tables = cwcc.getContext().tables();
+
+			if (existing != null) {
+				return tables.modifyStatements(existing, name, type, comment);
+			}
+			Schema target = schema != null && schema.getDatabase().getName().equals(database) ? schema : null;
+			return tables.createStatements(target, name, columns, type, comment);
+		} catch (Exception e) {
+			return List.of("-- " + e.getMessage());
+		}
 	}
 
 	/*

@@ -2,6 +2,20 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: SQL preview, process list controls, preferences, designer validation
+
+- Table editor: "Show SQL" shows the statements that Save runs (the CREATE TABLE of a new table, the changes of an
+  existing one) and keeps them up to date while you type. Columns have a comment (MySQL and PostgreSQL) in the table
+  editor and in the field dialog of the tree; the comment of existing columns is read from the server.
+- Process list: Pause and resume, Hide idle, a refresh interval of 1, 2, 5 or 10 seconds, and double click (or Show
+  query) opens the full statement in a read-only editor with SQL colouring and a Copy button.
+- Settings > Preferences: editor font size (applies at once to the query editor, the output panel and the other SQL
+  editors), the default folder of the export, import, upload and download windows, and the default file encoding of
+  the export and import windows. The settings file is written with proper XML escaping.
+- Designer: the properties of the model, a database and a table refuse an empty name, a database name that another
+  database of the model has, and a table name that another table in the same database has. The author of a model can
+  be edited at any time.
+
 05-10-2026: Create database options, schema management, rename and duplicate table
 
 - Create database: the dialog checks the name against the databases in the tree and offers the options of the server,

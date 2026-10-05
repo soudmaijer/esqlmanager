@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
+import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
 
 import javax.swing.*;
@@ -16,7 +17,11 @@ public class DatabaseProperties extends JPanel implements PropertiesInterface {
 	// Databaseobject
 	private DatabaseObject db;
 
-	public DatabaseProperties(DatabaseObject db) {
+	/** The model the database is part of, so that the name can be checked against the other databases. */
+	private final Model model;
+
+	public DatabaseProperties(DatabaseObject db, Model model) {
+		this.model = model;
 		lbl_name.setLabelFor(txt_name);
 		lbl_name.setDisplayedMnemonic('N');
 		txt_name.setText(db.getName());
@@ -33,6 +38,10 @@ public class DatabaseProperties extends JPanel implements PropertiesInterface {
 		add(general, BorderLayout.CENTER);
 
 		this.db = db;
+	}
+
+	public String inputProblem() {
+		return model == null ? ObjectNames.modelProblem(txt_name.getText()) : ObjectNames.databaseProblem(model, db, txt_name.getText());
 	}
 
 	public void saveProperties() {

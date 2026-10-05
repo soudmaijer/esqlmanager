@@ -511,9 +511,10 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface 
 	@Override
 	public String inputProblem() {
 		String name = txt_name.getText().trim();
-		if (name.isEmpty()) {
+		String nameProblem = model == null ? (name.isEmpty() ? "The table needs a name." : null) : ObjectNames.tableProblem(model, tb, name);
+		if (nameProblem != null) {
 			setSelectedIndex(0);
-			return "The table needs a name.";
+			return nameProblem;
 		}
 		String names = FieldRules.nameProblem(fieldNames());
 		if (names != null) {

@@ -108,6 +108,9 @@ public interface Dialect {
 	/** The statements that create a table, including its indexes and comment. */
 	List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment);
 
+	/** Whether a column can carry a comment. */
+	boolean supportsColumnComments();
+
 	List<String> renameTableSql(TableName table, String newName);
 
 	List<String> setTableTypeSql(TableName table, String tableType);

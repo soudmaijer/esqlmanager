@@ -40,7 +40,7 @@ public class Properties extends FormDialog {
 			cur = tp;
 		}
 		if (obj instanceof DatabaseObject object1) {
-			DatabaseProperties tp = new DatabaseProperties(object1);
+			DatabaseProperties tp = new DatabaseProperties(object1, model);
 			this.setTitle("Properties of '" + object1.getName() + "'");
 			this.cont.add(tp);
 			cur = tp;

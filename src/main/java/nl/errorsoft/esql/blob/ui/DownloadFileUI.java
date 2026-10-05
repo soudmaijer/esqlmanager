@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.swing.*;
 
+import nl.errorsoft.esql.ui.util.FileChoosers;
 import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 
@@ -116,7 +117,7 @@ public class DownloadFileUI extends FormDialog implements UDDataIF, ActionListen
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == jButton3) {
-			JFileChooser chooser = new JFileChooser();
+			JFileChooser chooser = FileChoosers.create();
 			chooser.setAcceptAllFileFilterUsed(true);
 			chooser.setDialogTitle("Save data...");
 

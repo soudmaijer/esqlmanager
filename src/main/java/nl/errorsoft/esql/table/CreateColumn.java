@@ -16,6 +16,8 @@ public class CreateColumn {
 
 	public String defaultval = "";
 	public String length = "";
+	/** The comment of the column, written where {@code Dialect.supportsColumnComments}. */
+	public String comment = "";
 
 	public CreateColumn(String name) {
 		this.name = name;

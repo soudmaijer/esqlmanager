@@ -46,6 +46,7 @@ public class TableRepository extends AbstractRepository {
 				column.setSize(rs.getInt("COLUMN_SIZE"));
 				column.setNullable(rs.getBoolean("NULLABLE"));
 				column.setDefault(rs.getString("COLUMN_DEF"));
+				column.setComment(rs.getString("REMARKS"));
 				columns.add(column);
 			}
 		}
@@ -138,7 +139,35 @@ public class TableRepository extends AbstractRepository {
 	/** @param schema the schema to create the table in, null for the current one. */
 	public void create(Database database, Schema schema, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
 		useDatabase(database.getName());
-		executeAll(dialect().createTableSql(new TableName(schema == null ? null : schema.getName(), name), columns, type, comment));
+		executeAll(createStatements(schema, name, columns, type, comment));
+	}
+
+	/** The statements {@link #create} runs, without running them. */
+	public List<String> createStatements(Schema schema, String name, List<CreateColumn> columns, String type, String comment) {
+		return dialect().createTableSql(new TableName(schema == null ? null : schema.getName(), name), columns, type, comment);
+	}
+
+	/** The statements that give the table the name, type and comment, only for the parts that differ; a null type means the server has none. */
+	public List<String> modifyStatements(Table table, String name, String type, String comment) {
+		List<String> statements = new ArrayList<>();
+		TableName current = table.qualifiedName();
+
+		if (!table.getName().equalsIgnoreCase(name)) {
+			statements.addAll(dialect().renameTableSql(current, name));
+			current = current.sibling(name);
+		}
+		if (type != null && !type.equalsIgnoreCase(table.getType())) {
+			statements.addAll(dialect().setTableTypeSql(current, type));
+		}
+		if (!comment.equals(table.getComment() == null ? "" : table.getComment())) {
+			statements.addAll(dialect().setTableCommentSql(current, comment));
+		}
+		return statements;
+	}
+
+	public void run(Table table, List<String> statements) throws Exception {
+		useDatabaseOf(table);
+		executeAll(statements);
 	}
 
 	public void dropTable(Table table) throws Exception {

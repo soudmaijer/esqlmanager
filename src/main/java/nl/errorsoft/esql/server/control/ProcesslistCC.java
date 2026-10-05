@@ -21,11 +21,18 @@ import nl.errorsoft.esql.server.ui.Processlist;
  */
 public class ProcesslistCC {
 	private static final Logger log = LogManager.getLogger(ProcesslistCC.class);
-	private static final int REFRESH_SECONDS = 5;
+	/** The intervals offered in the window, in seconds. */
+	public static final int[] INTERVALS = {1, 2, 5, 10};
+	public static final int DEFAULT_INTERVAL = 5;
+	private static final int TICK_MILLIS = 250;
 
 	private final ConnectionProfile profile;
 	private final Processlist ui;
 	private volatile boolean running = true;
+	private volatile boolean paused;
+	private volatile int intervalSeconds = DEFAULT_INTERVAL;
+	/** Set when the list must be read at the next tick: after a resume or a change of the interval. */
+	private volatile boolean refreshNow;
 	private volatile ServerService servers;
 
 	public ProcesslistCC(ConnectionProfile profile, JFrame parent) {
@@ -41,6 +48,19 @@ public class ProcesslistCC {
 	/** Called by the window when it closes. */
 	public void stop() {
 		running = false;
+	}
+
+	/** Stops the refreshing, the list stays as it is; resuming reads it again at once. */
+	public void setPaused(boolean paused) {
+		this.paused = paused;
+		if (!paused) {
+			refreshNow = true;
+		}
+	}
+
+	public void setInterval(int seconds) {
+		intervalSeconds = seconds;
+		refreshNow = true;
 	}
 
 	/** Kills a process on a virtual thread, the next refresh shows the result. */
@@ -63,14 +83,23 @@ public class ProcesslistCC {
 		try (connection) {
 			connection.connect(profile, "");
 			servers = ApplicationContext.get().connection(connection).servers();
+			long remainingMillis = 0;
+
 			while (running && !connection.getConnection().isClosed()) {
-				List<ServerProcess> processes = servers.getProcesses();
-				SwingUtilities.invokeLater(() -> ui.showProcesses(processes));
-				for (int i = REFRESH_SECONDS; i > 0 && running; i--) {
-					int seconds = i;
+				if (paused) {
+					SwingUtilities.invokeLater(ui::showPaused);
+				} else {
+					if (remainingMillis <= 0 || refreshNow) {
+						refreshNow = false;
+						List<ServerProcess> processes = servers.getProcesses();
+						SwingUtilities.invokeLater(() -> ui.showProcesses(processes));
+						remainingMillis = intervalSeconds * 1000L;
+					}
+					int seconds = (int) Math.ceil(remainingMillis / 1000.0);
 					SwingUtilities.invokeLater(() -> ui.showCountdown(seconds));
-					Thread.sleep(1000);
+					remainingMillis -= TICK_MILLIS;
 				}
+				Thread.sleep(TICK_MILLIS);
 			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();

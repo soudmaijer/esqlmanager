@@ -63,6 +63,10 @@ public class PostgresDialect extends AbstractDialect {
 		return "COMMIT";
 	}
 
+	public boolean supportsColumnComments() {
+		return true;
+	}
+
 	public java.util.Set<Maintenance> maintenanceCommands() {
 		return java.util.EnumSet.of(Maintenance.OPTIMIZE, Maintenance.ANALYZE);
 	}
@@ -93,7 +97,8 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	public ServerProcess readProcess(ResultSet rs) throws SQLException {
-		return new ServerProcess(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7));
+		return new ServerProcess(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7),
+			"idle".equals(rs.getString(5)));
 	}
 
 	public String killProcessSql(String processId) {

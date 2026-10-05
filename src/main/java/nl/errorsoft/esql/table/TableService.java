@@ -111,20 +111,25 @@ public class TableService {
 			table.getComment(), repository.countRows(table), columns, repository.sizeInBytes(table));
 	}
 
+	/** The statements {@link #modifyTable} would run, for a preview. */
+	public List<String> modifyStatements(Table table, String name, String type, String comment) {
+		return repository.modifyStatements(table, name, type, comment);
+	}
+
+	/** The statements {@link #createTable} would run, for a preview; {@code schema} is null for the current schema. */
+	public List<String> createStatements(Schema schema, String name, List<CreateColumn> columns, String type, String comment) {
+		return repository.createStatements(schema, name, columns, type, comment);
+	}
+
 	/** Applies the parts that changed; a null type means the database has no table types. */
 	public void modifyTable(Table table, String name, String type, String comment) throws Exception {
-		if (!table.getName().equalsIgnoreCase(name)) {
-			repository.renameTable(table, name);
-			table.setName(name);
-		}
-		if (type != null && !type.equalsIgnoreCase(table.getType())) {
-			repository.setTableType(table, type);
+		repository.run(table, repository.modifyStatements(table, name, type, comment));
+
+		table.setName(name);
+		if (type != null) {
 			table.setType(type);
 		}
-		if (!comment.equals(table.getComment() == null ? "" : table.getComment())) {
-			repository.setTableComment(table, comment);
-			table.setComment(comment);
-		}
+		table.setComment(comment);
 	}
 
 	public String optimizeTable(Table table) throws Exception {
@@ -147,21 +152,33 @@ public class TableService {
 
 	public void addColumn(Table table, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned,
 		boolean nullable) throws Exception {
-		CreateColumn column = createColumn(name, length, defaultValue, type, auto, unsigned, nullable);
+		CreateColumn column = newColumn(name, length, defaultValue, type, auto, unsigned, nullable);
 		column.primary = primary;
 
+		addColumn(table, column);
+	}
+
+	public void addColumn(Table table, CreateColumn column) throws Exception {
 		repository.addColumn(table, column);
 	}
 
 	public void editColumn(TableColumn old, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned,
 		boolean nullable) throws Exception {
-		repository.modifyColumn(old, createColumn(name, length, defaultValue, type, auto, unsigned, nullable));
+		CreateColumn column = newColumn(name, length, defaultValue, type, auto, unsigned, nullable);
+		column.primary = primary;
 
-		if (old.isPrimary() && !primary) {
+		editColumn(old, column);
+	}
+
+	/** Changes the column to the given definition; {@code column.primary} adds or drops the primary key. */
+	public void editColumn(TableColumn old, CreateColumn column) throws Exception {
+		repository.modifyColumn(old, column);
+
+		if (old.isPrimary() && !column.primary) {
 			repository.dropIndex(old.getTable(), "PRIMARY");
 		}
-		if (!old.isPrimary() && primary) {
-			repository.addIndex(old.getTable(), "PRIMARY", "INDEX", List.of(name));
+		if (!old.isPrimary() && column.primary) {
+			repository.addIndex(old.getTable(), "PRIMARY", "INDEX", List.of(column.name));
 		}
 	}
 
@@ -169,7 +186,8 @@ public class TableService {
 		repository.dropColumn(column);
 	}
 
-	private CreateColumn createColumn(String name, String length, String defaultValue, DataType type, boolean auto, boolean unsigned, boolean nullable) {
+	/** A column definition from the form of a dialog: options the type does not have are switched off. */
+	public static CreateColumn newColumn(String name, String length, String defaultValue, DataType type, boolean auto, boolean unsigned, boolean nullable) {
 		CreateColumn column = new CreateColumn(name);
 		column.type = type;
 		column.length = length;

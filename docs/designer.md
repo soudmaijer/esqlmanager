@@ -10,7 +10,7 @@ Tools > Database Designer draws a model of databases, tables and notes, and gene
 
 * Right click the canvas to add a database, a table or a note at that spot, to select all, to arrange the model or to show the grid.
 * Right click a card for what applies to it: properties, add a foreign key, attach, remove.
-* Double click a table to edit its name, columns and foreign keys.
+* Double click a table to edit its name, columns and foreign keys. The properties of a table, a database and the model (Model Properties) refuse an empty name, a database name that another database of the model has, and a table name that another table in the same database has (tables that are linked to no database count as one group). The author of the model can be edited at any time.
 * Shift-drag from a table or a note to a database to link them.
 * Tables are cards with an icon per column: a key for the primary key, a link for a foreign key column. The colours follow the light or dark appearance.
 

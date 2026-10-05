@@ -1,7 +1,9 @@
 package nl.errorsoft.esql.table.ui;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -31,6 +33,7 @@ public class FieldProperties extends FormDialog implements ActionListener {
 	private final JTextField name = new JTextField(16);
 	private final JTextField length = new JTextField();
 	private final JTextField dfault = new JTextField();
+	private final JTextField comment = new JTextField();
 	private final JComboBox<DataType> fieldtypes = new JComboBox<>();
 
 	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary key");
@@ -57,8 +60,11 @@ public class FieldProperties extends FormDialog implements ActionListener {
 			}
 		}
 
-		JPanel top = Forms.titled(new Forms.Grid().row("&Name:", name).row("&Type:", fieldtypes).row("&Length:", length).row("&Default:", dfault).panel(),
-			"Field properties");
+		Forms.Grid fields = new Forms.Grid().row("&Name:", name).row("&Type:", fieldtypes).row("&Length:", length).row("&Default:", dfault);
+		if (cwcc.dialect().supportsColumnComments()) {
+			fields.row("Co&mment:", comment);
+		}
+		JPanel top = Forms.titled(fields.panel(), "Field properties");
 
 		JPanel options = new JPanel(new GridLayout(2, 2, Forms.GAP, 0));
 		options.add(primary);
@@ -82,6 +88,7 @@ public class FieldProperties extends FormDialog implements ActionListener {
 			// The server reports a size for every type, only types that are written with a length show it.
 			length.setText(takesLength(column.getNativeTypeName()) ? Integer.toString(column.getSize()) : "");
 			dfault.setText(column.getDefault());
+			comment.setText(column.getComment());
 		}
 
 		pack();
@@ -123,13 +130,14 @@ public class FieldProperties extends FormDialog implements ActionListener {
 		}
 
 		DataType f = (DataType) fieldtypes.getSelectedItem();
-		boolean nullable = !notnull.isSelected();
+		CreateColumn definition = TableService.newColumn(name.getText().trim(), size, dfault.getText(), f, autoIncrement.isSelected(), unsigned.isSelected(),
+			!notnull.isSelected());
+		definition.primary = primary.isSelected();
+		definition.comment = comment.getText().trim();
 		if (add) {
-			cwcc.addTableColumn(this, name.getText().trim(), size, dfault.getText(), f, primary.isSelected(), false, false, autoIncrement.isSelected(),
-				unsigned.isSelected(), nullable);
+			cwcc.addTableColumn(this, definition);
 		} else if (edit) {
-			cwcc.editTableColumn(this, column, name.getText().trim(), size, dfault.getText(), f, primary.isSelected(), false, false,
-				autoIncrement.isSelected(), unsigned.isSelected(), nullable);
+			cwcc.editTableColumn(this, column, definition);
 		}
 	}
 }

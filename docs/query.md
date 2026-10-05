@@ -4,7 +4,7 @@
 
 New query (in the context menu of the server or a database) or **Run SQL query** in the toolbar opens a query tab: "Query", "Query 2" and so on. Each tab has its own editor and result, and can be closed with its close button.
 
-The editor highlights SQL, shows line numbers and has undo. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files. On PostgreSQL a schema picker sits next to the database: plain table names resolve to the chosen schema (it sets the `search_path`), write `schema.table` for the others. The result line shows the database and schema a statement ran on.
+The editor highlights SQL, shows line numbers and has undo; its font size is set in Settings > Preferences. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files. On PostgreSQL a schema picker sits next to the database: plain table names resolve to the chosen schema (it sets the `search_path`), write `schema.table` for the others. The result line shows the database and schema a statement ran on.
 
 ![A query tab with a result and the completion of the columns of products](query.png)
 

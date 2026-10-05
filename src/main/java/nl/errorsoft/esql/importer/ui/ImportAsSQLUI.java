@@ -27,6 +27,7 @@ import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.control.ImportCC;
 import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.ui.util.ExtentionFileFilter;
+import nl.errorsoft.esql.ui.util.FileChoosers;
 import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.ui.util.Validation;
@@ -42,7 +43,7 @@ public class ImportAsSQLUI extends FormDialog {
 	private final JRadioButton stopOnError = Forms.mnemonic(new JRadioButton("", true), "&Stop on the first error");
 	private final JRadioButton continueOnError = Forms.mnemonic(new JRadioButton(), "Co&ntinue and report the errors at the end");
 	private final JCheckBox singleTransaction = Forms.mnemonic(new JCheckBox(), "Run in a single &transaction");
-	private final JComboBox<Charset> encoding = Encodings.combo(StandardCharsets.UTF_8);
+	private final JComboBox<Charset> encoding = Encodings.combo(ApplicationContext.get().settings().getDefaultEncoding());
 
 	private DatabaseTreeView dtv;
 
@@ -130,7 +131,7 @@ public class ImportAsSQLUI extends FormDialog {
 	}
 
 	private void chooseFile() {
-		JFileChooser chooser = new JFileChooser();
+		JFileChooser chooser = FileChoosers.create();
 		ExtentionFileFilter sql = new ExtentionFileFilter("SQL file", new String[]{".sql", ".gz"});
 		chooser.addChoosableFileFilter(sql);
 		chooser.setAcceptAllFileFilterUsed(true);

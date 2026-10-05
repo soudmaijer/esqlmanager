@@ -32,6 +32,7 @@ import nl.errorsoft.esql.export.control.ExportCC;
 import nl.errorsoft.esql.table.TableName;
 import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.ui.util.FileChoosers;
 import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.ui.util.Validation;
@@ -53,7 +54,7 @@ public class ExportAsSQLUI extends FormDialog {
 	private final JCheckBox transaction = Forms.mnemonic(new JCheckBox("", false), "Wrap in a &transaction");
 	private final JCheckBox foreignKeys = Forms.mnemonic(new JCheckBox("", false), "Disable &foreign key checks");
 	private final JSpinner rowsPerInsert = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
-	private final JComboBox<Charset> encoding = Encodings.combo(StandardCharsets.UTF_8);
+	private final JComboBox<Charset> encoding = Encodings.combo(ApplicationContext.get().settings().getDefaultEncoding());
 
 	private DatabaseTreeView dtv;
 
@@ -173,7 +174,7 @@ public class ExportAsSQLUI extends FormDialog {
 	}
 
 	private void chooseFile() {
-		JFileChooser chooser = new JFileChooser();
+		JFileChooser chooser = FileChoosers.create();
 		chooser.setAcceptAllFileFilterUsed(true);
 		chooser.setDialogTitle("Save as (a name ending in .gz is compressed)");
 

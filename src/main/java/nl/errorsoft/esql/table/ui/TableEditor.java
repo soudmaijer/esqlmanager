@@ -8,6 +8,7 @@ import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.CreateTableCC;
+import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.util.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
 
@@ -41,6 +42,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 /**
  * Creates a new table or edits the name, type and comment of an existing one, as a tab of the connection window. The properties of the table are at the
@@ -82,12 +85,18 @@ public class TableEditor extends JPanel implements EditorTab {
 	private final JComboBox<DataType> columnType = new JComboBox<>();
 	private final JTextField length = new JTextField(16);
 	private final JTextField defaultval = new JTextField(16);
+	private final JTextField columnComment = new JTextField(16);
 	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary Key");
 	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "Not &null");
 	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "Auto &Increment");
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "Unsi&gned");
 	private final JComponent[] columnFields;
 	private final JLabel problem = new JLabel(" ");
+
+	// The SQL that Save would run, shown on request
+	private final JCheckBox showSql = Forms.mnemonic(new JCheckBox(), "Show S&QL");
+	private final RSyntaxTextArea sqlPreview = new RSyntaxTextArea(7, 60);
+	private final JScrollPane sqlScroll = new JScrollPane(sqlPreview);
 
 	private final JButton save = Forms.button("&Save");
 	private final JButton cancel = Forms.button("&Cancel");
@@ -133,7 +142,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		}
 		tabletypes = new JComboBox<>(ttmodel);
 
-		columnFields = new JComponent[]{columnName, columnType, length, defaultval, primary, notnull, autoincrement, unsigned};
+		columnFields = new JComponent[]{columnName, columnType, length, defaultval, columnComment, primary, notnull, autoincrement, unsigned};
 
 		add(tableProperties(tbt.length > 0, table), BorderLayout.NORTH);
 		add(columnsPanel(), BorderLayout.CENTER);
@@ -154,8 +163,10 @@ public class TableEditor extends JPanel implements EditorTab {
 		initialComment = comment.getText();
 		initialType = selectedTableType();
 
-		tablename.getDocument().addDocumentListener(new Changed(this::refreshProblem));
-		comment.getDocument().addDocumentListener(new Changed(this::refreshProblem));
+		tablename.getDocument().addDocumentListener(new Changed(this::edited));
+		comment.getDocument().addDocumentListener(new Changed(this::edited));
+		tabletypes.addActionListener(e -> refreshPreview());
+		dbs.addActionListener(e -> refreshPreview());
 		getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
 			"saveTable");
 		getActionMap().put("saveTable", new AbstractAction() {
@@ -228,7 +239,11 @@ public class TableEditor extends JPanel implements EditorTab {
 		checks.add(autoincrement);
 		checks.add(unsigned);
 		Forms.Grid grid = new Forms.Grid();
-		grid.row("Col&umn name:", columnName).row("Typ&e:", columnType).row("&Length:", length).row("De&fault:", defaultval).full(checks);
+		grid.row("Col&umn name:", columnName).row("Typ&e:", columnType).row("&Length:", length).row("De&fault:", defaultval);
+		if (ctcc.supportsColumnComments()) {
+			grid.row("Comment:", columnComment);
+		}
+		grid.full(checks);
 		columnGroup.add(grid.panel(), BorderLayout.CENTER);
 
 		addcolumn.addActionListener(e -> addColumn());
@@ -247,6 +262,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		columnType.addActionListener(e -> write(() -> applyType(selField, (DataType) columnType.getSelectedItem())));
 		length.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.length = length.getText())));
 		defaultval.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.defaultval = defaultval.getText())));
+		columnComment.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.comment = columnComment.getText())));
 		primary.addActionListener(e -> write(() -> selField.primary = primary.isSelected()));
 		notnull.addActionListener(e -> write(() -> selField.notnull = notnull.isSelected()));
 		autoincrement.addActionListener(e -> write(() -> selField.autoincrement = autoincrement.isSelected()));
@@ -263,9 +279,23 @@ public class TableEditor extends JPanel implements EditorTab {
 		problem.setForeground(red != null ? red : Color.RED);
 		save.addActionListener(e -> save());
 		cancel.addActionListener(e -> ctcc.cancel(this));
+
+		sqlPreview.setEditable(false);
+		sqlPreview.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
+		EditorTheme.install(sqlPreview);
+		sqlScroll.setVisible(false);
+		showSql.addActionListener(e -> {
+			sqlScroll.setVisible(showSql.isSelected());
+			refreshPreview();
+			revalidate();
+		});
+
+		JPanel messages = new JPanel(new BorderLayout(0, Forms.GAP));
+		messages.add(sqlScroll, BorderLayout.NORTH);
+		messages.add(problem, BorderLayout.CENTER);
 		JPanel south = new JPanel(new BorderLayout());
-		south.add(problem, BorderLayout.NORTH);
-		south.add(Forms.buttonRow(save, cancel), BorderLayout.CENTER);
+		south.add(messages, BorderLayout.NORTH);
+		south.add(Forms.buttonRowWithLeading(showSql, save, cancel), BorderLayout.CENTER);
 		return south;
 	}
 
@@ -317,6 +347,37 @@ public class TableEditor extends JPanel implements EditorTab {
 		return null;
 	}
 
+	/** The name or comment of the table was typed in. */
+	private void edited() {
+		refreshProblem();
+		refreshPreview();
+	}
+
+	/** Shows the statements Save would run, while the SQL view is open. */
+	private void refreshPreview() {
+		if (!showSql.isSelected() || !(sqlScroll.isVisible())) {
+			return;
+		}
+		List<CreateColumn> created = new ArrayList<>();
+		for (Object column : columns) {
+			if (column instanceof CreateColumn c) {
+				created.add(c);
+			}
+		}
+		String name = tablename.getText().trim();
+		if (table == null && created.isEmpty()) {
+			sqlPreview.setText("-- Add a column to see the statements.");
+			return;
+		}
+		List<String> statements = ctcc.previewStatements(table, Objects.toString(dbs.getSelectedItem(), ""), name.isEmpty() ? "table_name" : name,
+			comment.getText(), selectedTableType(), created);
+		sqlPreview.setText(statements.isEmpty()
+			? "-- No changes."
+			: statements.stream().map(statement -> statement.startsWith("--") ? statement : statement + ";")
+				.collect(java.util.stream.Collectors.joining("\n")));
+		sqlPreview.setCaretPosition(0);
+	}
+
 	private void refreshProblem() {
 		if (showProblems) {
 			String found = inputProblem();
@@ -361,6 +422,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		columnTable.scrollRectToVisible(columnTable.getCellRect(columns.size() - 1, 0, true));
 		columnsChanged = true;
 		refreshProblem();
+		refreshPreview();
 		columnName.requestFocusInWindow();
 		columnName.selectAll();
 	}
@@ -381,6 +443,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		columnsChanged = true;
 		showColumn();
 		refreshProblem();
+		refreshPreview();
 	}
 
 	private void moveColumn(int step) {
@@ -393,6 +456,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		columnModel.fireTableDataChanged();
 		columnTable.setRowSelectionInterval(to, to);
 		columnsChanged = true;
+		refreshPreview();
 	}
 
 	private List<String> allNames() {
@@ -426,6 +490,7 @@ public class TableEditor extends JPanel implements EditorTab {
 		}
 		enableOptionsFor(selField.type);
 		updateGroupTitle();
+		refreshPreview();
 	}
 
 	/** The type was chosen: options the type does not have are switched off. */
@@ -452,6 +517,7 @@ public class TableEditor extends JPanel implements EditorTab {
 			columnType.setSelectedItem(selField.type);
 			length.setText(selField.length);
 			defaultval.setText(selField.defaultval);
+			columnComment.setText(selField.comment);
 			primary.setSelected(selField.primary);
 			notnull.setSelected(selField.notnull);
 			autoincrement.setSelected(selField.autoincrement);
@@ -462,6 +528,7 @@ public class TableEditor extends JPanel implements EditorTab {
 			selectTypeNamed(tc.getNativeTypeName());
 			length.setText(String.valueOf(tc.getSize()));
 			defaultval.setText(tc.getDefault());
+			columnComment.setText(tc.getComment());
 			primary.setSelected(tc.isPrimary());
 			notnull.setSelected(!tc.isNullable());
 			autoincrement.setSelected(tc.isAutoIncrement());
@@ -470,6 +537,7 @@ public class TableEditor extends JPanel implements EditorTab {
 			columnName.setText("");
 			length.setText("");
 			defaultval.setText("");
+			columnComment.setText("");
 			for (JCheckBox box : List.of(primary, notnull, autoincrement, unsigned)) {
 				box.setSelected(false);
 			}
@@ -605,6 +673,7 @@ public class TableEditor extends JPanel implements EditorTab {
 				default -> created.defaultval = Objects.toString(value, "");
 			}
 			columnsChanged = true;
+			refreshPreview();
 			fireTableRowsUpdated(row, row);
 			if (row == columnTable.getSelectedRow()) {
 				showColumn();

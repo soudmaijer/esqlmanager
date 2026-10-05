@@ -473,6 +473,38 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void columnsCarryCommentsAndStatementsCanBePreviewed() throws Exception {
+		Assumptions.assumeTrue(dialect.supportsColumnComments(), "The server has no column comments");
+		String name = "cc_" + System.nanoTime();
+		CreateColumn id = column("id", INTEGER, "", true);
+		id.comment = "the key, it's unique";
+		CreateColumn label = column("label", VARCHAR, "20", false);
+		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
+
+		// The preview is what Save runs.
+		List<String> preview = service().createStatements(null, name, List.of(id, label), engine, "");
+		assertEquals(dialect.createTableSql(TableName.of(name), List.of(id, label), engine, ""), preview);
+		service().createTable(database, name, List.of(id, label), engine, "");
+		Table table = table(name);
+		assertEquals("the key, it's unique", service().loadColumns(table)[0].getComment());
+		assertEquals("", service().loadColumns(table)[1].getComment());
+
+		CreateColumn added = column("extra", INTEGER, "", false);
+		added.comment = "added later";
+		service().addColumn(table, added);
+		assertEquals("added later", service().loadColumns(table)[2].getComment());
+
+		CreateColumn changed = column("extra", INTEGER, "", false);
+		changed.comment = "";
+		service().editColumn(table.getTableColumn("extra"), changed);
+		assertEquals("", service().loadColumns(table)[2].getComment());
+
+		assertTrue(service().modifyStatements(table, name, table.getType(), "").isEmpty());
+		assertEquals(1, service().modifyStatements(table, name + "_x", table.getType(), "").size());
+		service().dropTable(table);
+	}
+
+	@Test
 	void createsAndSwitchesDatabases() throws Exception {
 		String name = "db_" + System.nanoTime();
 		var databases = new ConnectionContext(connection).databases();
@@ -501,6 +533,8 @@ abstract class DialectContractTest {
 			other.connect(profile(), "");
 			List<ServerProcess> processes = new ConnectionContext(connection).servers().getProcesses();
 			assertFalse(processes.isEmpty());
+			// The second connection waits for its client, the list can hide it.
+			assertTrue(processes.stream().anyMatch(ServerProcess::idle), processes.toString());
 		}
 
 		String name = "maint_" + System.nanoTime();

@@ -2,7 +2,7 @@ package nl.errorsoft.esql.connection.control;
 
 import nl.errorsoft.esql.error.Dialogs;
 
-import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.CreateTableCC;
@@ -222,12 +222,11 @@ public class ConnectionWindowCC extends Thread {
 		}
 	}
 
-	public void addTableColumn(FieldProperties fp, String name, String length, String dfault, DataType dt, boolean primary, boolean unique, boolean indexed,
-		boolean auto, boolean signed, boolean nullable) {
+	public void addTableColumn(FieldProperties fp, CreateColumn column) {
 		try {
 			jmcc.updateStatus("Adding tablecolumn...", true);
 			TableCC dbcc = new TableCC(this);
-			dbcc.addTableColumn(cwui.getTable(), name, length, dfault, dt, primary, auto, signed, nullable);
+			dbcc.addTableColumn(cwui.getTable(), column);
 			reloadSelectedTable();
 			fp.dispose();
 		} catch (Exception e) {
@@ -235,12 +234,11 @@ public class ConnectionWindowCC extends Thread {
 		}
 	}
 
-	public void editTableColumn(FieldProperties fp, TableColumn tbc, String name, String length, String dfault, DataType dt, boolean primary, boolean unique,
-		boolean indexed, boolean auto, boolean signed, boolean nullable) {
+	public void editTableColumn(FieldProperties fp, TableColumn tbc, CreateColumn column) {
 		try {
 			jmcc.updateStatus("Updating tablecolumn...", true);
 			TableCC dbcc = new TableCC(this);
-			dbcc.editTableColumn(tbc, name, length, dfault, dt, primary, auto, signed, nullable);
+			dbcc.editTableColumn(tbc, column);
 			reloadSelectedTable();
 			fp.dispose();
 		} catch (Exception e) {

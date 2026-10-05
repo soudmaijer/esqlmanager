@@ -22,6 +22,7 @@ public class TableColumn {
 	private int size;
 	private int type;
 	private int indexPosition;
+	private String comment = "";
 
 	/**
 	* @roseuid 3E05A70B02A3
@@ -126,6 +127,14 @@ public class TableColumn {
 	}
 	public void setNativeTypeName(String nativeTypeName) {
 		this.nativeTypeName = nativeTypeName;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment(String comment) {
+		this.comment = comment == null ? "" : comment;
 	}
 
 	public int getSize() {

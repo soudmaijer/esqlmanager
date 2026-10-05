@@ -49,7 +49,7 @@ public class MySqlDialect extends AbstractDialect {
 
 	public ServerProcess readProcess(ResultSet rs) throws SQLException {
 		return new ServerProcess(rs.getString("Id"), rs.getString("User"), rs.getString("Host"), rs.getString("db"), rs.getString("Command"),
-			rs.getString("Time"), rs.getString("Info"));
+			rs.getString("Time"), rs.getString("Info"), "Sleep".equalsIgnoreCase(rs.getString("Command")));
 	}
 
 	public String killProcessSql(String processId) {
@@ -72,6 +72,15 @@ public class MySqlDialect extends AbstractDialect {
 
 	public MaintenanceStatement maintenanceSql(Maintenance command, TableName table) {
 		return new MaintenanceStatement(command + " TABLE " + quote(table), "Msg_Text", "");
+	}
+
+	public boolean supportsColumnComments() {
+		return true;
+	}
+
+	/** MySQL writes the comment in the column definition. */
+	protected List<String> columnCommentSql(TableName table, CreateColumn column, boolean always) {
+		return List.of();
 	}
 
 	public String createDatabaseSql(String database) {
@@ -283,6 +292,9 @@ public class MySqlDialect extends AbstractDialect {
 		}
 		if (column.autoincrement) {
 			definition += " AUTO_INCREMENT";
+		}
+		if (!column.comment.isBlank()) {
+			definition += " COMMENT " + literal(column.comment);
 		}
 
 		return definition;
