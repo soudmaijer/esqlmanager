@@ -14,6 +14,7 @@ import nl.errorsoft.esql.dialect.Dialect;
 
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.TreeMenu;
+import nl.errorsoft.esql.connection.TreeSelection;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.query.ui.QueryTab;
@@ -153,7 +154,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		this.btnNewRow.setEnabled(false);
 		this.btnUpdateRow.setEnabled(false);
 		this.btnDeleteRow.setEnabled(false);
-		this.btnRunQuery.setEnabled(false);
 		this.btnDesigner.setEnabled(false);
 		this.btnDropTable.setEnabled(false);
 		this.btnCreateTable.setEnabled(false);
@@ -259,7 +259,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		btnDropTable.setEnabled(false);
 		btnAddField.setEnabled(false);
 		btnDeleteField.setEnabled(false);
-		btnRunQuery.setEnabled(false);
 		btnNewRow.setEnabled(false);
 		btnDeleteRow.setEnabled(false);
 		btnUpdateRow.setEnabled(false);
@@ -272,7 +271,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		btnDropTable.setEnabled(false);
 		btnAddField.setEnabled(false);
 		btnDeleteField.setEnabled(false);
-		btnRunQuery.setEnabled(true);
 		btnNewRow.setEnabled(false);
 		btnDeleteRow.setEnabled(false);
 		btnUpdateRow.setEnabled(false);
@@ -285,7 +283,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		btnDropTable.setEnabled(true);
 		btnAddField.setEnabled(true);
 		btnDeleteField.setEnabled(false);
-		btnRunQuery.setEnabled(true);
 		btnNewRow.setEnabled(true);
 		btnDeleteRow.setEnabled(true);
 		btnUpdateRow.setEnabled(true);
@@ -298,7 +295,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		btnDropTable.setEnabled(true);
 		btnAddField.setEnabled(true);
 		btnDeleteField.setEnabled(true);
-		btnRunQuery.setEnabled(true);
 		btnNewRow.setEnabled(true);
 		btnDeleteRow.setEnabled(true);
 		btnUpdateRow.setEnabled(true);
@@ -328,6 +324,9 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	// Shows the database tree.
 	public void showDatabaseTree(DatabaseTree tree) {
 		databaseTree = tree;
+		// A new tree starts without a selection, the old node is not part of it.
+		selectedNode = null;
+		rootSelected();
 		jsp.getViewport().add(databaseTree);
 
 		databaseTree.addMouseListener(this);
@@ -364,10 +363,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 	public DatabaseTree getDatabaseTree() {
 		return (DatabaseTree) jsp.getViewport().getView();
-	}
-
-	public DefaultMutableTreeNode getSelectedNode() {
-		return selectedNode;
 	}
 
 	public void showTableDataTab(String tabTitle, TableDataTab tableDataTab) {
@@ -764,17 +759,9 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		contextMenu(selectedNode.getUserObject()).show(databaseTree, e.getX(), e.getY());
 	}
 
+	/** The selected table, or the table of the selected column; null when nothing or something else is selected. */
 	public Table getTable() {
-		Object selected = selectedNode.getUserObject();
-
-		if (selected instanceof Table table) {
-			return table;
-		}
-		if (selected instanceof TableColumn column) {
-			return column.getTable();
-		}
-
-		return null;
+		return TreeSelection.table(selectedObject());
 	}
 
 	public void removeDataTab() {
@@ -786,42 +773,24 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		}
 	}
 
+	/** The selected database, or the database of the selected schema, table or column; null when nothing is selected. */
 	public Database getDatabase() {
-		Object selected = selectedNode.getUserObject();
-
-		if (selected instanceof Database database) {
-			return database;
-		}
-		if (selected instanceof Schema schema) {
-			return schema.getDatabase();
-		}
-		if (selected instanceof Table table) {
-			return table.getDatabase();
-		}
-		if (selected instanceof TableColumn column) {
-			return column.getTable().getDatabase();
-		}
-		return null;
+		return TreeSelection.database(selectedObject());
 	}
 
 	/** The selected schema, or the schema of the selected table or column; null when there is none. */
 	public Schema getSchema() {
-		Object selected = selectedNode == null ? null : selectedNode.getUserObject();
-
-		if (selected == null || selected instanceof Schema) {
-			return (Schema) selected;
-		}
-		Table table = getTable();
-		return table != null ? table.getSchema() : null;
+		return TreeSelection.schema(selectedObject());
 	}
 
+	/** The selected column, null when no column is selected. */
 	public TableColumn getTableColumn() {
-		Object selected = selectedNode.getUserObject();
+		return TreeSelection.column(selectedObject());
+	}
 
-		if (selected instanceof TableColumn column) {
-			return column;
-		}
-		return null;
+	/** What is selected in the tree (a database, schema, table, column or the server), null before anything is selected. */
+	public Object selectedObject() {
+		return selectedNode == null ? null : selectedNode.getUserObject();
 	}
 
 	/** A double click on a database or table opens its tab, a single click only selects. */

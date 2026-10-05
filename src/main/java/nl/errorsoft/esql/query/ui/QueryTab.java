@@ -103,11 +103,8 @@ public class QueryTab extends JPanel {
 		databases = new JComboBox<>(databaseList.toArray(new Database[0]));
 		databases.setMaximumSize(new Dimension(200, databases.getPreferredSize().height));
 
-		for (int i = 0; i < databases.getItemCount(); i++) {
-			if (selected != null && databases.getItemAt(i).getName().equals(selected.getName())) {
-				databases.setSelectedIndex(i);
-			}
-		}
+		// Without a selection in the tree the tab starts on the database the connection uses.
+		databases.setSelectedItem(controller.startDatabase(databaseList, selected));
 		databases.addActionListener(e -> useSelectedDatabase());
 		toolbar.add(databases);
 

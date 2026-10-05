@@ -204,9 +204,13 @@ public class ConnectionWindowController {
 	}
 
 	public void dropDatabase() {
+		Database db = selectedDatabase("Drop " + dialect().databaseTerm());
+		if (db == null) {
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Deleting database...", true);
-			Database db = connectionWindow.getDatabase();
 			DatabaseController databaseController = new DatabaseController(this);
 			databaseController.dropDatabase(db);
 			connectionWindow.getDatabaseTree().deleteDatabase(db);
@@ -219,9 +223,13 @@ public class ConnectionWindowController {
 	}
 
 	public void dropTable() {
+		Table tb = selectedTable("Drop table");
+		if (tb == null) {
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Deleting table...", true);
-			Table tb = connectionWindow.getTable();
 			TableController tableController = new TableController(this);
 			tableController.dropTable(tb);
 			connectionWindow.getDatabaseTree().deleteTable(tb);
@@ -237,10 +245,15 @@ public class ConnectionWindowController {
 	}
 
 	public void addTableColumn(FieldPropertiesDialog fieldPropertiesDialog, CreateColumn column) {
+		Table table = selectedTable("Add column");
+		if (table == null) {
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Adding tablecolumn...", true);
 			TableController tableController = new TableController(this);
-			tableController.addTableColumn(connectionWindow.getTable(), column);
+			tableController.addTableColumn(table, column);
 			reloadSelectedTable();
 			fieldPropertiesDialog.dispose();
 		} catch (Exception e) {
@@ -261,9 +274,13 @@ public class ConnectionWindowController {
 	}
 
 	public void dropTableColumn() {
+		TableColumn tb = selectedColumn("Drop column");
+		if (tb == null) {
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Deleting tablecolumn...", true);
-			TableColumn tb = connectionWindow.getTableColumn();
 			TableController tableController = new TableController(this);
 			tableController.dropTableColumn(tb);
 			connectionWindow.getDatabaseTree().deleteTableColumn(tb);
@@ -275,7 +292,10 @@ public class ConnectionWindowController {
 	}
 
 	public void reloadSelectedTable() {
-		this.tableSelected(connectionWindow.getTable(), true);
+		Table table = selectedTable("Reload columns");
+		if (table != null) {
+			this.tableSelected(table, true);
+		}
 	}
 
 	/** Reloads the tables of the selected schema (or of the schema of the selected table), otherwise the content of the selected database. */
@@ -285,8 +305,47 @@ public class ConnectionWindowController {
 		if (schema != null && hasSchemas()) {
 			this.schemaSelected(schema);
 		} else {
-			this.databaseSelected(connectionWindow.getDatabase());
+			Database database = selectedDatabase("Reload");
+			if (database != null) {
+				this.databaseSelected(database);
+			}
 		}
+	}
+
+	/** The database selected in the tree (or the one of the selected node); without one the user is asked to select it and the result is null. */
+	private Database selectedDatabase(String action) {
+		Database database = connectionWindow.getDatabase();
+		if (database == null) {
+			Dialogs.warn(connectionWindow, action, "Select a " + dialect().databaseTerm() + " in the tree first.");
+		}
+		return database;
+	}
+
+	/** The table selected in the tree (or the table of the selected column); without one the user is asked to select it and the result is null. */
+	private Table selectedTable(String action) {
+		Table table = connectionWindow.getTable();
+		if (table == null) {
+			Dialogs.warn(connectionWindow, action, "Select a table in the tree first.");
+		}
+		return table;
+	}
+
+	/** The column selected in the tree; without one the user is asked to select it and the result is null. */
+	private TableColumn selectedColumn(String action) {
+		TableColumn column = connectionWindow.getTableColumn();
+		if (column == null) {
+			Dialogs.warn(connectionWindow, action, "Select a column in the tree first.");
+		}
+		return column;
+	}
+
+	/** The schema selected in the tree; without one the user is asked to select it and the result is null. */
+	private Schema selectedSchema(String action) {
+		Schema schema = connectionWindow.getSchema();
+		if (schema == null) {
+			Dialogs.warn(connectionWindow, action, "Select a " + dialect().schemaTerm() + " in the tree first.");
+		}
+		return schema;
 	}
 
 	/** Whether a database of this server holds schemas, which hold the tables. */
@@ -307,8 +366,11 @@ public class ConnectionWindowController {
 	}
 
 	public void renameSchema() {
-		Schema schema = connectionWindow.getSchema();
 		String term = dialect().schemaTerm();
+		Schema schema = selectedSchema("Rename " + term);
+		if (schema == null) {
+			return;
+		}
 		String name = Dialogs.input(connectionWindow, "Rename " + term, "&New name:", "Rename", schema.getName(),
 			value -> Validation.first(Validation.required("a name", value), value.equals(schema.getName()) ? "Enter another name." : null));
 
@@ -327,8 +389,12 @@ public class ConnectionWindowController {
 	}
 
 	public void createSchema(String name) {
+		Database database = selectedDatabase("Create " + dialect().schemaTerm());
+		if (database == null) {
+			return;
+		}
+
 		try {
-			Database database = connectionWindow.getDatabase();
 			mainController.updateStatus("Creating " + dialect().schemaTerm() + "...", true);
 			Schema schema = new DatabaseController(this).createSchema(database, name);
 			databaseSelected(database);
@@ -339,8 +405,12 @@ public class ConnectionWindowController {
 	}
 
 	public void dropSchema() {
+		Schema schema = selectedSchema("Drop " + dialect().schemaTerm());
+		if (schema == null) {
+			return;
+		}
+
 		try {
-			Schema schema = connectionWindow.getSchema();
 			mainController.updateStatus("Dropping " + dialect().schemaTerm() + "...", true);
 			new DatabaseController(this).dropSchema(schema);
 			connectionWindow.getDatabaseTree().deleteSchema(schema);
@@ -371,7 +441,10 @@ public class ConnectionWindowController {
 	}
 
 	public void renameSelectedTable() {
-		Table table = connectionWindow.getTable();
+		Table table = selectedTable("Rename table");
+		if (table == null) {
+			return;
+		}
 		String name = Dialogs.input(connectionWindow, "Rename table", "&New name:", "Rename", table.getName(), value -> tableNameProblem(table, value));
 
 		if (name == null) {
@@ -391,7 +464,10 @@ public class ConnectionWindowController {
 	}
 
 	public void duplicateSelectedTable() {
-		Table table = connectionWindow.getTable();
+		Table table = selectedTable("Duplicate table");
+		if (table == null) {
+			return;
+		}
 		DuplicateTableDialog.Request request = DuplicateTableDialog.ask(connectionWindow, table.getName() + "_copy", value -> tableNameProblem(table, value));
 
 		if (request == null) {
@@ -457,10 +533,15 @@ public class ConnectionWindowController {
 	 * @description: deletes all data from the selected table.
 	 */
 	public void flushSelectedTable() {
+		Table table = selectedTable("Empty table");
+		if (table == null) {
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Flushing table data...", true);
 			TableController tableController = new TableController(this);
-			tableController.flushTable(connectionWindow.getTable());
+			tableController.flushTable(table);
 			mainController.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
@@ -523,6 +604,11 @@ public class ConnectionWindowController {
 
 	/** Double click on a database: opens the table list in a tab and puts that tab in front. */
 	public void openDatabase(Database database) {
+		if (database == null) {
+			selectedDatabase("Open " + dialect().databaseTerm());
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Loading tables...", true);
 
@@ -556,6 +642,10 @@ public class ConnectionWindowController {
 
 	/** Double click on a table: opens its data in a tab and puts that tab in front. */
 	public void openTable(Table table) {
+		if (table == null) {
+			selectedTable("Open table");
+			return;
+		}
 		showTableData(table);
 	}
 
@@ -579,7 +669,7 @@ public class ConnectionWindowController {
 		tableController.saveSelectedRow();
 	}
 
-	/** Opens a new query tab on the database selected in the tree. */
+	/** Opens a new query tab on the database selected in the tree; without a selection on the database the connection uses. */
 	public void startQueryTab() {
 		try {
 			QueryController controller = new QueryController(this);
@@ -590,6 +680,10 @@ public class ConnectionWindowController {
 	}
 
 	public void showFieldPropertiesDialog(boolean add, boolean edit) {
+		if (edit ? selectedColumn("Edit column") == null : selectedTable("Add column") == null) {
+			return;
+		}
+
 		try {
 			mainController.updateStatus("Starting field properties interface...", true);
 			FieldPropertiesDialog fieldPropertiesDialog = new FieldPropertiesDialog(mainController.getMainWindow(), this, connectionWindow.getTableColumn(),
@@ -632,8 +726,13 @@ public class ConnectionWindowController {
 	 *
 	 */
 	public void showIndexesTab() {
+		Table table = selectedTable("Indexes");
+		if (table == null) {
+			return;
+		}
+
 		try {
-			IndexesController indexesController = new IndexesController(this, (Table) connectionWindow.getSelectedNode().getUserObject());
+			IndexesController indexesController = new IndexesController(this, table);
 			indexesController.showTab();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Load indexes", e);
@@ -676,8 +775,13 @@ public class ConnectionWindowController {
 	}
 
 	public void showCreateTableTab() {
+		Database database = selectedDatabase("Create table");
+		if (database == null) {
+			return;
+		}
+
 		try {
-			new CreateTableController(this).startCreateTable(connectionWindow.getDatabase(), hasSchemas() ? connectionWindow.getSchema() : null);
+			new CreateTableController(this).startCreateTable(database, hasSchemas() ? connectionWindow.getSchema() : null);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Create table", e);
 		}
@@ -689,9 +793,13 @@ public class ConnectionWindowController {
 			return;
 		}
 
+		Database database = selectedDatabase("Open in designer");
+		if (database == null) {
+			return;
+		}
+
 		try {
-			Database database = connectionWindow.getDatabase();
-			Schema schema = hasSchemas() && connectionWindow.getSelectedNode().getUserObject() instanceof Schema selected ? selected : null;
+			Schema schema = hasSchemas() && selectedObject() instanceof Schema selected ? selected : null;
 			mainController.updateStatus("Reading database structure...", true);
 			DesignedDatabase designed = schema != null ? getContext().designer().reverseEngineer(schema) : getContext().designer().reverseEngineer(database);
 			Model model = ModelFactory.fromDatabase(designed, session.getConnectionProfile().getServerType().getDataTypes());
@@ -706,8 +814,13 @@ public class ConnectionWindowController {
 	}
 
 	public void showEditTableTab() {
+		Table table = selectedTable("Edit table");
+		if (table == null) {
+			return;
+		}
+
 		try {
-			new CreateTableController(this).startEditTable(connectionWindow.getDatabase(), connectionWindow.getTable());
+			new CreateTableController(this).startEditTable(table.getDatabase(), table);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Modify table", e);
 		}
@@ -720,7 +833,7 @@ public class ConnectionWindowController {
 	/** The connection window, the parent of messages and the owner of the tabs. */
 	/** What is selected in the tree (a database, schema, table, ...), null when nothing is. */
 	public Object selectedObject() {
-		return connectionWindow.getSelectedNode() == null ? null : connectionWindow.getSelectedNode().getUserObject();
+		return connectionWindow.selectedObject();
 	}
 
 	public ConnectionWindow getWindow() {
@@ -777,40 +890,37 @@ public class ConnectionWindowController {
 	}
 
 	public void optimizeTable() {
-		try {
-			TableController tableController = new TableController(this);
-			Dialogs.info(connectionWindow, "Optimize table: " + connectionWindow.getTable().getName(),
-				tableController.optimizeTable(connectionWindow.getTable()));
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Optimize table", e);
-		}
+		maintainSelectedTable("Optimize table", TableController::optimizeTable);
 	}
 
 	public void analyseTable() {
-		try {
-			TableController tableController = new TableController(this);
-			Dialogs.info(connectionWindow, "Analyze table: " + connectionWindow.getTable().getName(),
-				tableController.analyseTable(connectionWindow.getTable()));
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Analyze table", e);
-		}
+		maintainSelectedTable("Analyze table", TableController::analyseTable);
 	}
 
 	public void checkTable() {
-		try {
-			TableController tableController = new TableController(this);
-			Dialogs.info(connectionWindow, "Check table: " + connectionWindow.getTable().getName(), tableController.checkTable(connectionWindow.getTable()));
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Check table", e);
-		}
+		maintainSelectedTable("Check table", TableController::checkTable);
 	}
 
 	public void repairTable() {
+		maintainSelectedTable("Repair table", TableController::repairTable);
+	}
+
+	/** A maintenance command on a table that returns the server's report. */
+	private interface Maintenance {
+		String run(TableController controller, Table table) throws Exception;
+	}
+
+	/** Runs a maintenance command on the selected table and shows the server's report. */
+	private void maintainSelectedTable(String action, Maintenance maintenance) {
+		Table table = selectedTable(action);
+		if (table == null) {
+			return;
+		}
+
 		try {
-			TableController tableController = new TableController(this);
-			Dialogs.info(connectionWindow, "Repair table: " + connectionWindow.getTable().getName(), tableController.repairTable(connectionWindow.getTable()));
+			Dialogs.info(connectionWindow, action + ": " + table.getName(), maintenance.run(new TableController(this), table));
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Repair table", e);
+			ApplicationContext.get().errors().report(connectionWindow, action, e);
 		}
 	}
 }

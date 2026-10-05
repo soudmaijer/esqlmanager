@@ -2,6 +2,15 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Actions without a selection in the tree
+
+- Run SQL query no longer fails with "selectedNode is null" when nothing is selected in the tree: the query tab opens
+  on the database the connection uses (else the first database of the profile). The Run SQL query button is always
+  enabled.
+- Actions that need a database, schema, table or column (create, edit or drop a table, indexes, add, edit or drop a
+  column, table maintenance, open in the designer, ...) say "Select a table in the tree first." instead of failing.
+  Reloading the tree clears the selection and disables the buttons that need one.
+
 05-10-2026: Error handling, wording and small fixes
 
 - Open designer on a server without a designer only says so and no longer opens the designer after an error; the

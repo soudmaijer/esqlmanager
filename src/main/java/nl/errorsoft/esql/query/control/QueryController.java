@@ -81,6 +81,34 @@ public class QueryController implements SchemaNames {
 		return connectionWindowController.getContext().databases().getDatabases();
 	}
 
+	/** The database a new tab starts on: the one selected in the tree, else the one the connection uses now. */
+	public Database startDatabase(List<Database> databases, Database selected) {
+		String connected = null;
+		try {
+			connected = connectionWindowController.getDatabaseConnection().getDatabase();
+		} catch (Exception e) {
+			// Without a connection the tab starts on the first database, running a statement reports the problem.
+		}
+		return startDatabase(databases, selected, connected);
+	}
+
+	/**
+	 * The database a new tab starts on: the selected one, else the one the connection uses, else the first of the list (the profile's filter is applied
+	 * to it already). Null only for an empty list.
+	 */
+	public static Database startDatabase(List<Database> databases, Database selected, String connected) {
+		for (String name : java.util.Arrays.asList(selected == null ? null : selected.getName(), connected)) {
+			if (name != null) {
+				for (Database database : databases) {
+					if (database.getName().equals(name)) {
+						return database;
+					}
+				}
+			}
+		}
+		return databases.isEmpty() ? null : databases.getFirst();
+	}
+
 	/** Makes the database the current one and loads its table names for the completion, off the event thread. */
 	public void use(Database database) {
 		try {
