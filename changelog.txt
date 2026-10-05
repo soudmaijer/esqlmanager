@@ -1,6 +1,13 @@
-
 eSQLManager changelog
 ---------------------
+
+05-10-2026: Process list rows and designer attach shortcuts
+
+- Process list on PostgreSQL: the list includes its own connection, as on MySQL, so it is no longer empty on a quiet
+  server.
+- Designer: Attach table (F4), Attach comment (F5) and Show object properties follow the selection however it was
+  made, also after Select all.
+
 
 05-10-2026: Layering and wording issues found in the review
 

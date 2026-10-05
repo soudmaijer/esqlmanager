@@ -93,7 +93,9 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	public String listProcessesSql() {
-		return "SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' AND pid <> pg_backend_pid() ORDER BY pid";
+		// The own backend is listed too, as SHOW PROCESSLIST does on MySQL: the list runs on a connection of its own, which on a quiet server is the
+		// only one, and leaving it out showed an empty list.
+		return "SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' ORDER BY pid";
 	}
 
 	public ServerProcess readProcess(ResultSet rs) throws SQLException {

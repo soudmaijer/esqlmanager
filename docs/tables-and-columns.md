@@ -46,4 +46,4 @@ Add field, Edit field and Drop field are in the toolbar and in the context menu 
 ## Users and server
 
 * **Users** (server context menu or toolbar) manages accounts, passwords and privileges per server, database and table. On PostgreSQL accounts are roles.
-* **Process list** shows the running queries and can end one. **Pause** stops the refreshing, **Hide idle** leaves out the connections that run nothing, and the interval can be 1, 2, 5 or 10 seconds. Double click a row (or Show query) opens the full statement with SQL colouring and a Copy button. **Show status** and **Show variables** list the server's status values and settings.
+* **Process list** shows the connections to the server (its own included) with their running queries, and can end one. **Pause** stops the refreshing, **Hide idle** leaves out the connections that run nothing, and the interval can be 1, 2, 5 or 10 seconds. Double click a row (or Show query) opens the full statement with SQL colouring and a Copy button. **Show status** and **Show variables** list the server's status values and settings.

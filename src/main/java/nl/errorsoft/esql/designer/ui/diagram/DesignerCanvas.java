@@ -101,6 +101,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private String linkColumn;
 	private Point linkPoint;
 
+	private final java.beans.PropertyChangeListener selectionListener = e -> automateMenus();
+
 	/*
 	 	DesignerCanvas default constructor
 	 */
@@ -190,6 +192,16 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		toolbar.addSeparator();
 		toolbar.add(btn_export);
 		ToolbarButtons.style(btn_new, btn_save, btn_open, btn_add_database, btn_add_table, btn_add_comment, btn_properties, btn_export);
+	}
+
+	/** Every card on the canvas keeps the Model menu (and its F4/F5 shortcuts) in step with the selection. */
+	@Override
+	protected void addImpl(Component component, Object constraints, int index) {
+		super.addImpl(component, constraints, index);
+		if (component instanceof ModelObject object) {
+			object.removePropertyChangeListener("selected", selectionListener);
+			object.addPropertyChangeListener("selected", selectionListener);
+		}
 	}
 
 	/*
@@ -580,23 +592,13 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.repaint();
 	}
 
+	/** Enables the items of the Model menu that apply to the selection: a single database can get a table, any single card a note. */
 	public void automateMenus() {
-		if (model.getSelectedObjects().size() == 1 && model.getSelectedObjects().get(0) instanceof DatabaseObject) {
-			attach_table.setEnabled(true);
-		} else {
-			attach_table.setEnabled(false);
-		}
-
-		if (model.getSelectedObjects().size() == 1) {
-			if (!(model.getSelectedObjects().get(0) instanceof CommentObject)) {
-				show_properties.setEnabled(true);
-			}
-
-			attach_comment.setEnabled(true);
-		} else {
-			show_properties.setEnabled(false);
-			attach_comment.setEnabled(false);
-		}
+		List<ModelObject> selected = model.getSelectedObjects();
+		ModelObject single = selected.size() == 1 ? selected.get(0) : null;
+		attach_table.setEnabled(single instanceof DatabaseObject);
+		attach_comment.setEnabled(single != null);
+		show_properties.setEnabled(single != null && !(single instanceof CommentObject));
 	}
 
 	public boolean showProperties() {

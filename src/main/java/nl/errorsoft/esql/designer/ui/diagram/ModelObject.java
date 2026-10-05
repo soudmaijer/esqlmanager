@@ -39,12 +39,15 @@ public class ModelObject extends JPanel {
 		return selected;
 	}
 
+	/** Fires the property "selected", so menus that depend on the selection follow every way it changes (a click, Select all, a new card). */
 	public void setSelected(boolean selected) {
+		boolean old = this.selected;
 		this.selected = selected;
 		if (selected) {
 			this.requestFocus();
 		}
 		this.repaint();
+		firePropertyChange("selected", old, selected);
 	}
 
 	public void setHidden(boolean hidden) {

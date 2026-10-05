@@ -566,6 +566,16 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void processListShowsTheOwnConnection() throws Exception {
+		try (DatabaseConnection own = new DatabaseConnection()) {
+			own.connect(profile(), "");
+			List<ServerProcess> processes = new ConnectionContext(own).servers().getProcesses();
+			// The statement that reads the list is the one running on the own connection.
+			assertTrue(processes.stream().anyMatch(p -> dialect.listProcessesSql().equalsIgnoreCase(p.info())), processes.toString());
+		}
+	}
+
+	@Test
 	void showsServerStatusVariablesProcessesAndRunsMaintenance() throws Exception {
 		for (String query : Arrays.asList(dialect.getStatusQuery(), dialect.getVariablesQuery())) {
 			try (java.sql.ResultSet rs = connection.executeQuery(query)) {
