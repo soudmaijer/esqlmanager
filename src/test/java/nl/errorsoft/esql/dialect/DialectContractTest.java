@@ -199,6 +199,31 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void testsAConnectionWithoutKeepingIt() throws Exception {
+		var profiles = new nl.errorsoft.esql.connection.control.ConnectionProfileCC(null);
+		AtomicReference<nl.errorsoft.esql.connection.control.ConnectionProfileCC.TestResult> result = new AtomicReference<>();
+		java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+		profiles.testConnection(profile(), outcome -> {
+			result.set(outcome);
+			done.countDown();
+		});
+		assertTrue(done.await(30, java.util.concurrent.TimeUnit.SECONDS));
+		assertTrue(result.get().success(), result.get().message());
+		assertTrue(result.get().message().startsWith("Connected to "));
+
+		ConnectionProfile wrong = profile();
+		wrong.setPassword("not the password");
+		wrong.setPort("1");
+		java.util.concurrent.CountDownLatch failed = new java.util.concurrent.CountDownLatch(1);
+		profiles.testConnection(wrong, outcome -> {
+			result.set(outcome);
+			failed.countDown();
+		});
+		assertTrue(failed.await(30, java.util.concurrent.TimeUnit.SECONDS));
+		assertFalse(result.get().success());
+	}
+
+	@Test
 	void createsAndSwitchesDatabases() throws Exception {
 		String name = "db_" + System.nanoTime();
 		var databases = new ConnectionContext(connection).databases();

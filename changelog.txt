@@ -2,6 +2,14 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Test connection, duplicate profile and optional saved password
+
+- Connection profile: "Test connection" connects with the values in the form (not the saved profile) on a background
+  thread and shows "Connected to <server> <version>" in green or the error in red inside the dialog, then closes the
+  connection again. "Duplicate" saves a copy of the selected profile as "<name> copy". "Save password" (on by default,
+  profiles written before keep their password): when off, the password is not written to profiles.xml and is asked for
+  when connecting.
+
 05-10-2026: Clearer layouts for the field, table, index and user dialogs
 
 - Designer table properties: the fields tab has the list of fields on the left (Add, Duplicate, Remove with

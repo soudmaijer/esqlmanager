@@ -20,6 +20,7 @@ public class ConnectionProfile {
 	private ServerType st;
 	private boolean lastUsed = false;
 	private boolean autoConnect = false;
+	private boolean savePassword = true;
 	private org.jdom.Document profileData;
 
 	public ConnectionProfile() {
@@ -54,6 +55,8 @@ public class ConnectionProfile {
 					temp.setLastUsed(Boolean.valueOf(((org.jdom.Element) profiles.get(i)).getChild("lastUsed").getText()).booleanValue());
 					temp.setAutoConnect(Boolean.valueOf(((org.jdom.Element) profiles.get(i)).getChild("autoConnect").getText()).booleanValue());
 					temp.setDatabases(((org.jdom.Element) profiles.get(i)).getChild("databases").getText());
+					// Profiles written before the option existed keep their password.
+					temp.setSavePassword(!"false".equals(((org.jdom.Element) profiles.get(i)).getChildText("savePassword")));
 
 					p[i] = temp;
 				}
@@ -116,7 +119,8 @@ public class ConnectionProfile {
 			newElement.addContent(new org.jdom.Element("host").setText(cp.getHost()));
 			newElement.addContent(new org.jdom.Element("port").setText(cp.getPort()));
 			newElement.addContent(new org.jdom.Element("username").setText(cp.getUsername()));
-			newElement.addContent(new org.jdom.Element("password").setText(cp.getPassword()));
+			newElement.addContent(new org.jdom.Element("password").setText(cp.isSavePassword() ? cp.getPassword() : ""));
+			newElement.addContent(new org.jdom.Element("savePassword").setText(Boolean.toString(cp.isSavePassword())));
 			newElement.addContent(new org.jdom.Element("serverType").setText(Integer.toString(cp.getServerType().getType())));
 			newElement.addContent(new org.jdom.Element("databases").setText(cp.getDatabases()));
 			newElement.addContent(new org.jdom.Element("autoConnect").setText(Boolean.valueOf(cp.isAutoConnect()).toString()));
@@ -135,7 +139,8 @@ public class ConnectionProfile {
 					((org.jdom.Element) l.get(i)).getChild("host").setText(profile.getHost());
 					((org.jdom.Element) l.get(i)).getChild("port").setText(profile.getPort());
 					((org.jdom.Element) l.get(i)).getChild("username").setText(profile.getUsername());
-					((org.jdom.Element) l.get(i)).getChild("password").setText(profile.getPassword());
+					((org.jdom.Element) l.get(i)).getChild("password").setText(profile.isSavePassword() ? profile.getPassword() : "");
+					setOptionalChild((org.jdom.Element) l.get(i), "savePassword", Boolean.toString(profile.isSavePassword()));
 					((org.jdom.Element) l.get(i)).getChild("serverType").setText(Integer.toString(profile.getServerType().getType()));
 					((org.jdom.Element) l.get(i)).getChild("databases").setText(profile.getDatabases());
 					((org.jdom.Element) l.get(i)).getChild("autoConnect").setText(Boolean.valueOf(profile.isAutoConnect()).toString());
@@ -146,6 +151,38 @@ public class ConnectionProfile {
 			}
 			save(profileData);
 		}
+	}
+
+	private static void setOptionalChild(org.jdom.Element parent, String name, String value) {
+		org.jdom.Element child = parent.getChild(name);
+		if (child == null) {
+			child = new org.jdom.Element(name);
+			parent.addContent(child);
+		}
+		child.setText(value);
+	}
+
+	/** A copy of the connection settings (not of the profile file) under another name, not auto-connecting and not last used. */
+	public ConnectionProfile copyAs(String newName) {
+		ConnectionProfile copy = new ConnectionProfile();
+		copy.setName(newName);
+		copy.setHost(host);
+		copy.setPort(port);
+		copy.setUsername(username);
+		copy.setPassword(password);
+		copy.setSavePassword(savePassword);
+		copy.setDatabases(databases);
+		copy.setServerType(st);
+		return copy;
+	}
+
+	/** The first of "name copy", "name copy 2", ... that no profile has. */
+	public String uniqueCopyName(String baseName) throws Exception {
+		String candidate = baseName + " copy";
+		for (int n = 2; profileExists(candidate); n++) {
+			candidate = baseName + " copy " + n;
+		}
+		return candidate;
 	}
 
 	public void deleteProfile(ConnectionProfile profile) throws Exception {
@@ -229,6 +266,15 @@ public class ConnectionProfile {
 
 	public void setAutoConnect(boolean autoConnect) {
 		this.autoConnect = autoConnect;
+	}
+
+	/** Whether the password is written to profiles.xml; when off, it is asked for when connecting. */
+	public boolean isSavePassword() {
+		return savePassword;
+	}
+
+	public void setSavePassword(boolean savePassword) {
+		this.savePassword = savePassword;
 	}
 
 	public void setPassword(String password) {

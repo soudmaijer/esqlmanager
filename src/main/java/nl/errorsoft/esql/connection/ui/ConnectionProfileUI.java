@@ -22,6 +22,9 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 	private JButton btnSave;
 	private JButton btnDelete;
 	private JButton btnClose;
+	private JButton btnTest;
+	private JButton btnDuplicate;
+	private final JLabel testResult = new JLabel(" ");
 
 	private JPasswordField pw;
 	private JTextField un;
@@ -34,6 +37,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 	private JComboBox<Object> jc;
 	private JComboBox<ServerType> jcServer;
 	private JCheckBox chkAutoConnect;
+	private JCheckBox chkSavePassword;
 	private ServerType[] sta;
 	private ServerType previousServerType;
 	private boolean loadingProfile = false;
@@ -58,8 +62,14 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		dbs = new JTextField("");
 		chkAutoConnect = Forms.mnemonic(new JCheckBox(), "&Auto-connect to this server on startup");
 
+		chkSavePassword = Forms.mnemonic(new JCheckBox(), "Sa&ve password");
+		chkSavePassword.setToolTipText("When off, the password is not written to profiles.xml and is asked for when connecting.");
+		btnTest = Forms.button("&Test connection");
+		btnDuplicate = Forms.button("D&uplicate");
+
 		Forms.Grid form = new Forms.Grid().row("&Profile:", jc).row("Server &type:", jcServer).row("&Host:", ip).row("P&ort:", pt)
-			.row("&Username:", un).row("Pass&word:", pw).row("&Databases:", dbs).full(databasesHint()).full(chkAutoConnect);
+			.row("&Username:", un).row("Pass&word:", pw).full(chkSavePassword).row("&Databases:", dbs).full(databasesHint()).full(chkAutoConnect)
+			.full(testRow());
 		dbs.setToolTipText("Comma separated, for example db1,db2,db3. The first one is connected to.");
 
 		btnConnect = Forms.button("&Connect");
@@ -67,13 +77,18 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		btnDelete = Forms.button("De&lete");
 		btnClose = Forms.button("Close");
 
-		setLeadingButton(btnDelete);
+		JPanel leading = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
+		leading.add(btnDelete);
+		leading.add(btnDuplicate);
+		setLeadingButton(leading);
 		layoutDialog(form.done(), btnConnect, btnSave, btnClose);
 		setInitialFocus(btnConnect);
 
 		btnSave.addActionListener(this);
 		btnConnect.addActionListener(this);
 		btnDelete.addActionListener(this);
+		btnTest.addActionListener(this);
+		btnDuplicate.addActionListener(this);
 		btnClose.addActionListener(this);
 
 		for (int t = 0; t < sta.length; t++) {
@@ -87,6 +102,25 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 
 		jc.addItemListener(this);
 		jcServer.addItemListener(this);
+	}
+
+	/** The Test connection button with the outcome next to it. */
+	private JPanel testRow() {
+		JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
+		row.add(btnTest);
+		row.add(testResult);
+		return row;
+	}
+
+	private void showTestResult(ConnectionProfileCC.TestResult result) {
+		Color color = UIManager.getColor(result.success() ? "Actions.Green" : "Actions.Red");
+		if (color == null) {
+			color = result.success() ? new Color(0x2e7d32) : Color.RED;
+		}
+		testResult.setForeground(color);
+		testResult.setText(result.message());
+		btnTest.setEnabled(true);
+		pack();
 	}
 
 	/** The explanation of the databases field in the colour of disabled text. */
@@ -125,6 +159,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 				pw.setText(p[i].getPassword());
 				dbs.setText(p[i].getDatabases());
 				chkAutoConnect.setSelected(p[i].isAutoConnect());
+				chkSavePassword.setSelected(p[i].isSavePassword());
 
 				for (int t = 0; t < sta.length; t++) {
 					if (p[i].getServerType().getType() == sta[t].getType()) {
@@ -139,6 +174,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 					pw.setText(p[0].getPassword());
 					dbs.setText(p[0].getDatabases());
 					chkAutoConnect.setSelected(p[0].isAutoConnect());
+					chkSavePassword.setSelected(p[0].isSavePassword());
 				}
 			}
 		}
@@ -165,6 +201,8 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 			pw.setText(cp.getPassword());
 			dbs.setText(cp.getDatabases());
 			chkAutoConnect.setSelected(cp.isAutoConnect());
+			chkSavePassword.setSelected(cp.isSavePassword());
+			testResult.setText(" ");
 
 			loadingProfile = true;
 
@@ -277,6 +315,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		profile.setPassword(getPassword());
 		profile.setDatabases(getDatabases());
 		profile.setAutoConnect(chkAutoConnect.isSelected());
+		profile.setSavePassword(chkSavePassword.isSelected());
 		return profile;
 	}
 
@@ -299,11 +338,23 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 			if (typed.getName().isBlank()) {
 				Dialogs.warn(this, getTitle(), "Enter a name for the profile.");
 			} else if (jc.getSelectedItem() instanceof ConnectionProfile saved) {
-				cpcc.editProfile(saved, typed.getName(), typed.getServerType(), typed.getHost(), typed.getPort(), typed.getUsername(), typed.getPassword(),
-					typed.getDatabases(), typed.isAutoConnect());
+				cpcc.editProfile(saved, typed);
 			} else {
-				cpcc.addProfile(typed.getName(), typed.getServerType(), typed.getHost(), typed.getPort(), typed.getUsername(), typed.getPassword(),
-					typed.getDatabases(), typed.isAutoConnect());
+				cpcc.addProfile(typed);
+			}
+		} else if (object == btnTest) {
+			ConnectionProfile typed = profileFromForm();
+			if (typed != null) {
+				btnTest.setEnabled(false);
+				testResult.setForeground(UIManager.getColor("Label.foreground"));
+				testResult.setText("Connecting...");
+				cpcc.testConnection(typed, this::showTestResult);
+			}
+		} else if (object == btnDuplicate) {
+			if (jc.getSelectedItem() instanceof ConnectionProfile saved) {
+				cpcc.duplicateProfile(saved);
+			} else {
+				Dialogs.info(this, "Duplicate profile", "Save the profile first, then duplicate it.");
 			}
 		} else if (object == btnClose) {
 			this.dispose();
