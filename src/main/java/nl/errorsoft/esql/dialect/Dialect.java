@@ -23,7 +23,7 @@ public interface Dialect {
 
 	/** Optional functionality that not every database has an implementation for. */
 	enum Feature {
-		DESIGNER, USER_MANAGER, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS, FOREIGN_KEYS
+		DESIGNER, USER_MANAGER, CREATE_DATABASE, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS, FOREIGN_KEYS
 	}
 
 	int getType();
@@ -115,6 +115,9 @@ public interface Dialect {
 	 * @throws UnsupportedOperationException when the server has no such command.
 	 */
 	String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException;
+
+	/** The maintenance commands that {@link #maintain} can run on this server, empty when it has none. */
+	java.util.Set<Maintenance> maintenanceCommands();
 
 	/** A text value as an SQL literal. */
 	String literal(String value);

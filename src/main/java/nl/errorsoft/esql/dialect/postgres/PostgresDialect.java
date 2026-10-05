@@ -54,6 +54,10 @@ public class PostgresDialect extends AbstractDialect {
 		return statements;
 	}
 
+	public java.util.Set<Maintenance> maintenanceCommands() {
+		return java.util.EnumSet.of(Maintenance.OPTIMIZE, Maintenance.ANALYZE);
+	}
+
 	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
 		return switch (command) {
 			case OPTIMIZE -> {
@@ -112,7 +116,8 @@ public class PostgresDialect extends AbstractDialect {
 
 	public boolean supports(Feature feature) {
 		return feature == Feature.DESIGNER || feature == Feature.PROCESS_LIST || feature == Feature.SERVER_STATUS || feature == Feature.USER_MANAGER
-			|| feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT
+			|| feature == Feature.CREATE_DATABASE || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT
+			|| feature == Feature.EXPORT
 			|| feature == Feature.FOREIGN_KEYS;
 	}
 

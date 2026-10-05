@@ -68,6 +68,10 @@ public class MySqlDialect extends AbstractDialect {
 		return true;
 	}
 
+	public java.util.Set<Maintenance> maintenanceCommands() {
+		return java.util.EnumSet.allOf(Maintenance.class);
+	}
+
 	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
 		String message = "";
 

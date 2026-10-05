@@ -376,6 +376,19 @@ public class ConnectionWindowCC extends Thread {
 		umcc.startUI(jmcc.getUI());
 	}
 
+	/** Export and import of this connection, the same windows as in the Tools menu. */
+	public void dispatchExportUI() {
+		if (requireFeature(Dialect.Feature.EXPORT, "Export")) {
+			new nl.errorsoft.esql.export.control.ExportCC(jmcc).startExportSelectionUI(this);
+		}
+	}
+
+	public void dispatchImportUI() {
+		if (requireFeature(Dialect.Feature.IMPORT, "Import")) {
+			new nl.errorsoft.esql.importer.control.ImportCC(jmcc).startImportSelectionUI(this);
+		}
+	}
+
 	public void dispatchProcessUI() {
 		if (requireFeature(Dialect.Feature.PROCESS_LIST, "The process list")) {
 			new Processlist(this, jmcc.getUI());

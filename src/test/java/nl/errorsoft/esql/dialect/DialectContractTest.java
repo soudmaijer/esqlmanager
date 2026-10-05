@@ -227,8 +227,10 @@ abstract class DialectContractTest {
 		String name = "maint_" + System.nanoTime();
 		createTable(name, "");
 		Table table = table(name);
-		assertNotNull(service().optimizeTable(table));
-		assertNotNull(service().analyseTable(table));
+		// Every command the dialect offers (and so the tree menu shows) runs.
+		for (Dialect.Maintenance command : dialect.maintenanceCommands()) {
+			assertNotNull(dialect.maintain(connection, command, name), command.name());
+		}
 		service().dropTable(table);
 	}
 

@@ -9,7 +9,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
-import nl.errorsoft.esql.connection.ServerType;
+import nl.errorsoft.esql.connection.TreeMenu;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
 import nl.errorsoft.esql.query.ui.QueryUI;
@@ -51,53 +51,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private Component viewTab; // The table data or table list, shown in front of the help
 	private JEditorPane html; // The HTML info data.
 	private int queryTabs; // Query tabs opened so far, for their numbers
-
-	// Root menu.
-	private JLabel rtlabel;
-	private JPopupMenu rtmenu;
-	private JMenuItem rtCreate;
-	private JMenu rtMySQL;
-	private JMenuItem rtProcess;
-	private JMenuItem rtStatus;
-	private JMenuItem rtVariables;
-	private JMenu rtPostgres;
-	private JMenu rtSQLServer;
-	private JMenuItem rtRefresh;
-
-	// Database menu.
-	private JLabel dblabel;
-	private JPopupMenu dbmenu;
-	private JMenuItem dbCreateDatabase;
-	private JMenuItem dbDrop;
-	private JMenuItem dbCreateTable;
-	private JMenuItem dbDesigner;
-	private JMenuItem dbRefresh;
-
-	// Table menu.
-	private JLabel tblabel;
-	private JPopupMenu tbmenu;
-	private JMenuItem tbCreateTable;
-	private JMenuItem tbEditTable;
-	private JMenuItem tbEmptyTable;
-	private JMenuItem tbDropTable;
-	private JMenuItem tbIndexes;
-	private JMenu tbMySQL;
-	private JMenuItem tbmAnalyze;
-	private JMenuItem tbmCheck;
-	private JMenuItem tbmOptimize;
-	private JMenuItem tbmRepair;
-	private JMenu tbPostgres;
-	private JMenu tbSQLServer;
-	private JMenuItem tbAddField;
-	private JMenuItem tbRefresh;
-
-	// Field menu.
-	private JLabel fdlabel;
-	private JPopupMenu fdmenu;
-	private JMenuItem fdAddField;
-	private JMenuItem fdEditField;
-	private JMenuItem fdDropField;
-	private JMenuItem fdRefresh;
 
 	// Internal toolbar.
 	private JToolBar tbTable;
@@ -199,141 +152,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		/******************************************************************
 		 *
-		 *		Popup menu`s
-		 */
-
-		// Root menu.
-		rtlabel = new JLabel();
-		rtlabel.setIcon(imgLoader.getIcon("rt_select_20x20"));
-		rtlabel.setIconTextGap(0);
-		rtmenu = new JPopupMenu();
-		rtCreate = new JMenuItem("Create database");
-		rtMySQL = new JMenu("MySQL");
-		rtProcess = new JMenuItem("Process monitor");
-		rtStatus = new JMenuItem("Show status");
-		rtVariables = new JMenuItem("Show variables");
-		rtPostgres = new JMenu("Postgres");
-		rtSQLServer = new JMenu("SQL Server");
-		rtRefresh = new JMenuItem("Reload database(s)");
-
-		// Root menu item placement.
-		rtmenu.add(rtlabel);
-		rtmenu.addSeparator();
-		rtmenu.add(rtCreate);
-		rtmenu.addSeparator();
-		rtmenu.add(rtMySQL);
-		rtMySQL.add(rtProcess);
-		rtMySQL.add(rtStatus);
-		rtMySQL.add(rtVariables);
-		rtmenu.add(rtPostgres);
-		rtmenu.add(rtSQLServer);
-		rtmenu.addSeparator();
-		rtmenu.add(rtRefresh);
-
-		// Database menu.
-		dblabel = new JLabel();
-		dblabel.setIcon(imgLoader.getIcon("db_select_20x20"));
-		dblabel.setIconTextGap(0);
-		dbmenu = new JPopupMenu();
-		dbCreateDatabase = new JMenuItem("Create database");
-		dbDrop = new JMenuItem("Drop database");
-		dbCreateTable = new JMenuItem("Create table");
-		dbRefresh = new JMenuItem("Reload table(s)");
-		dbDesigner = new JMenuItem("Open in designer");
-
-		// Database menu item placement.
-		dbmenu.add(dblabel);
-		dbmenu.addSeparator();
-		dbmenu.add(dbCreateDatabase);
-		dbmenu.add(dbDrop);
-		dbmenu.addSeparator();
-		dbmenu.add(dbCreateTable);
-		dbmenu.add(dbDesigner);
-		dbmenu.addSeparator();
-		dbmenu.add(dbRefresh);
-
-		// Table menu.
-		tblabel = new JLabel();
-		tblabel.setIcon(imgLoader.getIcon("tb_select_20x20"));
-		tblabel.setIconTextGap(0);
-		tbmenu = new JPopupMenu();
-		tbCreateTable = new JMenuItem("Create table");
-		tbEditTable = new JMenuItem("Edit table");
-		tbEmptyTable = new JMenuItem("Empty table");
-		tbDropTable = new JMenuItem("Drop table");
-		tbIndexes = new JMenuItem("Index(es)");
-		tbAddField = new JMenuItem("Add field");
-		tbMySQL = new JMenu("MySQL");
-		tbmAnalyze = new JMenuItem("Analyze table");
-		tbmCheck = new JMenuItem("Check table");
-		tbmOptimize = new JMenuItem("Optimize table");
-		tbmRepair = new JMenuItem("Repair table");
-		tbPostgres = new JMenu("Postgres");
-		tbSQLServer = new JMenu("SQL Server");
-		tbRefresh = new JMenuItem("Reload data");
-
-		//Table menu item placement.
-		tbmenu.add(tblabel);
-		tbmenu.addSeparator();
-		tbmenu.add(tbCreateTable);
-		tbmenu.add(tbEditTable);
-		tbmenu.add(tbEmptyTable);
-		tbmenu.add(tbDropTable);
-		tbmenu.add(tbIndexes);
-		tbmenu.addSeparator();
-		tbmenu.add(tbAddField);
-		tbmenu.addSeparator();
-
-		tbMySQL.add(tbmAnalyze);
-		tbMySQL.add(tbmCheck);
-		tbMySQL.add(tbmOptimize);
-		tbMySQL.add(tbmRepair);
-
-		tbmenu.add(tbMySQL);
-		tbmenu.add(tbPostgres);
-		tbmenu.add(tbSQLServer);
-		tbmenu.addSeparator();
-		tbmenu.add(tbRefresh);
-
-		// Field menu.
-		fdlabel = new JLabel();
-		fdlabel.setIcon(imgLoader.getIcon("fd_select_20x20"));
-		fdlabel.setIconTextGap(0);
-		fdmenu = new JPopupMenu();
-		fdAddField = new JMenuItem("Add field");
-		fdEditField = new JMenuItem("Edit field");
-		fdDropField = new JMenuItem("Drop field");
-		fdRefresh = new JMenuItem("Reload field(s)");
-
-		// Field menu item placement.
-		fdmenu.add(fdlabel);
-		fdmenu.addSeparator();
-		fdmenu.add(fdAddField);
-		fdmenu.add(fdEditField);
-		fdmenu.add(fdDropField);
-		fdmenu.addSeparator();
-		fdmenu.add(fdRefresh);
-
-		// Disable menu`s which are not required.
-		if (cwcc.getConnectionProfile().getServerType().getType() == ServerType.MY_SQL) {
-			rtPostgres.setEnabled(false);
-			rtSQLServer.setEnabled(false);
-			tbPostgres.setEnabled(false);
-			tbSQLServer.setEnabled(false);
-		} else if (cwcc.getConnectionProfile().getServerType().getType() == ServerType.POSTGRES) {
-			rtMySQL.setEnabled(false);
-			rtSQLServer.setEnabled(false);
-			tbMySQL.setEnabled(false);
-			tbSQLServer.setEnabled(false);
-		} else if (cwcc.getConnectionProfile().getServerType().getType() == ServerType.MS_SQL_SERVER) {
-			rtPostgres.setEnabled(false);
-			rtMySQL.setEnabled(false);
-			tbPostgres.setEnabled(false);
-			tbMySQL.setEnabled(false);
-		}
-
-		/******************************************************************
-		 *
 		 *		Right SplitPane setup
 		 */
 
@@ -392,40 +210,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		 *
 		 *		Action Listeners.
 		 */
-
-		// Tablemenu listeners
-		tbCreateTable.addActionListener(this);
-		tbEditTable.addActionListener(this);
-		tbDropTable.addActionListener(this);
-		tbAddField.addActionListener(this);
-		tbRefresh.addActionListener(this);
-		tbEmptyTable.addActionListener(this);
-		tbIndexes.addActionListener(this);
-
-		tbmOptimize.addActionListener(this);
-		tbmAnalyze.addActionListener(this);
-		tbmRepair.addActionListener(this);
-		tbmCheck.addActionListener(this);
-
-		// Database menu listeners
-		dbCreateDatabase.addActionListener(this);
-		dbDrop.addActionListener(this);
-		dbCreateTable.addActionListener(this);
-		dbRefresh.addActionListener(this);
-		dbDesigner.addActionListener(this);
-
-		// Rootmenu listeners
-		rtCreate.addActionListener(this);
-		rtRefresh.addActionListener(this);
-		rtVariables.addActionListener(this);
-		rtStatus.addActionListener(this);
-		rtProcess.addActionListener(this);
-
-		// Fieldmenu listeners
-		fdAddField.addActionListener(this);
-		fdEditField.addActionListener(this);
-		fdDropField.addActionListener(this);
-		fdRefresh.addActionListener(this);
 
 		// Toolbar actionlisteners.
 		btnRefreshTree.addActionListener(this);
@@ -665,101 +449,168 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			cwcc.saveSelectedRow();
 		}
 		// Refresh database tree.
-		else if (eventSource == btnRefreshTree || eventSource == rtRefresh) {
+		else if (eventSource == btnRefreshTree) {
 			cwcc.showDatabaseTree();
 		}
 		// Run SQL query window.
 		else if (eventSource == btnRunQuery) {
 			cwcc.startQueryUI();
 		}
-		// Create database
-		else if (eventSource == rtCreate || eventSource == dbCreateDatabase) {
-			String input = Dialogs.input(this, "Create database", "Name of the new database:");
-
-			if (input != null) {
-				cwcc.createDatabase(input);
-			}
-		}
-		// Drop database
-		else if (eventSource == dbDrop) {
-			Database database = getDatabase();
-			String name = database != null ? "'" + database.getName() + "'" : "the selected database";
-
-			if (Dialogs.confirmDestructive(this, "Drop database", "Drop database " + name + " and all its tables? This cannot be undone.", "Drop")) {
-				cwcc.dropDatabase();
-			}
-		}
 		// Read the database into the designer.
-		else if (eventSource == btnDesigner || eventSource == dbDesigner) {
+		else if (eventSource == btnDesigner) {
 			cwcc.openDatabaseInDesigner();
 		}
-		// Reload databases.
-		else if (eventSource == this.dbRefresh) {
-			cwcc.reloadSelectedDatabase();
-		}
-		// Refresh data.
-		else if (eventSource == this.tbRefresh) {
-			cwcc.reloadSelectedTable();
-		}
-		// Flush table data.
-		else if (eventSource == this.tbEmptyTable) {
-			if (Dialogs.confirmDestructive(this, "Empty table", "Delete all rows from " + tableName(getTable()) + "? This cannot be undone.", "Empty")) {
-				cwcc.flushSelectedTable();
-			}
-		}
 		// Drop table.
-		else if (eventSource == btnDropTable || eventSource == tbDropTable) {
-			if (Dialogs.confirmDestructive(this, "Drop table", "Drop table " + tableName(getTable()) + "? All its data will be lost.", "Drop")) {
-				cwcc.dropTable();
-			}
+		else if (eventSource == btnDropTable) {
+			dropTable();
 		}
 		// Add field.
-		else if (eventSource == this.btnAddField || eventSource == this.tbAddField || eventSource == this.fdAddField) {
+		else if (eventSource == btnAddField) {
 			cwcc.startFieldUI(true, false);
 		}
-		// Edit field.
-		else if (eventSource == this.fdEditField) {
-			cwcc.startFieldUI(false, true);
-		}
 		// Drop field.
-		else if (eventSource == btnDeleteField || eventSource == fdDropField) {
-			TableColumn column = getTableColumn();
-			String name = column != null ? "column '" + column.getName() + "' from table " + tableName(column.getTable()) : "the selected column";
-
-			if (Dialogs.confirmDestructive(this, "Drop column", "Drop " + name + "? This cannot be undone.", "Drop")) {
-				cwcc.dropTableColumn();
-			}
-		} else if (eventSource == rtStatus) {
-			cwcc.showServerStatus();
-		} else if (eventSource == rtVariables) {
-			cwcc.showServerVariables();
-		}
-		// MySQL: OPTIMIZE TABLE.
-		else if (eventSource == tbmOptimize) {
-			cwcc.optimizeTable();
-		}
-		// MySQL: ANALYSE TABLE.
-		else if (eventSource == tbmAnalyze) {
-			cwcc.analyseTable();
-		}
-		// MySQL: REPAIR TABLE.
-		else if (eventSource == tbmRepair) {
-			cwcc.repairTable();
-		}
-		// MySQL: CHECK TABLE.
-		else if (eventSource == tbmCheck) {
-			cwcc.checkTable();
+		else if (eventSource == btnDeleteField) {
+			dropField();
 		} else if (eventSource == btnUserManager) {
 			cwcc.dispatchUserManagerUI();
-		} else if (eventSource == tbIndexes) {
-			cwcc.dispatchTableIndexesUI();
-		} else if (eventSource == rtProcess) {
-			cwcc.dispatchProcessUI();
-		} else if (eventSource == dbCreateTable || eventSource == btnCreateTable || eventSource == tbCreateTable) {
+		} else if (eventSource == btnCreateTable) {
 			cwcc.dispatchCreateTableUI();
-		} else if (eventSource == tbEditTable) {
-			cwcc.dispatchModifyTableUI();
 		}
+	}
+
+	/** Runs an item of the context menu of the tree, on the node that was right clicked (it is selected first). */
+	private void perform(TreeMenu.Item item) {
+		switch (item) {
+			case CREATE_DATABASE -> {
+				String input = Dialogs.input(this, "Create database", "Name of the new database:");
+
+				if (input != null) {
+					cwcc.createDatabase(input);
+				}
+			}
+			case NEW_QUERY -> cwcc.startQueryUI();
+			case USERS -> cwcc.dispatchUserManagerUI();
+			case PROCESS_LIST -> cwcc.dispatchProcessUI();
+			case SERVER_STATUS -> cwcc.showServerStatus();
+			case SERVER_VARIABLES -> cwcc.showServerVariables();
+			case EXPORT -> cwcc.dispatchExportUI();
+			case IMPORT -> cwcc.dispatchImportUI();
+			case RELOAD_DATABASES -> cwcc.showDatabaseTree();
+			case OPEN_DATABASE -> cwcc.openDatabase(getDatabase());
+			case CREATE_TABLE -> cwcc.dispatchCreateTableUI();
+			case OPEN_IN_DESIGNER -> cwcc.openDatabaseInDesigner();
+			case DROP_DATABASE -> {
+				Database database = getDatabase();
+				String name = database != null ? "'" + database.getName() + "'" : "the selected database";
+
+				if (Dialogs.confirmDestructive(this, "Drop database", "Drop database " + name + " and all its tables? This cannot be undone.", "Drop")) {
+					cwcc.dropDatabase();
+				}
+			}
+			case RELOAD_TABLES -> cwcc.reloadSelectedDatabase();
+			case OPEN_TABLE -> cwcc.openTable(getTable());
+			case EDIT_TABLE -> cwcc.dispatchModifyTableUI();
+			case INDEXES -> cwcc.dispatchTableIndexesUI();
+			case ADD_FIELD -> cwcc.startFieldUI(true, false);
+			case EMPTY_TABLE -> {
+				if (Dialogs.confirmDestructive(this, "Empty table", "Delete all rows from " + tableName(getTable()) + "? This cannot be undone.", "Empty")) {
+					cwcc.flushSelectedTable();
+				}
+			}
+			case DROP_TABLE -> dropTable();
+			case OPTIMIZE -> cwcc.optimizeTable();
+			case ANALYZE -> cwcc.analyseTable();
+			case CHECK -> cwcc.checkTable();
+			case REPAIR -> cwcc.repairTable();
+			case RELOAD_COLUMNS -> cwcc.reloadSelectedTable();
+			case EDIT_FIELD -> cwcc.startFieldUI(false, true);
+			case DROP_FIELD -> dropField();
+			case SEPARATOR -> {
+			}
+		}
+	}
+
+	private void dropTable() {
+		if (Dialogs.confirmDestructive(this, "Drop table", "Drop table " + tableName(getTable()) + "? All its data will be lost.", "Drop")) {
+			cwcc.dropTable();
+		}
+	}
+
+	private void dropField() {
+		TableColumn column = getTableColumn();
+		String name = column != null ? "column '" + column.getName() + "' from table " + tableName(column.getTable()) : "the selected column";
+
+		if (Dialogs.confirmDestructive(this, "Drop column", "Drop " + name + "? This cannot be undone.", "Drop")) {
+			cwcc.dropTableColumn();
+		}
+	}
+
+	/** The context menu of a node: a title with its name, then only the items the server supports. */
+	JPopupMenu contextMenu(Object node) {
+		TreeMenu.Node kind;
+		String title;
+		String icon;
+
+		if (node instanceof Database database) {
+			kind = TreeMenu.Node.DATABASE;
+			title = database.getName();
+			icon = "db_select_20x20";
+		} else if (node instanceof Table table) {
+			kind = TreeMenu.Node.TABLE;
+			title = table.getName();
+			icon = "tb_select_20x20";
+		} else if (node instanceof TableColumn column) {
+			kind = TreeMenu.Node.COLUMN;
+			title = column.getName();
+			icon = "fd_select_20x20";
+		} else {
+			kind = TreeMenu.Node.SERVER;
+			title = getTitle();
+			icon = "rt_select_20x20";
+		}
+
+		JPopupMenu menu = new JPopupMenu();
+		JLabel label = new JLabel(title, imgLoader.getIcon(icon), SwingConstants.LEFT);
+		label.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+		menu.add(label);
+		menu.addSeparator();
+
+		for (TreeMenu.Item item : TreeMenu.itemsFor(kind, cwcc.getConnectionProfile().getServerType().getDialect())) {
+			if (item == TreeMenu.Item.SEPARATOR) {
+				menu.addSeparator();
+			} else {
+				JMenuItem menuItem = new JMenuItem(item.label());
+				String itemIcon = menuIcon(item);
+
+				if (itemIcon != null) {
+					menuItem.setIcon(imgLoader.getIcon(itemIcon));
+				}
+				menuItem.addActionListener(e -> perform(item));
+				menu.add(menuItem);
+			}
+		}
+		return menu;
+	}
+
+	/** The registered Lucide icon of an item, null when there is none that fits. */
+	private static String menuIcon(TreeMenu.Item item) {
+		return switch (item) {
+			case CREATE_DATABASE -> "add_database";
+			case DROP_DATABASE -> "imgDropDatabase";
+			case NEW_QUERY -> "imgRunQuery";
+			case USERS -> "imgUserManager";
+			case OPEN_IN_DESIGNER -> "imgDesigner";
+			case CREATE_TABLE -> "imgCreateTable";
+			case DROP_TABLE -> "imgDropTable";
+			case OPEN_DATABASE, OPEN_TABLE -> "imgOpen";
+			case INDEXES -> "imgHasIndex";
+			case ADD_FIELD -> "imgAddField";
+			case DROP_FIELD -> "imgDeleteField";
+			case EDIT_TABLE, EDIT_FIELD -> "des_properties";
+			case EXPORT, IMPORT -> "imgSave";
+			case RELOAD_DATABASES, RELOAD_TABLES, RELOAD_COLUMNS -> "imgRun";
+			default -> null;
+		};
 	}
 
 	/** 'database.table' for the questions before a table is changed. */
@@ -771,41 +622,29 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	 *		Mouse Listener Implementation
 	 */
 
-	// Mouse event on JTree or JTable
+	// The popup trigger comes on press on macOS (also ctrl-click) and Linux, on release on Windows.
 	public void mouseReleased(MouseEvent e) {
-		Object eventSource = e.getSource();
+		showContextMenu(e);
+	}
 
-		if (eventSource == dtv && dtv.isSelectionEmpty()) {
+	public void mousePressed(MouseEvent e) {
+		showContextMenu(e);
+	}
+
+	/** Selects the node under the cursor and shows its context menu. */
+	private void showContextMenu(MouseEvent e) {
+		if (e.getSource() != dtv || !e.isPopupTrigger()) {
 			return;
-		} else if (eventSource == dtv) {
-			if (e.isMetaDown()) {
-				int i = dtv.getRowForLocation(e.getX(), e.getY());
-				selectedNode = (DefaultMutableTreeNode) dtv.getLastSelectedPathComponent();
-
-				if (i > -1) {
-					selectedNode = (DefaultMutableTreeNode) dtv.getPathForRow(i).getLastPathComponent();
-				}
-
-				Object selected = selectedNode.getUserObject();
-
-				try {
-					if (selected instanceof Table table) {
-						tblabel.setText(table.getName());
-						tbmenu.show(dtv, e.getX(), e.getY());
-					} else if (selected instanceof Database database) {
-						dblabel.setText(database.getName());
-						dbmenu.show(dtv, e.getX(), e.getY());
-					} else if (selected instanceof nl.errorsoft.esql.table.TableColumn column) {
-						fdlabel.setText(column.getName());
-						fdmenu.show(dtv, e.getX(), e.getY());
-					} else {
-						rtlabel.setText(this.getTitle());
-						rtmenu.show(dtv, e.getX(), e.getY());
-					}
-				} catch (Exception ex) { // No nodes selected
-				}
-			}
 		}
+
+		TreePath path = dtv.getPathForLocation(e.getX(), e.getY());
+
+		if (path == null) {
+			return;
+		}
+		dtv.setSelectionPath(path);
+		selectedNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+		contextMenu(selectedNode.getUserObject()).show(dtv, e.getX(), e.getY());
 	}
 
 	public Table getTable() {
@@ -854,8 +693,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		return null;
 	}
 
-	public void mousePressed(MouseEvent e) {
-	}
 	/** A double click on a database or table opens its tab, a single click only selects. */
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource() != dtv || e.getClickCount() != 2 || e.isMetaDown()) {

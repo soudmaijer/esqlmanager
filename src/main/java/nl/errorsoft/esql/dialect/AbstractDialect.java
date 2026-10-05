@@ -352,6 +352,10 @@ public abstract class AbstractDialect implements Dialect {
 		throw new UnsupportedOperationException("User management is not available on this server");
 	}
 
+	public java.util.Set<Maintenance> maintenanceCommands() {
+		return java.util.EnumSet.noneOf(Maintenance.class);
+	}
+
 	/** Without a command of its own the server does nothing, PostgreSQL overrides this with VACUUM and ANALYZE. */
 	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
 		throw new UnsupportedOperationException(command + " is not available on " + dbc.getConnectionProfile().getServerType().getDescription());

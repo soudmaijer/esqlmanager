@@ -64,6 +64,7 @@ public final class ApplicationContext {
 			images.addIcon("imgNext", "next", 16, false);
 			images.addIcon("imgLast", "last", 16, false);
 			images.addIcon("add_database", "database-add", 16, false);
+			images.addIcon("imgDropDatabase", "database-drop", 16, false);
 			images.addIcon("add_table", "table-add", 16, false);
 			images.addIcon("add_comment", "comment", 16, false);
 			images.addIcon("des_properties", "properties", 16, false);
