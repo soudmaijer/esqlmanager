@@ -35,6 +35,17 @@ class ProfileXmlTest {
 	}
 
 	@Test
+	void anUnknownServerTypeIsRefusedNotTakenForMySql() throws Exception {
+		for (String type : new String[]{"abc", "99", "-1"}) {
+			Element element = parse("<profile><name>Broken</name><serverType>" + type + "</serverType></profile>");
+			nl.errorsoft.esql.error.EsqlException refused = org.junit.jupiter.api.Assertions.assertThrows(nl.errorsoft.esql.error.EsqlException.class,
+				() -> ProfileXml.read(element));
+			assertTrue(refused.getMessage().contains("'Broken'"), refused.getMessage());
+		}
+		assertEquals(ServerType.POSTGRES, ProfileXml.read(parse("<profile><name>Ok</name><serverType>2</serverType></profile>")).getServerType().getType());
+	}
+
+	@Test
 	void schemasAreReadPerDatabase() throws Exception {
 		Element element = parse("<profile><name>Local</name><serverType>2</serverType><databases>shop,crm</databases>"
 			+ "<schemas><database name=\"shop\"><schema>public</schema><schema>archive</schema></database><database name=\"crm\" /></schemas></profile>");

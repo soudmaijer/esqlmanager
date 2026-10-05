@@ -2,6 +2,20 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Errors in settings, profiles and drivers are reported
+
+- A settings.xml that cannot be read is kept as settings.xml.bak and the user is told once that the defaults are
+  used; saving the settings reports a failure instead of only logging it.
+- A profiles.xml or datatypes.xml that cannot be read is reported ("profiles.xml cannot be read: ...") instead of
+  showing no profiles or types, and a damaged profiles.xml is not overwritten. A profile with an unknown server type
+  is left out with a warning in the log instead of being opened as MySQL (a profile without a server type still is MySQL).
+- driver.xml without a root element or with a bad entry no longer fails: the bad entry is skipped with a warning.
+- The process list shows "Disconnected" when it loses its connection, and Kill, Pause and the interval are
+  disabled.
+- Saving a query asks before overwriting an existing file and starts in the default folder; a name with another
+  extension keeps it.
+- A failure of the window selector is reported; the user manager reports over the main window.
+
 05-10-2026: Database work off the event thread in controllers and dialogs
 
 - Opening table data and paging through it, the Indexes and Edit table tabs and table maintenance (optimize, analyze,

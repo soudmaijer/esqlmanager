@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import nl.errorsoft.esql.error.EsqlException;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
@@ -22,14 +23,31 @@ public class ConnectionProfile {
 	private boolean autoConnect = false;
 	private boolean savePassword = true;
 	private org.jdom.Document profileData;
+	/** Why profiles.xml could not be read; then nothing is read from or written to it, so a damaged file is not overwritten. */
+	private EsqlException loadProblem;
 
+	/** The profiles of conf/profiles.xml. A missing file means no profiles yet; a file that cannot be read makes every use throw. */
 	public ConnectionProfile() {
-		try {
-			SAXBuilder builder = new SAXBuilder();
-			profileData = builder.build(DataDirectory.file("conf/profiles.xml"));
-		} catch (Exception e) {
-			log.warn("Warning: profiles.xml could not be loaded, no profiles will be available!");
+		File file = DataDirectory.file("conf/profiles.xml");
+
+		if (!file.isFile()) {
+			// A first start without the file: no profiles, the first save creates it.
+			profileData = new Document(new Element("profiles"));
+			return;
 		}
+		try {
+			profileData = new SAXBuilder().build(file);
+		} catch (Exception e) {
+			loadProblem = new EsqlException("profiles.xml cannot be read: " + e.getMessage(), e);
+		}
+	}
+
+	/** The document of profiles.xml; throws when the file could not be read. */
+	private Document document() {
+		if (loadProblem != null) {
+			throw loadProblem;
+		}
+		return profileData;
 	}
 
 	/** A profile that is not tied to the profile file, for the settings of one connection. */
@@ -41,22 +59,20 @@ public class ConnectionProfile {
 		this.profileData = profileData;
 	}
 
+	/** The saved profiles; one that cannot be used (an unknown server type) is left out with a warning in the log. */
 	public ConnectionProfile[] getProfiles() {
-		try {
-			if (profileData != null && profileData.hasRootElement()) {
-				java.util.List<?> profiles = profileData.getRootElement().getChildren("profile");
-				ConnectionProfile[] p = new ConnectionProfile[profiles.size()];
+		java.util.List<ConnectionProfile> profiles = new java.util.ArrayList<>();
 
-				for (int i = 0; i < profiles.size(); i++) {
-					p[i] = ProfileXml.read((org.jdom.Element) profiles.get(i));
+		if (document() != null && document().hasRootElement()) {
+			for (Object element : document().getRootElement().getChildren("profile")) {
+				try {
+					profiles.add(ProfileXml.read((Element) element));
+				} catch (EsqlException e) {
+					log.warn("Profile skipped: {}", e.getMessage());
 				}
-				return p;
 			}
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
 		}
-
-		return new ConnectionProfile[0];
+		return profiles.toArray(new ConnectionProfile[0]);
 	}
 
 	public ServerType getServerType() {
@@ -68,8 +84,8 @@ public class ConnectionProfile {
 	}
 
 	public boolean profileExists(String name) throws Exception {
-		if (profileData.hasRootElement()) {
-			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
+		if (document().hasRootElement()) {
+			java.util.List<?> l = document().getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(name)) {
@@ -83,8 +99,8 @@ public class ConnectionProfile {
 	public void setLastUsed(ConnectionProfile cp) throws Exception {
 		java.util.List<?> profiles = null;
 
-		if (profileData.hasRootElement()) {
-			profiles = profileData.getRootElement().getChildren("profile");
+		if (document().hasRootElement()) {
+			profiles = document().getRootElement().getChildren("profile");
 		}
 
 		for (int i = 0; i < profiles.size(); i++) {
@@ -98,16 +114,16 @@ public class ConnectionProfile {
 				}
 			}
 		}
-		save(profileData);
+		save(document());
 	}
 
 	public void addProfile(ConnectionProfile cp) throws Exception {
-		if (profileData.hasRootElement()) {
+		if (document().hasRootElement()) {
 			org.jdom.Element newElement = new org.jdom.Element("profile");
 			ProfileXml.write(newElement, cp);
-			profileData.getRootElement().addContent(newElement);
+			document().getRootElement().addContent(newElement);
 		}
-		save(profileData);
+		save(document());
 	}
 
 	public void editProfile(ConnectionProfile profile) throws Exception {
@@ -116,8 +132,8 @@ public class ConnectionProfile {
 
 	/** Writes the settings over the saved profile that is called {@code previousName}, which renames it when the name of {@code profile} is another. */
 	public void editProfile(String previousName, ConnectionProfile profile) throws Exception {
-		if (profileData.hasRootElement()) {
-			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
+		if (document().hasRootElement()) {
+			java.util.List<?> l = document().getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				org.jdom.Element element = (org.jdom.Element) l.get(i);
@@ -128,7 +144,7 @@ public class ConnectionProfile {
 					element.getChild("autoConnect").setText("false");
 				}
 			}
-			save(profileData);
+			save(document());
 		}
 	}
 
@@ -173,13 +189,13 @@ public class ConnectionProfile {
 	}
 
 	public void deleteProfile(ConnectionProfile profile) throws Exception {
-		if (profileData.hasRootElement()) {
-			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
+		if (document().hasRootElement()) {
+			java.util.List<?> l = document().getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(profile.getName())) {
-					profileData.getRootElement().removeContent((org.jdom.Element) l.get(i));
-					save(profileData);
+					document().getRootElement().removeContent((org.jdom.Element) l.get(i));
+					save(document());
 					break;
 				}
 			}

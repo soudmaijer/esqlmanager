@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.settings;
 
 import nl.errorsoft.esql.app.DataDirectory;
+import nl.errorsoft.esql.error.EsqlException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +12,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -33,6 +35,8 @@ public class Settings {
 	private int editorFontSize = DEFAULT_FONT_SIZE;
 	private String defaultFolder = "";
 	private Charset defaultEncoding = StandardCharsets.UTF_8;
+	/** Why the file could not be read, until the user has been told once; null when it was read or did not exist. */
+	private EsqlException loadProblem;
 
 	public Settings() {
 		this(DataDirectory.file("conf/settings.xml"));
@@ -79,8 +83,13 @@ public class Settings {
 		this.defaultEncoding = encoding == null ? StandardCharsets.UTF_8 : encoding;
 	}
 
+	/**
+	 * Reads the file. A missing file gives the defaults. A file that cannot be read also gives the defaults, but is first copied to a .bak file next to
+	 * it so that the next save does not destroy it, and {@link #takeLoadProblem} tells the user once.
+	 */
 	public void loadSettings() {
 		if (!file.isFile()) {
+			// A first start: there is nothing to read and nothing to tell.
 			log.info("{} does not exist, using the default settings", file);
 			return;
 		}
@@ -92,11 +101,37 @@ public class Settings {
 			setDefaultFolder(root.getChildText("defaultFolder"));
 			setDefaultEncoding(parseCharset(root.getChildText("defaultEncoding")));
 		} catch (Exception e) {
-			log.error("Could not read {}: {}", file, e.getMessage(), e);
+			loadProblem = new EsqlException(keepCorruptFile(e), e);
 		}
 	}
 
-	public boolean saveSettings() {
+	/** Copies the unreadable file to a backup and returns the message for the user. */
+	private String keepCorruptFile(Exception cause) {
+		File backup = backupFile();
+		try {
+			Files.copy(file.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			return file.getName() + " cannot be read (" + cause.getMessage() + "). The default settings are used; the file was kept as " + backup.getName()
+				+ ".";
+		} catch (IOException copyFailed) {
+			return file.getName() + " cannot be read (" + cause.getMessage() + ") and could not be kept as " + backup.getName() + " ("
+				+ copyFailed.getMessage() + "). The default settings are used.";
+		}
+	}
+
+	/** Where an unreadable settings file is kept: settings.xml.bak next to it. */
+	public File backupFile() {
+		return new File(file.getPath() + ".bak");
+	}
+
+	/** Why the settings file could not be read, once: the next call returns null, so the user is told only once. */
+	public synchronized EsqlException takeLoadProblem() {
+		EsqlException problem = loadProblem;
+		loadProblem = null;
+		return problem;
+	}
+
+	/** Writes the file; a failure is thrown for the dialog that saves to report. */
+	public void saveSettings() throws IOException {
 		Element root = new Element("config");
 		root.addContent(new Element("appearance").setText(appearance.name()));
 		root.addContent(new Element("editorFontSize").setText(String.valueOf(editorFontSize)));
@@ -105,10 +140,6 @@ public class Settings {
 
 		try (Writer out = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
 			new XMLOutputter(Format.getPrettyFormat().setIndent("\t")).output(new Document(root), out);
-			return true;
-		} catch (IOException e) {
-			log.error("Could not write {}: {}", file, e.getMessage());
-			return false;
 		}
 	}
 
@@ -116,6 +147,7 @@ public class Settings {
 		try {
 			return Integer.parseInt(text.trim());
 		} catch (RuntimeException e) {
+			// A value that is not a number gives the default, as the class comment says.
 			return fallback;
 		}
 	}
@@ -124,6 +156,7 @@ public class Settings {
 		try {
 			return Charset.forName(name.trim());
 		} catch (RuntimeException e) {
+			// An unknown encoding gives the default, as the class comment says.
 			return StandardCharsets.UTF_8;
 		}
 	}

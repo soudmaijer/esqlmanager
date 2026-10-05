@@ -46,6 +46,8 @@ public class ProcessListDialog extends JDialog {
 	private List<ServerProcess> processes = List.of();
 	/** The processes in the rows of the table. */
 	private List<ServerProcess> shown = List.of();
+	/** False once the list lost its connection; the rows stay, but nothing can be killed or refreshed. */
+	private boolean connected = true;
 
 	public ProcessListDialog(ProcessListController controller, JFrame parent, String title) {
 		super(parent, title, false);
@@ -66,7 +68,7 @@ public class ProcessListDialog extends JDialog {
 		kill.addActionListener(e -> killSelected(controller));
 		showQuery.addActionListener(e -> showSelectedQuery());
 		jtable.getSelectionModel().addListSelectionListener(e -> {
-			kill.setEnabled(jtable.getSelectedRow() > -1);
+			kill.setEnabled(connected && jtable.getSelectedRow() > -1);
 			showQuery.setEnabled(jtable.getSelectedRow() > -1);
 		});
 		jtable.addMouseListener(new MouseAdapter() {
@@ -182,5 +184,15 @@ public class ProcessListDialog extends JDialog {
 
 	public void showPaused() {
 		lblInterval.setText("Paused");
+	}
+
+	/** The list lost its connection: the last rows stay for reading, refreshing and killing stop. */
+	public void showDisconnected() {
+		connected = false;
+		lblInterval.setText("Disconnected, the list is no longer refreshed");
+		lblInterval.setForeground(UIManager.getColor("Label.disabledForeground"));
+		kill.setEnabled(false);
+		pause.setEnabled(false);
+		interval.setEnabled(false);
 	}
 }

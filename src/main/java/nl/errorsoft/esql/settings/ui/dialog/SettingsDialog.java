@@ -2,6 +2,7 @@ package nl.errorsoft.esql.settings.ui.dialog;
 
 import java.awt.BorderLayout;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -52,9 +53,14 @@ public class SettingsDialog extends FormDialog {
 			settings.setEditorFontSize((Integer) fontSize.getValue());
 			settings.setDefaultFolder(folder.getText());
 			settings.setDefaultEncoding((Charset) encoding.getSelectedItem());
-			settings.saveSettings();
+			// The choices apply now even when they cannot be kept for the next start.
 			settings.getAppearance().apply();
 			EditorTheme.applyFontSize();
+			try {
+				settings.saveSettings();
+			} catch (IOException e) {
+				ApplicationContext.get().errors().report(getOwner(), "Save settings", e);
+			}
 		});
 		setInitialFocus(appearance);
 		showDialog();

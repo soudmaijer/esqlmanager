@@ -31,18 +31,20 @@ public class ConnectionProfileController {
 
 	public ConnectionProfileController(MainController mainController) {
 		this.mainController = mainController;
-
-		try {
-			cp = new ConnectionProfile();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Load profiles", e);
-		}
+		cp = new ConnectionProfile();
 	}
 
 	public void showDialog(MainWindow mainWindow, boolean autoConnect) {
 		// Create Frame.
 		mainWindow.updateStatus("Starting profile manager...", true);
-		ConnectionProfile[] cpa = cp.getProfiles();
+		ConnectionProfile[] cpa;
+		try {
+			cpa = cp.getProfiles();
+		} catch (Exception e) {
+			mainController.showConnectionState();
+			ApplicationContext.get().errors().report(mainWindow, "Load profiles", e);
+			return;
+		}
 		log.info("Loaded {} connection profile(s) from conf/profiles.xml", cpa.length);
 		boolean conLastUsed = false;
 
@@ -56,7 +58,7 @@ public class ConnectionProfileController {
 		}
 		if (!conLastUsed) {
 			profileDialog = new ConnectionProfileDialog(mainWindow, this);
-			profileDialog.loadProfiles(cp.getProfiles(), null);
+			profileDialog.loadProfiles(cpa, null);
 			mainController.showConnectionState();
 			profileDialog.setVisible(true);
 		}

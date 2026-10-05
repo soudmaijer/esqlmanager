@@ -30,7 +30,15 @@ public class DatabaseDriver {
 	 * @description:	Reads the XML data from the driver.xml file in de application root.
 	 */
 	public DatabaseDriver() {
+		this(true);
+	}
+
+	/** One entry of driver.xml ({@code readFile} false), or the reader of the whole file. */
+	private DatabaseDriver(boolean readFile) {
 		drivers = new DatabaseDriver[0];
+		if (!readFile) {
+			return;
+		}
 
 		try {
 			SAXBuilder saxbuilder = new SAXBuilder();
@@ -45,38 +53,42 @@ public class DatabaseDriver {
 	 * @description:	Retreives all database drivers from the JDOM document.
 	 */
 	public DatabaseDriver[] getDatabaseDrivers() {
-		if (driverData == null) {
+		if (driverData == null || !driverData.hasRootElement()) {
 			return drivers;
 		}
 
-		List<?> list = null;
+		List<DatabaseDriver> read = new java.util.ArrayList<>();
 
-		if (driverData.hasRootElement()) {
-			list = driverData.getRootElement().getChildren("driver");
-		}
+		for (Object entry : driverData.getRootElement().getChildren("driver")) {
+			Element element = (Element) entry;
 
-		drivers = new DatabaseDriver[list.size()];
-
-		try {
-			for (int i = 0; i < list.size(); i++) {
-				DatabaseDriver temp = new DatabaseDriver();
-
-				temp.setId(Integer.valueOf(((Element) list.get(i)).getChild("id").getText()).intValue());
-				temp.setDriverName(((Element) list.get(i)).getChild("driverName").getText());
-				temp.setDriverURL(((Element) list.get(i)).getChild("driverURL").getText());
-				temp.setDriverClassName(((Element) list.get(i)).getChild("driverClassName").getText());
-				//temp.setDriverFilePath(((Element)list.get(i)).getChild("driverFilePath").getText());
-				temp.setFieldOpenChar(((Element) list.get(i)).getChild("fieldOpenChar").getText());
-				temp.setFieldCloseChar(((Element) list.get(i)).getChild("fieldCloseChar").getText());
-				temp.setDataOpenChar(((Element) list.get(i)).getChild("dataOpenChar").getText());
-				temp.setDataCloseChar(((Element) list.get(i)).getChild("dataCloseChar").getText());
-				drivers[i] = temp;
+			try {
+				DatabaseDriver driver = new DatabaseDriver(false);
+				driver.setId(Integer.parseInt(element.getChildTextTrim("id")));
+				driver.setDriverName(required(element, "driverName"));
+				driver.setDriverURL(required(element, "driverURL"));
+				driver.setDriverClassName(required(element, "driverClassName"));
+				driver.setFieldOpenChar(required(element, "fieldOpenChar"));
+				driver.setFieldCloseChar(required(element, "fieldCloseChar"));
+				driver.setDataOpenChar(required(element, "dataOpenChar"));
+				driver.setDataCloseChar(required(element, "dataCloseChar"));
+				read.add(driver);
+			} catch (RuntimeException e) {
+				// One bad entry leaves out that driver only, the others can still be used.
+				log.warn("Driver '{}' in driver.xml skipped: {}", element.getChildText("driverName"), e.getMessage());
 			}
-		} catch (Exception e) {
-			log.warn("Warning: driver data could not be loaded, no driver properties will be available!");
 		}
 
+		drivers = read.toArray(new DatabaseDriver[0]);
 		return drivers;
+	}
+
+	private static String required(Element element, String child) {
+		String text = element.getChildText(child);
+		if (text == null) {
+			throw new IllegalArgumentException("<" + child + "> is missing");
+		}
+		return text;
 	}
 
 	/*

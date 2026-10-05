@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.connection;
 
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.dialect.DialectFactory;
@@ -31,6 +32,11 @@ public class ServerType {
 	private String dataOpenChar = "";
 	private String dataCloseChar = "";
 	private DataType[] dt;
+
+	/** Whether the number is one of the server types above (the ids of conf/driver.xml). */
+	public static boolean isKnown(int type) {
+		return type == MY_SQL || type == MS_SQL_SERVER || type == POSTGRES || type == ORACLE;
+	}
 
 	public ServerType(int type) {
 		this.type = type;
@@ -109,6 +115,7 @@ public class ServerType {
 		return description;
 	}
 
+	/** The column types of this server from conf/datatypes.xml, empty when the file has none for it; a file that cannot be read is an {@link EsqlException}. */
 	public DataType[] getDataTypes() {
 		if (dt != null && dt.length != 0) {
 			return dt;
@@ -134,7 +141,7 @@ public class ServerType {
 			}
 			log.warn("No datatypes specified for server type {}", this.getType());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			throw new EsqlException("datatypes.xml cannot be read: " + e.getMessage(), e);
 		}
 		return new DataType[0];
 	}

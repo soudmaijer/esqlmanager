@@ -6,8 +6,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -37,7 +37,9 @@ import nl.errorsoft.esql.query.control.QueryController;
 import nl.errorsoft.esql.table.ui.TableDataTab;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
+import nl.errorsoft.esql.ui.util.FileChoosers;
 
 /**
  * A query tab of the connection window: the SQL editor with completion on top and below it a tab for every statement that returned rows, the newest in
@@ -297,12 +299,12 @@ public class QueryTab extends JPanel {
 
 		try {
 			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-				String fileName = chooser.getSelectedFile().getAbsolutePath();
+				File file = FileChoosers.withExtension(chooser.getSelectedFile(), ".sql");
 
-				if (!fileName.endsWith(".sql")) {
-					fileName = fileName + ".sql";
+				if (file.exists() && !Dialogs.confirmDestructive(this, "Save query", "Overwrite the existing file '" + file + "'?", "Overwrite")) {
+					return;
 				}
-				Files.writeString(Path.of(fileName), editor.getText() + System.lineSeparator());
+				Files.writeString(file.toPath(), editor.getText() + System.lineSeparator());
 			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(this, "Save query", e);
@@ -310,7 +312,7 @@ public class QueryTab extends JPanel {
 	}
 
 	private JFileChooser chooser(String title) {
-		JFileChooser chooser = new JFileChooser();
+		JFileChooser chooser = FileChoosers.create();
 		chooser.addChoosableFileFilter(new ExtensionFileFilter("SQL file", new String[]{".sql"}));
 		chooser.setAcceptAllFileFilterUsed(false);
 		chooser.setDialogTitle(title);

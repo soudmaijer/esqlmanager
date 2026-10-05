@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.jdom.Element;
 
+import nl.errorsoft.esql.error.EsqlException;
+
 /**
  * Reads and writes one {@code <profile>} element of conf/profiles.xml. Elements that are missing in older files get a default. The selection is stored as
  * {@code <databases>db1,db2</databases>} (what older versions understand) and, only for databases with chosen schemas,
@@ -16,7 +18,7 @@ public final class ProfileXml {
 	private ProfileXml() {
 	}
 
-	/** A profile (not auto-connecting, not last used unless the file says so) from the element. */
+	/** A profile (not auto-connecting, not last used unless the file says so) from the element; an unknown server type is an {@link EsqlException}. */
 	public static ConnectionProfile read(Element element) {
 		ConnectionProfile profile = ConnectionProfile.plain();
 		profile.setName(text(element, "name"));
@@ -24,7 +26,7 @@ public final class ProfileXml {
 		profile.setPort(text(element, "port"));
 		profile.setUsername(text(element, "username"));
 		profile.setPassword(text(element, "password"));
-		profile.setServerType(new ServerType(parseInt(text(element, "serverType"))));
+		profile.setServerType(serverType(element));
 		profile.setLastUsed(Boolean.parseBoolean(text(element, "lastUsed")));
 		profile.setAutoConnect(Boolean.parseBoolean(text(element, "autoConnect")));
 		// Profiles written before the option existed keep their password.
@@ -96,12 +98,24 @@ public final class ProfileXml {
 		return text == null ? "" : text;
 	}
 
-	private static int parseInt(String text) {
-		try {
-			return Integer.parseInt(text.trim());
-		} catch (NumberFormatException e) {
-			return ServerType.MY_SQL;
+	/**
+	 * The server type of the profile. A missing element gets the default of the oldest files, MySQL; a value that is not a known type is refused, so a
+	 * profile is never opened with the dialect of another server.
+	 */
+	private static ServerType serverType(Element element) {
+		String text = text(element, "serverType").trim();
+		if (text.isEmpty()) {
+			return new ServerType(ServerType.MY_SQL);
 		}
+		try {
+			int type = Integer.parseInt(text);
+			if (ServerType.isKnown(type)) {
+				return new ServerType(type);
+			}
+		} catch (NumberFormatException e) {
+			// Not a number: refused below like an unknown number.
+		}
+		throw new EsqlException("profile '" + text(element, "name") + "' has an unknown server type '" + text + "'");
 	}
 
 	private static void set(Element parent, String name, String value) {

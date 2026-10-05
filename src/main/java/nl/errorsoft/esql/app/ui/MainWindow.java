@@ -118,6 +118,12 @@ public class MainWindow extends JFrame implements ActionListener {
 		this.setVisible(true);
 		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
+		// Settings that could not be read were replaced by the defaults; the user hears it once, over the window.
+		var settingsProblem = ApplicationContext.get().settings().takeLoadProblem();
+		if (settingsProblem != null) {
+			SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(this, "Read settings", settingsProblem));
+		}
+
 		// Show rest
 		jsplit.setDividerLocation(0.85);
 	}
@@ -225,7 +231,7 @@ public class MainWindow extends JFrame implements ActionListener {
 					window.setSelected(true);
 				}
 			} catch (Exception ae) {
-				log.error(ae.getMessage(), ae);
+				ApplicationContext.get().errors().report(this, "Switch window", ae);
 			}
 		});
 

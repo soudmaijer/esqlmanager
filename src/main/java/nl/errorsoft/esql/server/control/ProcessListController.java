@@ -10,10 +10,12 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.ConnectionProfile;
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.server.ServerService;
 import nl.errorsoft.esql.server.ui.dialog.ProcessListDialog;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 /**
  * Shows the process list of a server and refreshes it every few seconds. The list runs on a connection of its own, so a long query in the connection window
@@ -67,6 +69,7 @@ public class ProcessListController {
 	public void killProcess(String id) {
 		ServerService service = servers;
 		if (service == null) {
+			Dialogs.warn(dialog, "Kill process", "The process list is not connected to the server. Close it and open it again to kill a process.");
 			return;
 		}
 		Thread.ofVirtual().name("kill-process").start(() -> {
@@ -85,7 +88,10 @@ public class ProcessListController {
 			servers = ApplicationContext.get().connection(connection).servers();
 			long remainingMillis = 0;
 
-			while (running && !connection.getConnection().isClosed()) {
+			while (running) {
+				if (connection.getConnection().isClosed()) {
+					throw new EsqlException("The connection of the process list was closed.");
+				}
 				if (paused) {
 					SwingUtilities.invokeLater(dialog::showPaused);
 				} else {
@@ -104,7 +110,13 @@ public class ProcessListController {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		} catch (Exception e) {
-			SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(dialog, "Load processes", e));
+			servers = null;
+			if (running) {
+				SwingUtilities.invokeLater(() -> {
+					dialog.showDisconnected();
+					ApplicationContext.get().errors().report(dialog, "Load processes", e);
+				});
+			}
 		} finally {
 			servers = null;
 			ApplicationContext.get().release(connection);

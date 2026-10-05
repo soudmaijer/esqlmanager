@@ -14,12 +14,8 @@ import java.util.Set;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.user.ui.dialog.UserManagerDialog;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class UserManagerController {
-	private static final Logger log = LogManager.getLogger(UserManagerController.class);
-
 	private ConnectionWindowController connectionWindowController;
 
 	public UserManagerController(ConnectionWindowController connectionWindowController) {
@@ -37,7 +33,7 @@ public class UserManagerController {
 			mainWindow.showConnectionState();
 			dialog.setVisible(true);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Open user manager", e);
+			ApplicationContext.get().errors().report(mainWindow, "Open user manager", e);
 		}
 	}
 
@@ -91,9 +87,5 @@ public class UserManagerController {
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}
-	}
-
-	private Dialect getDialect() {
-		return connectionWindowController.getConnectionProfile().getServerType().getDialect();
 	}
 }

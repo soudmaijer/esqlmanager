@@ -181,7 +181,8 @@ public class DesktopWindows {
 					try {
 						jif.setIcon(true);
 					} catch (java.beans.PropertyVetoException e) {
-						log.error(e.getMessage(), e);
+						// The frame refused to be iconified (it asks something first); it simply stays open.
+						log.debug("{} was not minimized: {}", jif.getTitle(), e.getMessage());
 					}
 				}
 			}
