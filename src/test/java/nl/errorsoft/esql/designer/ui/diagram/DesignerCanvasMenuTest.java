@@ -21,14 +21,14 @@ class DesignerCanvasMenuTest {
 
 	@Test
 	void emptyCanvasOffersOnlyAddingAndTheModel() {
-		assertEquals(List.of("Add Database", "Add Table", "Add Note", "-", "Show Grid", "-", "Model Properties..."),
+		assertEquals(List.of("Add database", "Add table", "Add note", "-", "Show grid", "-", "Model properties..."),
 			texts(viewer.canvasMenu(new Point(10, 10))));
 	}
 
 	@Test
 	void canvasWithTablesCanBeSelectedAndArranged() {
 		viewer.getModel().createTableObject("orders");
-		assertEquals(List.of("Add Database", "Add Table", "Add Note", "-", "Select All", "Arrange Automatically", "Show Grid", "-", "Model Properties..."),
+		assertEquals(List.of("Add database", "Add table", "Add note", "-", "Select all", "Arrange automatically", "Show grid", "-", "Model properties..."),
 			texts(viewer.canvasMenu(new Point(10, 10))));
 	}
 
@@ -36,19 +36,19 @@ class DesignerCanvasMenuTest {
 	void tableMenuLinksOnlyToDatabasesItIsNotLinkedTo() {
 		Model model = viewer.getModel();
 		TableObject table = model.createTableObject("orders");
-		assertEquals(List.of("Properties...", "Add Foreign Key...", "Add Note", "-", "Delete"), texts(viewer.tableMenu(table)));
+		assertEquals(List.of("Properties...", "Add foreign key...", "Add note", "-", "Delete"), texts(viewer.tableMenu(table)));
 
 		DatabaseObject shop = model.createDatabaseObject("shop");
-		assertEquals(List.of("Properties...", "Add Foreign Key...", "Link to Database", "Add Note", "-", "Delete"), texts(viewer.tableMenu(table)));
+		assertEquals(List.of("Properties...", "Add foreign key...", "Link to database", "Add note", "-", "Delete"), texts(viewer.tableMenu(table)));
 
 		model.addReference(shop, table);
-		assertEquals(List.of("Properties...", "Add Foreign Key...", "Add Note", "Remove Link", "-", "Delete"), texts(viewer.tableMenu(table)));
+		assertEquals(List.of("Properties...", "Add foreign key...", "Add note", "Remove link", "-", "Delete"), texts(viewer.tableMenu(table)));
 	}
 
 	@Test
 	void databaseAndNoteMenus() {
 		Model model = viewer.getModel();
-		assertEquals(List.of("Properties...", "Add Table to This Database", "Add Note", "-", "Delete"),
+		assertEquals(List.of("Properties...", "Add table to this database", "Add note", "-", "Delete"),
 			texts(viewer.databaseMenu(model.createDatabaseObject("shop"))));
 		assertEquals(List.of("Edit", "-", "Delete"), texts(viewer.noteMenu(model.createCommentObject("remember"))));
 	}

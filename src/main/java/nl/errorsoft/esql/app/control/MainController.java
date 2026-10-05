@@ -117,17 +117,8 @@ public class MainController {
 	}
 
 	public void openDesigner() {
-		try {
-			if (!mainWindow.getConnectionWindow().getController().getDatabaseConnection().getConnectionProfile().getServerType().getDialect()
-				.supports(Dialect.Feature.DESIGNER)) {
-				Dialogs.info(mainWindow, "Designer", "The designer is only available for MySQL.");
-				return;
-			}
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Designer", e);
-		}
-
-		if (mainWindow.getConnectionWindowCount() > 0) {
+		if (mainWindow.getConnectionWindowCount() > 0
+			&& mainWindow.getConnectionWindow().getController().requireFeature(Dialect.Feature.DESIGNER, "The designer")) {
 			new DesignerWindow(mainWindow, mainWindow.getConnectionWindow());
 		}
 	}

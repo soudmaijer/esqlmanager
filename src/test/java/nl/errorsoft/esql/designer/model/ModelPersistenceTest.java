@@ -34,7 +34,7 @@ class ModelPersistenceTest {
 		TableObject table = model.createTableObject("order<lines>");
 		table.setComment(HOSTILE);
 		table.setDescription(HOSTILE);
-		DesignerColumn field = new DesignerColumn("id&key", new DataType("int", false, false, false, false, false, false, false, false), "11", HOSTILE,
+		DesignerColumn field = new DesignerColumn("id&key", DataType.named("int"), "11", HOSTILE,
 			HOSTILE);
 		field.primary = true;
 		field.notnull = true;
@@ -151,7 +151,7 @@ class ModelPersistenceTest {
 	private static TableObject table(Model model, String name, String... fields) {
 		TableObject table = model.createTableObject(name);
 		for (String field : fields) {
-			table.addField(new DesignerColumn(field, new DataType("int", false, false, false, false, false, false, false, false), "", "", ""));
+			table.addField(new DesignerColumn(field, DataType.named("int"), "", "", ""));
 		}
 		return table;
 	}

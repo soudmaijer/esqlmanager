@@ -42,13 +42,9 @@ public class TableService {
 		return repository.exists(schema.getDatabase(), schema, name);
 	}
 
-	/** Creates the table in the current schema of the database. */
-	public void createTable(Database database, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
-		repository.create(database, null, name, columns, type, comment);
-	}
-
-	public void createTable(Schema schema, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
-		repository.create(schema.getDatabase(), schema, name, columns, type, comment);
+	/** Creates the table, in the current schema of the database when the definition names no schema. */
+	public void createTable(TableDefinition table) throws Exception {
+		repository.create(table);
 	}
 
 	public void dropTable(Table table) throws Exception {
@@ -110,9 +106,9 @@ public class TableService {
 		return repository.modifyStatements(table, name, type, comment);
 	}
 
-	/** The statements {@link #createTable} would run, for a preview; {@code schema} is null for the current schema. */
-	public List<String> createStatements(Schema schema, String name, List<CreateColumn> columns, String type, String comment) {
-		return repository.createStatements(schema, name, columns, type, comment);
+	/** The statements {@link #createTable} would run, for a preview. */
+	public List<String> createStatements(TableDefinition table) {
+		return repository.createStatements(table);
 	}
 
 	/** Applies the parts that changed; a null type means the database has no table types. */
@@ -144,24 +140,8 @@ public class TableService {
 
 	// Columns
 
-	public void addColumn(Table table, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned,
-		boolean nullable) throws Exception {
-		CreateColumn column = newColumn(name, length, defaultValue, type, auto, unsigned, nullable);
-		column.primary = primary;
-
-		addColumn(table, column);
-	}
-
 	public void addColumn(Table table, CreateColumn column) throws Exception {
 		repository.addColumn(table, column);
-	}
-
-	public void editColumn(TableColumn old, String name, String length, String defaultValue, DataType type, boolean primary, boolean auto, boolean unsigned,
-		boolean nullable) throws Exception {
-		CreateColumn column = newColumn(name, length, defaultValue, type, auto, unsigned, nullable);
-		column.primary = primary;
-
-		editColumn(old, column);
 	}
 
 	/** Changes the column to the given definition; {@code column.primary} adds or drops the primary key. */
@@ -186,8 +166,8 @@ public class TableService {
 		column.type = type;
 		column.length = length;
 		column.defaultval = defaultValue;
-		column.unsigned = type.unsigned && unsigned;
-		column.notnull = type.notnull && !nullable;
+		column.unsigned = type.allows(DataType.Option.UNSIGNED) && unsigned;
+		column.notnull = type.allows(DataType.Option.NOT_NULL) && !nullable;
 		column.autoincrement = auto;
 		return column;
 	}

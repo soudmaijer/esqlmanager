@@ -136,9 +136,9 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		boolean hasBinary = false;
 		boolean hasZerofill = false;
 		for (DataType type : serverType.getDataTypes()) {
-			hasUnsigned |= type.unsigned;
-			hasBinary |= type.binary;
-			hasZerofill |= type.zerofill;
+			hasUnsigned |= type.allows(DataType.Option.UNSIGNED);
+			hasBinary |= type.allows(DataType.Option.BINARY);
+			hasZerofill |= type.allows(DataType.Option.ZEROFILL);
 		}
 		unsigned.setVisible(hasUnsigned);
 		binary.setVisible(hasBinary);
@@ -391,14 +391,14 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		}
 		selField.setType(type);
 		loading = true;
-		clearUnless(primary, type.primary, value -> selField.primary = value);
-		clearUnless(index, type.index, value -> selField.index = value);
-		clearUnless(unique, type.unique, value -> selField.unique = value);
-		clearUnless(binary, type.binary, value -> selField.binary = value);
-		clearUnless(notnull, type.notnull, value -> selField.notnull = value);
-		clearUnless(unsigned, type.unsigned, value -> selField.unsigned = value);
-		clearUnless(autoincrement, type.autoincrement, value -> selField.autoincrement = value);
-		clearUnless(zerofill, type.zerofill, value -> selField.zerofill = value);
+		clearUnless(primary, type.allows(DataType.Option.PRIMARY), value -> selField.primary = value);
+		clearUnless(index, type.allows(DataType.Option.INDEX), value -> selField.index = value);
+		clearUnless(unique, type.allows(DataType.Option.UNIQUE), value -> selField.unique = value);
+		clearUnless(binary, type.allows(DataType.Option.BINARY), value -> selField.binary = value);
+		clearUnless(notnull, type.allows(DataType.Option.NOT_NULL), value -> selField.notnull = value);
+		clearUnless(unsigned, type.allows(DataType.Option.UNSIGNED), value -> selField.unsigned = value);
+		clearUnless(autoincrement, type.allows(DataType.Option.AUTO_INCREMENT), value -> selField.autoincrement = value);
+		clearUnless(zerofill, type.allows(DataType.Option.ZEROFILL), value -> selField.zerofill = value);
 		loading = false;
 		enableOptionsFor(type);
 		markLengthProblem();
@@ -416,14 +416,14 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		if (type == null) {
 			return;
 		}
-		primary.setEnabled(type.primary);
-		binary.setEnabled(type.binary);
-		unsigned.setEnabled(type.unsigned);
-		zerofill.setEnabled(type.zerofill);
-		index.setEnabled(type.index);
-		unique.setEnabled(type.unique);
-		notnull.setEnabled(type.notnull);
-		autoincrement.setEnabled(type.autoincrement);
+		primary.setEnabled(type.allows(DataType.Option.PRIMARY));
+		binary.setEnabled(type.allows(DataType.Option.BINARY));
+		unsigned.setEnabled(type.allows(DataType.Option.UNSIGNED));
+		zerofill.setEnabled(type.allows(DataType.Option.ZEROFILL));
+		index.setEnabled(type.allows(DataType.Option.INDEX));
+		unique.setEnabled(type.allows(DataType.Option.UNIQUE));
+		notnull.setEnabled(type.allows(DataType.Option.NOT_NULL));
+		autoincrement.setEnabled(type.allows(DataType.Option.AUTO_INCREMENT));
 	}
 
 	private static void setEnabledDeep(Container container, boolean enabled) {

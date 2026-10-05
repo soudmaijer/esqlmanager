@@ -56,7 +56,9 @@ class DesignerForeignKeyTest {
 	private TableObject table(String name, String... columns) {
 		TableObject table = model.createTableObject(name);
 		for (int i = 0; i < columns.length; i += 2) {
-			DesignerColumn field = new DesignerColumn(columns[i], new DataType(columns[i + 1], true, true, true, false, true, true, true, false), "", "", "");
+			DesignerColumn field = new DesignerColumn(columns[i], new DataType(columns[i + 1], java.util.EnumSet.of(DataType.Option.PRIMARY,
+				DataType.Option.INDEX, DataType.Option.UNIQUE, DataType.Option.NOT_NULL, DataType.Option.UNSIGNED, DataType.Option.AUTO_INCREMENT)), "", "",
+				"");
 			field.primary = i == 0;
 			table.addField(field);
 		}

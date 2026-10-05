@@ -7,6 +7,7 @@ import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.TableDefinition;
 import nl.errorsoft.esql.table.control.CreateTableController;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.component.EditorTab;
@@ -372,9 +373,8 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			sqlPreview.setText("-- Add a column to see the statements.");
 			return;
 		}
-		List<String> statements = createTableController.previewStatements(table, Objects.toString(dbs.getSelectedItem(), ""),
-			name.isEmpty() ? "table_name" : name,
-			comment.getText(), selectedTableType(), created);
+		List<String> statements = createTableController.previewStatements(table,
+			definition(name.isEmpty() ? "table_name" : name, created));
 		sqlPreview.setText(statements.isEmpty()
 			? "-- No changes."
 			: statements.stream().map(statement -> statement.startsWith("--") ? statement : statement + ";")
@@ -408,10 +408,16 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			for (Object column : columns) {
 				cols.add((CreateColumn) column);
 			}
-			createTableController.createTable(tablename.getText(), dbs.getSelectedItem().toString(), comment.getText(), selectedTableType(), this, cols);
+			createTableController.createTable(definition(tablename.getText(), cols), this);
 		} else {
 			createTableController.modifyTable(this, table, tablename.getText(), selectedTableType(), comment.getText());
 		}
+	}
+
+	/** The table as the editor holds it, in the chosen database. */
+	private TableDefinition definition(String name, List<CreateColumn> columns) {
+		Database database = dbs.getSelectedItem() instanceof Database chosen ? chosen : new Database("");
+		return new TableDefinition(database, null, name, selectedTableType(), comment.getText(), columns);
 	}
 
 	private void addColumn() {
@@ -503,11 +509,11 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			return;
 		}
 		column.type = type;
-		column.primary &= type.primary;
-		column.notnull &= type.notnull;
-		column.unsigned &= type.unsigned;
-		column.autoincrement &= type.autoincrement;
-		column.zerofill &= type.zerofill;
+		column.primary &= type.allows(DataType.Option.PRIMARY);
+		column.notnull &= type.allows(DataType.Option.NOT_NULL);
+		column.unsigned &= type.allows(DataType.Option.UNSIGNED);
+		column.autoincrement &= type.allows(DataType.Option.AUTO_INCREMENT);
+		column.zerofill &= type.allows(DataType.Option.ZEROFILL);
 	}
 
 	/** Fills the details from the selected column. A new column can be edited, an existing one is only shown. */
@@ -569,15 +575,15 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		if (type == null) {
 			return;
 		}
-		primary.setEnabled(type.primary);
-		notnull.setEnabled(type.notnull);
-		autoincrement.setEnabled(type.autoincrement);
-		unsigned.setEnabled(type.unsigned);
+		primary.setEnabled(type.allows(DataType.Option.PRIMARY));
+		notnull.setEnabled(type.allows(DataType.Option.NOT_NULL));
+		autoincrement.setEnabled(type.allows(DataType.Option.AUTO_INCREMENT));
+		unsigned.setEnabled(type.allows(DataType.Option.UNSIGNED));
 		// Fixed in the box when the type does not allow it
-		primary.setSelected(primary.isSelected() && type.primary);
-		notnull.setSelected(notnull.isSelected() && type.notnull);
-		autoincrement.setSelected(autoincrement.isSelected() && type.autoincrement);
-		unsigned.setSelected(unsigned.isSelected() && type.unsigned);
+		primary.setSelected(primary.isSelected() && type.allows(DataType.Option.PRIMARY));
+		notnull.setSelected(notnull.isSelected() && type.allows(DataType.Option.NOT_NULL));
+		autoincrement.setSelected(autoincrement.isSelected() && type.allows(DataType.Option.AUTO_INCREMENT));
+		unsigned.setSelected(unsigned.isSelected() && type.allows(DataType.Option.UNSIGNED));
 	}
 
 	/** The group says which column its fields belong to. */
@@ -623,9 +629,9 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			}
 			DataType type = created.type;
 			return switch (column) {
-				case NOT_NULL -> type != null && type.notnull;
-				case PRIMARY -> type != null && type.primary;
-				case AUTO_INCREMENT -> type != null && type.autoincrement;
+				case NOT_NULL -> type != null && type.allows(DataType.Option.NOT_NULL);
+				case PRIMARY -> type != null && type.allows(DataType.Option.PRIMARY);
+				case AUTO_INCREMENT -> type != null && type.allows(DataType.Option.AUTO_INCREMENT);
 				default -> true;
 			};
 		}

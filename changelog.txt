@@ -2,6 +2,19 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Error handling, wording and small fixes
+
+- Open designer on a server without a designer only says so and no longer opens the designer after an error; the
+  message names the server type instead of always MySQL.
+- Saving the driver properties closes the dialog instead of showing a "saved" popup.
+- Dropping a database asks with the server's own word for it.
+- The table data grid no longer adds a header listener on every page; the undo of the cell editor uses the menu key
+  (Cmd on macOS), keeps one history per shown cell and no longer fails on read-only cells.
+- Designer: File menu items have their own mnemonics (Open, Save, Save as, the exports and Close), Edit > Delete
+  selected and the View items have one too. Menu and context menu items are in sentence case, a new note attached
+  to an object reads "New comment" instead of "New Table", and the properties button has a proper tooltip.
+- An image that cannot be loaded is noted in the log.
+
 05-10-2026: Slow work off the event thread
 
 - The query tab runs its statements in the background: the window stays responsive, the run buttons are disabled and

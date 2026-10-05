@@ -128,9 +128,7 @@ public class ServerType {
 
 				for (int i = 0; i < types.size(); i++) {
 					Element type = (Element) types.get(i);
-					this.dt[i] = new DataType(type.getChildText("name"), flag(type, "primary"), flag(type, "index"), flag(type, "unique"),
-						flag(type, "binary"),
-						flag(type, "notnull"), flag(type, "unsigned"), flag(type, "autoincrement"), flag(type, "zerofill"));
+					this.dt[i] = new DataType(type.getChildText("name"), options(type));
 				}
 				return this.dt;
 			}
@@ -139,6 +137,20 @@ public class ServerType {
 			log.error(e.getMessage(), e);
 		}
 		return new DataType[0];
+	}
+
+	/** The options a type allows, each a child element set to true (primary, index, unique, binary, notnull, unsigned, autoincrement, zerofill). */
+	private java.util.Set<DataType.Option> options(Element type) {
+		java.util.Set<DataType.Option> options = java.util.EnumSet.noneOf(DataType.Option.class);
+		java.util.Map<String, DataType.Option> elements = java.util.Map.of("primary", DataType.Option.PRIMARY, "index", DataType.Option.INDEX, "unique",
+			DataType.Option.UNIQUE, "binary", DataType.Option.BINARY, "notnull", DataType.Option.NOT_NULL, "unsigned", DataType.Option.UNSIGNED,
+			"autoincrement", DataType.Option.AUTO_INCREMENT, "zerofill", DataType.Option.ZEROFILL);
+		elements.forEach((element, option) -> {
+			if (flag(type, element)) {
+				options.add(option);
+			}
+		});
+		return options;
 	}
 
 	private boolean flag(Element type, String name) {

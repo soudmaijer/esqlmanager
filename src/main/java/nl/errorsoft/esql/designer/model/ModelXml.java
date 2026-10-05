@@ -193,7 +193,7 @@ final class ModelXml {
 			place(t, tb);
 
 			for (Element fd : children(tb, "fields", "field")) {
-				DataType type = new DataType(text(fd, "type", ""), false, false, false, false, false, false, false, false);
+				DataType type = DataType.named(text(fd, "type", ""));
 				DesignerColumn f = new DesignerColumn(text(fd, "name", ""), type, text(fd, "length", ""), text(fd, "default", ""), text(fd, "comment", ""));
 				f.primary = flag(fd, "primary");
 				f.autoincrement = flag(fd, "autoincrement");

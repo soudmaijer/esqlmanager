@@ -7,6 +7,7 @@ import javax.swing.UIManager;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class ImageLoader {
+	private static final org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ImageLoader.class);
 	private String imgpath;
 	private Image[] images = new Image[0];
 	private String[] names = new String[0];
@@ -23,10 +24,16 @@ public class ImageLoader {
 		m.addImage(tmp, 1);
 		try {
 			m.waitForAll();
+			if (m.isErrorAny()) {
+				log.warn("Image {} ({}) could not be loaded", name, img);
+			}
 			this.expand();
 			images[0] = tmp;
 			names[0] = name;
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
+			// Interrupted while waiting for the image, which then stays unregistered; keep the interrupt for the caller.
+			Thread.currentThread().interrupt();
+			log.warn("Loading image {} ({}) was interrupted", name, img);
 		}
 	}
 

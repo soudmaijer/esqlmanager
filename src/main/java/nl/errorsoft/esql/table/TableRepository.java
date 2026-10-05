@@ -130,15 +130,15 @@ public class TableRepository extends AbstractRepository {
 		}
 	}
 
-	/** @param schema the schema to create the table in, null for the current one. */
-	public void create(Database database, Schema schema, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
-		useDatabase(database.getName());
-		executeAll(createStatements(schema, name, columns, type, comment));
+	public void create(TableDefinition table) throws Exception {
+		useDatabase(table.database().getName());
+		executeAll(createStatements(table));
 	}
 
 	/** The statements {@link #create} runs, without running them. */
-	public List<String> createStatements(Schema schema, String name, List<CreateColumn> columns, String type, String comment) {
-		return dialect().createTableSql(new TableName(schema == null ? null : schema.getName(), name), columns, type, comment);
+	public List<String> createStatements(TableDefinition table) {
+		return dialect().createTableSql(new TableName(table.schema() == null ? null : table.schema().getName(), table.name()), table.columns(), table.type(),
+			table.comment());
 	}
 
 	/** The statements that give the table the name, type and comment, only for the parts that differ; a null type means the server has none. */

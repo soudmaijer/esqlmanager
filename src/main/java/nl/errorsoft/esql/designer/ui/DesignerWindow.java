@@ -38,22 +38,22 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 	private static final Logger log = LogManager.getLogger(DesignerWindow.class);
 
 	private JMenu file = new JMenu("File");
-	private JMenuItem file_new = new JMenuItem("New Model...");
-	private JMenuItem file_opn = new JMenuItem("Open Model...");
-	private JMenuItem file_sav = new JMenuItem("Save Model");
-	private JMenuItem file_sva = new JMenuItem("Save Model As...");
+	private JMenuItem file_new = new JMenuItem("New model...");
+	private JMenuItem file_opn = new JMenuItem("Open model...");
+	private JMenuItem file_sav = new JMenuItem("Save model");
+	private JMenuItem file_sva = new JMenuItem("Save model as...");
 	private JMenuItem file_ext = new JMenuItem("Close");
 	private JMenuItem file_plantuml = new JMenuItem("Export as PlantUML...");
 	private JMenuItem file_mermaid = new JMenuItem("Export as Mermaid...");
 
 	private JMenu edit = new JMenu("Edit");
-	private JMenuItem edit_del = new JMenuItem("Delete Selected");
-	private JMenuItem edit_sla = new JMenuItem("Select All");
-	private JMenuItem edit_dsa = new JMenuItem("Deselect All");
+	private JMenuItem edit_del = new JMenuItem("Delete selected");
+	private JMenuItem edit_sla = new JMenuItem("Select all");
+	private JMenuItem edit_dsa = new JMenuItem("Deselect all");
 
 	private JMenu view = new JMenu("View");
-	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show Grid", true);
-	private JMenuItem view_arrange = new JMenuItem("Arrange Automatically");
+	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show grid", true);
+	private JMenuItem view_arrange = new JMenuItem("Arrange automatically");
 
 	private ModelBrowserPanel modelBrowser;
 	private DesignerCanvas canvas;
@@ -108,15 +108,19 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 		file.addSeparator();
 		file.add(file_ext);
 
+		int menuKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		file.setMnemonic('F');
-		file_new.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+		file_new.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, menuKey));
 		file_new.setMnemonic('N');
-		file_opn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
-		file_new.setMnemonic('O');
-		file_sav.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
-		file_new.setMnemonic('S');
-		file_new.setMnemonic('A');
-		file_ext.setMnemonic('X');
+		file_opn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, menuKey));
+		file_opn.setMnemonic('O');
+		file_sav.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuKey));
+		file_sav.setMnemonic('S');
+		file_sva.setMnemonic('A');
+		file_sva.setDisplayedMnemonicIndex(file_sva.getText().indexOf(" as") + 1);
+		file_plantuml.setMnemonic('P');
+		file_mermaid.setMnemonic('M');
+		file_ext.setMnemonic('C');
 
 		edit.add(edit_sla);
 		edit.add(edit_dsa);
@@ -124,10 +128,11 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 		edit.add(edit_del);
 
 		edit.setMnemonic('E');
-		edit_sla.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.CTRL_MASK));
+		edit_sla.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, menuKey));
 		edit_sla.setMnemonic('S');
-		edit_dsa.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK));
+		edit_dsa.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, menuKey));
 		edit_dsa.setMnemonic('D');
+		edit_del.setMnemonic('L');
 		edit_del.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
 		file_opn.addMouseListener(this);
@@ -144,6 +149,8 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 
 		view.add(view_grid);
 		view.setMnemonic('V');
+		view_grid.setMnemonic('G');
+		view_arrange.setMnemonic('A');
 		view_grid.addActionListener(e -> canvas.setShowGrid(view_grid.isSelected()));
 		// The context menu of the canvas can switch the grid too.
 		canvas.addPropertyChangeListener("showGrid", e -> view_grid.setSelected(canvas.showsGrid()));

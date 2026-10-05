@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.connection.ui.dialog;
 
 import nl.errorsoft.esql.connection.DatabaseDriver;
+import nl.errorsoft.esql.connection.DriverProperties;
 import nl.errorsoft.esql.connection.control.DatabaseDriverController;
 import nl.errorsoft.esql.ui.dialog.FormDialog;
 import nl.errorsoft.esql.ui.util.Validation;
@@ -90,7 +91,10 @@ public class DriverDialog extends FormDialog {
 			return;
 		}
 		DatabaseDriver driver = (DatabaseDriver) type.getSelectedItem();
-		driverController.saveProperties(driver.getId(), driver.getDriverName(), url.getText().trim(), className.getText().trim(), identifierOpen.getText(),
+		DriverProperties properties = new DriverProperties(url.getText().trim(), className.getText().trim(), identifierOpen.getText(),
 			identifierClose.getText(), stringOpen.getText(), stringClose.getText());
+		if (driverController.saveProperties(driver, properties)) {
+			dispose();
+		}
 	}
 }

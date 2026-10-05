@@ -62,7 +62,7 @@ class ColumnDefinitionSafetyTest {
 
 	private static CreateColumn column(String type, String length) {
 		CreateColumn column = new CreateColumn("c");
-		column.type = new DataType(type, false, false, false, false, false, false, false, false);
+		column.type = DataType.named(type);
 		column.length = length;
 		return column;
 	}

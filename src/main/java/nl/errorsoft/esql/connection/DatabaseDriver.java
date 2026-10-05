@@ -83,20 +83,18 @@ public class DatabaseDriver {
 	 * @author: 		S.Oudmaijer.
 	 * @description:	Saves the properties of one specific database driver.
 	 */
-	public void saveProperties(DatabaseDriver[] drivers, int id, String name, String url, String className, String filePath, String fieldOpen,
-		String fieldClose, String dataOpen, String dataClose) throws Exception {
+	public void saveProperties(DatabaseDriver[] drivers, int id, DriverProperties properties) throws Exception {
 		org.jdom.Element root = new org.jdom.Element("drivers");
 		driverData.setRootElement(root);
 
 		for (int i = 0; i < drivers.length; i++) {
 			if (drivers[i].getId() == id) {
-				drivers[i].setDriverURL(url);
-				drivers[i].setDriverClassName(className);
-				//drivers[i].setDriverFilePath( filePath );
-				drivers[i].setFieldOpenChar(fieldOpen);
-				drivers[i].setFieldCloseChar(fieldClose);
-				drivers[i].setDataOpenChar(dataOpen);
-				drivers[i].setDataCloseChar(dataClose);
+				drivers[i].setDriverURL(properties.url());
+				drivers[i].setDriverClassName(properties.className());
+				drivers[i].setFieldOpenChar(properties.identifierOpen());
+				drivers[i].setFieldCloseChar(properties.identifierClose());
+				drivers[i].setDataOpenChar(properties.stringOpen());
+				drivers[i].setDataCloseChar(properties.stringClose());
 			}
 
 			root.addContent(new org.jdom.Element("driver")
@@ -198,17 +196,6 @@ public class DatabaseDriver {
 
 	public void setId(int id) {
 		this.id = id;
-	}
-
-	public static void main(String args[]) throws Exception {
-		DatabaseDriver dp = new DatabaseDriver();
-		DatabaseDriver[] drivers = dp.getDatabaseDrivers();
-
-		for (int i = 0; i < drivers.length; i++) {
-			log.info(drivers[i].getDriverName());
-		}
-
-		dp.saveProperties(drivers, 1, "MySQL", "jdbc:mysql://localhost", "com.mysql.cj.jdbc.Driver", "c:\\", "`", "`", "'", "'");
 	}
 
 	public String toString() {

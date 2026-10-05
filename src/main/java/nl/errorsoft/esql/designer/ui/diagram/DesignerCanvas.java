@@ -68,14 +68,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private ModelObject place = null;
 
 	private JMenu model_menu = new JMenu("Model");
-	private JMenuItem create_database = new JMenuItem("Add New Database");
-	private JMenuItem create_table = new JMenuItem("Add New Table");
-	private JMenuItem create_comment = new JMenuItem("Add New Comment");
-	private JMenuItem show_properties = new JMenuItem("Show Object Properties");
-	private JMenuItem show_model_properties = new JMenuItem("Show Model Properties");
+	private JMenuItem create_database = new JMenuItem("Add new database");
+	private JMenuItem create_table = new JMenuItem("Add new table");
+	private JMenuItem create_comment = new JMenuItem("Add new comment");
+	private JMenuItem show_properties = new JMenuItem("Show object properties");
+	private JMenuItem show_model_properties = new JMenuItem("Show model properties");
 
-	private JMenuItem attach_table = new JMenuItem("Attach Table");
-	private JMenuItem attach_comment = new JMenuItem("Attach Comment");
+	private JMenuItem attach_table = new JMenuItem("Attach table");
+	private JMenuItem attach_comment = new JMenuItem("Attach comment");
 
 	private JToolBar toolbar = new JToolBar();
 	private JButton btn_add_database = new JButton();
@@ -180,7 +180,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		btn_export.addActionListener(this);
 
 		btn_export.setToolTipText("Generate model in database");
-		btn_properties.setToolTipText("selected object/model properties");
+		btn_properties.setToolTipText("Properties of the selected object or the model");
 
 		toolbar.add(btn_new);
 		toolbar.add(btn_save);
@@ -676,7 +676,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				} else if (tmp == attach_comment && attach_comment.isEnabled()) {
 					List<ModelObject> v = this.getModel().getSelectedObjects();
 					if (v.size() == 1 && v.get(0) instanceof ModelObject) {
-						this.createCommentObject("New Table", (ModelObject) v.get(0));
+						this.createCommentObject("New comment", (ModelObject) v.get(0));
 					}
 				}
 			}
@@ -770,7 +770,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		} else if (e.getSource() == create_table || e.getSource() == btn_add_table) {
 			this.createTableObject("New Table");
 		} else if (e.getSource() == create_comment || e.getSource() == btn_add_comment) {
-			this.createCommentObject("New Comment");
+			this.createCommentObject("New comment");
 		} else if (e.getSource() == btn_open) {
 			canvasController.openModel();
 		} else if (e.getSource() == btn_save) {
@@ -832,34 +832,34 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	JPopupMenu canvasMenu(Point point) {
 		JPopupMenu menu = new JPopupMenu();
-		menu.add(item("Add Database", "add_database", () -> placeAt(model.createDatabaseObject("New Database"), point)));
-		menu.add(item("Add Table", "add_table", () -> placeAt(model.createTableObject("New Table"), point)));
-		menu.add(item("Add Note", "add_comment", () -> placeAt(model.createCommentObject("New Comment"), point)));
+		menu.add(item("Add database", "add_database", () -> placeAt(model.createDatabaseObject("New Database"), point)));
+		menu.add(item("Add table", "add_table", () -> placeAt(model.createTableObject("New Table"), point)));
+		menu.add(item("Add note", "add_comment", () -> placeAt(model.createCommentObject("New comment"), point)));
 		menu.addSeparator();
 		if (!model.getObjects().isEmpty()) {
-			menu.add(item("Select All", null, () -> {
+			menu.add(item("Select all", null, () -> {
 				model.selectAll();
 				repaint();
 			}));
 		}
 		if (model.getObjects().stream().anyMatch(object -> object instanceof TableObject)) {
-			menu.add(item("Arrange Automatically", null, this::arrangeAutomatically));
+			menu.add(item("Arrange automatically", null, this::arrangeAutomatically));
 		}
-		JCheckBoxMenuItem grid = new JCheckBoxMenuItem("Show Grid", showGrid);
+		JCheckBoxMenuItem grid = new JCheckBoxMenuItem("Show grid", showGrid);
 		grid.addActionListener(e -> setShowGrid(grid.isSelected()));
 		menu.add(grid);
 		menu.addSeparator();
-		menu.add(item("Model Properties...", "des_properties", this::showModelProperties));
+		menu.add(item("Model properties...", "des_properties", this::showModelProperties));
 		return menu;
 	}
 
 	JPopupMenu tableMenu(TableObject table) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Properties...", "des_properties", this::showProperties));
-		menu.add(item("Add Foreign Key...", "linkimg", () -> addForeignKey(table, firstColumnOf(table), null, null)));
+		menu.add(item("Add foreign key...", "linkimg", () -> addForeignKey(table, firstColumnOf(table), null, null)));
 
 		List<ModelObject> linked = linkedObjects(table);
-		JMenu link = new JMenu("Link to Database");
+		JMenu link = new JMenu("Link to database");
 		for (Object object : model.getObjects()) {
 			if (object instanceof DatabaseObject database && !linked.contains(database)) {
 				link.add(item(database.getName(), null, () -> {
@@ -878,7 +878,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	JPopupMenu databaseMenu(DatabaseObject database) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Properties...", "des_properties", this::showProperties));
-		menu.add(item("Add Table to This Database", "add_table", () -> {
+		menu.add(item("Add table to this database", "add_table", () -> {
 			TableObject table = model.createTableObject("New Table");
 			model.addReference(database, table);
 			Rectangle card = database.cardBounds();
@@ -897,23 +897,23 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	JPopupMenu connectorMenu(DesignerForeignKey key) {
 		JPopupMenu menu = new JPopupMenu();
-		menu.add(item("Edit Foreign Key...", "des_properties", () -> editForeignKey(key)));
-		menu.add(item("Remove Foreign Key", null, () -> removeForeignKey(key)));
+		menu.add(item("Edit foreign key...", "des_properties", () -> editForeignKey(key)));
+		menu.add(item("Remove foreign key", null, () -> removeForeignKey(key)));
 		return menu;
 	}
 
 	/** What every card has: a note attached to it, removing its links (when it has any), and delete. */
 	private void addObjectItems(JPopupMenu menu, ModelObject object, List<ModelObject> linked) {
 		if (!(object instanceof CommentObject)) {
-			menu.add(item("Add Note", "add_comment", () -> {
-				CommentObject note = model.createCommentObject("New Comment");
+			menu.add(item("Add note", "add_comment", () -> {
+				CommentObject note = model.createCommentObject("New comment");
 				model.addReference(note, object);
 				Rectangle card = object.cardBounds();
 				placeAt(note, new Point(card.x + card.width + 40, card.y));
 			}));
 		}
 		if (!linked.isEmpty()) {
-			JMenu unlink = new JMenu("Remove Link");
+			JMenu unlink = new JMenu("Remove link");
 			for (ModelObject other : linked) {
 				String name = other instanceof CommentObject ? "Note" : other.getName();
 				unlink.add(item(name, null, () -> {
@@ -926,7 +926,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		}
 		menu.addSeparator();
 		int count = model.getSelectedObjects().size();
-		menu.add(item(count > 1 ? "Delete " + count + " Objects" : "Delete", null, this::removeSelectedObjects));
+		menu.add(item(count > 1 ? "Delete " + count + " objects" : "Delete", null, this::removeSelectedObjects));
 	}
 
 	/** The cards an object is linked to with a database or note link, in both directions. */
@@ -1033,7 +1033,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			if (e.getKeyCode() == e.VK_F5) {
 				List<ModelObject> v = this.getModel().getSelectedObjects();
 				if (v.size() == 1 && v.get(0) instanceof ModelObject) {
-					this.createCommentObject("New Table", (ModelObject) v.get(0));
+					this.createCommentObject("New comment", (ModelObject) v.get(0));
 				}
 			}
 		}

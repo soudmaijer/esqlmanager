@@ -268,7 +268,7 @@ public class MySqlDialect extends AbstractDialect {
 		type = type.replace(" UNSIGNED", "");
 		column.autoincrement = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
 		column.notnull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
-		column.type = new DataType(type, false, false, false, false, false, false, false, false);
+		column.type = DataType.named(type);
 		column.defaultval = defaultValue == null ? "" : defaultValue;
 
 		if ((type.equals("VARCHAR") || type.equals("CHAR")) && size > 0) {

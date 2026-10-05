@@ -1,12 +1,11 @@
 package nl.errorsoft.esql.connection.control;
 
-import nl.errorsoft.esql.ui.dialog.Dialogs;
-
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.DatabaseDriver;
+import nl.errorsoft.esql.connection.DriverProperties;
 import nl.errorsoft.esql.connection.ui.dialog.DriverDialog;
 
 public class DatabaseDriverController {
@@ -29,12 +28,14 @@ public class DatabaseDriverController {
 		return drivers;
 	}
 
-	public void saveProperties(int id, String name, String url, String className, String fieldOpen, String fieldClose, String dataOpen, String dataClose) {
+	/** Saves the properties of the driver; false when that failed, which is reported. */
+	public boolean saveProperties(DatabaseDriver driver, DriverProperties properties) {
 		try {
-			new DatabaseDriver().saveProperties(drivers, id, name, url, className, "", fieldOpen, fieldClose, dataOpen, dataClose);
-			Dialogs.info(driverDialog, driverDialog.getTitle(), "Driver properties saved.");
+			new DatabaseDriver().saveProperties(drivers, driver.getId(), properties);
+			return true;
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(driverDialog, "Save properties", e);
+			ApplicationContext.get().errors().report(driverDialog, "Save driver properties", e);
+			return false;
 		}
 	}
 }

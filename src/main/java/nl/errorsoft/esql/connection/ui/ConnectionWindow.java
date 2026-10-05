@@ -591,9 +591,10 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 			case OPEN_IN_DESIGNER -> connectionWindowController.openDatabaseInDesigner();
 			case DROP_DATABASE -> {
 				Database database = getDatabase();
-				String name = database != null ? "'" + database.getName() + "'" : "the selected database";
+				String term = dialect().databaseTerm();
+				String name = database != null ? term + " '" + database.getName() + "'" : "the selected " + term;
 
-				if (Dialogs.confirmDestructive(this, "Drop database", "Drop database " + name + " and all its tables? This cannot be undone.", "Drop")) {
+				if (Dialogs.confirmDestructive(this, "Drop " + term, "Drop " + name + " and all its tables? This cannot be undone.", "Drop")) {
 					connectionWindowController.dropDatabase();
 				}
 			}

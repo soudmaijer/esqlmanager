@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.EnumSet;
+import nl.errorsoft.esql.table.DataType.Option;
+import nl.errorsoft.esql.table.TableDefinition;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,9 +64,10 @@ import org.junit.jupiter.api.io.TempDir;
 abstract class DialectContractTest {
 	protected static final String DATABASE = "shop";
 
-	private static final DataType INTEGER = new DataType("integer", true, true, true, false, true, false, true, false);
-	private static final DataType VARCHAR = new DataType("varchar", true, true, true, false, true, false, false, false);
-	private static final DataType BIGINT = new DataType("bigint", true, true, true, false, true, false, false, false);
+	private static final DataType INTEGER = new DataType("integer",
+		EnumSet.of(Option.PRIMARY, Option.INDEX, Option.UNIQUE, Option.NOT_NULL, Option.AUTO_INCREMENT));
+	private static final DataType VARCHAR = new DataType("varchar", EnumSet.of(Option.PRIMARY, Option.INDEX, Option.UNIQUE, Option.NOT_NULL));
+	private static final DataType BIGINT = new DataType("bigint", EnumSet.of(Option.PRIMARY, Option.INDEX, Option.UNIQUE, Option.NOT_NULL));
 
 	private static DatabaseConnection connection;
 
@@ -102,10 +106,10 @@ abstract class DialectContractTest {
 		assertEquals(Arrays.asList("id", "name", "note"), columnNames(table));
 		assertTrue(service().loadIndexes(table)[0].isPrimary() || indexNames(table).contains("PRIMARY"));
 
-		service().addColumn(table, "age", "", "0", INTEGER, false, false, false, true);
+		service().addColumn(table, TableService.newColumn("age", "", "0", INTEGER, false, false, true));
 		assertTrue(columnNames(table).contains("age"));
 
-		service().editColumn(table.getTableColumn("age"), "years", "", "5", BIGINT, false, false, false, false);
+		service().editColumn(table.getTableColumn("age"), TableService.newColumn("years", "", "5", BIGINT, false, false, false));
 		assertTrue(columnNames(table).contains("years"));
 		assertFalse(columnNames(table).contains("age"));
 
@@ -464,7 +468,7 @@ abstract class DialectContractTest {
 		var databases = new ConnectionContext(connection).databases();
 		String name = "before_" + System.nanoTime();
 		Schema schema = databases.createSchema(database, name);
-		service().createTable(schema, "kept", List.of(column("id", INTEGER, "", true)), null, "");
+		service().createTable(new TableDefinition(schema.getDatabase(), schema, "kept", null, "", List.of(column("id", INTEGER, "", true))));
 
 		Schema renamed = databases.renameSchema(schema, name + "_after");
 		assertEquals(name + "_after", renamed.getName());
@@ -522,9 +526,9 @@ abstract class DialectContractTest {
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 
 		// The preview is what Save runs.
-		List<String> preview = service().createStatements(null, name, List.of(id, label), engine, "");
+		List<String> preview = service().createStatements(new TableDefinition(database, null, name, engine, "", List.of(id, label)));
 		assertEquals(dialect.createTableSql(TableName.of(name), List.of(id, label), engine, ""), preview);
-		service().createTable(database, name, List.of(id, label), engine, "");
+		service().createTable(new TableDefinition(database, null, name, engine, "", List.of(id, label)));
 		Table table = table(name);
 		assertEquals("the key, it's unique", service().loadColumns(table)[0].getComment());
 		assertEquals("", service().loadColumns(table)[1].getComment());
@@ -606,7 +610,7 @@ abstract class DialectContractTest {
 		CreateColumn parentId = new CreateColumn("parent_id");
 		parentId.type = INTEGER;
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
-		service().createTable(database, child, Arrays.asList(id, parentId), engine, "");
+		service().createTable(new TableDefinition(database, null, child, engine, "", Arrays.asList(id, parentId)));
 		Table childTable = table(child);
 
 		service().addForeignKey(childTable, new TableForeignKey("fk_child_parent", List.of("parent_id"), parent, List.of("id"), "cascade", "NO ACTION"));
@@ -737,7 +741,8 @@ abstract class DialectContractTest {
 
 		// A table with the same name as one in the current schema, so only a qualified statement reaches it.
 		createTable("orders", "");
-		service().createTable(schema, "orders", List.of(column("id", INTEGER, "", true), column("note", VARCHAR, "20", false)), null, "");
+		service().createTable(new TableDefinition(schema.getDatabase(), schema, "orders", null, "",
+			List.of(column("id", INTEGER, "", true), column("note", VARCHAR, "20", false))));
 		assertTrue(service().exists(schema, "orders"));
 		List<Table> tables = databases.getTables(schema);
 		assertEquals(List.of("orders"), tables.stream().map(Table::getName).toList());
@@ -768,7 +773,7 @@ abstract class DialectContractTest {
 		runSynchronously(imported::setListener, imported);
 		assertEquals(1, service().loadPage(orders, 0, 10).length);
 
-		service().addColumn(orders, "extra", "", "", INTEGER, false, false, false, true);
+		service().addColumn(orders, TableService.newColumn("extra", "", "", INTEGER, false, false, true));
 		TableIndex index = new TableIndex(orders);
 		index.setName("orders_note_idx");
 		service().addIndex(orders, index, new TableColumn[]{orders.getTableColumn("note")}, "INDEX");
@@ -862,7 +867,8 @@ abstract class DialectContractTest {
 		Database other = databases.createDatabase("multi_" + System.nanoTime());
 		connection.useDatabase(other.getName());
 		Schema schema = databases.createSchema(other, "archive");
-		service().createTable(schema, "items", List.of(column("id", INTEGER, "", true), column("note", VARCHAR, "20", false)), null, "");
+		service().createTable(new TableDefinition(schema.getDatabase(), schema, "items", null, "",
+			List.of(column("id", INTEGER, "", true), column("note", VARCHAR, "20", false))));
 		connection.executeUpdate("INSERT INTO " + dialect.quote(new TableName("archive", "items")) + " VALUES (1, 'kept')");
 
 		File file = dir.resolve("database.sql").toFile();
@@ -938,7 +944,7 @@ abstract class DialectContractTest {
 		title.notnull = true;
 		title.defaultval = "it's";
 		CreateColumn note = new CreateColumn("note");
-		note.type = new DataType("text", false, false, false, false, false, false, false, false);
+		note.type = DataType.named("text");
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 
 		for (String statement : dialect.createTableSql(TableName.of(name), Arrays.asList(id, title, note), engine, comment)) {

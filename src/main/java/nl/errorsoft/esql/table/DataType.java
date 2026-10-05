@@ -1,35 +1,37 @@
-// Class for maintaining fieldtypes and their optional flags
-
 package nl.errorsoft.esql.table;
 
-public class DataType {
-	String name;
-	public boolean primary;
-	public boolean index;
-	public boolean unique;
-	public boolean binary;
-	public boolean notnull;
-	public boolean unsigned;
-	public boolean autoincrement;
-	public boolean zerofill;
+import java.util.EnumSet;
+import java.util.Set;
 
-	public DataType(String name, boolean primary, boolean index, boolean unique, boolean binary, boolean notnull, boolean unsigned, boolean autoincrement,
-		boolean zerofill) {
+/** A data type of a server (from datatypes.xml) and the column options it allows. */
+public final class DataType {
+	/** What a column of this type can be or have. */
+	public enum Option {
+		PRIMARY, INDEX, UNIQUE, BINARY, NOT_NULL, UNSIGNED, AUTO_INCREMENT, ZEROFILL
+	}
+
+	private final String name;
+	private final Set<Option> options;
+
+	public DataType(String name, Set<Option> options) {
 		this.name = name;
-		this.primary = primary;
-		this.index = index;
-		this.unique = unique;
-		this.binary = binary;
-		this.notnull = notnull;
-		this.unsigned = unsigned;
-		this.autoincrement = autoincrement;
-		this.zerofill = zerofill;
+		this.options = options.isEmpty() ? EnumSet.noneOf(Option.class) : EnumSet.copyOf(options);
+	}
+
+	/** A type that allows no options, such as one read back from a database. */
+	public static DataType named(String name) {
+		return new DataType(name, Set.of());
+	}
+
+	public boolean allows(Option option) {
+		return options.contains(option);
 	}
 
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public String toString() {
 		return name;
 	}

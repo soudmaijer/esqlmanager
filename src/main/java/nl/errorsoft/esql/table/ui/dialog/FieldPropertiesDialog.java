@@ -101,10 +101,10 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 		// Click in fieldtypes window, set the GUI to match the selected item
 		if (source == fieldtypes) {
 			DataType f = (DataType) fieldtypes.getSelectedItem();
-			primary.setEnabled(f.primary);
-			notnull.setEnabled(f.notnull);
-			unsigned.setEnabled(f.unsigned);
-			autoIncrement.setEnabled(f.autoincrement);
+			primary.setEnabled(f.allows(DataType.Option.PRIMARY));
+			notnull.setEnabled(f.allows(DataType.Option.NOT_NULL));
+			unsigned.setEnabled(f.allows(DataType.Option.UNSIGNED));
+			autoIncrement.setEnabled(f.allows(DataType.Option.AUTO_INCREMENT));
 		} else if (source == btnCancel) {
 			dispose();
 		} else if (source == btnSave) {

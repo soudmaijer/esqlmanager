@@ -426,7 +426,7 @@ public abstract class AbstractDialect implements Dialect {
 
 		column.autoincrement = "YES".equals(rs.getString("IS_AUTOINCREMENT")) || (defaultValue != null && defaultValue.startsWith("nextval("));
 		column.notnull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
-		column.type = new DataType(designerTypeName(identityType(type)), false, false, false, false, false, false, false, false);
+		column.type = DataType.named(designerTypeName(identityType(type)));
 		column.defaultval = column.autoincrement || defaultValue == null ? "" : plainDefault(defaultValue);
 
 		if ((type.equals("varchar") || type.equals("bpchar")) && size > 0 && size < Integer.MAX_VALUE) {

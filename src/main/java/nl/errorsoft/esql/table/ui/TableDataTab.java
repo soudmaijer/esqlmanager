@@ -73,6 +73,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private JButton btnCloseCellData;
 	private UndoManager ndo;
 	private UndoableEditListener undoHandler;
+	private HeaderListener headerListener;
 	private ImageLoader imgLoader;
 	private TableData editingCell;
 	private int editingRow;
@@ -237,17 +238,24 @@ public class TableDataTab extends JPanel implements ActionListener {
 		cellData = new JTextArea();
 		cellData.setLineWrap(false);
 		cellData.setWrapStyleWord(true);
-		cellData.addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent evt) {
-				if (evt.getKeyCode() == evt.VK_Z && evt.isControlDown()) {
-					if (ndo.canUndo()) {
-						ndo.undo();
-					}
-				} else if (evt.getKeyCode() == evt.VK_Y && evt.isControlDown()) {
-					if (ndo.canRedo()) {
-						ndo.redo();
-					}
-				}
+		// One undo history for the editor, cleared whenever another cell is shown in it.
+		ndo = new UndoManager();
+		undoHandler = new UndoListener(ndo);
+		cellData.getDocument().addUndoableEditListener(undoHandler);
+		int menu = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menu), "undo", () -> {
+			if (ndo.canUndo()) {
+				ndo.undo();
+			}
+		});
+		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Y, menu), "redo", () -> {
+			if (ndo.canRedo()) {
+				ndo.redo();
+			}
+		});
+		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menu | InputEvent.SHIFT_DOWN_MASK), "redo", () -> {
+			if (ndo.canRedo()) {
+				ndo.redo();
 			}
 		});
 		jspText = new JScrollPane(cellData, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -280,6 +288,16 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		jcep.add(jtb, BorderLayout.NORTH);
 		jcep.add(jspText, BorderLayout.CENTER);
+	}
+
+	private void bindUndo(KeyStroke key, String name, Runnable action) {
+		cellData.getInputMap(JComponent.WHEN_FOCUSED).put(key, name);
+		cellData.getActionMap().put(name, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				action.run();
+			}
+		});
 	}
 
 	/** Keeps a button at its own width in a column that stretches. */
@@ -316,16 +334,12 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		cellData.setEnabled(true);
 		cellData.setText(editingCell.getEditText());
+		ndo.discardAllEdits();
 
 		if (editingCell.getTableColumn().isWritable()) {
 			btnUpdateRowData.setEnabled(true);
 			btnCloseCellData.setEnabled(true);
 			cellData.setEditable(true);
-
-			// Listener for edits on a document.
-			ndo = new UndoManager();
-			undoHandler = new UndoListener(ndo);
-			cellData.getDocument().addUndoableEditListener(undoHandler);
 		} else {
 			btnUpdateRowData.setEnabled(false);
 			btnCloseCellData.setEnabled(false);
@@ -339,8 +353,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	public void disableCellDataEditor() {
-		// Listener for edits on a document.
-		cellData.getDocument().removeUndoableEditListener(undoHandler);
 		jsplit.setBottomComponent(null);
 	}
 
@@ -467,7 +479,12 @@ public class TableDataTab extends JPanel implements ActionListener {
 			tcm.addColumn(tempCol);
 		}
 
-		tbData.getTableHeader().addMouseListener(new HeaderListener(tbData.getTableHeader(), hr));
+		// Every page has its own renderer, the listener of the previous page goes.
+		if (headerListener != null) {
+			tbData.getTableHeader().removeMouseListener(headerListener);
+		}
+		headerListener = new HeaderListener(tbData.getTableHeader(), hr);
+		tbData.getTableHeader().addMouseListener(headerListener);
 		stm.setDataVector(tda, columns);
 		tbData.setColumnModel(tcm);
 		tbData.setModel(stm);

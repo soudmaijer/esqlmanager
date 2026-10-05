@@ -11,6 +11,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableDefinition;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.ui.TableEditorTab;
 
@@ -85,15 +86,14 @@ public class CreateTableController {
 	 * The statements Save would run, for the SQL preview: the CREATE TABLE of a new table (in the schema this editor was opened for) or the changes of an
 	 * existing one. A problem is returned as a comment line.
 	 */
-	public List<String> previewStatements(Table existing, String database, String name, String comment, String type, List<CreateColumn> columns) {
+	public List<String> previewStatements(Table existing, TableDefinition definition) {
 		try {
 			TableService tables = connectionWindowController.getContext().tables();
 
 			if (existing != null) {
-				return tables.modifyStatements(existing, name, type, comment);
+				return tables.modifyStatements(existing, definition.name(), definition.type(), definition.comment());
 			}
-			Schema target = schema != null && schema.getDatabase().getName().equals(database) ? schema : null;
-			return tables.createStatements(target, name, columns, type, comment);
+			return tables.createStatements(inTargetSchema(definition));
 		} catch (Exception e) {
 			return List.of("-- " + e.getMessage());
 		}
@@ -113,21 +113,23 @@ public class CreateTableController {
 		return connectionWindowController.getConnectionProfile().getServerType().getDataTypes();
 	}
 
-	public void createTable(String name, String database, String comment, String type, TableEditorTab editor, List<CreateColumn> columns) {
-		if (name.trim().length() == 0) {
+	/** The definition in the schema this editor was opened for, when the table goes in that schema's database. */
+	private TableDefinition inTargetSchema(TableDefinition definition) {
+		boolean sameDatabase = schema != null && schema.getDatabase().getName().equals(definition.database().getName());
+		return definition.inSchema(sameDatabase ? schema : null);
+	}
+
+	public void createTable(TableDefinition definition, TableEditorTab editor) {
+		if (definition.name().trim().length() == 0) {
 			Dialogs.error(window(), "Create table", "Enter a table name.");
 			return;
 		}
-		if (columns.isEmpty()) {
+		if (definition.columns().isEmpty()) {
 			Dialogs.error(window(), "Create table", "Add at least one column.");
 			return;
 		}
 		try {
-			if (schema != null && schema.getDatabase().getName().equals(database)) {
-				connectionWindowController.getContext().tables().createTable(schema, name, new ArrayList<>(columns), type, comment);
-			} else {
-				connectionWindowController.getContext().tables().createTable(new Database(database), name, new ArrayList<>(columns), type, comment);
-			}
+			connectionWindowController.getContext().tables().createTable(inTargetSchema(definition));
 			window().removeTab(editor);
 			connectionWindowController.reloadSelectedDatabase();
 		} catch (Exception e) {

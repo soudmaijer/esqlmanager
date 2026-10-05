@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.designer;
 
+import nl.errorsoft.esql.table.TableDefinition;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,7 +101,7 @@ public class DesignerService {
 				step.run();
 
 				if (!tables.exists(database, table.name())) {
-					tables.createTable(database, table.name(), table.columns(), table.type(), table.comment());
+					tables.createTable(new TableDefinition(database, null, table.name(), table.type(), table.comment(), table.columns()));
 				}
 
 				for (int i = 0; i < table.columns().size(); i++) {
