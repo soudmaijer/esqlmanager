@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.query.control;
 
 import java.awt.Component;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +29,15 @@ public class QueryCC implements SchemaNames {
 
 	private final ConnectionWindowCC cwcc;
 	private volatile Map<String, Table> tables = Map.of();
+	private String database = "";
 	private final Map<String, List<String>> columns = new ConcurrentHashMap<>();
 
-	/** The outcome of a run: the view of the last statement that returned rows (null when none did) and whether every statement succeeded. */
-	public record RunResult(TableDataView view, boolean succeeded) {
+	/** The outcome of a run: a result for every statement that returned rows, in order, and whether every statement succeeded. */
+	public record RunResult(List<StatementResult> results, boolean succeeded) {
+	}
+
+	/** The rows of one statement, with what is shown below them: when it ran, on which database, how many rows and how long it took. */
+	public record StatementResult(String sql, TableDataView view, LocalTime ranAt, String database, long millis) {
 	}
 
 	public QueryCC(ConnectionWindowCC cwcc) {
@@ -51,6 +57,7 @@ public class QueryCC implements SchemaNames {
 			return;
 		}
 
+		this.database = database.getName();
 		tables = Map.of();
 		columns.clear();
 		Thread.ofVirtual().name("completion-tables").start(() -> {
@@ -79,9 +86,10 @@ public class QueryCC implements SchemaNames {
 			queries = cwcc.getContext().queries();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(parent, "Run query", e);
-			return new RunResult(null, false);
+			return new RunResult(List.of(), false);
 		}
 
+		List<StatementResult> results = new ArrayList<>();
 		TableDataView view = null;
 		long start = System.nanoTime();
 
@@ -91,10 +99,13 @@ public class QueryCC implements SchemaNames {
 
 			try {
 				long started = System.nanoTime();
+				LocalTime ranAt = LocalTime.now().withNano(0);
 
 				if (queries.returnsRows(sql)) {
 					view = new TableCC(cwcc).executeQuery(sql);
-					log.info("{}: {} row(s) in {} ms", which, view.getRowCount(), millisSince(started));
+					long millis = millisSince(started);
+					results.add(new StatementResult(sql.strip(), view, ranAt, currentDatabase(), millis));
+					log.info("{}: {} row(s) in {} ms", which, view.getRowCount(), millis);
 				} else if (queries.isUse(sql)) {
 					queries.use(sql);
 					log.info("{}: database changed", which);
@@ -105,7 +116,7 @@ public class QueryCC implements SchemaNames {
 			} catch (Exception e) {
 				cwcc.setStatusDetail(which + " failed: " + firstLine(sql));
 				ApplicationContext.get().errors().report(parent, which + " (" + firstLine(sql) + ")", e);
-				return new RunResult(view, false);
+				return new RunResult(results, false);
 			}
 		}
 
@@ -113,7 +124,11 @@ public class QueryCC implements SchemaNames {
 			? "Query returned " + view.getRowCount() + " row(s) in " + millisSince(start) + " ms"
 			: statements.size() + " statement(s) executed in " + millisSince(start) + " ms";
 		cwcc.setStatusDetail(summary);
-		return new RunResult(view, true);
+		return new RunResult(results, true);
+	}
+
+	private String currentDatabase() {
+		return database;
 	}
 
 	@Override

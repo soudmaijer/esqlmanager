@@ -8,6 +8,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -19,6 +20,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -37,7 +39,8 @@ import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.util.ExtentionFileFilter;
 
 /**
- * A query tab of the connection window: the SQL editor with completion on top, the result of the last statement that returned rows below it.
+ * A query tab of the connection window: the SQL editor with completion on top and below it a tab for every statement that returned rows, the newest in
+ * front. A result tab is named after its statement (the full text is its tooltip) and shows when it ran, on which database, the rows and the time taken.
  */
 public class QueryUI extends JPanel {
 	private static final int MENU = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
@@ -48,7 +51,11 @@ public class QueryUI extends JPanel {
 	private final JComboBox<Database> databases;
 	private final JSplitPane split;
 	private final AutoCompletion completion;
+	private static final int MAX_RESULTS = 20;
+	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 	private final JLabel noResult = new JLabel("Run a statement to see its result here", JLabel.CENTER);
+	private final JTabbedPane results = new JTabbedPane();
 
 	public QueryUI(QueryCC controller, List<Database> databaseList, Database selected) {
 		super(new BorderLayout());
@@ -100,6 +107,9 @@ public class QueryUI extends JPanel {
 		bind(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, MENU | InputEvent.SHIFT_DOWN_MASK), "complete", completion::doCompletion);
 
 		noResult.setEnabled(false);
+		results.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		results.putClientProperty("JTabbedPane.tabClosable", true);
+		results.putClientProperty("JTabbedPane.tabCloseCallback", (java.util.function.IntConsumer) this::closeResult);
 		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorScroll, noResult);
 		split.setResizeWeight(0.5);
 		split.setContinuousLayout(true);
@@ -164,12 +174,52 @@ public class QueryUI extends JPanel {
 
 		QueryCC.RunResult result = controller.run(statements.stream().map(SqlScript.Statement::sql).toList(), this);
 
-		if (result.view() != null) {
-			int divider = split.getDividerLocation();
-			split.setBottomComponent(result.view());
-			split.setDividerLocation(divider);
+		for (QueryCC.StatementResult statement : result.results()) {
+			showResult(statement);
 		}
 		SwingUtilities.invokeLater(editor::requestFocusInWindow);
+	}
+
+	private void showResult(QueryCC.StatementResult statement) {
+		JLabel details = new JLabel("Ran at " + TIME.format(statement.ranAt()) + (statement.database().isEmpty() ? "" : " on " + statement.database()) + ", "
+			+ statement.view().getRowCount() + " row(s) in " + statement.millis() + " ms");
+		details.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 6));
+		JPanel tab = new JPanel(new BorderLayout());
+		tab.add(statement.view(), BorderLayout.CENTER);
+		tab.add(details, BorderLayout.SOUTH);
+
+		if (results.getTabCount() >= MAX_RESULTS) {
+			results.removeTabAt(0);
+		}
+		results.addTab(tabTitle(statement.sql()), null, tab, tooltip(statement.sql()));
+		results.setSelectedComponent(tab);
+
+		if (split.getBottomComponent() != results) {
+			int divider = split.getDividerLocation();
+			split.setBottomComponent(results);
+			split.setDividerLocation(divider);
+		}
+	}
+
+	private void closeResult(int index) {
+		results.removeTabAt(index);
+
+		if (results.getTabCount() == 0) {
+			int divider = split.getDividerLocation();
+			split.setBottomComponent(noResult);
+			split.setDividerLocation(divider);
+		}
+	}
+
+	/** The statement on one line, shortened to fit on a tab. */
+	static String tabTitle(String sql) {
+		String line = sql.replaceAll("\\s+", " ").strip();
+		return line.length() > 32 ? line.substring(0, 32) + "..." : line;
+	}
+
+	private static String tooltip(String sql) {
+		String escaped = sql.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+		return "<html><pre>" + escaped + "</pre></html>";
 	}
 
 	private void open() {
