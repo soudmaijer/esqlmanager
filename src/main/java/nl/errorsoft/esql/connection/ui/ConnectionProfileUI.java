@@ -2,10 +2,9 @@ package nl.errorsoft.esql.connection.ui;
 
 import nl.errorsoft.esql.error.Dialogs;
 
-import nl.errorsoft.esql.database.Database;
-
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ConnectionProfile;
+import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
 
@@ -15,6 +14,9 @@ import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
 import nl.errorsoft.esql.dialect.Dialect;
 
 public class ConnectionProfileUI extends FormDialog implements ItemListener, ActionListener {
@@ -30,7 +32,6 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 	private JTextField un;
 	private JTextField ip;
 	private JTextField pt;
-	private JTextField dbs;
 
 	private ESQLManagerUI jm;
 	private ConnectionProfileCC cpcc;
@@ -41,6 +42,12 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 	private ServerType[] sta;
 	private ServerType previousServerType;
 	private boolean loadingProfile = false;
+	private boolean testing = false;
+	private final JTabbedPane tabs = new JTabbedPane();
+	private final DatabasePicker picker;
+	private static final int PICKER_TAB = 1;
+	private static final String CHANGED_HINT = "Connection settings changed, test the connection again";
+	private static final String TEST_FIRST_HINT = "Test the connection to choose databases and schemas";
 
 	public ConnectionProfileUI(ESQLManagerUI jm, ConnectionProfileCC cpcc) {
 		super(jm, "Connect to server", false);
@@ -59,18 +66,22 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		un = new JTextField("");
 		pw = new JPasswordField();
 		pt = new JTextField("");
-		dbs = new JTextField("");
 		chkAutoConnect = Forms.mnemonic(new JCheckBox(), "&Auto-connect to this server on startup");
 
 		chkSavePassword = Forms.mnemonic(new JCheckBox(), "Sa&ve password");
 		chkSavePassword.setToolTipText("When off, the password is not written to profiles.xml and is asked for when connecting.");
 		btnTest = Forms.button("&Test connection");
-		btnDuplicate = Forms.button("D&uplicate");
+		btnDuplicate = Forms.button("Dupl&icate");
 
-		Forms.Grid form = new Forms.Grid().row("&Profile:", jc).row("Server &type:", jcServer).row("&Host:", ip).row("P&ort:", pt)
-			.row("&Username:", un).row("Pass&word:", pw).full(chkSavePassword).row("&Databases:", dbs).full(databasesHint()).full(chkAutoConnect)
-			.full(testRow());
-		dbs.setToolTipText("Comma separated, for example db1,db2,db3. The first one is connected to.");
+		Forms.Grid form = new Forms.Grid().row("&Profile:", jc).row("Server t&ype:", jcServer).row("&Host:", ip).row("P&ort:", pt)
+			.row("&Username:", un).row("Pass&word:", pw).full(chkSavePassword).full(chkAutoConnect).full(testRow());
+
+		picker = new DatabasePicker(this::loadSchemas, this::reloadDatabases);
+		tabs.addTab("Connection", Forms.padded(form.done()));
+		tabs.addTab("Databases and schemas", Forms.padded(picker));
+		tabs.setEnabledAt(PICKER_TAB, false);
+		tabs.setToolTipTextAt(PICKER_TAB, TEST_FIRST_HINT);
+		picker.clear(TEST_FIRST_HINT);
 
 		btnConnect = Forms.button("&Connect");
 		btnSave = Forms.button("&Save");
@@ -81,7 +92,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		leading.add(btnDelete);
 		leading.add(btnDuplicate);
 		setLeadingButton(leading);
-		layoutDialog(form.done(), btnConnect, btnSave, btnClose);
+		layoutDialog(tabs, btnConnect, btnSave, btnClose);
 		setInitialFocus(btnConnect);
 
 		btnSave.addActionListener(this);
@@ -102,17 +113,81 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 
 		jc.addItemListener(this);
 		jcServer.addItemListener(this);
+		for (JTextComponent field : new JTextComponent[]{ip, pt, un, pw}) {
+			field.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					settingsChanged();
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					settingsChanged();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {
+					settingsChanged();
+				}
+			});
+		}
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				cpcc.invalidate();
+			}
+		});
 	}
 
-	/** The Test connection button with the outcome next to it. */
+	/**
+	 * The connection settings no longer match the tested ones: results that are on their way are ignored, the databases are cleared (the ticks stay) and
+	 * the tab is disabled until the connection is tested again.
+	 */
+	private void settingsChanged() {
+		cpcc.invalidate();
+		boolean wasAvailable = tabs.isEnabledAt(PICKER_TAB);
+		if (testing) {
+			testing = false;
+			testResult.setText(" ");
+		}
+		btnTest.setEnabled(true);
+		tabs.setEnabledAt(PICKER_TAB, false);
+		if (tabs.getSelectedIndex() == PICKER_TAB) {
+			tabs.setSelectedIndex(0);
+		}
+		String hint = wasAvailable ? CHANGED_HINT : TEST_FIRST_HINT;
+		tabs.setToolTipTextAt(PICKER_TAB, hint);
+		picker.clear(hint);
+		if (wasAvailable) {
+			testResult.setForeground(UIManager.getColor("Label.foreground"));
+			testResult.setText(CHANGED_HINT);
+		}
+	}
+
+	private ServerType serverType() {
+		return (ServerType) jcServer.getSelectedItem();
+	}
+
+	private void loadSchemas(String database) {
+		cpcc.loadSchemas(database, schemas -> picker.showSchemas(database, schemas), () -> picker.showSchemaFailure(database));
+	}
+
+	private void reloadDatabases() {
+		cpcc.reloadDatabases(databases -> picker.showDatabases(serverType().getDialect(), databases));
+	}
+
+	/** The Test connection button with its outcome on the line below. */
 	private JPanel testRow() {
-		JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
-		row.add(btnTest);
-		row.add(testResult);
+		JPanel buttonLine = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		buttonLine.add(btnTest);
+		JPanel row = new JPanel(new BorderLayout(0, Forms.GAP));
+		row.add(buttonLine, BorderLayout.NORTH);
+		row.add(testResult, BorderLayout.CENTER);
 		return row;
 	}
 
 	private void showTestResult(ConnectionProfileCC.TestResult result) {
+		testing = false;
 		Color color = UIManager.getColor(result.success() ? "Actions.Green" : "Actions.Red");
 		if (color == null) {
 			color = result.success() ? new Color(0x2e7d32) : Color.RED;
@@ -120,18 +195,12 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		testResult.setForeground(color);
 		testResult.setText(result.message());
 		btnTest.setEnabled(true);
-		pack();
-	}
-
-	/** The explanation of the databases field in the colour of disabled text. */
-	private static JLabel databasesHint() {
-		JLabel hint = new JLabel("Comma separated, for example db1,db2. The first one is connected to.");
-		java.awt.Color disabled = UIManager.getColor("Label.disabledForeground");
-		if (disabled != null) {
-			hint.setForeground(disabled);
+		if (result.success()) {
+			picker.showDatabases(serverType().getDialect(), result.databases());
+			tabs.setEnabledAt(PICKER_TAB, true);
+			tabs.setToolTipTextAt(PICKER_TAB, null);
 		}
-		hint.setFont(hint.getFont().deriveFont(hint.getFont().getSize2D() - 1f));
-		return hint;
+		pack();
 	}
 
 	public void loadProfiles(ConnectionProfile[] p) {
@@ -144,7 +213,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 			pt.setText("");
 			pw.setText("");
 			un.setText("");
-			dbs.setText("");
+			picker.setSelection(DatabaseSelection.NONE);
 		}
 
 		for (int i = 0; i < p.length; i++) {
@@ -157,7 +226,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 				ip.setText(p[i].getHost());
 				un.setText(p[i].getUsername());
 				pw.setText(p[i].getPassword());
-				dbs.setText(p[i].getDatabases());
+				picker.setSelection(p[i].getSelection());
 				chkAutoConnect.setSelected(p[i].isAutoConnect());
 				chkSavePassword.setSelected(p[i].isSavePassword());
 
@@ -172,7 +241,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 					ip.setText(p[0].getHost());
 					un.setText(p[0].getUsername());
 					pw.setText(p[0].getPassword());
-					dbs.setText(p[0].getDatabases());
+					picker.setSelection(p[0].getSelection());
 					chkAutoConnect.setSelected(p[0].isAutoConnect());
 					chkSavePassword.setSelected(p[0].isSavePassword());
 				}
@@ -199,7 +268,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 			ip.setText(cp.getHost());
 			un.setText(cp.getUsername());
 			pw.setText(cp.getPassword());
-			dbs.setText(cp.getDatabases());
+			picker.setSelection(cp.getSelection());
 			chkAutoConnect.setSelected(cp.isAutoConnect());
 			chkSavePassword.setSelected(cp.isSavePassword());
 			testResult.setText(" ");
@@ -244,10 +313,6 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 	private boolean isEmptyOrDefault(JTextField field, String previousDefault) {
 		String text = field.getText().trim();
 		return text.length() == 0 || text.equals(previousDefault);
-	}
-
-	public String getDatabases() {
-		return dbs.getText().trim();
 	}
 
 	public String getName() {
@@ -313,7 +378,7 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		profile.setPort(port);
 		profile.setUsername(getUsername());
 		profile.setPassword(getPassword());
-		profile.setDatabases(getDatabases());
+		profile.setSelection(picker.getSelection());
 		profile.setAutoConnect(chkAutoConnect.isSelected());
 		profile.setSavePassword(chkSavePassword.isSelected());
 		return profile;
@@ -345,7 +410,9 @@ public class ConnectionProfileUI extends FormDialog implements ItemListener, Act
 		} else if (object == btnTest) {
 			ConnectionProfile typed = profileFromForm();
 			if (typed != null) {
+				settingsChanged();
 				btnTest.setEnabled(false);
+				testing = true;
 				testResult.setForeground(UIManager.getColor("Label.foreground"));
 				testResult.setText("Connecting...");
 				cpcc.testConnection(typed, this::showTestResult);

@@ -6,11 +6,14 @@ import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.error.Dialogs;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
+import nl.errorsoft.esql.database.DatabaseCatalog;
 import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.connection.ui.ConnectionProfileUI;
 
 import java.awt.Component;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -114,7 +117,7 @@ public class ConnectionProfileCC {
 			saved.setUsername(typed.getUsername());
 			saved.setPassword(typed.getPassword());
 			saved.setSavePassword(typed.isSavePassword());
-			saved.setDatabases(typed.getDatabases());
+			saved.setSelection(typed.getSelection());
 			saved.setServerType(typed.getServerType());
 			saved.setAutoConnect(typed.isAutoConnect());
 			cp.editProfile(saved);
@@ -137,28 +140,117 @@ public class ConnectionProfileCC {
 		}
 	}
 
-	/** The outcome of a connection test: the server that answered, or the reason it did not. */
-	public record TestResult(boolean success, String message) {
+	/** The outcome of a connection test: the server that answered and its databases, or the reason it did not answer (no databases). */
+	public record TestResult(boolean success, String message, List<String> databases) {
 	}
 
+	/** The scratch connection of the databases tab with the one thread that uses it. */
+	private record Session(DatabaseCatalog catalog, ExecutorService worker) {
+		/** Closes the connection after the work that is queued. */
+		void close() {
+			worker.execute(catalog::close);
+			worker.shutdown();
+		}
+	}
+
+	private Session session;
+	/** Counts the changes of the connection settings (event thread only); an answer that belongs to an older number is ignored. */
+	private int generation;
+
 	/**
-	 * Connects with the given settings on a virtual thread, closes the connection again and hands the outcome to the callback on the event thread.
-	 * The saved profiles are not touched.
+	 * Connects with the given settings on a virtual thread, lists the databases of the server and hands the outcome to the callback on the event thread. The
+	 * connection stays open for loading schemas, until {@link #invalidate()} or the next test. The saved profiles are not touched.
 	 */
 	public void testConnection(ConnectionProfile profile, Consumer<TestResult> callback) {
-		Thread.ofVirtual().name("test-connection").start(() -> {
+		invalidate();
+		int started = generation;
+		Session opened = new Session(new DatabaseCatalog(profile), Executors.newSingleThreadExecutor(Thread.ofVirtual().name("catalog").factory()));
+		session = opened;
+		opened.worker().execute(() -> {
 			TestResult result;
-			try (DatabaseConnection connection = new DatabaseConnection()) {
-				connection.connect(profile, "");
-				result = new TestResult(true, "Connected to " + connection.getServerDescription());
+			try {
+				opened.catalog().connect();
+				result = new TestResult(true, "Connected to " + opened.catalog().serverDescription(), opened.catalog().databases());
 				log.info("Connection test to {} succeeded", profile.getHost());
 			} catch (Exception e) {
 				log.warn("Connection test to {} failed: {}", profile.getHost(), e.getMessage());
-				result = new TestResult(false, e.getMessage() == null ? e.toString() : e.getMessage());
+				result = new TestResult(false, e.getMessage() == null ? e.toString() : e.getMessage(), List.of());
 			}
 			TestResult outcome = result;
-			SwingUtilities.invokeLater(() -> callback.accept(outcome));
+			SwingUtilities.invokeLater(() -> {
+				if (started != generation) {
+					return;
+				}
+				if (!outcome.success()) {
+					closeSession();
+				}
+				callback.accept(outcome);
+			});
 		});
+	}
+
+	/** Lists the databases of the server again over the open connection. */
+	public void reloadDatabases(Consumer<List<String>> callback) {
+		Session current = session;
+		int started = generation;
+		if (current == null) {
+			return;
+		}
+		current.worker().execute(() -> {
+			try {
+				List<String> databases = current.catalog().databases();
+				SwingUtilities.invokeLater(() -> {
+					if (started == generation) {
+						callback.accept(databases);
+					}
+				});
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(() -> {
+					if (started == generation) {
+						ApplicationContext.get().errors().report(cpui, "Reload databases", e);
+					}
+				});
+			}
+		});
+	}
+
+	/** Loads the schemas of one database over the open connection; the callbacks run on the event thread, and not at all when the settings changed. */
+	public void loadSchemas(String database, Consumer<List<String>> loaded, Runnable failed) {
+		Session current = session;
+		int started = generation;
+		if (current == null) {
+			return;
+		}
+		current.worker().execute(() -> {
+			try {
+				List<String> schemas = current.catalog().schemas(database);
+				SwingUtilities.invokeLater(() -> {
+					if (started == generation) {
+						loaded.accept(schemas);
+					}
+				});
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(() -> {
+					if (started == generation) {
+						ApplicationContext.get().errors().report(cpui, "Load schemas", e);
+						failed.run();
+					}
+				});
+			}
+		});
+	}
+
+	/** The connection settings changed or the dialog closed: answers still on their way are ignored and the scratch connection is closed. */
+	public void invalidate() {
+		generation++;
+		closeSession();
+	}
+
+	private void closeSession() {
+		if (session != null) {
+			session.close();
+			session = null;
+		}
 	}
 
 	public void deleteProfile(ConnectionProfile cp) {
