@@ -19,6 +19,8 @@ A row can only be changed or deleted when it can be identified, by its primary k
 * **Create table** (toolbar, or the context menu of a database) asks for a name and the columns: type, length, default, not null, auto increment, and primary key, unique and index flags.
 * **Edit table** renames a table and changes its comment and, on MySQL, its storage engine.
 * **Indexes** manages the primary key, unique indexes, plain indexes and (MySQL) fulltext indexes.
+
+These three open as a tab of the connection window, one per table; opening one again shows the open tab. Save applies the change (Create table and Edit table then close their tab, the indexes tab stays open), Cancel or the close button of the tab asks before discarding unsaved changes.
 * **Empty table** deletes every row, **Drop table** removes the table. Both ask first.
 * Maintenance: Optimize and Analyze table, and on MySQL Check and Repair table. On PostgreSQL optimize runs `VACUUM`.
 

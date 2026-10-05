@@ -11,7 +11,6 @@ import nl.errorsoft.esql.table.ui.IndexesUI;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
 import org.apache.logging.log4j.LogManager;
@@ -32,35 +31,45 @@ public class IndexesCC {
 		this.t = t;
 	}
 
-	public void startUI(ESQLManagerUI eu) throws Exception {
-		if (!cwcc.requireFeature(Dialect.Feature.INDEXES, "The index manager")) {
+	/** Opens the indexes of the table in a tab ("Indexes orders"), or puts its open tab in front. */
+	public void startUI() throws Exception {
+		String key = "indexes:" + t.getDatabase().getName() + "." + t.getName();
+
+		if (!cwcc.requireFeature(Dialect.Feature.INDEXES, "The index manager") || cwcc.getWindow().selectEditorTab(key)) {
 			return;
 		}
 
-		iu = new IndexesUI(cwcc.getUI(), this);
+		String title = "Indexes " + t.getName();
+		iu = new IndexesUI(this, title);
 		service().loadColumns(t);
 		service().loadIndexes(t);
 		iu.loadIndexes(t.getIndexes());
+		cwcc.getWindow().showEditorTab(key, title, iu);
+	}
+
+	/** Cancel: closes the tab, asking first when something has not been saved. */
+	public void close() {
+		cwcc.getWindow().closeTab(iu);
 	}
 
 	public void addIndex(TableIndex ti, TableColumn[] tc, String type) {
 		try {
 			if (tc.length <= 0) {
-				Dialogs.error(iu, iu.getTitle(), "Select at least one column for the index.");
+				Dialogs.error(cwcc.getWindow(), "Indexes", "Select at least one column for the index.");
 			} else {
 				service().addIndex(t, ti, tc, type);
 				iu.loadIndexes(t.getIndexes());
 				cwcc.tableSelected(t, true);
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iu, "Add index", e);
+			ApplicationContext.get().errors().report(cwcc.getWindow(), "Add index", e);
 		}
 	}
 
 	public void modifyIndex(TableIndex ti, TableColumn[] tc, String type) {
 		try {
 			if (tc.length <= 0) {
-				Dialogs.error(iu, iu.getTitle(), "Select at least one column for the index.");
+				Dialogs.error(cwcc.getWindow(), "Indexes", "Select at least one column for the index.");
 			} else {
 				if (ti.isNew()) {
 					service().addIndex(t, ti, tc, type);
@@ -72,7 +81,7 @@ public class IndexesCC {
 				cwcc.tableSelected(t, true);
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iu, "Modify index", e);
+			ApplicationContext.get().errors().report(cwcc.getWindow(), "Modify index", e);
 		}
 	}
 
@@ -82,7 +91,7 @@ public class IndexesCC {
 			iu.loadIndexes(t.getIndexes());
 			cwcc.tableSelected(t, true);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iu, "Drop index", e);
+			ApplicationContext.get().errors().report(cwcc.getWindow(), "Drop index", e);
 		}
 	}
 

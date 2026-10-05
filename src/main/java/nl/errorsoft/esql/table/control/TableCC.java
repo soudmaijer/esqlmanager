@@ -4,7 +4,6 @@ import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
-import nl.errorsoft.esql.table.ui.CreateTable;
 import nl.errorsoft.esql.table.ui.TableDataView;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -28,34 +27,6 @@ public class TableCC {
 
 	public TableCC(ConnectionWindowCC cwcc) {
 		this.cwcc = cwcc;
-	}
-
-	public void startCreateTableUI(ESQLManagerUI eu, Database d) throws Exception {
-		// Dit stuk code moet naar CreateTableCC!
-		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables")) {
-			return;
-		}
-
-		eu.updateStatus("Starting create table interface...", true);
-		CreateTable ct = new CreateTable(eu, cwcc, this, d, null);
-		ct.setVisible(true);
-		eu.showConnectionState();
-
-	}
-
-	public void startEditTableUI(ESQLManagerUI eu, Database d, Table t) throws Exception {
-		// Dit stuk code moet naar CreateTableCC!
-		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables")) {
-			return;
-		}
-
-		eu.updateStatus("Starting modify table interface...", true);
-		if (t.getColumns() == null) {
-			service().loadColumns(t);
-		}
-		CreateTable ct = new CreateTable(eu, cwcc, this, d, t);
-		eu.showConnectionState();
-		ct.setVisible(true);
 	}
 
 	public void dispatchDownloadFileUI(Table table, TableData[] rowData, TableData cellData) {

@@ -45,6 +45,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * Completion uses the RSyntaxTextArea AutoComplete library (`com.fifesoft:autocomplete`, the release that matches rsyntaxtextarea), with `query.ui.SqlCompletionProvider`. Names that are not plain lower case identifiers go through `dialect.quote`.
 * Query shortcuts: menu key (Cmd/Ctrl)+Enter runs the selection or the statement at the caret, +Shift+Enter runs all; Ctrl+Space, Meta+Space and menu key+Shift+Space open the completion (macOS reserves Cmd+Space for Spotlight unless the user turns that off).
 * Context menus are built when they open and show only the items that apply. The tree's items come from `connection.TreeMenu.itemsFor(node, dialect)` (pure, `TreeMenuTest`), based on `Dialect.supports(Feature)` and `Dialect.maintenanceCommands()`; `ConnectionWindowUI.perform` wires each item to a `ConnectionWindowCC` method. The designer's menus are built in `ModelViewer` (canvas, table, database, note, connector; `ModelViewerMenuTest`). Popups open on `isPopupTrigger()` in both mousePressed and mouseReleased, after selecting what is under the cursor.
+* Create table, Edit table and Indexes are tabs of the connection window (`table.ui.TableEditor`, `table.ui.IndexesUI`, opened by `CreateTableCC` and `IndexesCC` through `ConnectionWindowUI.showEditorTab`), one per table under a key (`selectEditorTab` jumps to an open one), titled "New table", "Edit orders", "Indexes orders". Save and Cancel are at the bottom. An editor implements `ui.util.EditorTab`: `ConnectionWindowUI.closeTab` asks its `confirmClose()` ("Discard changes?" when modified), `removeTab` closes it without asking after a successful Save. Esc does not close a tab (`EscapeToClose` is for dialogs). The field properties of one column (`FieldProperties`) and the name prompt for a new index stay dialogs.
 * Destructive actions (create and drop database) are in the context menus of the tree, not in the toolbar of the connection window. Closing a connection window asks "Disconnect from <title>?" (Disconnect / Cancel).
 * The output panel is a read-only `RSyntaxTextArea` with SQL colouring (`ui.editor.EditorTheme`, same theme as the query editor): it shows the log exactly as written.
 * The output panel does not wrap lines (re-wrapping a long log made resizing slow), keeps at most 200000 characters, and the split pane uses continuous layout with `resizeWeight` 1.0.
@@ -145,7 +146,7 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 ## Known technical debt
 
 * Raw `Vector` and other raw types (about 100 lint warnings).
-* Many dialogs still use null layouts (`ConnectionWindowUI`, `CreateTable`, `IndexesUI`, ...).
+* Many dialogs still use null layouts (`ConnectionWindowUI`, `FieldProperties`, ...).
 * `Dialect` and `UserAdmin` methods such as `listTables`, `maintain`, `dropIndexSql` still take a `DatabaseConnection` and run SQL themselves, repositories only wrap them.
 * Some windows (`Processlist`, `DatabaseTreeView`) hold more logic than a UI should.
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.

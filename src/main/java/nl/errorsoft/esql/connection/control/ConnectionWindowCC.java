@@ -5,6 +5,7 @@ import nl.errorsoft.esql.error.Dialogs;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.control.CreateTableCC;
 import nl.errorsoft.esql.table.control.IndexesCC;
 import nl.errorsoft.esql.table.control.TableCC;
 import nl.errorsoft.esql.table.ui.FieldProperties;
@@ -365,7 +366,7 @@ public class ConnectionWindowCC extends Thread {
 	public void dispatchTableIndexesUI() {
 		try {
 			IndexesCC tcc = new IndexesCC(this, (Table) cwui.getSelectedNode().getUserObject());
-			tcc.startUI(jmcc.getUI());
+			tcc.startUI();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Load indexes", e);
 		}
@@ -407,8 +408,7 @@ public class ConnectionWindowCC extends Thread {
 
 	public void dispatchCreateTableUI() {
 		try {
-			TableCC tbcc = new TableCC(this);
-			tbcc.startCreateTableUI(jmcc.getUI(), cwui.getDatabase());
+			new CreateTableCC(this).startCreateTable(cwui.getDatabase());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Create table", e);
 		}
@@ -436,8 +436,7 @@ public class ConnectionWindowCC extends Thread {
 
 	public void dispatchModifyTableUI() {
 		try {
-			TableCC dbcc = new TableCC(this);
-			dbcc.startEditTableUI(jmcc.getUI(), cwui.getDatabase(), cwui.getTable());
+			new CreateTableCC(this).startEditTable(cwui.getDatabase(), cwui.getTable());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Modify table", e);
 		}
@@ -445,6 +444,11 @@ public class ConnectionWindowCC extends Thread {
 
 	public String getTitle() {
 		return cw.getConnectionProfile().getUsername() + "@" + cw.getConnectionProfile().getHost();
+	}
+
+	/** The connection window, the parent of messages and the owner of the tabs. */
+	public ConnectionWindowUI getWindow() {
+		return cwui;
 	}
 
 	public ESQLManagerUI getUI() {

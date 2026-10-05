@@ -15,6 +15,7 @@ import nl.errorsoft.esql.database.ui.DatabaseTreeView;
 import nl.errorsoft.esql.query.ui.QueryUI;
 import nl.errorsoft.esql.help.ui.HelpPane;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.ui.util.EditorTab;
 
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
@@ -53,6 +54,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private Component viewTab; // The table data or table list, shown in front of the help
 	private HelpPane html; // The user documentation from docs/.
 	private int queryTabs; // Query tabs opened so far, for their numbers
+	private static final String EDITOR_KEY = "ConnectionWindowUI.editorKey"; // Finds an editor tab again
 
 	// Internal toolbar.
 	private JToolBar tbTable;
@@ -404,7 +406,51 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		SwingUtilities.invokeLater(() -> query.getEditor().requestFocusInWindow());
 	}
 
+	/** Puts the editor tab opened under this key in front, false when there is none. */
+	public boolean selectEditorTab(String key) {
+		for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+			if (tabbedPane.getComponentAt(i) instanceof JComponent tab && key.equals(tab.getClientProperty(EDITOR_KEY))) {
+				tabbedPane.setSelectedIndex(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Opens an editor (table, indexes) in a new tab, found again by its key, and puts it in front. */
+	public void showEditorTab(String key, String title, JComponent editor) {
+		editor.putClientProperty(EDITOR_KEY, key);
+		this.tabbedPane.addTab(title, editor);
+		this.tabbedPane.setSelectedComponent(editor);
+	}
+
+	/** Closes a tab as its close button does, an editor with unsaved changes asks first. */
+	public void closeTab(Component tab) {
+		int index = tabbedPane.indexOfComponent(tab);
+
+		if (index >= 0) {
+			closeTab(index);
+		}
+	}
+
+	/** Closes a tab without asking, for an editor that has just been saved. */
+	public void removeTab(Component tab) {
+		int index = tabbedPane.indexOfComponent(tab);
+
+		if (index >= 0) {
+			removeTab(index);
+		}
+	}
+
 	private void closeTab(int index) {
+		if (this.tabbedPane.getComponentAt(index) instanceof EditorTab editor && !editor.confirmClose()) {
+			return;
+		}
+
+		removeTab(index);
+	}
+
+	private void removeTab(int index) {
 		Component tab = this.tabbedPane.getComponentAt(index);
 
 		if (tab == viewTab) {
