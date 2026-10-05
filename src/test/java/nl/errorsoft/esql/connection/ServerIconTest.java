@@ -26,7 +26,7 @@ class ServerIconTest {
 
 			FlatSVGIcon icon = assertInstanceOf(FlatSVGIcon.class, ApplicationContext.get().imageLoader().getIcon(name), name);
 			assertTrue(icon.hasFound(), "svg of " + name + " not found");
-			assertTrue(icon.getIconWidth() == 16 && icon.getIconHeight() == 16, name);
+			assertTrue(icon.getIconWidth() == 18 && icon.getIconHeight() == 18, name);
 		}
 	}
 }

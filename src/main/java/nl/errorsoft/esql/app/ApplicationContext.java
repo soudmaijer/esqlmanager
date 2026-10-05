@@ -42,10 +42,10 @@ public final class ApplicationContext {
 			images.addIcon("imgTileHorizontal", "tile-horizontal", 20, false);
 			images.addIcon("imgTileVertical", "tile-vertical", 20, false);
 			images.addIcon("pc", "server", 16, false);
-			images.addBrandIcon("serverPostgres", "brand-postgresql", 16);
-			images.addBrandIcon("serverMySql", "brand-mysql", 16);
-			images.addBrandIcon("serverOracle", "brand-oracle", 16);
-			images.addBrandIcon("serverSqlServer", "brand-microsoftsqlserver", 16);
+			images.addBrandIcon("serverPostgres", "brand-postgresql", 18);
+			images.addBrandIcon("serverMySql", "brand-mysql", 18);
+			images.addBrandIcon("serverOracle", "brand-oracle", 18);
+			images.addBrandIcon("serverSqlServer", "brand-microsoftsqlserver", 18);
 			images.addIcon("imgCreateTable", "table-add", 16, false);
 			images.addIcon("imgDropTable", "table-drop", 16, false);
 			images.addIcon("imgUserManager", "users", 16, false);

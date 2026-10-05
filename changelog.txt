@@ -5,7 +5,8 @@ eSQLManager changelog
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
 - Server icons: the profile lists, the connection window and the server node of the tree show the logo of the
-  server (PostgreSQL, MySQL, Oracle, SQL Server, Simple Icons), lighter on a dark theme.
+  server (PostgreSQL, MySQL, Oracle, SQL Server; Devicon and Simple Icons, 18px), lighter on a dark theme;
+  the window selector in the toolbar shows it too.
 - SQL query: every statement that returns rows gets its own closable result tab, named after the statement with the
   full text as tooltip, and a line with the time it ran, the database, the rows and the duration (at most 20 tabs).
 - Help tab: dark pages in a dark theme, white pages in a light theme.

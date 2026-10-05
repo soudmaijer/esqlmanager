@@ -6,6 +6,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
+import nl.errorsoft.esql.connection.ui.ServerIconRenderer;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.util.DesktopUtils;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
@@ -197,6 +198,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		toolbar.addSeparator();
 
 		cmbWindows = new JComboBox<>();
+		cmbWindows.setRenderer(new ServerIconRenderer());
 		cmbWindows.addActionListener(e -> {
 			try {
 				if (cmbWindows.getItemCount() <= 0) {
