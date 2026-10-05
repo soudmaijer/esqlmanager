@@ -161,7 +161,7 @@ This is the naming standard. New and renamed classes must follow it. Existing cl
 
 ### N2: Static-only helpers are a plural noun
 
-`Forms`, `Encodings`, `Validation`, `DesktopWindows`. Never `Util` / `Utils` / `Helper`.
+`Forms`, `Encodings`, `Validation`, `Browsers`. Never `Util` / `Utils` / `Helper`.
 
 A static class that is one algorithm or one conversion may be named after what it does instead (`AutoLayout`, `DiagramExporter`), when a plural noun would say less.
 
@@ -215,5 +215,4 @@ Known layer and naming problems that are not fixed yet. Do not report them again
 - `designer.ui.dialog.ModelPropertiesPanel`, `DatabasePropertiesPanel` and `TablePropertiesPanel` are panels in `ui.dialog` because only `DesignerPropertiesDialog` uses them.
 - `blob.ui.TransferProgress` is the window interface the controller drives; it is not a `Listener` because it also opens the window.
 - `app.ui.CreditsPanel` extends `java.awt.Canvas` (an AWT widget).
-- `ui.util.DesktopWindows` also holds `openInBrowser`, which is not about the desktop.
 - `error.ErrorHandler` shows the error dialog itself (Swing by design): it is the one place that turns a failure into a message, called from controllers and windows.

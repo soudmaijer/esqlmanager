@@ -26,7 +26,7 @@ The **Databases and schemas** tab is available after a successful test. It lists
 
 Profiles are saved in `conf/profiles.xml`. A saved password is stored there in plain text, so only save one on a machine you trust, or turn Save password off.
 
-Several connections can be open at the same time. Their windows, and the designer windows, sit on the desktop of eSQLManager; the window selector in the toolbar brings one to the front. Window > Tile horizontal, Tile vertical and Cascade arrange them.
+Several connections can be open at the same time. Each connection window, and each designer, has a tab at the top of eSQLManager with the logo of its server and its title; click a tab to bring that window to the front, or use Window > Next window and Previous window (Cmd/Ctrl+Shift+] and [) or pick it from the Window menu. The cross on a tab (or a middle click) closes the window: a connection asks "Disconnect from ...?", a designer asks to save its model.
 
 ## The connection window
 

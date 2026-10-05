@@ -2,7 +2,7 @@
 
 [Back to the help index](index.md)
 
-Tools > Database Designer draws a model of databases, tables and notes, and generates it on a MySQL or PostgreSQL server. The designer opens as a window on the desktop of eSQLManager, next to the connection windows; the window selector in the toolbar lists it, so you can switch between a connection and its models. Each model has its own designer window. Closing it (or disconnecting its connection) asks to save the model first.
+Tools > Database Designer draws a model of databases, tables and notes, and generates it on a MySQL or PostgreSQL server. The designer opens as a window on the desktop of eSQLManager, with a tab of its own next to the connection windows, so you can switch between a connection and its models. Each model has its own designer window. Closing it (or disconnecting its connection) asks to save the model first.
 
 ![The model designer with the shop database and its tables](designer.png)
 

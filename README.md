@@ -21,7 +21,7 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Saved connection profiles with auto-connect, duplicate, optional saved password | yes | yes | yes | yes |
 | Test connection from the profile dialog | yes | yes | yes | yes |
 | Choose the databases and schemas a profile shows (checkbox tree in the profile dialog) | yes | yes | yes | no |
-| Several connections open at once, tiled or cascaded | yes | yes | yes | yes |
+| Several connections open at once, one tab per window | yes | yes | yes | yes |
 | JDBC driver configuration | yes | yes | yes | yes |
 | Browse databases, tables, views and columns in a tree | yes | yes | yes | yes |
 | Schemas in the tree (server > databases > schemas > tables), create, rename and drop a schema | no | yes | no | no |
@@ -85,7 +85,7 @@ Known gaps with schemas: the user manager grants table privileges without a sche
 
 ## Database designer
 
-The designer (Tools > Database Designer) opens as a window on the desktop of eSQLManager, next to the connection windows and listed in the window selector of the toolbar, one per model. It draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
+The designer (Tools > Database Designer) opens as a window on the desktop of eSQLManager, with a tab of its own next to the connection windows, one per model. It draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
 
 * Drag from the icon of a column onto a column of another table to create a foreign key, or use "Add foreign key..." in the table's context menu or the Foreign Keys tab of its properties. The dialog takes several column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions.
 * Foreign keys are drawn from column to column with a crow's foot at the many side. Double click a line to edit it, select it and press Delete to remove it.
@@ -211,7 +211,7 @@ Settings > Preferences holds the appearance (below), the font size of the SQL ed
 
 ### Appearance
 
-Settings > Preferences > Appearance chooses the look and feel: follow the system (light or dark, on macOS), light, dark or the native look of the operating system. The choice is stored in `settings.xml` and applies at once. On macOS the menu is in the screen menu bar. The icons are vector icons from [Lucide](https://lucide.dev) that follow the theme. Profiles, connection windows, the window selector in the toolbar and the server node of the tree show the logo of the server (PostgreSQL, MySQL, Oracle, SQL Server, from [Devicon](https://devicon.dev) and [Simple Icons](https://simpleicons.org)).
+Settings > Preferences > Appearance chooses the look and feel: follow the system (light or dark, on macOS), light, dark or the native look of the operating system. The choice is stored in `settings.xml` and applies at once. On macOS the menu is in the screen menu bar. The icons are vector icons from [Lucide](https://lucide.dev) that follow the theme. Profiles, the window tabs and the server node of the tree show the logo of the server (PostgreSQL, MySQL, Oracle, SQL Server, from [Devicon](https://devicon.dev) and [Simple Icons](https://simpleicons.org)).
 
 ## Logging
 

@@ -1,6 +1,15 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Window tabs instead of the window selector
+
+- Connection windows and designers each have a tab at the top of the main window, with the server logo (or the
+  designer icon) and the title. A tab brings its window to the front; its cross or a middle click closes the window
+  the usual way (Disconnect, or save the model).
+- The windows are always maximized and have no title bar of their own; the designer keeps its menu bar.
+- The Window menu lists the open windows, with Next window and Previous window (Cmd/Ctrl+Shift+] and [).
+  Tile and Cascade, and their toolbar buttons, are gone.
+
 05-10-2026: Smaller runtime image (60 MB to 51 MB)
 
 - The bundled Java runtime keeps the locale data of English, Dutch, German, French and Spanish only.
