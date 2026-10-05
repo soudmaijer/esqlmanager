@@ -478,14 +478,19 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		showNavigation();
 	}
 
-	/** Shows what the connection did last below the tab in front, as the message of that tab. */
+	/**
+	 * What the connection did in the tree or the table view (tables listed, a table loaded) belongs to the view tab, the first tab with the table
+	 * data or table list. Without a view tab the message is only in the log: the help and the query and editor tabs keep their own messages.
+	 */
 	public void setStatus(String text) {
 		if (!SwingUtilities.isEventDispatchThread()) {
 			SwingUtilities.invokeLater(() -> setStatus(text));
 			return;
 		}
 
-		setStatus(tabbedPane.getSelectedComponent(), text);
+		if (viewTab != null) {
+			setStatus(viewTab, text);
+		}
 	}
 
 	/** Keeps a message with its tab; the status bar shows it while that tab is in front. */
@@ -498,7 +503,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		if (tab instanceof JComponent component) {
 			component.putClientProperty(STATUS_KEY, text);
 		}
-		if (tab == null || tab == tabbedPane.getSelectedComponent()) {
+		if (tab == tabbedPane.getSelectedComponent()) {
 			showStatus(text);
 		}
 	}
