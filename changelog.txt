@@ -4,6 +4,8 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Selected tabs stand out: a darker background and the accent underline, also when the focus is elsewhere
+  (TabbedPane defaults in settings.Appearance). A tab that is opened is put in front.
 - Status bar per tab: the message below the tabs of a connection window belongs to the tab it is about; switching
   tabs shows that tab's message, and a query reports in the status of its own query tab.
 - Designer as an internal frame: the model designer (designer.ui.DBCreator) is a JInternalFrame on the desktop of

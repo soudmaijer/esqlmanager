@@ -66,7 +66,7 @@ public enum Appearance {
 
 	/**
 	 * FlatLaf defaults of eSQLManager, in FlatLaf properties syntax so that the colours are derived from the theme. The title bar of a connection window is the
-	 * panel background slightly darker, inactive titles use the disabled foreground. Split pane dividers are thin and flat, without grip dots or arrows.
+	 * panel background slightly darker, inactive titles use the disabled foreground. Split pane dividers are thin and flat, without grip dots or arrows. The selected tab has a darker background and the accent underline, also when the focus is elsewhere.
 	 */
 	private static final Map<String, String> FLAT_DEFAULTS = Map.ofEntries(Map.entry("InternalFrame.activeTitleBackground", "darken(@background,4%)"),
 		Map.entry("InternalFrame.activeTitleForeground", "@foreground"), Map.entry("InternalFrame.inactiveTitleBackground", "@background"),
@@ -75,7 +75,8 @@ public enum Appearance {
 		Map.entry("InternalFrame.buttonPressedBackground", "darken($InternalFrame.activeTitleBackground,14%,derived)"),
 		Map.entry("InternalFrame.activeBorderColor", "$Component.borderColor"), Map.entry("InternalFrame.inactiveBorderColor", "$Component.borderColor"),
 		Map.entry("InternalFrameTitlePane.border", "0,12,0,4"), Map.entry("SplitPane.dividerSize", "5"), Map.entry("SplitPaneDivider.style", "plain"),
-		Map.entry("SplitPaneDivider.gripDotCount", "0"), Map.entry("SplitPaneDivider.draggingColor", "$Component.focusColor"));
+		Map.entry("SplitPaneDivider.gripDotCount", "0"), Map.entry("SplitPaneDivider.draggingColor", "$Component.focusColor"),
+		Map.entry("TabbedPane.selectedBackground", "darken(@background,6%)"), Map.entry("TabbedPane.inactiveUnderlineColor", "$TabbedPane.underlineColor"));
 
 	/** The title bar buttons are Lucide icons, coloured by {@link TitleButtonIcon} at paint time so that they follow the theme. */
 	private static void installTitleIcons() {
