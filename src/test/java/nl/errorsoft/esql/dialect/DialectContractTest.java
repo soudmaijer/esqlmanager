@@ -391,6 +391,88 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void createsADatabaseWithOptionsAndDescribesIt() throws Exception {
+		var databases = new ConnectionContext(connection).databases();
+		var choices = databases.createDatabaseChoices();
+		assertEquals(dialect.createDatabaseOptions().stream().map(o -> o.key()).toList(), List.copyOf(choices.keySet()));
+		choices.values().forEach(values -> assertFalse(values.isEmpty()));
+
+		java.util.Map<String, String> preferred = java.util.Map.of("charset", "latin1", "collation", "latin1_swedish_ci", "owner",
+			profile().getUsername(), "encoding", "UTF8");
+		java.util.Map<String, String> chosen = new java.util.LinkedHashMap<>();
+		choices.forEach((key, values) -> {
+			assertTrue(values.contains(preferred.get(key)), key + " " + values);
+			chosen.put(key, preferred.get(key));
+		});
+
+		String name = "opt_" + System.nanoTime();
+		Database created = databases.createDatabase(name, chosen);
+		var properties = databases.properties(created);
+		assertEquals(name, properties.name());
+		assertEquals(0, properties.tableCount());
+		chosen.values().forEach(value -> assertTrue(properties.details().containsValue(value), value + " in " + properties.details()));
+
+		assertThrows(EsqlException.class, () -> databases.createDatabase(name));
+		assertThrows(EsqlException.class, () -> databases.createDatabase("  "));
+		connection.useDatabase(DATABASE);
+		databases.dropDatabase(created);
+	}
+
+	@Test
+	void renamesASchema() throws Exception {
+		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.SCHEMAS), "The server has no schemas");
+		var databases = new ConnectionContext(connection).databases();
+		String name = "before_" + System.nanoTime();
+		Schema schema = databases.createSchema(database, name);
+		service().createTable(schema, "kept", List.of(column("id", INTEGER, "", true)), null, "");
+
+		Schema renamed = databases.renameSchema(schema, name + "_after");
+		assertEquals(name + "_after", renamed.getName());
+		var names = databases.getSchemas(database).stream().map(Schema::getName).toList();
+		assertTrue(names.contains(name + "_after"));
+		assertFalse(names.contains(name));
+		assertEquals(List.of("kept"), databases.getTables(renamed).stream().map(Table::getName).toList());
+		databases.dropSchema(renamed);
+	}
+
+	@Test
+	void renamesAndDuplicatesTablesAndDescribesThem() throws Exception {
+		String name = "orig_" + System.nanoTime();
+		createTable(name, "the original");
+		Table table = table(name);
+		insert(table, "first", "a");
+		insert(table, "second", "b");
+
+		service().renameTable(table, name + "_r");
+		assertEquals(name + "_r", table.getName());
+		assertTrue(service().exists(database, name + "_r"));
+		assertFalse(service().exists(database, name));
+		assertThrows(EsqlException.class, () -> service().renameTable(table, " "));
+
+		Table empty = service().duplicateTable(table, name + "_empty", false);
+		assertEquals(List.of("id", "name", "note"), columnNames(empty));
+		assertEquals(0, service().loadPage(empty, 0, 100).length);
+
+		Table full = service().duplicateTable(table, name + "_full", true);
+		assertEquals(2, service().loadPage(full, 0, 100).length);
+		// Auto numbering of the copy continues after the copied rows.
+		insert(full, "third", "c");
+		assertEquals(3, service().loadPage(full, 0, 100).length);
+		assertThrows(EsqlException.class, () -> service().duplicateTable(table, name + "_full", false));
+		assertEquals("A table named '" + name + "_full' exists already.", service().newNameProblem(table, name + "_full"));
+
+		var info = service().describe(table);
+		assertEquals(name + "_r", info.name());
+		assertEquals(3, info.columnCount());
+		assertEquals(2, info.rowCount());
+		assertTrue(info.sizeBytes() != null && info.sizeBytes() > 0, String.valueOf(info.sizeBytes()));
+
+		service().dropTable(table);
+		service().dropTable(empty);
+		service().dropTable(full);
+	}
+
+	@Test
 	void createsAndSwitchesDatabases() throws Exception {
 		String name = "db_" + System.nanoTime();
 		var databases = new ConnectionContext(connection).databases();

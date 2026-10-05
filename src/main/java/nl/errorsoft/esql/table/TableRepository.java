@@ -153,6 +153,44 @@ public class TableRepository extends AbstractRepository {
 		executeAll(dialect().renameTableSql(table.qualifiedName(), newName));
 	}
 
+	/** Creates a table with the structure of the source in the same schema, with its rows when asked. */
+	public void copyTable(Table source, String newName, boolean withData) throws Exception {
+		useDatabaseOf(source);
+		TableName target = source.qualifiedName().sibling(newName);
+		executeAll(dialect().copyTableSql(source.qualifiedName(), target, withData));
+
+		if (withData) {
+			String autoNumbered = dialect().autoNumberedColumnsSql();
+			List<String> columns = autoNumbered == null ? List.of() : queryStrings(autoNumbered, target.schema(), target.name());
+
+			for (String statement : dialect().afterDataLoadSql(target, columns)) {
+				dbc.execute(statement);
+			}
+		}
+	}
+
+	/** The exact number of rows. */
+	public long countRows(Table table) throws SQLException {
+		useDatabaseOf(table);
+
+		try (ResultSet rs = dbc.executeQuery("SELECT count(*) FROM " + quote(table))) {
+			return rs.next() ? rs.getLong(1) : 0;
+		}
+	}
+
+	/** The size of the table with its indexes in bytes, null when the server cannot tell. */
+	public Long sizeInBytes(Table table) throws SQLException {
+		String sql = dialect().tableSizeSql();
+
+		if (sql == null) {
+			return null;
+		}
+
+		useDatabaseOf(table);
+		List<String> size = queryStrings(sql, table.getSchema() == null ? null : table.getSchema().getName(), table.getName());
+		return size.isEmpty() || size.getFirst() == null ? null : Long.valueOf(size.getFirst());
+	}
+
 	public void setTableType(Table table, String type) throws Exception {
 		executeAll(dialect().setTableTypeSql(table.qualifiedName(), type));
 	}

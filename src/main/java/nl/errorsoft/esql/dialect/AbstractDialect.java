@@ -265,6 +265,50 @@ public abstract class AbstractDialect implements Dialect {
 		return "CREATE DATABASE " + quote(database);
 	}
 
+	public List<DatabaseOption> createDatabaseOptions() {
+		return List.of();
+	}
+
+	public String createDatabaseSql(String database, java.util.Map<String, String> options) {
+		StringBuilder sql = new StringBuilder("CREATE DATABASE ").append(quote(database));
+
+		for (DatabaseOption option : createDatabaseOptions()) {
+			String value = options.get(option.key());
+
+			if (value != null && !value.isBlank()) {
+				sql.append(" ").append(databaseOptionClause(option.key(), value.trim()));
+			}
+		}
+		return sql.toString();
+	}
+
+	/** The part of CREATE DATABASE that sets one option, the value is a literal or identifier to be written safely. */
+	protected String databaseOptionClause(String key, String value) {
+		throw new UnsupportedOperationException("Unknown database option " + key);
+	}
+
+	public String databasePropertiesSql() {
+		return null;
+	}
+
+	public String renameSchemaSql(String schema, String newName) {
+		return "ALTER SCHEMA " + quote(schema) + " RENAME TO " + quote(newName);
+	}
+
+	public List<String> copyTableSql(TableName source, TableName target, boolean withData) {
+		List<String> statements = new ArrayList<>();
+		statements.add("CREATE TABLE " + quote(target) + " (LIKE " + quote(source) + " INCLUDING ALL)");
+
+		if (withData) {
+			statements.add("INSERT INTO " + quote(target) + " SELECT * FROM " + quote(source));
+		}
+		return statements;
+	}
+
+	public String tableSizeSql() {
+		return null;
+	}
+
 	public String dropDatabaseSql(String database) {
 		return "DROP DATABASE " + quote(database);
 	}

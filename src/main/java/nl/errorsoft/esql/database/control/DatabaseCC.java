@@ -51,6 +51,10 @@ public class DatabaseCC {
 		return service().createSchema(database, name);
 	}
 
+	public Schema renameSchema(Schema schema, String newName) throws Exception {
+		return service().renameSchema(schema, newName);
+	}
+
 	public void dropSchema(Schema schema) throws Exception {
 		service().dropSchema(schema);
 	}

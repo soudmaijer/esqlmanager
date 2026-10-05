@@ -2,10 +2,12 @@ package nl.errorsoft.esql.database;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 
@@ -97,8 +99,48 @@ public class DatabaseService {
 	}
 
 	public Database createDatabase(String name) throws Exception {
-		repository.create(name);
+		return createDatabase(name, Map.of());
+	}
+
+	/**
+	 * Creates a database with the chosen options (see {@link DatabaseRepository#createDatabaseChoices}).
+	 * @throws EsqlException when the name is empty or a database of that name exists
+	 */
+	public Database createDatabase(String name, Map<String, String> options) throws Exception {
+		if (name == null || name.isBlank()) {
+			throw new EsqlException("Enter a name for the " + repository.databaseTerm() + ".");
+		}
+		if (exists(new Database(name))) {
+			throw new EsqlException("A " + repository.databaseTerm() + " named '" + name + "' exists already.");
+		}
+
+		repository.create(name, options);
+		log.info("Created {} {}", repository.databaseTerm(), name);
 		return new Database(name);
+	}
+
+	/** The values to choose from when creating a database, by option key. */
+	public Map<String, List<String>> createDatabaseChoices() throws Exception {
+		return repository.createDatabaseChoices();
+	}
+
+	public DatabaseProperties properties(Database database) throws Exception {
+		int tables = 0;
+		List<Schema> schemas = getSchemas(database);
+
+		if (schemas.isEmpty()) {
+			tables = repository.listTables(database).size();
+		}
+		for (Schema schema : schemas) {
+			tables += repository.listTables(schema).size();
+		}
+		return new DatabaseProperties(database.getName(), repository.describe(database), tables);
+	}
+
+	/** Renames the schema, the returned schema has the new name. */
+	public Schema renameSchema(Schema schema, String newName) throws Exception {
+		repository.renameSchema(schema, newName);
+		return new Schema(schema.getDatabase(), newName);
 	}
 
 	public void dropDatabase(Database database) throws Exception {

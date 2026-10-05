@@ -65,6 +65,52 @@ public class TableService {
 		repository.flushTable(table);
 	}
 
+	/** Gives the table another name, the table object is updated. @throws EsqlException when the name is empty or a table of that name exists */
+	public void renameTable(Table table, String newName) throws Exception {
+		checkNewName(table, newName);
+		repository.renameTable(table, newName);
+		table.setName(newName);
+	}
+
+	/** Copies the structure of the table to a new table in the same schema, with the rows when asked; returns the new table. */
+	public Table duplicateTable(Table source, String newName, boolean withData) throws Exception {
+		checkNewName(source, newName);
+		repository.copyTable(source, newName, withData);
+
+		Table copy = source.getSchema() != null ? new Table(source.getSchema()) : new Table(source.getDatabase());
+		copy.setName(newName);
+		copy.setType(source.getType());
+		copy.setComment(source.getComment());
+		copy.setRowCount(withData ? source.getRowCount() : 0);
+		return copy;
+	}
+
+	/** The message for a name that cannot be used for a table next to the given one, null when it is fine. */
+	public String newNameProblem(Table sibling, String newName) throws Exception {
+		if (newName == null || newName.isBlank()) {
+			return "Enter a name for the table.";
+		}
+		if (repository.exists(sibling.getDatabase(), sibling.getSchema(), newName.trim())) {
+			return "A table named '" + newName.trim() + "' exists already.";
+		}
+		return null;
+	}
+
+	private void checkNewName(Table sibling, String newName) throws Exception {
+		String problem = newNameProblem(sibling, newName);
+
+		if (problem != null) {
+			throw new EsqlException(problem);
+		}
+	}
+
+	/** The facts of the Properties window. */
+	public TableInfo describe(Table table) throws Exception {
+		int columns = loadColumns(table).length;
+		return new TableInfo(table.getName(), table.getDatabase().getName(), table.getSchema() == null ? null : table.getSchema().getName(), table.getType(),
+			table.getComment(), repository.countRows(table), columns, repository.sizeInBytes(table));
+	}
+
 	/** Applies the parts that changed; a null type means the database has no table types. */
 	public void modifyTable(Table table, String name, String type, String comment) throws Exception {
 		if (!table.getName().equalsIgnoreCase(name)) {

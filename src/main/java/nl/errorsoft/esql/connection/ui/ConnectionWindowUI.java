@@ -577,13 +577,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	/** Runs an item of the context menu of the tree, on the node that was right clicked (it is selected first). */
 	private void perform(TreeMenu.Item item) {
 		switch (item) {
-			case CREATE_DATABASE -> {
-				String input = Dialogs.input(this, "Create database", "&Name:", "Create");
-
-				if (input != null) {
-					cwcc.createDatabase(input);
-				}
-			}
+			case CREATE_DATABASE -> cwcc.startCreateDatabase();
 			case NEW_QUERY -> cwcc.startQueryUI();
 			case USERS -> cwcc.dispatchUserManagerUI();
 			case PROCESS_LIST -> cwcc.dispatchProcessUI();
@@ -603,7 +597,21 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 					cwcc.dropDatabase();
 				}
 			}
-			case RELOAD_TABLES -> cwcc.reloadSelectedDatabase();
+			case RELOAD_TABLES, RELOAD_SCHEMAS -> cwcc.reloadSelectedDatabase();
+			case CREATE_SCHEMA -> cwcc.startCreateSchema();
+			case RENAME_SCHEMA -> cwcc.renameSchema();
+			case DROP_SCHEMA -> {
+				Schema schema = getSchema();
+				String term = dialect().schemaTerm();
+
+				if (Dialogs.confirmDestructive(this, "Drop " + term, "Drop " + term + " '" + (schema == null ? "" : schema.getName())
+					+ "' and everything in it? This cannot be undone.", "Drop")) {
+					cwcc.dropSchema();
+				}
+			}
+			case RENAME_TABLE -> cwcc.renameSelectedTable();
+			case DUPLICATE_TABLE -> cwcc.duplicateSelectedTable();
+			case PROPERTIES -> cwcc.showProperties();
 			case OPEN_TABLE -> cwcc.openTable(getTable());
 			case EDIT_TABLE -> cwcc.dispatchModifyTableUI();
 			case INDEXES -> cwcc.dispatchTableIndexesUI();

@@ -36,6 +36,16 @@ public class DatabaseTreeView extends JTree {
 		dtm.reload();
 	}
 
+	/** The names of the databases in the tree. */
+	public List<String> databaseNames() {
+		List<String> names = new java.util.ArrayList<>();
+
+		for (int i = 0; i < rootNode.getChildCount(); i++) {
+			names.add(((DefaultMutableTreeNode) rootNode.getChildAt(i)).getUserObject().toString());
+		}
+		return names;
+	}
+
 	public void addDatabase(Database db) {
 		rootNode.add(new DefaultMutableTreeNode(db));
 		dtm.reload(rootNode);

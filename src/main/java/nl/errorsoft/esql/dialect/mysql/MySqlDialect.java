@@ -3,6 +3,7 @@ package nl.errorsoft.esql.dialect.mysql;
 import nl.errorsoft.esql.table.TableName;
 
 import nl.errorsoft.esql.dialect.AbstractDialect;
+import nl.errorsoft.esql.dialect.DatabaseOption;
 import nl.errorsoft.esql.dialect.MaintenanceStatement;
 import nl.errorsoft.esql.dialect.UserAdmin;
 
@@ -75,6 +76,37 @@ public class MySqlDialect extends AbstractDialect {
 
 	public String createDatabaseSql(String database) {
 		return "CREATE DATABASE IF NOT EXISTS " + quote(database);
+	}
+
+	public List<DatabaseOption> createDatabaseOptions() {
+		return List.of(new DatabaseOption("charset", "Character set", "SELECT CHARACTER_SET_NAME FROM information_schema.CHARACTER_SETS ORDER BY 1"),
+			new DatabaseOption("collation", "Collation", "SELECT COLLATION_NAME FROM information_schema.COLLATIONS ORDER BY 1", "charset"));
+	}
+
+	protected String databaseOptionClause(String key, String value) {
+		return switch (key) {
+			case "charset" -> "CHARACTER SET " + literal(value);
+			case "collation" -> "COLLATE " + literal(value);
+			default -> super.databaseOptionClause(key, value);
+		};
+	}
+
+	public String databasePropertiesSql() {
+		return "SELECT DEFAULT_CHARACTER_SET_NAME AS `Character set`, DEFAULT_COLLATION_NAME AS `Collation` FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?";
+	}
+
+	public List<String> copyTableSql(TableName source, TableName target, boolean withData) {
+		List<String> statements = new ArrayList<>();
+		statements.add("CREATE TABLE " + quote(target) + " LIKE " + quote(source));
+
+		if (withData) {
+			statements.add("INSERT INTO " + quote(target) + " SELECT * FROM " + quote(source));
+		}
+		return statements;
+	}
+
+	public String tableSizeSql() {
+		return "SELECT DATA_LENGTH + INDEX_LENGTH FROM information_schema.TABLES WHERE TABLE_SCHEMA = coalesce(?, DATABASE()) AND TABLE_NAME = ?";
 	}
 
 	public String useDatabaseSql(String database) {

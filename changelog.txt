@@ -2,6 +2,19 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Create database options, schema management, rename and duplicate table
+
+- Create database: the dialog checks the name against the databases in the tree and offers the options of the server,
+  taken from the server itself: character set and collation on MySQL (the collations follow the chosen character set),
+  owner and encoding on PostgreSQL.
+- Schemas (PostgreSQL): the context menu of a database now creates and reloads schemas, and the menu of a schema renames
+  and drops them (drop asks for confirmation); these menu items did nothing before.
+- Tables: Rename table and Duplicate table (structure, optionally with the rows; auto numbering of the copy continues
+  after the copied rows) in the context menu of a table.
+- Properties (context menu of a table and of a database): a read-only summary. A table shows name, database, schema,
+  engine or type, comment, rows, columns and size; a database shows its character set and collation (MySQL) or owner and
+  encoding (PostgreSQL) and the number of tables.
+
 05-10-2026: Cancel for jobs, export and import options
 
 - Export, import and the upload and download of a binary cell can be cancelled. The progress window has a Cancel

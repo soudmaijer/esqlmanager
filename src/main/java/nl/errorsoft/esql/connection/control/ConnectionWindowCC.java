@@ -21,6 +21,13 @@ import nl.errorsoft.esql.query.control.QueryCC;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
+import nl.errorsoft.esql.database.DatabaseProperties;
+import nl.errorsoft.esql.database.ui.CreateDatabaseForm;
+import nl.errorsoft.esql.table.TableInfo;
+import nl.errorsoft.esql.table.ui.DuplicateTableForm;
+import nl.errorsoft.esql.ui.util.ByteSize;
+import nl.errorsoft.esql.ui.util.PropertiesDialog;
+import nl.errorsoft.esql.ui.util.Validation;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -156,15 +163,29 @@ public class ConnectionWindowCC extends Thread {
 		}
 	}
 
-	public void createDatabase(String name) {
+	/** Asks for the name and the options of the new database (character set, owner, ...) and creates it. */
+	public void startCreateDatabase() {
 		try {
-			jmcc.updateStatus("Creating database...", true);
-			DatabaseCC dbcc = new DatabaseCC(this);
-			Database db = dbcc.createDatabase(name);
+			CreateDatabaseForm.Request request = CreateDatabaseForm.ask(cwui, dialect().databaseTerm(), dialect().createDatabaseOptions(),
+				getContext().databases().createDatabaseChoices(), cwui.getDatabaseTreeView().databaseNames());
+
+			if (request != null) {
+				createDatabase(request.name(), request.options());
+			}
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Create " + dialect().databaseTerm(), e);
+		}
+	}
+
+	private void createDatabase(String name, Map<String, String> options) {
+		try {
+			jmcc.updateStatus("Creating " + dialect().databaseTerm() + "...", true);
+			Database db = getContext().databases().createDatabase(name, options);
 			cwui.getDatabaseTreeView().addDatabase(db);
+			setStatusDetail(dialect().databaseTerm() + " " + name + " created");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Create database", e);
+			ApplicationContext.get().errors().report(cwui, "Create " + dialect().databaseTerm(), e);
 		}
 	}
 
@@ -265,6 +286,34 @@ public class ConnectionWindowCC extends Thread {
 		return cw.getConnectionProfile().getServerType().getDialect();
 	}
 
+	public void startCreateSchema() {
+		String name = Dialogs.input(cwui, "Create " + dialect().schemaTerm(), "&Name:", "Create");
+
+		if (name != null) {
+			createSchema(name);
+		}
+	}
+
+	public void renameSchema() {
+		Schema schema = cwui.getSchema();
+		String term = dialect().schemaTerm();
+		String name = Dialogs.input(cwui, "Rename " + term, "&New name:", "Rename", schema.getName(),
+			value -> Validation.first(Validation.required("a name", value), value.equals(schema.getName()) ? "Enter another name." : null));
+
+		if (name == null) {
+			return;
+		}
+
+		try {
+			jmcc.updateStatus("Renaming " + term + "...", true);
+			new DatabaseCC(this).renameSchema(schema, name);
+			databaseSelected(schema.getDatabase());
+			setStatusDetail(schema.getDatabase().getName() + ": " + term + " " + schema.getName() + " renamed to " + name);
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Rename " + term, e);
+		}
+	}
+
 	public void createSchema(String name) {
 		try {
 			Database database = cwui.getDatabase();
@@ -289,6 +338,107 @@ public class ConnectionWindowCC extends Thread {
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Drop " + dialect().schemaTerm(), e);
 		}
+	}
+
+	/** Shows the tables of the schema or database a table is in, after the list has changed. */
+	private void reloadTablesOf(Table table) {
+		if (table.getSchema() != null && hasSchemas()) {
+			schemaSelected(table.getSchema());
+		} else {
+			databaseSelected(table.getDatabase());
+		}
+	}
+
+	/** The message for a name the table service refuses, so a dialog can keep itself open. */
+	private String tableNameProblem(Table table, String name) {
+		try {
+			return getContext().tables().newNameProblem(table, name);
+		} catch (Exception e) {
+			return e.getMessage();
+		}
+	}
+
+	public void renameSelectedTable() {
+		Table table = cwui.getTable();
+		String name = Dialogs.input(cwui, "Rename table", "&New name:", "Rename", table.getName(), value -> tableNameProblem(table, value));
+
+		if (name == null) {
+			return;
+		}
+
+		try {
+			jmcc.updateStatus("Renaming table...", true);
+			String oldName = table.getName();
+			getContext().tables().renameTable(table, name);
+			reloadTablesOf(table);
+			setStatusDetail("Table " + oldName + " renamed to " + name);
+			jmcc.showConnectionState();
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Rename table", e);
+		}
+	}
+
+	public void duplicateSelectedTable() {
+		Table table = cwui.getTable();
+		DuplicateTableForm.Request request = DuplicateTableForm.ask(cwui, table.getName() + "_copy", value -> tableNameProblem(table, value));
+
+		if (request == null) {
+			return;
+		}
+
+		try {
+			jmcc.updateStatus("Duplicating table...", true);
+			Table copy = getContext().tables().duplicateTable(table, request.name(), request.withData());
+			reloadTablesOf(table);
+			setStatusDetail("Table " + table.getName() + " duplicated as " + copy.getName() + (request.withData() ? " with its data" : ""));
+			jmcc.showConnectionState();
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Duplicate table", e);
+		}
+	}
+
+	/** The read-only Properties window of the selected table or database. */
+	public void showProperties() {
+		try {
+			if (selectedObject() instanceof Table table) {
+				showTableProperties(table);
+			} else if (selectedObject() instanceof Database database) {
+				showDatabaseProperties(database);
+			}
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Properties", e);
+		}
+	}
+
+	private void showTableProperties(Table table) throws Exception {
+		TableInfo info = getContext().tables().describe(table);
+		Map<String, String> properties = new LinkedHashMap<>();
+		properties.put("Name", info.name());
+		properties.put(capitalized(dialect().databaseTerm()), info.database());
+		if (info.schema() != null) {
+			properties.put(capitalized(dialect().schemaTerm()), info.schema());
+		}
+		properties.put(dialect().getTableTypes().length > 0 ? "Engine" : "Type", info.type());
+		properties.put("Comment", info.comment());
+		properties.put("Rows", String.valueOf(info.rowCount()));
+		properties.put("Columns", String.valueOf(info.columnCount()));
+		if (info.sizeBytes() != null) {
+			properties.put("Size", ByteSize.format(info.sizeBytes()));
+		}
+		PropertiesDialog.show(cwui, "Properties of " + info.name(), properties);
+	}
+
+	private void showDatabaseProperties(Database database) throws Exception {
+		DatabaseProperties info = getContext().databases().properties(database);
+		Map<String, String> properties = new LinkedHashMap<>();
+		properties.put("Name", info.name());
+		properties.putAll(info.details());
+		properties.put("Tables", String.valueOf(info.tableCount()));
+		PropertiesDialog.show(cwui, "Properties of " + info.name(), properties);
+	}
+
+	private static String capitalized(String word) {
+		return Character.toUpperCase(word.charAt(0)) + word.substring(1);
 	}
 
 	/*

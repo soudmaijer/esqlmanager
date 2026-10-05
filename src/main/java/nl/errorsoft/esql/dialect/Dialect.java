@@ -179,6 +179,30 @@ public interface Dialect {
 
 	String createDatabaseSql(String database);
 
+	/** The choices offered when creating a database (character set, owner, ...), empty when the server has none. */
+	List<DatabaseOption> createDatabaseOptions();
+
+	/**
+	 * CREATE DATABASE with the chosen options.
+	 * @param options the value per {@link DatabaseOption#key()}, options that are missing or blank are left to the server default.
+	 */
+	String createDatabaseSql(String database, java.util.Map<String, String> options);
+
+	/**
+	 * A query that returns the properties of a database as one row, the database name is its only parameter; each column is a property named by its
+	 * label. Null when the server has nothing to show.
+	 */
+	String databasePropertiesSql();
+
+	/** Renames a schema, only meaningful when the server {@link #supports} {@link Feature#SCHEMAS}. */
+	String renameSchemaSql(String schema, String newName);
+
+	/** Copies the structure of a table (columns, defaults, indexes) to a new table and, when asked, its rows. */
+	List<String> copyTableSql(TableName source, TableName target, boolean withData);
+
+	/** A query with the schema (null for the current one) and the table name as parameters, returning the size of the table with its indexes in bytes; null when unknown. */
+	String tableSizeSql();
+
 	String dropDatabaseSql(String database);
 
 	/** The database to switch to before dropping the one the connection is using, null when the server can drop it while in use. */

@@ -54,9 +54,29 @@ class TreeMenuTest {
 		assertEquals("Reload schemas", Item.RELOAD_SCHEMAS.label(POSTGRES));
 		assertEquals("Reload databases", Item.RELOAD_DATABASES.label(POSTGRES));
 		assertEquals(
-			List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.IMPORT, Item.DROP_SCHEMA,
+			List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.IMPORT, Item.RENAME_SCHEMA,
+				Item.DROP_SCHEMA,
 				Item.SEPARATOR, Item.RELOAD_TABLES),
 			TreeMenu.itemsFor(Node.SCHEMA, POSTGRES));
+	}
+
+	@Test
+	void tablesCanBeRenamedDuplicatedAndInspectedWhereTheServerCanDdl() {
+		for (Dialect dialect : List.of(MY_SQL, POSTGRES)) {
+			List<Item> table = TreeMenu.itemsFor(Node.TABLE, dialect);
+			assertTrue(table.containsAll(List.of(Item.RENAME_TABLE, Item.DUPLICATE_TABLE, Item.PROPERTIES)), String.valueOf(dialect));
+			assertTrue(TreeMenu.itemsFor(Node.DATABASE, dialect).contains(Item.PROPERTIES));
+		}
+		List<Item> sqlServer = TreeMenu.itemsFor(Node.TABLE, SQL_SERVER);
+		assertFalse(sqlServer.contains(Item.RENAME_TABLE) || sqlServer.contains(Item.DUPLICATE_TABLE) || sqlServer.contains(Item.PROPERTIES));
+		assertFalse(TreeMenu.itemsFor(Node.DATABASE, SQL_SERVER).contains(Item.PROPERTIES));
+	}
+
+	@Test
+	void onlyServersWithSchemasCanRenameThem() {
+		assertTrue(TreeMenu.itemsFor(Node.SCHEMA, POSTGRES).contains(Item.RENAME_SCHEMA));
+		assertFalse(TreeMenu.itemsFor(Node.SCHEMA, MY_SQL).contains(Item.RENAME_SCHEMA));
+		assertEquals("Rename schema...", Item.RENAME_SCHEMA.label(POSTGRES));
 	}
 
 	@Test

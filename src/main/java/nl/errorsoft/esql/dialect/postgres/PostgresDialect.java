@@ -3,6 +3,7 @@ package nl.errorsoft.esql.dialect.postgres;
 import nl.errorsoft.esql.table.TableName;
 
 import nl.errorsoft.esql.dialect.AbstractDialect;
+import nl.errorsoft.esql.dialect.DatabaseOption;
 import nl.errorsoft.esql.dialect.MaintenanceStatement;
 import nl.errorsoft.esql.dialect.UserAdmin;
 
@@ -135,6 +136,29 @@ public class PostgresDialect extends AbstractDialect {
 			SELECT nspname FROM pg_namespace
 			WHERE nspname NOT IN ('pg_catalog', 'information_schema') AND nspname NOT LIKE 'pg\\_toast%' AND nspname NOT LIKE 'pg\\_temp%'
 			ORDER BY nspname""";
+	}
+
+	public List<DatabaseOption> createDatabaseOptions() {
+		return List.of(new DatabaseOption("owner", "Owner", "SELECT rolname FROM pg_roles WHERE rolname NOT LIKE 'pg\\_%' ORDER BY 1"),
+			new DatabaseOption("encoding", "Encoding",
+				"SELECT DISTINCT pg_encoding_to_char(i) FROM generate_series(0, 40) i WHERE pg_encoding_to_char(i) <> '' ORDER BY 1"));
+	}
+
+	/** Another encoding than the template's needs template0, which is always empty and always there. */
+	protected String databaseOptionClause(String key, String value) {
+		return switch (key) {
+			case "owner" -> "OWNER " + quote(value);
+			case "encoding" -> "ENCODING " + literal(value) + " TEMPLATE template0";
+			default -> super.databaseOptionClause(key, value);
+		};
+	}
+
+	public String databasePropertiesSql() {
+		return "SELECT pg_get_userbyid(datdba)::text AS \"Owner\", pg_encoding_to_char(encoding)::text AS \"Encoding\", datcollate::text AS \"Collation\" FROM pg_database WHERE datname = ?";
+	}
+
+	public String tableSizeSql() {
+		return "SELECT pg_total_relation_size(format('%I.%I', coalesce(?::text, current_schema()::text), ?::text)::regclass)";
 	}
 
 	public String useSchemaSql(String schema) {

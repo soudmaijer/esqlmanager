@@ -1,10 +1,15 @@
 package nl.errorsoft.esql.database;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import nl.errorsoft.esql.dialect.DatabaseOption;
 import nl.errorsoft.esql.jdbc.AbstractRepository;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
@@ -75,6 +80,11 @@ public class DatabaseRepository extends AbstractRepository {
 		executeUpdate(dialect().dropSchemaSql(schema.getName()));
 	}
 
+	/** What the server calls a database. */
+	public String databaseTerm() {
+		return dialect().databaseTerm();
+	}
+
 	public boolean exists(String name) throws SQLException {
 		return listNames().contains(name);
 	}
@@ -83,8 +93,48 @@ public class DatabaseRepository extends AbstractRepository {
 		useDatabase(name);
 	}
 
-	public void create(String name) throws SQLException {
-		executeUpdate("CREATE DATABASE " + quote(name));
+	public void create(String name, Map<String, String> options) throws SQLException {
+		executeUpdate(dialect().createDatabaseSql(name, options));
+	}
+
+	/** The values to choose from for every option of CREATE DATABASE, by option key; empty when the server has no options. */
+	public Map<String, List<String>> createDatabaseChoices() throws SQLException {
+		Map<String, List<String>> choices = new LinkedHashMap<>();
+
+		for (DatabaseOption option : dialect().createDatabaseOptions()) {
+			choices.put(option.key(), queryStrings(option.choicesSql()));
+		}
+		return choices;
+	}
+
+	/** The properties of a database as the server reports them, in the order of its columns; empty when the server reports none. */
+	public Map<String, String> describe(Database database) throws SQLException {
+		String sql = dialect().databasePropertiesSql();
+		Map<String, String> details = new LinkedHashMap<>();
+
+		if (sql == null) {
+			return details;
+		}
+
+		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
+			ps.setString(1, database.getName());
+
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					ResultSetMetaData columns = rs.getMetaData();
+
+					for (int i = 1; i <= columns.getColumnCount(); i++) {
+						details.put(columns.getColumnLabel(i), rs.getString(i));
+					}
+				}
+			}
+		}
+		return details;
+	}
+
+	public void renameSchema(Schema schema, String newName) throws SQLException {
+		useDatabase(schema.getDatabase().getName());
+		executeUpdate(dialect().renameSchemaSql(schema.getName(), newName));
 	}
 
 	/** Also drops the database the connection is using, moving to another one first when the server needs that. */
