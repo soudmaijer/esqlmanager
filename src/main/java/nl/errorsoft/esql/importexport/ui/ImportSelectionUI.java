@@ -19,9 +19,8 @@ import javax.swing.*;
  * @version 1.0
  */
 
-public class ImportSelectionUI extends JDialog implements ActionListener
-{
-	private static final Logger log = LogManager.getLogger( ImportSelectionUI.class );
+public class ImportSelectionUI extends JDialog implements ActionListener {
+	private static final Logger log = LogManager.getLogger(ImportSelectionUI.class);
 
 	JPanel jPanel1 = new JPanel();
 	JRadioButton jRadioButton1 = new JRadioButton();
@@ -32,87 +31,75 @@ public class ImportSelectionUI extends JDialog implements ActionListener
 	private ESQLManagerUI jm;
 	private ImportCC ecc;
 
-	public ImportSelectionUI( ImportCC ecc, ESQLManagerUI jm )
-	{
-		try
-		{
+	public ImportSelectionUI(ImportCC ecc, ESQLManagerUI jm) {
+		try {
 			this.jm = jm;
 			this.ecc = ecc;
 			jbInit();
-		}
-		catch ( Exception ex )
-		{
-			log.error( ex.getMessage(), ex );
+		} catch (Exception ex) {
+			log.error(ex.getMessage(), ex);
 		}
 	}
 
-	void jbInit() throws Exception
-	{
-		this.setTitle( "Import data" );
-		this.setResizable( false );
-		this.getContentPane().setLayout( null );
-		this.setSize( new Dimension( 320, 200 ) );
-		jRadioButton1.setText( "From a CSV comma-seperated file" );
-		jRadioButton1.setBounds( new Rectangle( 10, 30, 225, 23 ) );
-		jRadioButton2.setText( "From a file containing SQL statements" );
-		jRadioButton2.setBounds( new Rectangle( 10, 7, 225, 23 ) );
-		jLabel1.setFont( new java.awt.Font( "Dialog", 1, 11 ) );
-		jLabel1.setText( "Import data options:" );
-		jLabel1.setBounds( new Rectangle( 30, 20, 161, 15 ) );
-		jPanel1.setLayout( null );
-		jPanel1.setBorder( BorderFactory.createEtchedBorder() );
-		jPanel1.setBounds( new Rectangle( 29, 47, 250, 59 ) );
-		jButton1.setBounds( new Rectangle( 55, 120, 94, 21 ) );
-		jButton1.setText( "Cancel" );
-		jButton1.addActionListener( this );
-		jButton2.setBounds( new Rectangle( 155, 120, 95, 21 ) );
-		jButton2.setText( "Next" );
-		jButton2.addActionListener( this );
-		jPanel1.add( jRadioButton2, null );
-		jPanel1.add( jRadioButton1, null );
-		jRadioButton1.setEnabled( false );
-		jRadioButton2.setSelected( true );
-		this.getContentPane().add( jButton1, null );
-		this.getContentPane().add( jButton2, null );
-		this.getContentPane().add( jLabel1, null );
-		this.getContentPane().add( jPanel1, null );
-		this.setLocation( jm.getLocation().x + ( int ) ( ( jm.getSize().width - this.getSize().width ) / 2 ),
-			jm.getLocation().y + ( int ) ( ( jm.getSize().height - this.getSize().height ) / 2 ) );
+	void jbInit() throws Exception {
+		this.setTitle("Import data");
+		this.setResizable(false);
+		this.getContentPane().setLayout(null);
+		this.setSize(new Dimension(320, 200));
+		jRadioButton1.setText("From a CSV comma-seperated file");
+		jRadioButton1.setBounds(new Rectangle(10, 30, 225, 23));
+		jRadioButton2.setText("From a file containing SQL statements");
+		jRadioButton2.setBounds(new Rectangle(10, 7, 225, 23));
+		jLabel1.setFont(new java.awt.Font("Dialog", 1, 11));
+		jLabel1.setText("Import data options:");
+		jLabel1.setBounds(new Rectangle(30, 20, 161, 15));
+		jPanel1.setLayout(null);
+		jPanel1.setBorder(BorderFactory.createEtchedBorder());
+		jPanel1.setBounds(new Rectangle(29, 47, 250, 59));
+		jButton1.setBounds(new Rectangle(55, 120, 94, 21));
+		jButton1.setText("Cancel");
+		jButton1.addActionListener(this);
+		jButton2.setBounds(new Rectangle(155, 120, 95, 21));
+		jButton2.setText("Next");
+		jButton2.addActionListener(this);
+		jPanel1.add(jRadioButton2, null);
+		jPanel1.add(jRadioButton1, null);
+		jRadioButton1.setEnabled(false);
+		jRadioButton2.setSelected(true);
+		this.getContentPane().add(jButton1, null);
+		this.getContentPane().add(jButton2, null);
+		this.getContentPane().add(jLabel1, null);
+		this.getContentPane().add(jPanel1, null);
+		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
+			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
 	}
 
-	public void actionPerformed( ActionEvent e )
-	{
-		if ( e.getSource() == this.jButton1 )
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == this.jButton1) {
 			dispose();
-		else if ( e.getSource() == this.jButton2 )
-		{
-			if ( !jRadioButton1.isSelected() && !jRadioButton2.isSelected() )
-			{
-				showErrorMessage( "Select an Import option!" );
-			}
-			else
-			{
+		} else if (e.getSource() == this.jButton2) {
+			if (!jRadioButton1.isSelected() && !jRadioButton2.isSelected()) {
+				showErrorMessage("Select an Import option!");
+			} else {
 				// CSV
-				if ( jRadioButton1.isSelected() )
-					;
-				// SQL
-				else if ( jRadioButton2.isSelected() )
+				if (jRadioButton1.isSelected()) {
+					// SQL
+				} else if (jRadioButton2.isSelected()) {
 					ecc.startImportSQLUI();
+				}
 				this.dispose();
 			}
 		}
 	}
 
-	public void showMessage( String message )
-	{
+	public void showMessage(String message) {
 		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog( this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE );
+		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	public void showErrorMessage( String message )
-	{
+	public void showErrorMessage(String message) {
 		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog( this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE );
+		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 }

@@ -52,7 +52,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Code style
 
-* Formatting is done by Spotless with the Eclipse formatter profile in `.eclipse-formatter.xml` (tabs, braces on their own line, spaces inside parentheses, 160 columns, LF line endings). Run `./mvnw spotless:apply` before committing, `./mvnw spotless:check` verifies. `.editorconfig` holds the same basics for editors. IntelliJ's own formatter does not follow it.
+* Formatting is done by Spotless with the Eclipse formatter profile in `.eclipse-formatter.xml` (Java conventions: braces at the end of the line, tabs, 160 columns, LF line endings; if, else, for and while always have braces). Run `./mvnw spotless:apply` before committing, `./mvnw spotless:check` verifies. `.editorconfig` holds the same basics for editors. IntelliJ's own formatter does not follow it.
 * Resources are closed with try-with-resources. No deprecated API in new code (`new Integer`, `Dialog.show()`, ...).
 * No em-dashes in prose or documentation.
 

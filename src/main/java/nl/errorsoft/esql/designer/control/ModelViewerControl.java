@@ -7,63 +7,52 @@ import nl.errorsoft.esql.ui.ImageLoader;
 
 import nl.errorsoft.esql.ui.ImageLoader;
 
-public class ModelViewerControl
-{
+public class ModelViewerControl {
 	private DBCreator db;
 
-	public ModelViewerControl( DBCreator db )
-	{
+	public ModelViewerControl(DBCreator db) {
 		this.db = db;
 	}
 
-	public void showPropertiesDialog( Vector sel )
-	{
-		if ( sel.size() == 1 )
-			db.showProperties( sel.get( 0 ) );
+	public void showPropertiesDialog(Vector sel) {
+		if (sel.size() == 1) {
+			db.showProperties(sel.get(0));
+		}
 	}
 
-	public void showModelPropertiesDialog( Object model )
-	{
-		db.showProperties( model );
+	public void showModelPropertiesDialog(Object model) {
+		db.showProperties(model);
 	}
 
-	public void buildMenu()
-	{
+	public void buildMenu() {
 		db.buildMenu();
 	}
 
-	public void saveModel( boolean direct )
-	{
-		db.saveCurrentModel( direct );
+	public void saveModel(boolean direct) {
+		db.saveCurrentModel(direct);
 	}
 
-	public void newModel()
-	{
+	public void newModel() {
 		db.newModel();
 	}
 
-	public void openModel()
-	{
+	public void openModel() {
 		db.openModel();
 	}
 
-	public void updateTitle()
-	{
+	public void updateTitle() {
 		db.updateTitle();
 	}
 
-	public ImageLoader getImageList()
-	{
+	public ImageLoader getImageList() {
 		return db.getImageList();
 	}
 
-	public void saveModel()
-	{
-		this.db.saveCurrentModel( true );
+	public void saveModel() {
+		this.db.saveCurrentModel(true);
 	}
 
-	public void generate()
-	{
+	public void generate() {
 		this.db.generate();
 	}
 }

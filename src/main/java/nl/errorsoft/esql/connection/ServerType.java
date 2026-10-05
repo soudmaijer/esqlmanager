@@ -11,9 +11,8 @@ import java.io.File;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
-public class ServerType
-{
-	private static final Logger log = LogManager.getLogger( ServerType.class );
+public class ServerType {
+	private static final Logger log = LogManager.getLogger(ServerType.class);
 
 	public static final int MY_SQL = 0;
 	public static final int MS_SQL_SERVER = 1;
@@ -31,16 +30,13 @@ public class ServerType
 	private String dataCloseChar = "";
 	private DataType[] dt;
 
-	public ServerType( int type )
-	{
+	public ServerType(int type) {
 		this.type = type;
 		DatabaseDriver d = new DatabaseDriver();
 		DatabaseDriver[] da = d.getDatabaseDrivers();
 
-		for ( int i = 0; i < da.length; i++ )
-		{
-			if ( type == da[i].getId() )
-			{
+		for (int i = 0; i < da.length; i++) {
+			if (type == da[i].getId()) {
 				description = da[i].getDriverName();
 				connectionURL = da[i].getDriverURL();
 				driverName = da[i].getDriverClassName();
@@ -52,115 +48,97 @@ public class ServerType
 		}
 	}
 
-	public String getFieldOpenChar()
-	{
+	public String getFieldOpenChar() {
 		return fieldOpenChar;
 	}
 
-	public String getFieldCloseChar()
-	{
+	public String getFieldCloseChar() {
 		return fieldCloseChar;
 	}
 
-	public String getDataOpenChar()
-	{
+	public String getDataOpenChar() {
 		return dataOpenChar;
 	}
 
-	public String getDataCloseChar()
-	{
+	public String getDataCloseChar() {
 		return dataCloseChar;
 	}
 
-	public String getConnectionURL( ConnectionProfile cp, String database )
-	{
+	public String getConnectionURL(ConnectionProfile cp, String database) {
 		String url = connectionURL;
 
-		url = url.replace( "@host", cp.getHost() );
-		url = url.replace( "@port", cp.getPort() );
-		url = url.replace( "@username", cp.getUsername() );
-		url = url.replace( "@password", cp.getPassword() );
-		url = url.replace( "@database", getDialect().getConnectionDatabase( cp, database ) );
+		url = url.replace("@host", cp.getHost());
+		url = url.replace("@port", cp.getPort());
+		url = url.replace("@username", cp.getUsername());
+		url = url.replace("@password", cp.getPassword());
+		url = url.replace("@database", getDialect().getConnectionDatabase(cp, database));
 
 		return url;
 	}
 
-	public Dialect getDialect()
-	{
-		return Dialects.forType( type );
+	public Dialect getDialect() {
+		return Dialects.forType(type);
 	}
 
-	public String getDriverName()
-	{
+	public String getDriverName() {
 		return driverName;
 	}
 
-	public int getType()
-	{
+	public int getType() {
 		return type;
 	}
 
-	public String getDescription()
-	{
+	public String getDescription() {
 		return description;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return description;
 	}
 
-	public DataType[] getDataTypes()
-	{
-		if ( dt != null && dt.length != 0 )
-		{
+	public DataType[] getDataTypes() {
+		if (dt != null && dt.length != 0) {
 			return dt;
 		}
-		try
-		{
+		try {
 			SAXBuilder builder = new SAXBuilder();
-			org.jdom.Document sdata = builder.build( new File( "conf/datatypes.xml" ) );
+			org.jdom.Document sdata = builder.build(new File("conf/datatypes.xml"));
 
 			// The file holds the datatypes of every server, pick the section of this one.
-			for ( Object driver : sdata.getRootElement().getChildren( "driver" ) )
-			{
-				if ( Integer.parseInt( ( ( Element ) driver ).getAttributeValue( "id" ) ) != this.getType() )
+			for (Object driver : sdata.getRootElement().getChildren("driver")) {
+				if (Integer.parseInt(((Element) driver).getAttributeValue("id")) != this.getType()) {
 					continue;
+				}
 
-				java.util.List types = ( ( Element ) driver ).getChildren( "type" );
+				java.util.List types = ((Element) driver).getChildren("type");
 				this.dt = new DataType[types.size()];
 
-				for ( int i = 0; i < types.size(); i++ )
-				{
-					Element type = ( Element ) types.get( i );
-					this.dt[i] = new DataType( type.getChildText( "name" ), flag( type, "primary" ), flag( type, "index" ), flag( type, "unique" ),
-						flag( type, "binary" ),
-						flag( type, "notnull" ), flag( type, "unsigned" ), flag( type, "autoincrement" ), flag( type, "zerofill" ) );
+				for (int i = 0; i < types.size(); i++) {
+					Element type = (Element) types.get(i);
+					this.dt[i] = new DataType(type.getChildText("name"), flag(type, "primary"), flag(type, "index"), flag(type, "unique"),
+						flag(type, "binary"),
+						flag(type, "notnull"), flag(type, "unsigned"), flag(type, "autoincrement"), flag(type, "zerofill"));
 				}
 				return this.dt;
 			}
-			log.warn( "No datatypes specified for server type {}", this.getType() );
-		}
-		catch ( Exception e )
-		{
-			log.error( e.getMessage(), e );
+			log.warn("No datatypes specified for server type {}", this.getType());
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
 		}
 		return new DataType[0];
 	}
 
-	private boolean flag( Element type, String name )
-	{
-		return "true".equalsIgnoreCase( type.getChildText( name ) );
+	private boolean flag(Element type, String name) {
+		return "true".equalsIgnoreCase(type.getChildText(name));
 	}
 
-	public static ServerType[] getServerTypes()
-	{
+	public static ServerType[] getServerTypes() {
 		ServerType[] st = new ServerType[4];
 
-		st[0] = new ServerType( ServerType.MY_SQL );
-		st[1] = new ServerType( ServerType.MS_SQL_SERVER );
-		st[2] = new ServerType( ServerType.POSTGRES );
-		st[3] = new ServerType( ServerType.ORACLE );
+		st[0] = new ServerType(ServerType.MY_SQL);
+		st[1] = new ServerType(ServerType.MS_SQL_SERVER);
+		st[2] = new ServerType(ServerType.POSTGRES);
+		st[3] = new ServerType(ServerType.ORACLE);
 
 		return st;
 	}

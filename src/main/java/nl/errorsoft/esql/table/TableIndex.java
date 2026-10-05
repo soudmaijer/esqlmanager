@@ -4,8 +4,7 @@ package nl.errorsoft.esql.table;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
 
-public class TableIndex
-{
+public class TableIndex {
 	private boolean unique = false;
 	private boolean newindex = false;
 	private boolean fulltext = false;
@@ -13,48 +12,39 @@ public class TableIndex
 	private String name;
 	private Table table;
 
-	public TableIndex( Table table )
-	{
+	public TableIndex(Table table) {
 		tca = new TableColumn[0];
 		this.table = table;
 	}
 
-	public Table getTable()
-	{
+	public Table getTable() {
 		return this.table;
 	}
 
-	public void setNew( boolean newindex )
-	{
+	public void setNew(boolean newindex) {
 		this.newindex = newindex;
 	}
 
-	public boolean isNew()
-	{
+	public boolean isNew() {
 		return newindex;
 	}
 
-	public void setUnique( boolean unique )
-	{
+	public void setUnique(boolean unique) {
 		this.unique = unique;
 	}
 
-	public void setFulltext( boolean fulltext )
-	{
+	public void setFulltext(boolean fulltext) {
 		this.fulltext = fulltext;
 	}
 
-	public boolean isFulltext()
-	{
+	public boolean isFulltext() {
 		return this.fulltext;
 	}
 
-	public void addTableColumn( TableColumn tc )
-	{
+	public void addTableColumn(TableColumn tc) {
 		TableColumn[] temp = new TableColumn[tca.length + 1];
 
-		for ( int i = 0; i < temp.length - 1; i++ )
-		{
+		for (int i = 0; i < temp.length - 1; i++) {
 			temp[i] = tca[i];
 		}
 
@@ -63,35 +53,30 @@ public class TableIndex
 		temp = null;
 	}
 
-	public TableColumn[] getTableColumns()
-	{
+	public TableColumn[] getTableColumns() {
 		return this.tca;
 	}
 
-	public void setName( String name )
-	{
+	public void setName(String name) {
 		this.name = name;
 	}
 
-	public boolean isUnique()
-	{
+	public boolean isUnique() {
 		return unique;
 	}
 
-	public boolean isPrimary()
-	{
-		if ( this.getName().equals( "PRIMARY" ) )
+	public boolean isPrimary() {
+		if (this.getName().equals("PRIMARY")) {
 			return true;
+		}
 		return false;
 	}
 
-	public String getName()
-	{
-		return ( this.name );
+	public String getName() {
+		return (this.name);
 	}
 
-	public String toString()
-	{
+	public String toString() {
 
 		return name;
 	}

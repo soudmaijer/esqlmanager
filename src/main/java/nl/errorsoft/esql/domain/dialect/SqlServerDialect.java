@@ -8,31 +8,27 @@ import java.util.List;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.connection.ServerType;
 
-public class SqlServerDialect extends AbstractDialect
-{
-	public int getType()
-	{
+public class SqlServerDialect extends AbstractDialect {
+	public int getType() {
 		return ServerType.MS_SQL_SERVER;
 	}
 
-	public String getDefaultPort()
-	{
+	public String getDefaultPort() {
 		return "1433";
 	}
 
-	public String getDefaultUsername()
-	{
+	public String getDefaultUsername() {
 		return "sa";
 	}
 
-	public List<String> listDatabases( DatabaseConnection dbc ) throws SQLException
-	{
+	public List<String> listDatabases(DatabaseConnection dbc) throws SQLException {
 		List<String> names = new ArrayList<String>();
-		CallableStatement cs = dbc.getConnection().prepareCall( "{call sp_databases}" );
+		CallableStatement cs = dbc.getConnection().prepareCall("{call sp_databases}");
 		ResultSet rs = cs.executeQuery();
 
-		while ( rs.next() )
-			names.add( rs.getString( 1 ) );
+		while (rs.next()) {
+			names.add(rs.getString(1));
+		}
 
 		rs.close();
 		cs.close();

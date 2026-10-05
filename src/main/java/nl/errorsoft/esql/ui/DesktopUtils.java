@@ -8,9 +8,8 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class DesktopUtils
-{
-	private static final Logger log = LogManager.getLogger( DesktopUtils.class );
+public class DesktopUtils {
+	private static final Logger log = LogManager.getLogger(DesktopUtils.class);
 
 	protected static final int UNUSED_HEIGHT = 0;
 	protected static int nextX; // Next X position
@@ -22,11 +21,9 @@ public class DesktopUtils
 
 	// Layout all of the children of this container
 	// so that they are tiled.
-	public static void tileVertical( JDesktopPane desktop )
-	{
+	public static void tileVertical(JDesktopPane desktop) {
 		DesktopManager manager = desktop.getDesktopManager();
-		if ( manager == null )
-		{
+		if (manager == null) {
 			// No desktop manager - do nothing
 			return;
 		}
@@ -36,21 +33,18 @@ public class DesktopUtils
 		int count = 0;
 
 		// Count and handle only the internal frames
-		for ( int i = 0; i < comps.length; i++ )
-		{
+		for (int i = 0; i < comps.length; i++) {
 			comp = comps[i];
-			if ( comp instanceof JInternalFrame && comp.isVisible() )
-			{
+			if (comp instanceof JInternalFrame && comp.isVisible()) {
 				count++;
 			}
 		}
 
-		if ( count != 0 )
-		{
-			double root = Math.sqrt( ( double ) count );
-			int rows = ( int ) root;
+		if (count != 0) {
+			double root = Math.sqrt((double) count);
+			int rows = (int) root;
 			int columns = count / rows;
-			int spares = count - ( columns * rows );
+			int spares = count - (columns * rows);
 
 			Dimension paneSize = desktop.getSize();
 			int columnWidth = paneSize.width / columns;
@@ -58,35 +52,29 @@ public class DesktopUtils
 			// We leave some space at the bottom that doesn't get covered
 			int availableHeight = paneSize.height - UNUSED_HEIGHT;
 			int mainHeight = availableHeight / rows;
-			int smallerHeight = availableHeight / ( rows + 1 );
+			int smallerHeight = availableHeight / (rows + 1);
 			int rowHeight = mainHeight;
 			int x = 0;
 			int y = 0;
 			int thisRow = rows;
 			int normalColumns = columns - spares;
 
-			for ( int i = comps.length - 1; i >= 0; i-- )
-			{
+			for (int i = comps.length - 1; i >= 0; i--) {
 				comp = comps[i];
-				if ( comp instanceof JInternalFrame && comp.isVisible() )
-				{
-					manager.setBoundsForFrame( ( JComponent ) comp, x, y,
-						columnWidth, rowHeight );
+				if (comp instanceof JInternalFrame && comp.isVisible()) {
+					manager.setBoundsForFrame((JComponent) comp, x, y,
+						columnWidth, rowHeight);
 					y += rowHeight;
-					if ( --thisRow == 0 )
-					{
+					if (--thisRow == 0) {
 						// Filled the row
 						y = 0;
 						x += columnWidth;
 
 						// Switch to smaller rows if necessary
-						if ( --normalColumns <= 0 )
-						{
+						if (--normalColumns <= 0) {
 							thisRow = rows + 1;
 							rowHeight = smallerHeight;
-						}
-						else
-						{
+						} else {
 							thisRow = rows;
 						}
 					}
@@ -95,124 +83,105 @@ public class DesktopUtils
 		}
 	} // end of TileAll
 
-	public static final void tileHorizontal( JDesktopPane desktop )
-	{
+	public static final void tileHorizontal(JDesktopPane desktop) {
 		int _resizableCnt = 0;
 		JInternalFrame _allFrames[] = desktop.getAllFrames();
-		for ( int _x = 0; _x < _allFrames.length; _x++ )
-		{
+		for (int _x = 0; _x < _allFrames.length; _x++) {
 			JInternalFrame _frame = _allFrames[_x];
-			if ( ( _frame.isVisible() ) && ( !_frame.isIcon() ) )
-			{
-				if ( !_frame.isResizable() )
-					try
-					{
-						_frame.setMaximum( false );
-					}
-					catch ( Exception _e )
-					{
+			if ((_frame.isVisible()) && (!_frame.isIcon())) {
+				if (!_frame.isResizable()) {
+					try {
+						_frame.setMaximum(false);
+					} catch (Exception _e) {
 						// OK, to take no action here
 					}
-				if ( _frame.isResizable() )
+				}
+				if (_frame.isResizable()) {
 					_resizableCnt++;
+				}
 			}
 		} // End for
 		int _width = desktop.getBounds().width;
-		int _height = arrangeIcons( desktop );
-		if ( _resizableCnt != 0 )
-		{
+		int _height = arrangeIcons(desktop);
+		if (_resizableCnt != 0) {
 			int _fHeight = _height / _resizableCnt;
 			int _yPos = 0;
-			for ( int _x = 0; _x < _allFrames.length; _x++ )
-			{
+			for (int _x = 0; _x < _allFrames.length; _x++) {
 				JInternalFrame _frame = _allFrames[_x];
-				if ( ( _frame.isVisible() ) &&
-					( _frame.isResizable() ) &&
-					( !_frame.isIcon() ) )
-				{
-					_frame.setSize( _width, _fHeight );
-					_frame.setLocation( 0, _yPos );
+				if ((_frame.isVisible()) &&
+					(_frame.isResizable()) &&
+					(!_frame.isIcon())) {
+					_frame.setSize(_width, _fHeight);
+					_frame.setLocation(0, _yPos);
 					_yPos += _fHeight;
 				}
 			} // End for
 		}
 	}
 
-	public static final int arrangeIcons( JDesktopPane desktop )
-	{
+	public static final int arrangeIcons(JDesktopPane desktop) {
 		int _iconCnt = 0;
 		JInternalFrame _allFrames[] = desktop.getAllFrames();
-		for ( int _x = 0; _x < _allFrames.length; _x++ )
-			if ( ( _allFrames[_x].isVisible() ) && ( _allFrames[_x].isIcon() ) )
+		for (int _x = 0; _x < _allFrames.length; _x++) {
+			if ((_allFrames[_x].isVisible()) && (_allFrames[_x].isIcon())) {
 				_iconCnt++;
+			}
+		}
 		int _height = desktop.getBounds().height;
 		int _yPos = _height;
-		if ( _iconCnt != 0 )
-		{
+		if (_iconCnt != 0) {
 			int _width = desktop.getBounds().width;
 			int _xPos = 0;
-			for ( int _x = 0; _x < _allFrames.length; _x++ )
-			{
+			for (int _x = 0; _x < _allFrames.length; _x++) {
 				JInternalFrame _frame = _allFrames[_x];
-				if ( ( _frame.isVisible() ) && ( _frame.isIcon() ) )
-				{
+				if ((_frame.isVisible()) && (_frame.isIcon())) {
 					Dimension _dim = _frame.getDesktopIcon().getSize();
 					int _iWidth = _dim.width;
 					int _iHeight = _dim.height;
-					if ( _yPos == _height )
+					if (_yPos == _height) {
 						_yPos = _height - _iHeight;
-					if ( ( _xPos + _iWidth > _width ) && ( _xPos != 0 ) )
-					{
+					}
+					if ((_xPos + _iWidth > _width) && (_xPos != 0)) {
 						_xPos = 0;
 						_yPos -= _iHeight;
 					}
-					_frame.getDesktopIcon().setLocation( _xPos, _yPos );
+					_frame.getDesktopIcon().setLocation(_xPos, _yPos);
 					_xPos += _iWidth;
 				} // End if
 			} // End for
 		} // End if
-		return ( _yPos );
+		return (_yPos);
 	} // End method
 
 	// Layout all of the children of this container
 	// so that they are cascaded.
-	public static void cascadeAll( JDesktopPane desktop )
-	{
+	public static void cascadeAll(JDesktopPane desktop) {
 		Component[] comps = desktop.getComponents();
 		int count = comps.length;
 		nextX = 0;
 		nextY = 0;
 
-		for ( int i = count - 1; i >= 0; i-- )
-		{
+		for (int i = count - 1; i >= 0; i--) {
 			Component comp = comps[i];
-			if ( comp instanceof JInternalFrame && comp.isVisible() )
-			{
-				cascade( comp, desktop );
+			if (comp instanceof JInternalFrame && comp.isVisible()) {
+				cascade(comp, desktop);
 			}
 		}
 	}
 
-	public static void minimizeAll( JDesktopPane desktop )
-	{
+	public static void minimizeAll(JDesktopPane desktop) {
 		Component[] comps = desktop.getComponents();
 		int count = comps.length;
 
-		for ( int i = count - 1; i >= 0; i-- )
-		{
+		for (int i = count - 1; i >= 0; i--) {
 			Component comp = comps[i];
-			if ( comp instanceof JInternalFrame && comp.isVisible() )
-			{
-				JInternalFrame jif = ( JInternalFrame ) comp;
-				if ( jif.isIconifiable() )
-				{
-					try
-					{
-						jif.setIcon( true );
-					}
-					catch ( java.beans.PropertyVetoException e )
-					{
-						log.error( e.getMessage(), e );
+			if (comp instanceof JInternalFrame && comp.isVisible()) {
+				JInternalFrame jif = (JInternalFrame) comp;
+				if (jif.isIconifiable()) {
+					try {
+						jif.setIcon(true);
+					} catch (java.beans.PropertyVetoException e) {
+						log.error(e.getMessage(), e);
 					}
 				}
 			}
@@ -221,28 +190,25 @@ public class DesktopUtils
 
 	// Place a component so that it is cascaded
 	// relative to the previous one
-	protected static void cascade( Component comp, JDesktopPane desktop )
-	{
+	protected static void cascade(Component comp, JDesktopPane desktop) {
 		Dimension paneSize = desktop.getSize();
 		int targetWidth = 3 * paneSize.width / 4;
 		int targetHeight = 3 * paneSize.height / 4;
 
 		DesktopManager manager = desktop.getDesktopManager();
-		if ( manager == null )
-		{
-			comp.setBounds( 0, 0, targetWidth, targetHeight );
+		if (manager == null) {
+			comp.setBounds(0, 0, targetWidth, targetHeight);
 			return;
 		}
 
-		if ( nextX + targetWidth > paneSize.width ||
-			nextY + targetHeight > paneSize.height )
-		{
+		if (nextX + targetWidth > paneSize.width ||
+			nextY + targetHeight > paneSize.height) {
 			nextX = 0;
 			nextY = 0;
 		}
 
-		manager.setBoundsForFrame( ( JComponent ) comp, nextX, nextY,
-			targetWidth, targetHeight );
+		manager.setBoundsForFrame((JComponent) comp, nextX, nextY,
+			targetWidth, targetHeight);
 
 		nextX += offsetX;
 		nextY += offsetY;

@@ -6,8 +6,7 @@ import nl.errorsoft.esql.data.*;
 
 import nl.errorsoft.esql.domain.*;
 
-public class TableData
-{
+public class TableData {
 	private Object data;
 	private boolean newRow = false;
 	private boolean nullData = true;
@@ -16,65 +15,59 @@ public class TableData
 	/**
 	* @roseuid 3E05A70B0344
 	*/
-	public TableData()
-	{
+	public TableData() {
 	}
 
-	public void setTableColumn( nl.errorsoft.esql.table.TableColumn tc )
-	{
+	public void setTableColumn(nl.errorsoft.esql.table.TableColumn tc) {
 		this.tc = tc;
 	}
 
-	public TableColumn getTableColumn()
-	{
+	public TableColumn getTableColumn() {
 		return tc;
 	}
 
-	public void setData( Object data )
-	{
-		if ( data != null )
+	public void setData(Object data) {
+		if (data != null) {
 			nullData = false;
+		}
 		this.data = data;
 	}
 
-	public void setNewRow( boolean newRow )
-	{
+	public void setNewRow(boolean newRow) {
 		this.newRow = newRow;
 	}
 
-	public boolean isNewRow()
-	{
+	public boolean isNewRow() {
 		return newRow;
 	}
 
-	public String getData()
-	{
-		if ( data == null )
+	public String getData() {
+		if (data == null) {
 			return "null";
-		else
+		} else {
 			return data.toString();
+		}
 	}
 
-	public Object getNativeData()
-	{
-		if ( data == null )
+	public Object getNativeData() {
+		if (data == null) {
 			return "null";
-		else
+		} else {
 			return data;
+		}
 	}
 
-	public String toString()
-	{
-		if ( tc.isBinary() )
+	public String toString() {
+		if (tc.isBinary()) {
 			return "[BINARY]";
-		else if ( data == null )
+		} else if (data == null) {
 			return "null";
-		else
+		} else {
 			return data.toString();
+		}
 	}
 
-	public boolean isNull()
-	{
+	public boolean isNull() {
 		return nullData;
 	}
 }

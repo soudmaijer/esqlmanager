@@ -7,8 +7,7 @@ import nl.errorsoft.esql.domain.*;
 
 import java.util.Vector;
 
-public class TableColumn
-{
+public class TableColumn {
 	private Table table;
 	private String name;
 	private String typeName;
@@ -30,172 +29,138 @@ public class TableColumn
 	/**
 	* @roseuid 3E05A70B02A3
 	*/
-	public TableColumn( Table table )
-	{
+	public TableColumn(Table table) {
 		this.table = table;
 	}
 
-	public Table getTable()
-	{
+	public Table getTable() {
 		return table;
 	}
 
-	public void setName( String name )
-	{
+	public void setName(String name) {
 		this.name = name;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return this.name;
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		return this.name;
 	}
 
-	public void setIndexed( boolean indexed )
-	{
+	public void setIndexed(boolean indexed) {
 		this.hasIndex = indexed;
 	}
 
-	public void setHasUniqueIndex( boolean uniqueIndexed )
-	{
+	public void setHasUniqueIndex(boolean uniqueIndexed) {
 		this.hasUniqueIndex = uniqueIndexed;
 	}
 
-	public boolean hasIndex()
-	{
+	public boolean hasIndex() {
 		return hasIndex;
 	}
 
-	public boolean hasUniqueIndex()
-	{
+	public boolean hasUniqueIndex() {
 		return hasUniqueIndex;
 	}
 
-	public void setTable( Table table )
-	{
+	public void setTable(Table table) {
 		this.table = table;
 	}
 
-	public void setAutoIncrement( boolean autoIncrement )
-	{
+	public void setAutoIncrement(boolean autoIncrement) {
 		this.autoIncrement = autoIncrement;
 	}
 
-	public void setSigned( boolean signed )
-	{
+	public void setSigned(boolean signed) {
 		this.signed = signed;
 	}
 
-	public void setWritable( boolean writable )
-	{
+	public void setWritable(boolean writable) {
 		this.writable = writable;
 	}
 
-	public void setNullable( boolean nullable )
-	{
+	public void setNullable(boolean nullable) {
 		this.nullable = nullable;
 	}
 
-	public boolean isPrimary()
-	{
+	public boolean isPrimary() {
 		return primary;
 	}
-	public void setPrimary( boolean primary )
-	{
+	public void setPrimary(boolean primary) {
 		this.primary = primary;
 	}
 
-	public boolean isAutoIncrement()
-	{
-		return ( this.autoIncrement );
+	public boolean isAutoIncrement() {
+		return (this.autoIncrement);
 	}
-	public boolean isBinary()
-	{
-		return ( this.binary );
+	public boolean isBinary() {
+		return (this.binary);
 	}
-	public boolean isSigned()
-	{
-		return ( this.signed );
+	public boolean isSigned() {
+		return (this.signed);
 	}
 
-	public boolean isNullable()
-	{
-		return ( this.nullable );
+	public boolean isNullable() {
+		return (this.nullable);
 	}
 
-	public boolean isWritable()
-	{
-		return ( this.writable );
+	public boolean isWritable() {
+		return (this.writable);
 	}
 
-	public String getTypeName()
-	{
+	public String getTypeName() {
 		return this.typeName;
 	}
-	public void setTypeName( String typeName )
-	{
+	public void setTypeName(String typeName) {
 		this.typeName = typeName;
 	}
 
-	public String getDefault()
-	{
+	public String getDefault() {
 		return this.defaultValue;
 	}
-	public void setDefault( String defaultValue )
-	{
+	public void setDefault(String defaultValue) {
 		this.defaultValue = defaultValue;
 	}
 
-	public String getNativeTypeName()
-	{
+	public String getNativeTypeName() {
 		return this.nativeTypeName;
 	}
-	public void setNativeTypeName( String nativeTypeName )
-	{
+	public void setNativeTypeName(String nativeTypeName) {
 		this.nativeTypeName = nativeTypeName;
 	}
 
-	public int getSize()
-	{
+	public int getSize() {
 		return this.size;
 	}
-	public void setSize( int size )
-	{
+	public void setSize(int size) {
 		this.size = size;
 	}
-	public String getClassName()
-	{
+	public String getClassName() {
 		return this.className;
 	}
-	public void setClassName( String className )
-	{
+	public void setClassName(String className) {
 		this.className = className;
 	}
 
-	public int getType()
-	{
+	public int getType() {
 		return this.type;
 	}
 
-	public void setType( int type )
-	{
-		if ( type == java.sql.Types.BINARY || type == java.sql.Types.VARBINARY || type == java.sql.Types.LONGVARBINARY || type == java.sql.Types.BLOB
-			|| type == java.sql.Types.CLOB )
+	public void setType(int type) {
+		if (type == java.sql.Types.BINARY || type == java.sql.Types.VARBINARY || type == java.sql.Types.LONGVARBINARY || type == java.sql.Types.BLOB
+			|| type == java.sql.Types.CLOB) {
 			this.binary = true;
+		}
 		this.type = type;
 	}
 
-	public void setIndexPosition( int indexPosition )
-	{
+	public void setIndexPosition(int indexPosition) {
 		this.indexPosition = indexPosition;
 	}
 
-	public int getIndexPosition()
-	{
+	public int getIndexPosition() {
 		return indexPosition;
 	}
 }

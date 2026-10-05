@@ -16,55 +16,47 @@ import nl.errorsoft.esql.user.GrantTarget;
  * Accounts are roles. What MySQL calls global privileges are role attributes here,
  * database and table privileges are the ones recorded in the access control lists of those objects.
  */
-public class PostgresUserAdmin implements UserAdmin
-{
-	private static final List<String> ROLE_ATTRIBUTES = Arrays.asList( "LOGIN", "SUPERUSER", "CREATEDB", "CREATEROLE", "REPLICATION" );
-	private static final List<String> DATABASE_PRIVILEGES = Arrays.asList( "CONNECT", "CREATE", "TEMPORARY" );
-	private static final List<String> TABLE_PRIVILEGES = Arrays.asList( "SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER" );
+public class PostgresUserAdmin implements UserAdmin {
+	private static final List<String> ROLE_ATTRIBUTES = Arrays.asList("LOGIN", "SUPERUSER", "CREATEDB", "CREATEROLE", "REPLICATION");
+	private static final List<String> DATABASE_PRIVILEGES = Arrays.asList("CONNECT", "CREATE", "TEMPORARY");
+	private static final List<String> TABLE_PRIVILEGES = Arrays.asList("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER");
 
 	private final Dialect dialect;
 
-	public PostgresUserAdmin( Dialect dialect )
-	{
+	public PostgresUserAdmin(Dialect dialect) {
 		this.dialect = dialect;
 	}
 
-	public boolean usesHost()
-	{
+	public boolean usesHost() {
 		return false;
 	}
 
-	public List<DatabaseUser> listUsers( DatabaseConnection dbc ) throws SQLException
-	{
+	public List<DatabaseUser> listUsers(DatabaseConnection dbc) throws SQLException {
 		List<DatabaseUser> users = new ArrayList<DatabaseUser>();
-		ResultSet rs = dbc.executeQuery( "SELECT rolname FROM pg_roles WHERE rolname !~ '^pg_' ORDER BY rolname" );
+		ResultSet rs = dbc.executeQuery("SELECT rolname FROM pg_roles WHERE rolname !~ '^pg_' ORDER BY rolname");
 
-		while ( rs.next() )
-			users.add( new DatabaseUser( rs.getString( 1 ), null ) );
+		while (rs.next()) {
+			users.add(new DatabaseUser(rs.getString(1), null));
+		}
 
 		rs.close();
 		return users;
 	}
 
-	public void createUser( DatabaseConnection dbc, DatabaseUser user, String password ) throws SQLException
-	{
-		dbc.executeUpdate( "CREATE ROLE " + dialect.quote( user.getName() ) + " LOGIN" + passwordClause( password ) );
+	public void createUser(DatabaseConnection dbc, DatabaseUser user, String password) throws SQLException {
+		dbc.executeUpdate("CREATE ROLE " + dialect.quote(user.getName()) + " LOGIN" + passwordClause(password));
 	}
 
-	public void changePassword( DatabaseConnection dbc, DatabaseUser user, String password ) throws SQLException
-	{
-		dbc.executeUpdate( "ALTER ROLE " + dialect.quote( user.getName() ) + ( password.length() == 0 ? " PASSWORD NULL" : passwordClause( password ) ) );
+	public void changePassword(DatabaseConnection dbc, DatabaseUser user, String password) throws SQLException {
+		dbc.executeUpdate("ALTER ROLE " + dialect.quote(user.getName()) + (password.length() == 0 ? " PASSWORD NULL" : passwordClause(password)));
 	}
 
-	public void dropUser( DatabaseConnection dbc, DatabaseUser user ) throws SQLException
-	{
-		dbc.executeUpdate( "DROP ROLE " + dialect.quote( user.getName() ) );
+	public void dropUser(DatabaseConnection dbc, DatabaseUser user) throws SQLException {
+		dbc.executeUpdate("DROP ROLE " + dialect.quote(user.getName()));
 	}
 
-	public List<String> getPrivileges( GrantTarget.Scope scope )
-	{
-		switch ( scope )
-		{
+	public List<String> getPrivileges(GrantTarget.Scope scope) {
+		switch (scope) {
 			case GLOBAL :
 				return ROLE_ATTRIBUTES;
 			case DATABASE :
@@ -74,92 +66,86 @@ public class PostgresUserAdmin implements UserAdmin
 		}
 	}
 
-	public Set<String> getGrants( DatabaseConnection dbc, DatabaseUser user, GrantTarget target ) throws SQLException
-	{
+	public Set<String> getGrants(DatabaseConnection dbc, DatabaseUser user, GrantTarget target) throws SQLException {
 		Set<String> granted = new LinkedHashSet<String>();
 
-		switch ( target.getScope() )
-		{
+		switch (target.getScope()) {
 			case GLOBAL :
-				try ( PreparedStatement ps = dbc.getConnection()
-					.prepareStatement( "SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolreplication FROM pg_roles WHERE rolname = ?" ) )
-				{
-					ps.setString( 1, user.getName() );
+				try (PreparedStatement ps = dbc.getConnection()
+					.prepareStatement("SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolreplication FROM pg_roles WHERE rolname = ?")) {
+					ps.setString(1, user.getName());
 
-					try ( ResultSet rs = ps.executeQuery() )
-					{
-						if ( rs.next() )
-						{
-							for ( int i = 0; i < ROLE_ATTRIBUTES.size(); i++ )
-								if ( rs.getBoolean( i + 1 ) )
-									granted.add( ROLE_ATTRIBUTES.get( i ) );
+					try (ResultSet rs = ps.executeQuery()) {
+						if (rs.next()) {
+							for (int i = 0; i < ROLE_ATTRIBUTES.size(); i++) {
+								if (rs.getBoolean(i + 1)) {
+									granted.add(ROLE_ATTRIBUTES.get(i));
+								}
+							}
 						}
 					}
 				}
 				break;
 			case DATABASE :
-				collect( dbc, granted,
+				collect(dbc, granted,
 					"SELECT a.privilege_type FROM pg_database d, aclexplode(d.datacl) a JOIN pg_roles r ON r.oid = a.grantee WHERE d.datname = ? AND r.rolname = ?",
-					target.getDatabase(), user.getName() );
+					target.getDatabase(), user.getName());
 				break;
 			default :
-				dbc.useDatabase( target.getDatabase() );
-				collect( dbc, granted,
+				dbc.useDatabase(target.getDatabase());
+				collect(dbc, granted,
 					"SELECT a.privilege_type FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, aclexplode(c.relacl) a JOIN pg_roles r ON r.oid = a.grantee "
 						+ "WHERE n.nspname = current_schema() AND c.relname = ? AND r.rolname = ?",
-					target.getTable(), user.getName() );
+					target.getTable(), user.getName());
 		}
 		return granted;
 	}
 
-	public void setGrants( DatabaseConnection dbc, DatabaseUser user, GrantTarget target, Set<String> privileges ) throws SQLException
-	{
-		String role = dialect.quote( user.getName() );
+	public void setGrants(DatabaseConnection dbc, DatabaseUser user, GrantTarget target, Set<String> privileges) throws SQLException {
+		String role = dialect.quote(user.getName());
 
-		if ( target.getScope() == GrantTarget.Scope.GLOBAL )
-		{
+		if (target.getScope() == GrantTarget.Scope.GLOBAL) {
 			StringBuilder attributes = new StringBuilder();
 
-			for ( String attribute : ROLE_ATTRIBUTES )
-				attributes.append( privileges.contains( attribute ) ? " " : " NO" ).append( attribute );
+			for (String attribute : ROLE_ATTRIBUTES) {
+				attributes.append(privileges.contains(attribute) ? " " : " NO").append(attribute);
+			}
 
-			dbc.executeUpdate( "ALTER ROLE " + role + " WITH" + attributes );
+			dbc.executeUpdate("ALTER ROLE " + role + " WITH" + attributes);
 			return;
 		}
 
-		if ( target.getScope() == GrantTarget.Scope.TABLE )
-			dbc.useDatabase( target.getDatabase() );
+		if (target.getScope() == GrantTarget.Scope.TABLE) {
+			dbc.useDatabase(target.getDatabase());
+		}
 
 		String object = target.getScope() == GrantTarget.Scope.DATABASE
-			? "DATABASE " + dialect.quote( target.getDatabase() )
-			: "TABLE " + dialect.quote( target.getTable() );
-		Set<String> current = getGrants( dbc, user, target );
+			? "DATABASE " + dialect.quote(target.getDatabase())
+			: "TABLE " + dialect.quote(target.getTable());
+		Set<String> current = getGrants(dbc, user, target);
 
-		for ( String privilege : getPrivileges( target.getScope() ) )
-		{
-			if ( privileges.contains( privilege ) && !current.contains( privilege ) )
-				dbc.executeUpdate( "GRANT " + privilege + " ON " + object + " TO " + role );
-			else if ( !privileges.contains( privilege ) && current.contains( privilege ) )
-				dbc.executeUpdate( "REVOKE " + privilege + " ON " + object + " FROM " + role );
+		for (String privilege : getPrivileges(target.getScope())) {
+			if (privileges.contains(privilege) && !current.contains(privilege)) {
+				dbc.executeUpdate("GRANT " + privilege + " ON " + object + " TO " + role);
+			} else if (!privileges.contains(privilege) && current.contains(privilege)) {
+				dbc.executeUpdate("REVOKE " + privilege + " ON " + object + " FROM " + role);
+			}
 		}
 	}
 
-	private String passwordClause( String password )
-	{
-		return password.length() == 0 ? "" : " PASSWORD " + dialect.literal( password );
+	private String passwordClause(String password) {
+		return password.length() == 0 ? "" : " PASSWORD " + dialect.literal(password);
 	}
 
-	private void collect( DatabaseConnection dbc, Set<String> into, String sql, String first, String second ) throws SQLException
-	{
-		try ( PreparedStatement ps = dbc.getConnection().prepareStatement( sql ) )
-		{
-			ps.setString( 1, first );
-			ps.setString( 2, second );
+	private void collect(DatabaseConnection dbc, Set<String> into, String sql, String first, String second) throws SQLException {
+		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
+			ps.setString(1, first);
+			ps.setString(2, second);
 
-			try ( ResultSet rs = ps.executeQuery() )
-			{
-				while ( rs.next() )
-					into.add( rs.getString( 1 ) );
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					into.add(rs.getString(1));
+				}
 			}
 		}
 	}
