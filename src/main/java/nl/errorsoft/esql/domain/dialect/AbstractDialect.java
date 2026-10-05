@@ -248,6 +248,11 @@ public abstract class AbstractDialect implements Dialect
 		return type;
 	}
 
+	public UserAdmin getUserAdmin()
+	{
+		throw new UnsupportedOperationException( "User management is not available on this server" );
+	}
+
 	/** Without a command of its own the server does nothing, PostgreSQL overrides this with VACUUM and ANALYZE. */
 	public String maintain( DatabaseConnection dbc, Maintenance command, String table ) throws SQLException
 	{

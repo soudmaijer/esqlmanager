@@ -104,4 +104,7 @@ public interface Dialect
 
 	/** The CREATE TABLE statement of an existing table. */
 	String createTableDdl( DatabaseConnection dbc, String table ) throws SQLException;
+
+	/** The account and privilege management of this server. */
+	UserAdmin getUserAdmin();
 }

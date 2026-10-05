@@ -30,6 +30,11 @@ public class MySqlDialect extends AbstractDialect
 	}
 
 	/** The MySQL specific tools were written for MySQL, so it is the only server that supports all of them. */
+	public UserAdmin getUserAdmin()
+	{
+		return new MySqlUserAdmin( this );
+	}
+
 	public boolean supports( Feature feature )
 	{
 		return true;

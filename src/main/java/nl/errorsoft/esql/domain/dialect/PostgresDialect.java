@@ -49,9 +49,14 @@ public class PostgresDialect extends AbstractDialect
 		}
 	}
 
+	public UserAdmin getUserAdmin()
+	{
+		return new PostgresUserAdmin( this );
+	}
+
 	public boolean supports( Feature feature )
 	{
-		return feature == Feature.DESIGNER || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT;
+		return feature == Feature.DESIGNER || feature == Feature.USER_MANAGER || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT;
 	}
 
 	/** The profile's database list is a filter, so the first entry is where we connect to. */

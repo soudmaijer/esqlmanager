@@ -1,107 +1,130 @@
 package nl.errorsoft.esql.control;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.domain.Database;
+import nl.errorsoft.esql.domain.DatabaseUser;
+import nl.errorsoft.esql.domain.GrantTarget;
+import nl.errorsoft.esql.domain.Table;
+import nl.errorsoft.esql.domain.dialect.Dialect;
+import nl.errorsoft.esql.domain.dialect.UserAdmin;
+import nl.errorsoft.esql.gui.ESQLManagerUI;
+import nl.errorsoft.esql.gui.UserManagerUI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.dialect.Dialect;
-import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.gui.*;
-
-import java.util.Vector;
-
 public class UserManagerCC
-{	
+{
 	private static final Logger log = LogManager.getLogger( UserManagerCC.class );
 
 	private ConnectionWindowCC cwcc;
-	private UserManager um;
-	
-	public UserManagerCC ( ConnectionWindowCC cwcc )
+
+	public UserManagerCC( ConnectionWindowCC cwcc )
 	{
 		this.cwcc = cwcc;
-		this.um = new UserManager( cwcc );
 	}
-	
+
 	public void startUI( ESQLManagerUI emui )
 	{
 		try
 		{
-			if( !cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports( Dialect.Feature.USER_MANAGER ) )   	   	
-			{	cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-	   		return;
-	   	}
-	
-			emui.updateStatus("Starting usermanager...", true );
-			UserManagerUI up = new UserManagerUI( emui, cwcc );
-			emui.updateStatus("Ready...", false );
-			up.show();
+			if( !getDialect().supports( Dialect.Feature.USER_MANAGER ) )
+			{	cwcc.getUI().showErrorMessage( "The user manager is not available for this database" );
+				return;
+			}
+
+			emui.updateStatus( "Starting usermanager...", true );
+			UserManagerUI ui = new UserManagerUI( emui, this );
+			emui.updateStatus( "Ready...", false );
+			ui.setVisible( true );
 		}
 		catch( Exception e )
 		{
+			log.error( e.getMessage(), e );
+			cwcc.getUI().showErrorMessage( "Can't start the user manager: " + e.getMessage() );
 		}
 	}
-	
-	public Vector getUserAccounts ()
+
+	public boolean usesHost()
 	{
-		return um.getUserAccounts();
+		return getUserAdmin().usesHost();
 	}
-	
-	public String createUserAccount ( User u, boolean grant)
+
+	public List<String> getPrivileges( GrantTarget.Scope scope )
 	{
-		return um.addUser( u, grant );
+		return getUserAdmin().getPrivileges( scope );
 	}
-	
-	public String editUserAccount( User nw, User old)
+
+	public List<DatabaseUser> listUsers() throws Exception
 	{
-		return um.editUserAccount(nw, old);
+		return getUserAdmin().listUsers( connection() );
 	}
-	
-	public String deleteUserAccount( User u )
+
+	public void createUser( DatabaseUser user, String password ) throws Exception
 	{
-		return um.deleteUserAccount( u );
-	}	
-	
-   public void showTables( UserManagerUI um, Database db )
-   {
-		try
+		getUserAdmin().createUser( connection(), user, password );
+	}
+
+	public void changePassword( DatabaseUser user, String password ) throws Exception
+	{
+		getUserAdmin().changePassword( connection(), user, password );
+	}
+
+	public void dropUser( DatabaseUser user ) throws Exception
+	{
+		getUserAdmin().dropUser( connection(), user );
+	}
+
+	public Set<String> getGrants( DatabaseUser user, GrantTarget target ) throws Exception
+	{
+		return getUserAdmin().getGrants( connection(), user, target );
+	}
+
+	public void setGrants( DatabaseUser user, GrantTarget target, Set<String> privileges ) throws Exception
+	{
+		getUserAdmin().setGrants( connection(), user, target, privileges );
+	}
+
+	public List<String> getDatabaseNames() throws Exception
+	{
+		List<String> names = new ArrayList<String>();
+
+		for( Object database : new DatabaseCC( cwcc ).getDatabases() )
+			names.add( database.toString() );
+
+		return names;
+	}
+
+	public List<String> getTableNames( String databaseName ) throws Exception
+	{
+		DatabaseCC databaseCC = new DatabaseCC( cwcc );
+		List<String> names = new ArrayList<String>();
+
+		for( Object database : databaseCC.getDatabases() )
 		{
-   		DatabaseCC dbcc = new DatabaseCC( cwcc );
-   		um.getDatabaseTreeView().loadTables( db, dbcc.getTables( db ) );
-	   }
-	   catch( Exception e )
-	   {
-	   	log.error( e.getMessage(), e );
-	   }   	
-   } 
-  
-   public void showFields( UserManagerUI um, Table tb )
-   {
-		try
-		{
-   		TableCC tbcc = new TableCC( cwcc );
-   		um.getDatabaseTreeView().loadTableColumns( tb, tbcc.getColumns(tb) );
-	   }
-	   catch( Exception e )
-	   {
-	   	log.error( e.getMessage(), e );
-	   }   	
-   }    
-     
-	public void initTree( UserManagerUI umui )
-   {
-		try
-		{
-			DatabaseCC dbcc = new DatabaseCC( cwcc );
-	   	umui.showDatabaseTreeView( dbcc.getDatabaseTreeView() );
-	   }
-	   catch( Exception e )
-	   {
-	   	log.error( e.getMessage(), e );
-	   }
-   }
-   
-   public boolean updateGrants( User u, Vector grants )
-   {	
-   	return um.updateGrants(u, grants);
-   }
+			if( database.toString().equals( databaseName ) )
+			{
+				for( Object table : databaseCC.getTables( (Database)database ) )
+					names.add( ( (Table)table ).getName() );
+			}
+		}
+		return names;
+	}
+
+	private DatabaseConnection connection() throws Exception
+	{
+		return cwcc.getDatabaseConnection();
+	}
+
+	private Dialect getDialect()
+	{
+		return cwcc.getConnectionProfile().getServerType().getDialect();
+	}
+
+	private UserAdmin getUserAdmin()
+	{
+		return getDialect().getUserAdmin();
+	}
 }
