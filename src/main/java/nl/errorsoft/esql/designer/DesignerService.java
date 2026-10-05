@@ -1,23 +1,73 @@
 package nl.errorsoft.esql.designer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.error.EsqlException;
+import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableForeignKey;
+import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.TableService;
 
-/** Creates the databases, tables and foreign keys of a designed model on the server. */
+/** Creates the databases, tables and foreign keys of a designed model on the server, and reads an existing database back as a model. */
 public class DesignerService {
 	private final DatabaseService databases;
 	private final TableService tables;
+	private final DesignerRepository repository;
 
-	public DesignerService(DatabaseService databases, TableService tables) {
+	public DesignerService(DatabaseService databases, TableService tables, DesignerRepository repository) {
 		this.databases = databases;
 		this.tables = tables;
+		this.repository = repository;
+	}
+
+	/**
+	 * Reads every table of the database (views are left out) with its columns, primary key, single column indexes and the foreign keys
+	 * between the tables of the database. Generating the result again leaves the existing tables and keys alone.
+	 */
+	public DesignedDatabase reverseEngineer(Database database) throws Exception {
+		List<String> names = repository.loadTableNames(database);
+		List<String> engines = repository.tableTypes();
+		List<DesignedTable> designed = new ArrayList<>();
+
+		for (Table table : databases.getTables(database)) {
+			if (!names.contains(table.getName())) {
+				continue;
+			}
+
+			List<CreateColumn> columns = repository.loadColumns(table.getName());
+			markIndexes(table, columns);
+			List<DesignedForeignKey> keys = new ArrayList<>();
+			for (DesignedForeignKey key : repository.loadForeignKeys(table.getName())) {
+				// A key on a table in another schema or database can't be drawn in this model.
+				if (names.contains(key.referencedTable())) {
+					keys.add(key);
+				}
+			}
+
+			String engine = engines.contains(table.getType()) ? table.getType() : "";
+			designed.add(new DesignedTable(table.getName(), engine, table.getComment() == null ? "" : table.getComment(), columns, keys));
+		}
+		return new DesignedDatabase(database.getName(), designed);
+	}
+
+	/** The designer has an index and a unique flag per column, so only indexes on one column are kept; the primary key is already marked. */
+	private void markIndexes(Table table, List<CreateColumn> columns) throws Exception {
+		for (TableIndex index : tables.loadIndexes(table)) {
+			if (index.isPrimary() || index.getTableColumns().length != 1) {
+				continue;
+			}
+			for (CreateColumn column : columns) {
+				if (column.name.equals(index.getTableColumns()[0].getName())) {
+					column.unique |= index.isUnique();
+					column.index |= !index.isUnique();
+				}
+			}
+		}
 	}
 
 	/**

@@ -9,9 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.server.ServerProcess;
@@ -21,6 +24,9 @@ import nl.errorsoft.esql.table.Table;
  * Plain JDBC and ANSI SQL behaviour that works on any database. Dialects override what is different.
  */
 public abstract class AbstractDialect implements Dialect {
+	/** A text default with an optional cast, as PostgreSQL reports it: 'it''s'::character varying. */
+	private static final Pattern QUOTED_DEFAULT = Pattern.compile("^'(.*)'(::[\\w\\s\\[\\]]+)?$", Pattern.DOTALL);
+
 	public boolean supports(Feature feature) {
 		return false;
 	}
@@ -267,6 +273,45 @@ public abstract class AbstractDialect implements Dialect {
 			case "smallserial" -> "smallint";
 			default -> typeName;
 		};
+	}
+
+	/** Reads the PostgreSQL type names of the driver (int4, bpchar, serial) as the names the designer uses (integer, char). */
+	public CreateColumn readColumn(ResultSet rs) throws SQLException {
+		CreateColumn column = new CreateColumn(rs.getString("COLUMN_NAME"));
+		String type = rs.getString("TYPE_NAME").toLowerCase();
+		String defaultValue = rs.getString("COLUMN_DEF");
+		int size = rs.getInt("COLUMN_SIZE");
+
+		column.autoincrement = "YES".equals(rs.getString("IS_AUTOINCREMENT")) || (defaultValue != null && defaultValue.startsWith("nextval("));
+		column.notnull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
+		column.type = new DataType(designerTypeName(identityType(type)), false, false, false, false, false, false, false, false);
+		column.defaultval = column.autoincrement || defaultValue == null ? "" : plainDefault(defaultValue);
+
+		if ((type.equals("varchar") || type.equals("bpchar")) && size > 0 && size < Integer.MAX_VALUE) {
+			column.length = String.valueOf(size);
+		} else if (type.equals("numeric") && size > 0 && size < 1000) {
+			column.length = size + "," + rs.getInt("DECIMAL_DIGITS");
+		}
+		return column;
+	}
+
+	private static String designerTypeName(String type) {
+		return switch (type) {
+			case "int2" -> "smallint";
+			case "int4" -> "integer";
+			case "int8" -> "bigint";
+			case "float4" -> "real";
+			case "float8" -> "double precision";
+			case "bool" -> "boolean";
+			case "bpchar" -> "char";
+			default -> type;
+		};
+	}
+
+	/** A default such as {@code 'it''s'::character varying} as the text it stands for; an expression such as now() stays as it is. */
+	private static String plainDefault(String defaultValue) {
+		Matcher literal = QUOTED_DEFAULT.matcher(defaultValue);
+		return literal.matches() ? literal.group(1).replace("''", "'") : defaultValue;
 	}
 
 	private String typeWithSize(ResultSet rs) throws SQLException {

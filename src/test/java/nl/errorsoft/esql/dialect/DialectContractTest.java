@@ -304,6 +304,81 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void designerReadsAnExistingDatabaseBack() throws Exception {
+		String name = "re_" + System.nanoTime();
+		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
+		CreateColumn id = column("id", INTEGER, "", true);
+		id.autoincrement = true;
+		CreateColumn customerName = column("name", VARCHAR, "50", false);
+		customerName.notnull = true;
+		customerName.defaultval = "it's";
+		DesignedTable customers = new DesignedTable("customers", engine, "", List.of(id, customerName), List.of());
+		DesignedTable products = new DesignedTable("products", engine, "", List.of(column("code", VARCHAR, "20", true), column("version", INTEGER, "", true)),
+			List.of());
+		DesignedTable lines = new DesignedTable("order_lines", engine, "",
+			List.of(column("id", INTEGER, "", true), column("customer_id", INTEGER, "", false), column("product_code", VARCHAR, "20", false),
+				column("product_version", INTEGER, "", false)),
+			List.of(new DesignedForeignKey("fk_line_customer", List.of("customer_id"), "customers", List.of("id"), "CASCADE", ""),
+				new DesignedForeignKey("fk_line_product", List.of("product_code", "product_version"), "products", List.of("code", "version"), "", "")));
+		DesignedTable notes = new DesignedTable("notes", engine, "", List.of(column("id", INTEGER, "", true)), List.of());
+		ConnectionContext context = new ConnectionContext(connection);
+		context.designer().generate(List.of(new DesignedDatabase(name, List.of(customers, products, lines, notes))), () -> {
+		});
+		connection.useDatabase(name);
+		connection.executeUpdate("CREATE VIEW " + dialect.quote("customer_names") + " AS SELECT " + dialect.quote("name") + " FROM " + dialect.quote(
+			"customers"));
+
+		DesignedDatabase read = context.designer().reverseEngineer(new Database(name));
+
+		assertEquals(name, read.name());
+		assertEquals(List.of("customers", "notes", "order_lines", "products"), read.tables().stream().map(DesignedTable::name).sorted().toList());
+		DesignedTable readCustomers = designed(read, "customers");
+		assertEquals(List.of("id", "name"), readCustomers.columns().stream().map(c -> c.name).toList());
+		CreateColumn readId = readCustomers.columns().get(0);
+		assertTrue(readId.primary && readId.autoincrement && readId.notnull);
+		assertTrue(readId.type.getName().toLowerCase().startsWith("int"), readId.type.getName());
+		CreateColumn readName = readCustomers.columns().get(1);
+		assertEquals("varchar", readName.type.getName().toLowerCase());
+		assertEquals("50", readName.length);
+		assertEquals("it's", readName.defaultval);
+		assertTrue(readName.notnull && !readName.primary);
+
+		assertEquals(List.of("code", "version"), designed(read, "products").columns().stream().filter(c -> c.primary).map(c -> c.name).toList());
+		assertTrue(designed(read, "notes").foreignKeys().isEmpty());
+
+		List<DesignedForeignKey> keys = designed(read, "order_lines").foreignKeys().stream().sorted(java.util.Comparator.comparing(DesignedForeignKey::name))
+			.toList();
+		assertEquals(2, keys.size());
+		// The update rule is left out: MySQL reports a key without one as RESTRICT, which is what NO ACTION does there.
+		DesignedForeignKey customerKey = keys.get(0);
+		assertEquals(new DesignedForeignKey("fk_line_customer", List.of("customer_id"), "customers", List.of("id"), "CASCADE", customerKey.onUpdate()),
+			customerKey);
+		assertEquals("products", keys.get(1).referencedTable());
+		assertEquals(List.of("product_code", "product_version"), keys.get(1).columns());
+		assertEquals(List.of("code", "version"), keys.get(1).referencedColumns());
+
+		// Generating the model that was read leaves the existing tables and keys alone.
+		context.designer().generate(List.of(read), () -> {
+		});
+		connection.useDatabase(DATABASE);
+		context.databases().dropDatabase(new Database(name));
+		connection.useDatabase(DATABASE);
+	}
+
+	private static CreateColumn column(String name, DataType type, String length, boolean primary) {
+		CreateColumn column = new CreateColumn(name);
+		column.type = type;
+		column.length = length;
+		column.primary = primary;
+		column.notnull = primary;
+		return column;
+	}
+
+	private static DesignedTable designed(DesignedDatabase database, String table) {
+		return database.tables().stream().filter(t -> t.name().equals(table)).findFirst().orElseThrow();
+	}
+
+	@Test
 	void refusesUnknownForeignKeyActions() {
 		assertThrows(EsqlException.class, () -> dialect.addForeignKeySql("a", "fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", ""));
 		assertFalse(dialect.addForeignKeySql("a", "fk", List.of("b"), "c", List.of("d"), "", null).get(0).contains("ON "));

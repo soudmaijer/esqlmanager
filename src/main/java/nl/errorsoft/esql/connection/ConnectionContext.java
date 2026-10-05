@@ -8,6 +8,7 @@ import nl.errorsoft.esql.blob.BlobService;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.DatabaseRepository;
 import nl.errorsoft.esql.database.DatabaseService;
+import nl.errorsoft.esql.designer.DesignerRepository;
 import nl.errorsoft.esql.designer.DesignerService;
 import nl.errorsoft.esql.export.ExportOptions;
 import nl.errorsoft.esql.export.ExportRepository;
@@ -42,7 +43,7 @@ public class ConnectionContext {
 		this.users = new UserService(new UserRepository(connection), databases);
 		this.servers = new ServerService(new ServerRepository(connection), tables);
 		this.queries = new QueryService(new QueryRepository(connection));
-		this.designer = new DesignerService(databases, tables);
+		this.designer = new DesignerService(databases, tables, new DesignerRepository(connection));
 	}
 
 	public TableService tables() {

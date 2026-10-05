@@ -3,6 +3,7 @@ package nl.errorsoft.esql.dialect.mysql;
 import nl.errorsoft.esql.dialect.AbstractDialect;
 import nl.errorsoft.esql.dialect.UserAdmin;
 
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Vector;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.CreateColumn;
+import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.server.ServerProcess;
@@ -195,6 +197,28 @@ public class MySqlDialect extends AbstractDialect {
 				}
 			}
 		}
+	}
+
+	/** The driver reports types in upper case with the sign attached (INT UNSIGNED) and defaults as plain text. */
+	public CreateColumn readColumn(ResultSet rs) throws SQLException {
+		CreateColumn column = new CreateColumn(rs.getString("COLUMN_NAME"));
+		String type = rs.getString("TYPE_NAME").toUpperCase();
+		String defaultValue = rs.getString("COLUMN_DEF");
+		int size = rs.getInt("COLUMN_SIZE");
+
+		column.unsigned = type.endsWith(" UNSIGNED");
+		type = type.replace(" UNSIGNED", "");
+		column.autoincrement = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
+		column.notnull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
+		column.type = new DataType(type, false, false, false, false, false, false, false, false);
+		column.defaultval = defaultValue == null ? "" : defaultValue;
+
+		if ((type.equals("VARCHAR") || type.equals("CHAR")) && size > 0) {
+			column.length = String.valueOf(size);
+		} else if (type.equals("DECIMAL") && size > 0) {
+			column.length = size + "," + rs.getInt("DECIMAL_DIGITS");
+		}
+		return column;
 	}
 
 	protected String columnDefinition(CreateColumn column) {

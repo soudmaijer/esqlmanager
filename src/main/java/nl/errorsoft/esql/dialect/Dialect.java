@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.dialect;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Vector;
@@ -128,6 +129,12 @@ public interface Dialect {
 
 	/** Statements to run after the rows of a table have been loaded, such as moving auto numbering past the highest value. */
 	List<String> afterDataLoadSql(DatabaseConnection dbc, String table) throws SQLException;
+
+	/**
+	 * A column of an existing table as the designer models it, read from the current row of {@link java.sql.DatabaseMetaData#getColumns}:
+	 * the type in the names of {@code datatypes.xml}, the length, the default as plain text, not null and auto numbering. The primary key is not set.
+	 */
+	CreateColumn readColumn(ResultSet columns) throws SQLException;
 
 	/** The CREATE TABLE statement of an existing table. */
 	String createTableDdl(DatabaseConnection dbc, String table) throws SQLException;
