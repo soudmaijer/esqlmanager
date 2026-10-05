@@ -61,6 +61,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	private JButton btnTileHorizontal;
 	private JButton btnTileVertical;
 	private JComboBox cmbWindows;
+	private static final int TOOLBAR_BUTTON_SIZE = 30;
 
 	// Statusbar
 	private JPanel statusbar;
@@ -164,7 +165,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		 * Toolbar
 		 */
 		toolbar = new JToolBar();
-		toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
 		toolbar.setFloatable(true);
 		btnConnect = new JButton(imgLoader.getIcon("imgConnect"));
 		btnConnect.setEnabled(true);
@@ -212,8 +213,14 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 			}
 		});
 
-		cmbWindows.setPreferredSize(new Dimension(125, 20));
+		cmbWindows.setToolTipText("Active connection window");
+		cmbWindows.setMinimumSize(new Dimension(160, TOOLBAR_BUTTON_SIZE));
+		cmbWindows.setPreferredSize(new Dimension(220, TOOLBAR_BUTTON_SIZE));
 		toolbar.add(cmbWindows);
+		for (JButton button : new JButton[]{btnConnect, btnDisconnect, btnCascade, btnTileHorizontal, btnTileVertical}) {
+			button.setMargin(new Insets(4, 4, 4, 4));
+			button.setFocusable(false);
+		}
 		this.getContentPane().add(toolbar, BorderLayout.NORTH);
 
 		/*

@@ -36,11 +36,11 @@ public final class ApplicationContext {
 			images.addIcon("redLight", "check-error", 16, false);
 			images.addImage("ico16x16.gif", "windowIcon");
 			images.addImage("../images/splash.gif", "esql");
-			images.addIcon("imgConnect", "connect", 16, false);
-			images.addIcon("imgDisconnect", "disconnect", 16, false);
-			images.addIcon("imgCascade", "cascade", 16, false);
-			images.addIcon("imgTileHorizontal", "tile-horizontal", 16, false);
-			images.addIcon("imgTileVertical", "tile-vertical", 16, false);
+			images.addIcon("imgConnect", "connect", 20, false);
+			images.addIcon("imgDisconnect", "disconnect", 20, false);
+			images.addIcon("imgCascade", "cascade", 20, false);
+			images.addIcon("imgTileHorizontal", "tile-horizontal", 20, false);
+			images.addIcon("imgTileVertical", "tile-vertical", 20, false);
 			images.addIcon("pc", "server", 16, false);
 			images.addIcon("imgCreateTable", "table-add", 16, false);
 			images.addIcon("imgDropTable", "table-drop", 16, false);
