@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.designer.model;
 
-import java.io.File;
 import java.awt.Rectangle;
+import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -12,14 +12,12 @@ import nl.errorsoft.esql.designer.ui.diagram.ModelCard;
 import nl.errorsoft.esql.designer.ui.diagram.TableCard;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import nl.errorsoft.esql.xml.XmlFiles;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
- * Reads and writes a designer model as an .edm file. JDOM escapes the values, so names with {@code < & "} survive a round trip.
+ * Reads and writes a designer model as an .edm file. {@link XmlFiles} escapes the values, so names with {@code < & "} survive a round trip.
  * Version 0.1 files (written before foreign keys existed) still load; new files are written as {@value #VERSION}.
  */
 final class ModelXml {
@@ -29,138 +27,132 @@ final class ModelXml {
 	}
 
 	static String write(Model model) {
-		Element root = new Element("model");
-		root.addContent(text("version", VERSION));
-		root.addContent(text("name", model.getName()));
-		root.addContent(text("comment", model.getComment()));
-		root.addContent(text("identifier_offset", model.getIdentifier()));
-		root.addContent(text("author", model.getAuthor()));
-		Element edited = new Element("last_edited");
-		edited.addContent(text("author", model.getAuthor()));
-		edited.addContent(text("time", System.currentTimeMillis()));
-		root.addContent(edited);
+		return XmlFiles.toString(document(model));
+	}
 
-		Element databases = new Element("databases");
-		Element tables = new Element("tables");
-		Element comments = new Element("comments");
-		Element relations = new Element("relations");
+	/** Writes the model to the file in one step, so a failure leaves the old file as it was. */
+	static void save(Model model, File file) {
+		XmlFiles.write(file.toPath(), document(model));
+	}
+
+	private static Document document(Model model) {
+		Document document = XmlFiles.newDocument("model");
+		Element root = document.getDocumentElement();
+		add(root, "version", VERSION);
+		add(root, "name", model.getName());
+		add(root, "comment", model.getComment());
+		add(root, "identifier_offset", model.getIdentifier());
+		add(root, "author", model.getAuthor());
+		Element edited = XmlFiles.addChild(root, "last_edited");
+		add(edited, "author", model.getAuthor());
+		add(edited, "time", System.currentTimeMillis());
+
+		Element databases = XmlFiles.addChild(root, "databases");
+		Element tables = XmlFiles.addChild(root, "tables");
+		Element comments = XmlFiles.addChild(root, "comments");
+		Element relations = XmlFiles.addChild(root, "relations");
 
 		for (Object object : model.getObjects()) {
 			switch (object) {
-				case DatabaseCard databaseCard -> databases.addContent(database(databaseCard));
-				case TableCard tableCard -> tables.addContent(table(tableCard));
-				case NoteCard noteCard -> comments.addContent(comment(noteCard));
+				case DatabaseCard databaseCard -> database(databases, databaseCard);
+				case TableCard tableCard -> table(tables, tableCard);
+				case NoteCard noteCard -> comment(comments, noteCard);
 				default -> {
 				}
 			}
 
 			ModelCard source = (ModelCard) object;
 			for (Object target : source.getReferences()) {
-				Element relation = new Element("relation");
-				relation.addContent(text("source_identifier", source.getIdentifier()));
-				relation.addContent(text("target_identifier", ((ModelCard) target).getIdentifier()));
-				relations.addContent(relation);
+				Element relation = XmlFiles.addChild(relations, "relation");
+				add(relation, "source_identifier", source.getIdentifier());
+				add(relation, "target_identifier", ((ModelCard) target).getIdentifier());
 			}
 		}
 
-		root.addContent(databases);
-		root.addContent(tables);
-		root.addContent(comments);
-		root.addContent(relations);
-		root.addContent(foreignKeys(model));
+		foreignKeys(root, model);
 
-		return new XMLOutputter(Format.getPrettyFormat().setEncoding("UTF-8")).outputString(new Document(root));
+		return document;
 	}
 
-	private static Element database(DatabaseCard card) {
-		Element element = new Element("database");
-		element.addContent(text("name", card.getName()));
-		element.addContent(text("comment", card.getDescription()));
-		element.addContent(text("identifier", card.getIdentifier()));
-		element.addContent(bounds(card));
-		return element;
+	private static void database(Element parent, DatabaseCard card) {
+		Element element = XmlFiles.addChild(parent, "database");
+		add(element, "name", card.getName());
+		add(element, "comment", card.getDescription());
+		add(element, "identifier", card.getIdentifier());
+		bounds(element, card);
 	}
 
-	private static Element table(TableCard card) {
-		Element element = new Element("table");
-		element.addContent(text("name", card.getName()));
-		element.addContent(text("comment", card.getComment()));
-		element.addContent(text("description", card.getDescription()));
-		element.addContent(text("type", card.getType()));
-		element.addContent(text("identifier", card.getIdentifier()));
-		element.addContent(bounds(card));
+	private static void table(Element parent, TableCard card) {
+		Element element = XmlFiles.addChild(parent, "table");
+		add(element, "name", card.getName());
+		add(element, "comment", card.getComment());
+		add(element, "description", card.getDescription());
+		add(element, "type", card.getType());
+		add(element, "identifier", card.getIdentifier());
+		bounds(element, card);
 
-		Element fields = new Element("fields");
+		Element fields = XmlFiles.addChild(element, "fields");
 		for (DesignerColumn column : card.getFields()) {
-			Element field = new Element("field");
-			field.addContent(text("name", column.getName()));
-			field.addContent(text("comment", column.getComment()));
-			field.addContent(text("default", column.getDefault()));
-			field.addContent(text("length", column.getLength()));
-			field.addContent(text("type", column.getType().getName()));
-			field.addContent(text("primary", column.primary));
-			field.addContent(text("autoincrement", column.autoIncrement));
-			field.addContent(text("binary", column.binary));
-			field.addContent(text("index", column.index));
-			field.addContent(text("notnull", column.notNull));
-			field.addContent(text("unique", column.unique));
-			field.addContent(text("unsigned", column.unsigned));
-			field.addContent(text("zerofill", column.zerofill));
-			fields.addContent(field);
+			Element field = XmlFiles.addChild(fields, "field");
+			add(field, "name", column.getName());
+			add(field, "comment", column.getComment());
+			add(field, "default", column.getDefault());
+			add(field, "length", column.getLength());
+			add(field, "type", column.getType().getName());
+			add(field, "primary", column.primary);
+			add(field, "autoincrement", column.autoIncrement);
+			add(field, "binary", column.binary);
+			add(field, "index", column.index);
+			add(field, "notnull", column.notNull);
+			add(field, "unique", column.unique);
+			add(field, "unsigned", column.unsigned);
+			add(field, "zerofill", column.zerofill);
 		}
-		element.addContent(fields);
-		return element;
 	}
 
-	private static Element comment(NoteCard card) {
-		Element element = new Element("comment");
-		element.addContent(text("comment", card.getComment()));
-		element.addContent(text("identifier", card.getIdentifier()));
-		element.addContent(bounds(card));
-		return element;
+	private static void comment(Element parent, NoteCard card) {
+		Element element = XmlFiles.addChild(parent, "comment");
+		add(element, "comment", card.getComment());
+		add(element, "identifier", card.getIdentifier());
+		bounds(element, card);
 	}
 
-	private static Element foreignKeys(Model model) {
-		Element keys = new Element("foreignkeys");
+	private static void foreignKeys(Element root, Model model) {
+		Element keys = XmlFiles.addChild(root, "foreignkeys");
 		for (ModelForeignKey key : model.getForeignKeys()) {
-			Element element = new Element("foreignkey");
-			element.addContent(text("name", key.name()));
-			element.addContent(text("from_identifier", key.from().getIdentifier()));
-			element.addContent(text("to_identifier", key.to().getIdentifier()));
-			element.addContent(text("on_delete", key.onDelete()));
-			element.addContent(text("on_update", key.onUpdate()));
+			Element element = XmlFiles.addChild(keys, "foreignkey");
+			add(element, "name", key.name());
+			add(element, "from_identifier", key.from().getIdentifier());
+			add(element, "to_identifier", key.to().getIdentifier());
+			add(element, "on_delete", key.onDelete());
+			add(element, "on_update", key.onUpdate());
 
 			for (int i = 0; i < key.fromColumns().size(); i++) {
-				Element column = new Element("column");
-				column.setAttribute("from", key.fromColumns().get(i));
-				column.setAttribute("to", key.toColumns().get(i));
-				element.addContent(column);
+				Element column = XmlFiles.addChild(element, "column");
+				XmlFiles.setAttribute(column, "from", key.fromColumns().get(i));
+				XmlFiles.setAttribute(column, "to", key.toColumns().get(i));
 			}
-			keys.addContent(element);
 		}
-		return keys;
 	}
 
-	private static Element bounds(ModelCard object) {
+	private static void bounds(Element parent, ModelCard object) {
 		// The card, not the shadow margin around it, so that models written before the cards had a shadow keep their positions.
 		Rectangle card = object.cardBounds();
-		Element bounds = new Element("bounds");
-		bounds.addContent(text("x", card.x));
-		bounds.addContent(text("y", card.y));
-		bounds.addContent(text("w", card.width));
-		bounds.addContent(text("h", card.height));
-		return bounds;
+		Element bounds = XmlFiles.addChild(parent, "bounds");
+		add(bounds, "x", card.x);
+		add(bounds, "y", card.y);
+		add(bounds, "w", card.width);
+		add(bounds, "h", card.height);
 	}
 
-	private static Element text(String name, Object value) {
-		return new Element(name).setText(value == null ? "" : String.valueOf(value));
+	private static void add(Element parent, String name, Object value) {
+		XmlFiles.addChild(parent, name, value == null ? "" : String.valueOf(value));
 	}
 
 	// Reading
 
-	static Model read(File file) throws Exception {
-		Document document = new SAXBuilder().build(file);
-		Element root = document.getRootElement();
+	static Model read(File file) {
+		Element root = XmlFiles.read(file.toPath()).getDocumentElement();
 		String version = text(root, "version", "");
 
 		if (!version.equals("0.1") && !version.equals(VERSION)) {
@@ -237,10 +229,9 @@ final class ModelXml {
 
 			List<String> fromColumns = new ArrayList<>();
 			List<String> toColumns = new ArrayList<>();
-			for (Object child : foreignKeyElement.getChildren("column")) {
-				Element column = (Element) child;
-				fromColumns.add(column.getAttributeValue("from", ""));
-				toColumns.add(column.getAttributeValue("to", ""));
+			for (Element column : XmlFiles.children(foreignKeyElement, "column")) {
+				fromColumns.add(XmlFiles.attribute(column, "from", ""));
+				toColumns.add(XmlFiles.attribute(column, "to", ""));
 			}
 
 			model.addForeignKey(new ModelForeignKey(fromTable, fromColumns, toTable, toColumns, text(foreignKeyElement, "name", ""),
@@ -249,7 +240,7 @@ final class ModelXml {
 	}
 
 	private static void place(ModelCard object, Element element) {
-		Element bounds = element.getChild("bounds");
+		Element bounds = XmlFiles.child(element, "bounds");
 		if (bounds != null) {
 			Rectangle card = object.cardBounds();
 			object.setCardLocation(number(bounds, "x", 0), number(bounds, "y", 0));
@@ -262,20 +253,12 @@ final class ModelXml {
 	}
 
 	private static List<Element> children(Element parent, String group, String name) {
-		Element container = parent.getChild(group);
-		List<Element> elements = new ArrayList<>();
-
-		if (container != null) {
-			for (Object child : container.getChildren(name)) {
-				elements.add((Element) child);
-			}
-		}
-		return elements;
+		Element container = XmlFiles.child(parent, group);
+		return container == null ? List.of() : XmlFiles.children(container, name);
 	}
 
 	private static String text(Element parent, String name, String fallback) {
-		Element child = parent.getChild(name);
-		return child == null ? fallback : child.getText();
+		return XmlFiles.childText(parent, name, fallback);
 	}
 
 	private static int number(Element parent, String name, int fallback) {

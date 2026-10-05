@@ -351,6 +351,11 @@ public class Model implements MouseListener, MouseMotionListener {
 		return ModelXml.write(this);
 	}
 
+	/** Writes the model as an .edm file; the old file stays as it was when this fails. */
+	public void saveModel(File file) {
+		ModelXml.save(this, file);
+	}
+
 	/** Reads a model file of version 0.1 or 0.2. */
 	public Model loadModel(File xml) throws Exception {
 		return ModelXml.read(xml);

@@ -6,17 +6,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.StringReader;
 import java.util.List;
 import java.util.Set;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
+import org.w3c.dom.Element;
+import nl.errorsoft.esql.xml.XmlFiles;
 import org.junit.jupiter.api.Test;
 
 class ProfileXmlTest {
 
 	private static Element parse(String xml) throws Exception {
-		return new SAXBuilder().build(new StringReader(xml)).getRootElement();
+		return XmlFiles.parse(xml).getDocumentElement();
 	}
 
 	@Test
@@ -82,14 +81,14 @@ class ProfileXmlTest {
 	void writingAndReadingKeepsTheSelection() throws Exception {
 		ConnectionProfile profile = ProfileXml.read(parse("<profile><name>Local</name><host>h</host><port>1</port><serverType>2</serverType></profile>"));
 		profile.setSelection(DatabaseSelection.parse("shop,crm").withSchema("shop", "public", true));
-		Element element = new Element("profile");
+		Element element = XmlFiles.newDocument("profile").getDocumentElement();
 
 		ProfileXml.write(element, profile);
 
-		assertEquals("shop,crm", element.getChildText("databases"));
-		assertEquals("public", element.getChild("schemas").getChild("database").getChildText("schema"));
+		assertEquals("shop,crm", XmlFiles.childText(element, "databases"));
+		assertEquals("public", XmlFiles.childText(XmlFiles.child(XmlFiles.child(element, "schemas"), "database"), "schema"));
 		assertEquals(profile.getSelection(), ProfileXml.read(element).getSelection());
-		assertEquals("false", element.getChildText("lastUsed"));
+		assertEquals("false", XmlFiles.childText(element, "lastUsed"));
 	}
 
 	@Test
@@ -101,8 +100,8 @@ class ProfileXmlTest {
 
 		ProfileXml.write(element, profile);
 
-		assertNull(element.getChild("schemas"));
-		assertNotNull(element.getChild("databases"));
-		assertEquals("", element.getChildText("databases"));
+		assertNull(XmlFiles.child(element, "schemas"));
+		assertNotNull(XmlFiles.child(element, "databases"));
+		assertEquals("", XmlFiles.childText(element, "databases"));
 	}
 }

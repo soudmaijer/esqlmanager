@@ -4,12 +4,12 @@ import nl.errorsoft.esql.app.DataDirectory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
+import nl.errorsoft.esql.error.EsqlException;
+import nl.errorsoft.esql.xml.XmlFiles;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class DatabaseDriver {
 	private static final Logger log = LogManager.getLogger(DatabaseDriver.class);
@@ -23,7 +23,7 @@ public class DatabaseDriver {
 	private String dataOpenChar;
 	private String dataCloseChar;
 	private DatabaseDriver[] drivers;
-	private org.jdom.Document driverData;
+	private Document driverData;
 
 	/*
 	 * @author:			S.Oudmaijer
@@ -41,30 +41,27 @@ public class DatabaseDriver {
 		}
 
 		try {
-			SAXBuilder saxbuilder = new SAXBuilder();
-			driverData = saxbuilder.build(DataDirectory.file("conf/driver.xml"));
-		} catch (Exception exception) {
-			log.warn("Warning: driver.xml could not be loaded, no driver properties will be available!");
+			driverData = XmlFiles.read(DataDirectory.file("conf/driver.xml").toPath());
+		} catch (EsqlException e) {
+			log.warn("driver.xml could not be loaded, no driver properties will be available: {}", e.getMessage());
 		}
 	}
 
 	/*
 	 * @author:			S.Oudmaijer
-	 * @description:	Retreives all database drivers from the JDOM document.
+	 * @description:	Retrieves all database drivers from the driver.xml document.
 	 */
 	public DatabaseDriver[] getDatabaseDrivers() {
-		if (driverData == null || !driverData.hasRootElement()) {
+		if (driverData == null) {
 			return drivers;
 		}
 
-		List<DatabaseDriver> read = new java.util.ArrayList<>();
+		List<DatabaseDriver> read = new ArrayList<>();
 
-		for (Object entry : driverData.getRootElement().getChildren("driver")) {
-			Element element = (Element) entry;
-
+		for (Element element : XmlFiles.children(driverData.getDocumentElement(), "driver")) {
 			try {
 				DatabaseDriver driver = new DatabaseDriver(false);
-				driver.setId(Integer.parseInt(element.getChildTextTrim("id")));
+				driver.setId(Integer.parseInt(XmlFiles.childText(element, "id", "").trim()));
 				driver.setDriverName(required(element, "driverName"));
 				driver.setDriverURL(required(element, "driverURL"));
 				driver.setDriverClassName(required(element, "driverClassName"));
@@ -75,7 +72,7 @@ public class DatabaseDriver {
 				read.add(driver);
 			} catch (RuntimeException e) {
 				// One bad entry leaves out that driver only, the others can still be used.
-				log.warn("Driver '{}' in driver.xml skipped: {}", element.getChildText("driverName"), e.getMessage());
+				log.warn("Driver '{}' in driver.xml skipped: {}", XmlFiles.childText(element, "driverName"), e.getMessage());
 			}
 		}
 
@@ -84,7 +81,7 @@ public class DatabaseDriver {
 	}
 
 	private static String required(Element element, String child) {
-		String text = element.getChildText(child);
+		String text = XmlFiles.childText(element, child);
 		if (text == null) {
 			throw new IllegalArgumentException("<" + child + "> is missing");
 		}
@@ -96,8 +93,8 @@ public class DatabaseDriver {
 	 * @description:	Saves the properties of one specific database driver.
 	 */
 	public void saveProperties(DatabaseDriver[] drivers, int id, DriverProperties properties) throws Exception {
-		org.jdom.Element root = new org.jdom.Element("drivers");
-		driverData.setRootElement(root);
+		Document document = XmlFiles.newDocument("drivers");
+		Element root = document.getDocumentElement();
 
 		for (int i = 0; i < drivers.length; i++) {
 			if (drivers[i].getId() == id) {
@@ -109,33 +106,19 @@ public class DatabaseDriver {
 				drivers[i].setDataCloseChar(properties.stringClose());
 			}
 
-			root.addContent(new org.jdom.Element("driver")
-
-				.addContent(new org.jdom.Element("id").setText(new String().valueOf(drivers[i].getId())))
-				.addContent(new org.jdom.Element("driverName").setText(drivers[i].getDriverName()))
-				.addContent(new org.jdom.Element("driverURL").setText(drivers[i].getDriverURL()))
-				.addContent(new org.jdom.Element("driverClassName").setText(drivers[i].getDriverClassName()))
-				//.addContent( new org.jdom.Element("driverFilePath").setText( drivers[i].getDriverFilePath() ))
-				.addContent(new org.jdom.Element("fieldOpenChar").setText(drivers[i].getFieldOpenChar()))
-				.addContent(new org.jdom.Element("fieldCloseChar").setText(drivers[i].getFieldCloseChar()))
-				.addContent(new org.jdom.Element("dataOpenChar").setText(drivers[i].getDataOpenChar()))
-				.addContent(new org.jdom.Element("dataCloseChar").setText(drivers[i].getDataCloseChar()))
-
-			);
+			Element driver = XmlFiles.addChild(root, "driver");
+			XmlFiles.addChild(driver, "id", String.valueOf(drivers[i].getId()));
+			XmlFiles.addChild(driver, "driverName", drivers[i].getDriverName());
+			XmlFiles.addChild(driver, "driverURL", drivers[i].getDriverURL());
+			XmlFiles.addChild(driver, "driverClassName", drivers[i].getDriverClassName());
+			XmlFiles.addChild(driver, "fieldOpenChar", drivers[i].getFieldOpenChar());
+			XmlFiles.addChild(driver, "fieldCloseChar", drivers[i].getFieldCloseChar());
+			XmlFiles.addChild(driver, "dataOpenChar", drivers[i].getDataOpenChar());
+			XmlFiles.addChild(driver, "dataCloseChar", drivers[i].getDataCloseChar());
 		}
 
-		save(driverData);
-	}
-
-	/*
-	 * @author: 		S.Oudmaijer.
-	 * @description:	Saves the given JDOM document to the driver.xml file.
-	 */
-	public void save(Document document) throws Exception {
-		XMLOutputter xmloutputter = new XMLOutputter();
-		try (PrintWriter out = new PrintWriter(DataDirectory.file("conf/driver.xml"), java.nio.charset.StandardCharsets.UTF_8)) {
-			xmloutputter.output(document, out);
-		}
+		XmlFiles.write(DataDirectory.file("conf/driver.xml").toPath(), document);
+		driverData = document;
 	}
 
 	public void setDriverName(String driverName) {

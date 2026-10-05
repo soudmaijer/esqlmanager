@@ -6,18 +6,15 @@ import nl.errorsoft.esql.error.EsqlException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.errorsoft.esql.xml.XmlFiles;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 
 /**
  * The preferences of the user, kept in {@code conf/settings.xml}: the appearance, the font size of the editors, the folder the export, import and
@@ -95,21 +92,23 @@ public class Settings {
 		}
 
 		try {
-			Element root = new SAXBuilder().build(file).getRootElement();
-			appearance = Appearance.of(root.getChildText("appearance"));
-			setEditorFontSize(parseInt(root.getChildText("editorFontSize"), DEFAULT_FONT_SIZE));
-			setDefaultFolder(root.getChildText("defaultFolder"));
-			setDefaultEncoding(parseCharset(root.getChildText("defaultEncoding")));
-		} catch (Exception e) {
+			Element root = XmlFiles.read(file.toPath()).getDocumentElement();
+			appearance = Appearance.of(XmlFiles.childText(root, "appearance"));
+			setEditorFontSize(parseInt(XmlFiles.childText(root, "editorFontSize"), DEFAULT_FONT_SIZE));
+			setDefaultFolder(XmlFiles.childText(root, "defaultFolder"));
+			setDefaultEncoding(parseCharset(XmlFiles.childText(root, "defaultEncoding")));
+		} catch (RuntimeException e) {
 			loadProblem = new EsqlException(keepCorruptFile(e), e);
 		}
 	}
 
 	/** Copies the unreadable file to a backup and returns the message for the user. */
-	private String keepCorruptFile(Exception cause) {
+	private String keepCorruptFile(Exception problem) {
+		// XmlFiles names the file in its message, this message does it itself.
+		Throwable cause = problem.getCause() == null ? problem : problem.getCause();
 		File backup = backupFile();
 		try {
-			Files.copy(file.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			XmlFiles.backup(file.toPath());
 			return file.getName() + " cannot be read (" + cause.getMessage() + "). The default settings are used; the file was kept as " + backup.getName()
 				+ ".";
 		} catch (IOException copyFailed) {
@@ -130,17 +129,15 @@ public class Settings {
 		return problem;
 	}
 
-	/** Writes the file; a failure is thrown for the dialog that saves to report. */
-	public void saveSettings() throws IOException {
-		Element root = new Element("config");
-		root.addContent(new Element("appearance").setText(appearance.name()));
-		root.addContent(new Element("editorFontSize").setText(String.valueOf(editorFontSize)));
-		root.addContent(new Element("defaultFolder").setText(defaultFolder));
-		root.addContent(new Element("defaultEncoding").setText(defaultEncoding.name()));
-
-		try (Writer out = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-			new XMLOutputter(Format.getPrettyFormat().setIndent("\t")).output(new Document(root), out);
-		}
+	/** Writes the file; a failure is an {@link EsqlException} for the dialog that saves to report. */
+	public void saveSettings() {
+		Document document = XmlFiles.newDocument("config");
+		Element root = document.getDocumentElement();
+		XmlFiles.addChild(root, "appearance", appearance.name());
+		XmlFiles.addChild(root, "editorFontSize", String.valueOf(editorFontSize));
+		XmlFiles.addChild(root, "defaultFolder", defaultFolder);
+		XmlFiles.addChild(root, "defaultEncoding", defaultEncoding.name());
+		XmlFiles.write(file.toPath(), document);
 	}
 
 	private static int parseInt(String text, int fallback) {

@@ -70,7 +70,7 @@ class SettingsTest {
 	@Test
 	void savingWhereNothingCanBeWrittenFails(@TempDir Path dir) {
 		Settings settings = new Settings(dir.resolve("missing").resolve("settings.xml").toFile());
-		assertThrows(java.io.IOException.class, settings::saveSettings);
+		assertThrows(nl.errorsoft.esql.error.EsqlException.class, settings::saveSettings);
 	}
 
 	@Test

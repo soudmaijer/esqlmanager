@@ -2,7 +2,6 @@ package nl.errorsoft.esql.settings.ui.dialog;
 
 import java.awt.BorderLayout;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -14,6 +13,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.settings.Settings;
@@ -58,7 +58,7 @@ public class SettingsDialog extends FormDialog {
 			EditorTheme.applyFontSize();
 			try {
 				settings.saveSettings();
-			} catch (IOException e) {
+			} catch (EsqlException e) {
 				ApplicationContext.get().errors().report(getOwner(), "Save settings", e);
 			}
 		});

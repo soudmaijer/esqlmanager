@@ -5,9 +5,10 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.jdom.Element;
+import org.w3c.dom.Element;
 
 import nl.errorsoft.esql.error.EsqlException;
+import nl.errorsoft.esql.xml.XmlFiles;
 
 /**
  * Reads and writes one {@code <profile>} element of conf/profiles.xml. Elements that are missing in older files get a default. The selection is stored as
@@ -30,7 +31,7 @@ public final class ProfileXml {
 		profile.setLastUsed(Boolean.parseBoolean(text(element, "lastUsed")));
 		profile.setAutoConnect(Boolean.parseBoolean(text(element, "autoConnect")));
 		// Profiles written before the option existed keep their password.
-		profile.setSavePassword(!"false".equals(element.getChildText("savePassword")));
+		profile.setSavePassword(!"false".equals(XmlFiles.childText(element, "savePassword")));
 		profile.setSelection(readSelection(element));
 		return profile;
 	}
@@ -46,7 +47,7 @@ public final class ProfileXml {
 		set(element, "serverType", Integer.toString(profile.getServerType().getType()));
 		set(element, "databases", profile.getDatabases());
 		set(element, "autoConnect", Boolean.toString(profile.isAutoConnect()));
-		if (element.getChild("lastUsed") == null) {
+		if (XmlFiles.child(element, "lastUsed") == null) {
 			set(element, "lastUsed", "false");
 		}
 		writeSchemas(element, profile.getSelection());
@@ -58,15 +59,14 @@ public final class ProfileXml {
 			selected.put(database, new LinkedHashSet<>());
 		}
 
-		Element schemas = element.getChild("schemas");
+		Element schemas = XmlFiles.child(element, "schemas");
 		if (schemas != null) {
-			for (Object child : schemas.getChildren("database")) {
-				Element database = (Element) child;
+			for (Element database : XmlFiles.children(schemas, "database")) {
 				// Schemas of a database that is not selected are dropped.
-				Set<String> names = selected.get(database.getAttributeValue("name"));
+				Set<String> names = selected.get(XmlFiles.attribute(database, "name", null));
 				if (names != null) {
-					for (Object schema : database.getChildren("schema")) {
-						names.add(((Element) schema).getText());
+					for (Element schema : XmlFiles.children(database, "schema")) {
+						names.add(schema.getTextContent());
 					}
 				}
 			}
@@ -75,27 +75,25 @@ public final class ProfileXml {
 	}
 
 	private static void writeSchemas(Element element, DatabaseSelection selection) {
-		element.removeChildren("schemas");
+		XmlFiles.removeChildren(element, "schemas");
 		if (!selection.hasSchemaFilter()) {
 			return;
 		}
-		Element schemas = new Element("schemas");
+		Element schemas = XmlFiles.addChild(element, "schemas");
 		for (String database : selection.databases()) {
 			Set<String> names = selection.schemasOf(database);
 			if (!names.isEmpty()) {
-				Element databaseElement = new Element("database").setAttribute("name", database);
+				Element databaseElement = XmlFiles.addChild(schemas, "database");
+				XmlFiles.setAttribute(databaseElement, "name", database);
 				for (String name : names) {
-					databaseElement.addContent(new Element("schema").setText(name));
+					XmlFiles.addChild(databaseElement, "schema", name);
 				}
-				schemas.addContent(databaseElement);
 			}
 		}
-		element.addContent(schemas);
 	}
 
 	private static String text(Element element, String child) {
-		String text = element.getChildText(child);
-		return text == null ? "" : text;
+		return XmlFiles.childText(element, child, "");
 	}
 
 	/**
@@ -119,11 +117,6 @@ public final class ProfileXml {
 	}
 
 	private static void set(Element parent, String name, String value) {
-		Element child = parent.getChild(name);
-		if (child == null) {
-			child = new Element(name);
-			parent.addContent(child);
-		}
-		child.setText(value);
+		XmlFiles.setChildText(parent, name, value);
 	}
 }

@@ -10,8 +10,9 @@ import nl.errorsoft.esql.table.DataType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.jdom.*;
-import org.jdom.input.SAXBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import nl.errorsoft.esql.xml.XmlFiles;
 
 public class ServerType {
 	private static final Logger log = LogManager.getLogger(ServerType.class);
@@ -120,26 +121,27 @@ public class ServerType {
 			return dataTypes;
 		}
 		try {
-			SAXBuilder builder = new SAXBuilder();
-			org.jdom.Document sdata = builder.build(DataDirectory.file("conf/datatypes.xml"));
+			Document sdata = XmlFiles.read(DataDirectory.file("conf/datatypes.xml").toPath());
 
 			// The file holds the datatypes of every server, pick the section of this one.
-			for (Object driver : sdata.getRootElement().getChildren("driver")) {
-				if (Integer.parseInt(((Element) driver).getAttributeValue("id")) != this.getType()) {
+			for (Element driver : XmlFiles.children(sdata.getDocumentElement(), "driver")) {
+				if (Integer.parseInt(XmlFiles.attribute(driver, "id", "").trim()) != this.getType()) {
 					continue;
 				}
 
-				java.util.List<?> types = ((Element) driver).getChildren("type");
+				java.util.List<Element> types = XmlFiles.children(driver, "type");
 				this.dataTypes = new DataType[types.size()];
 
 				for (int i = 0; i < types.size(); i++) {
-					Element type = (Element) types.get(i);
-					this.dataTypes[i] = new DataType(type.getChildText("name"), options(type));
+					Element type = types.get(i);
+					this.dataTypes[i] = new DataType(XmlFiles.childText(type, "name"), options(type));
 				}
 				return this.dataTypes;
 			}
 			log.warn("No datatypes specified for server type {}", this.getType());
-		} catch (Exception e) {
+		} catch (EsqlException e) {
+			throw e;
+		} catch (RuntimeException e) {
 			throw new EsqlException("datatypes.xml cannot be read: " + e.getMessage(), e);
 		}
 		return new DataType[0];
@@ -160,7 +162,7 @@ public class ServerType {
 	}
 
 	private boolean flag(Element type, String name) {
-		return "true".equalsIgnoreCase(type.getChildText(name));
+		return "true".equalsIgnoreCase(XmlFiles.childText(type, name));
 	}
 
 	public static ServerType[] getServerTypes() {

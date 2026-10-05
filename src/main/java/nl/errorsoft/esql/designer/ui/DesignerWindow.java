@@ -275,7 +275,7 @@ public class DesignerWindow extends JInternalFrame {
 			file = fileChooser.getSelectedFile();
 		}
 		try {
-			Files.writeString(file.toPath(), canvas.getModel().getModelXML() + System.lineSeparator(), StandardCharsets.UTF_8);
+			canvas.getModel().saveModel(file);
 			canvas.getModel().setFile(file);
 			return true;
 		} catch (Exception ex) {
