@@ -27,9 +27,6 @@ public class QueryUI extends JDialog implements ActionListener {
 
 	// Internal toolbar
 	private JToolBar tbQuery;
-	private Image imgRunQuery;
-	private Image imgSaveQuery;
-	private Image imgClose;
 	private JButton btnSaveQuery;
 	private JButton btnRunQuery;
 	private JButton btnClose;
@@ -49,23 +46,20 @@ public class QueryUI extends JDialog implements ActionListener {
 		this.setTitle("Run SQL query on `" + cwcc.getTitle() + "`");
 
 		// Load images
-		imgRunQuery = this.imgLoader.getImage("imgDoRunQuery");
-		imgSaveQuery = this.imgLoader.getImage("imgSave");
-		imgClose = this.imgLoader.getImage("imgDeleteRow");
 
 		// Toolbar
 		tbQuery = new JToolBar();
 		tbQuery.setFloatable(false);
 		tbQuery.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		btnSaveQuery = new JButton(new ImageIcon(imgSaveQuery));
+		btnSaveQuery = new JButton(imgLoader.getIcon("imgSave"));
 		btnSaveQuery.setToolTipText("Save query");
 		btnSaveQuery.addActionListener(this);
 		tbQuery.add(btnSaveQuery);
-		btnClose = new JButton(new ImageIcon(imgClose));
+		btnClose = new JButton(imgLoader.getIcon("imgDeleteRow"));
 		btnClose.setToolTipText("Close");
 		btnClose.addActionListener(this);
 		tbQuery.add(btnClose);
-		btnRunQuery = new JButton(new ImageIcon(imgRunQuery));
+		btnRunQuery = new JButton(imgLoader.getIcon("imgDoRunQuery"));
 		btnRunQuery.setToolTipText("Run query");
 		btnRunQuery.addActionListener(this);
 		tbQuery.add(btnRunQuery);

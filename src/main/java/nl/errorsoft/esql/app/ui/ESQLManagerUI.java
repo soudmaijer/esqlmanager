@@ -166,29 +166,29 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		toolbar = new JToolBar();
 		toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		toolbar.setFloatable(true);
-		btnConnect = new JButton(new ImageIcon(imgLoader.getImage("imgConnect")));
+		btnConnect = new JButton(imgLoader.getIcon("imgConnect"));
 		btnConnect.setEnabled(true);
 		btnConnect.setToolTipText("Connect");
 		toolbar.add(btnConnect);
 
-		btnDisconnect = new JButton(new ImageIcon(imgLoader.getImage("imgDisconnect")));
+		btnDisconnect = new JButton(imgLoader.getIcon("imgDisconnect"));
 		btnDisconnect.setEnabled(false);
 		btnDisconnect.setToolTipText("Disconnect");
 		toolbar.add(btnDisconnect);
 
 		toolbar.addSeparator();
 
-		btnCascade = new JButton(new ImageIcon(imgLoader.getImage("imgCascade")));
+		btnCascade = new JButton(imgLoader.getIcon("imgCascade"));
 		btnCascade.setEnabled(false);
 		btnCascade.setToolTipText("Cascade");
 		toolbar.add(btnCascade);
 
-		btnTileHorizontal = new JButton(new ImageIcon(imgLoader.getImage("imgTileHorizontal")));
+		btnTileHorizontal = new JButton(imgLoader.getIcon("imgTileHorizontal"));
 		btnTileHorizontal.setEnabled(false);
 		btnTileHorizontal.setToolTipText("Tile horizontal");
 		toolbar.add(btnTileHorizontal);
 
-		btnTileVertical = new JButton(new ImageIcon(imgLoader.getImage("imgTileVertical")));
+		btnTileVertical = new JButton(imgLoader.getIcon("imgTileVertical"));
 		btnTileVertical.setEnabled(false);
 		btnTileVertical.setToolTipText("Tile vertical");
 		toolbar.add(btnTileVertical);
@@ -224,7 +224,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		stl = new StatusLight(imgLoader);
 
 		statusMsg = new JLabel("Ready...");
-		statusMsg.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 8));
+		statusMsg.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 8));
 		statusMsg.setPreferredSize(new Dimension(200, 20));
 		JPanel statusState = new JPanel(new BorderLayout());
 		statusState.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));

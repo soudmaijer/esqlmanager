@@ -134,29 +134,29 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		tbTable = new JToolBar();
 		tbTable.setFloatable(false);
-		btnRefreshTree = new JButton(new ImageIcon(imgLoader.getImage("pc")));
+		btnRefreshTree = new JButton(imgLoader.getIcon("pc"));
 		btnRefreshTree.setToolTipText("Refresh tree");
-		btnCreateDb = new JButton(new ImageIcon(imgLoader.getImage("imgCreateDb")));
+		btnCreateDb = new JButton(imgLoader.getIcon("imgCreateDb"));
 		btnCreateDb.setToolTipText("Create database");
-		btnDropDb = new JButton(new ImageIcon(imgLoader.getImage("imgDropDb")));
+		btnDropDb = new JButton(imgLoader.getIcon("imgDropDb"));
 		btnDropDb.setToolTipText("Drop database");
-		btnCreateTable = new JButton(new ImageIcon(imgLoader.getImage("imgCreateTable")));
+		btnCreateTable = new JButton(imgLoader.getIcon("imgCreateTable"));
 		btnCreateTable.setToolTipText("Create table");
-		btnDropTable = new JButton(new ImageIcon(imgLoader.getImage("imgDropTable")));
+		btnDropTable = new JButton(imgLoader.getIcon("imgDropTable"));
 		btnDropTable.setToolTipText("Drop table");
-		btnUserManager = new JButton(new ImageIcon(imgLoader.getImage("imgUserManager")));
+		btnUserManager = new JButton(imgLoader.getIcon("imgUserManager"));
 		btnUserManager.setToolTipText("User manager");
-		btnRunQuery = new JButton(new ImageIcon(imgLoader.getImage("imgRunQuery")));
+		btnRunQuery = new JButton(imgLoader.getIcon("imgRunQuery"));
 		btnRunQuery.setToolTipText("Run SQL query");
-		btnNewRow = new JButton(new ImageIcon(imgLoader.getImage("imgNewRow")));
+		btnNewRow = new JButton(imgLoader.getIcon("imgNewRow"));
 		btnNewRow.setToolTipText("Insert new row");
-		btnUpdateRow = new JButton(new ImageIcon(imgLoader.getImage("imgUpdateRow")));
+		btnUpdateRow = new JButton(imgLoader.getIcon("imgUpdateRow"));
 		btnUpdateRow.setToolTipText("Update changes");
-		btnDeleteRow = new JButton(new ImageIcon(imgLoader.getImage("imgDeleteRow")));
+		btnDeleteRow = new JButton(imgLoader.getIcon("imgDeleteRow"));
 		btnDeleteRow.setToolTipText("Delete row");
-		btnAddField = new JButton(new ImageIcon(imgLoader.getImage("imgAddField")));
+		btnAddField = new JButton(imgLoader.getIcon("imgAddField"));
 		btnAddField.setToolTipText("Add field");
-		btnDeleteField = new JButton(new ImageIcon(imgLoader.getImage("imgDeleteField")));
+		btnDeleteField = new JButton(imgLoader.getIcon("imgDeleteField"));
 		btnDeleteField.setToolTipText("Delete field");
 
 		// Voeg knoppen toe aan toolbar
@@ -196,7 +196,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		// Root menu.
 		rtlabel = new JLabel();
-		rtlabel.setIcon(new ImageIcon(imgLoader.getImage("rt_select_20x20")));
+		rtlabel.setIcon(imgLoader.getIcon("rt_select_20x20"));
 		rtlabel.setIconTextGap(0);
 		rtmenu = new JPopupMenu();
 		rtCreate = new JMenuItem("Create database");
@@ -224,7 +224,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		// Database menu.
 		dblabel = new JLabel();
-		dblabel.setIcon(new ImageIcon(imgLoader.getImage("db_select_20x20")));
+		dblabel.setIcon(imgLoader.getIcon("db_select_20x20"));
 		dblabel.setIconTextGap(0);
 		dbmenu = new JPopupMenu();
 		dbCreateDatabase = new JMenuItem("Create database");
@@ -244,7 +244,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		// Table menu.
 		tblabel = new JLabel();
-		tblabel.setIcon(new ImageIcon(imgLoader.getImage("tb_select_20x20")));
+		tblabel.setIcon(imgLoader.getIcon("tb_select_20x20"));
 		tblabel.setIconTextGap(0);
 		tbmenu = new JPopupMenu();
 		tbCreateTable = new JMenuItem("Create table");
@@ -287,7 +287,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 		// Field menu.
 		fdlabel = new JLabel();
-		fdlabel.setIcon(new ImageIcon(imgLoader.getImage("fd_select_20x20")));
+		fdlabel.setIcon(imgLoader.getIcon("fd_select_20x20"));
 		fdlabel.setIconTextGap(0);
 		fdmenu = new JPopupMenu();
 		fdAddField = new JMenuItem("Add field");

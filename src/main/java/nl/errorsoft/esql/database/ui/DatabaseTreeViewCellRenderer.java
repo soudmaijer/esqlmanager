@@ -40,7 +40,7 @@ class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer {
 			if (temp.isPrimary()) {
 				setIcon(imgldr.getIcon("keyimg"));
 			} else if (temp.hasIndex()) {
-				setIcon(imgldr.getIcon("imgHasIndexSel"));
+				setIcon(imgldr.getIcon("imgHasIndex"));
 			} else {
 				setIcon(imgldr.getIcon("fldimg"));
 			}

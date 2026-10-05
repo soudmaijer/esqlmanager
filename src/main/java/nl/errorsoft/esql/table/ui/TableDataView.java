@@ -180,30 +180,12 @@ public class TableDataView extends JPanel implements ActionListener {
 		JPanel jpButton = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		JPanel jpInfo = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
-		Toolkit tk = this.getToolkit();
-		Image imgFirst = tk.getImage("icons/tb_first.gif");
-		Image imgPrev = tk.getImage("icons/tb_prev.gif");
-		Image imgRun = tk.getImage("icons/tb_run.gif");
-		Image imgNext = tk.getImage("icons/tb_next.gif");
-		Image imgLast = tk.getImage("icons/tb_last.gif");
-
-		MediaTracker mt = new MediaTracker(this);
-		mt.addImage(imgFirst, 0);
-		mt.addImage(imgPrev, 1);
-		mt.addImage(imgRun, 2);
-		mt.addImage(imgNext, 3);
-		mt.addImage(imgLast, 4);
-
-		try {
-			mt.waitForAll();
-		} catch (Exception e) {
-		}
-
-		btnFirst = new JButton(new ImageIcon(imgFirst));
-		btnPrev = new JButton(new ImageIcon(imgPrev));
-		btnRun = new JButton(new ImageIcon(imgRun));
-		btnNext = new JButton(new ImageIcon(imgNext));
-		btnLast = new JButton(new ImageIcon(imgLast));
+		ImageLoader icons = ApplicationContext.get().imageLoader();
+		btnFirst = new JButton(icons.getIcon("imgFirst"));
+		btnPrev = new JButton(icons.getIcon("imgPrev"));
+		btnRun = new JButton(icons.getIcon("imgRun"));
+		btnNext = new JButton(icons.getIcon("imgNext"));
+		btnLast = new JButton(icons.getIcon("imgLast"));
 
 		btnFirst.addActionListener(this);
 		btnPrev.addActionListener(this);
@@ -273,15 +255,15 @@ public class TableDataView extends JPanel implements ActionListener {
 		jcep.setLayout(new BorderLayout());
 
 		// Make copy.
-		btnUpdateRowData = new JButton(new ImageIcon(imgLoader.getImage("imgUpdateRow")));
+		btnUpdateRowData = new JButton(imgLoader.getIcon("imgUpdateRow"));
 		btnUpdateRowData.setToolTipText("Update changes");
 		btnUpdateRowData.addActionListener(this);
 
-		btnSaveCellData = new JButton(new ImageIcon(imgLoader.getImage("imgSave")));
+		btnSaveCellData = new JButton(imgLoader.getIcon("imgSave"));
 		btnSaveCellData.setToolTipText("Save data to file");
 		btnSaveCellData.addActionListener(this);
 
-		btnCloseCellData = new JButton(new ImageIcon(imgLoader.getImage("imgDeleteRow")));
+		btnCloseCellData = new JButton(imgLoader.getIcon("imgDeleteRow"));
 		btnCloseCellData.setToolTipText("Close");
 		btnCloseCellData.addActionListener(this);
 

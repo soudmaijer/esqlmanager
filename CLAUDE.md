@@ -10,6 +10,10 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * Test: `./mvnw test`. The tests start Postgres 17 and MySQL 8 with Testcontainers and are skipped without Docker.
 * A GUI cannot be started inside the Claude sandbox (no display). Run harnesses with the sandbox disabled, and verify UI work by painting the root pane to a `BufferedImage` in-process.
 
+## Finishing a change
+
+* Update `README.md` and `changelog.txt`, and retake `docs/screenshot.png` and `docs/designer.png` when the UI changed, before reporting a change as done.
+
 ## Design decisions
 
 ### Database differences live in a Dialect

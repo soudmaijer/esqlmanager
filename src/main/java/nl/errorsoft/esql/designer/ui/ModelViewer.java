@@ -151,16 +151,16 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 
 		Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.KEY_EVENT_MASK);
 
-		btn_add_database.setIcon(new ImageIcon(mvc.getImageList().getImage("add_database")));
-		btn_add_table.setIcon(new ImageIcon(mvc.getImageList().getImage("add_table")));
-		btn_add_comment.setIcon(new ImageIcon(mvc.getImageList().getImage("add_comment")));
-		btn_properties.setIcon(new ImageIcon(mvc.getImageList().getImage("des_properties")));
+		btn_add_database.setIcon(mvc.getImageList().getIcon("add_database"));
+		btn_add_table.setIcon(mvc.getImageList().getIcon("add_table"));
+		btn_add_comment.setIcon(mvc.getImageList().getIcon("add_comment"));
+		btn_properties.setIcon(mvc.getImageList().getIcon("des_properties"));
 
-		btn_new.setIcon(new ImageIcon(mvc.getImageList().getImage("des_new")));
-		btn_save.setIcon(new ImageIcon(mvc.getImageList().getImage("des_save")));
-		btn_open.setIcon(new ImageIcon(mvc.getImageList().getImage("des_open")));
+		btn_new.setIcon(mvc.getImageList().getIcon("des_new"));
+		btn_save.setIcon(mvc.getImageList().getIcon("des_save"));
+		btn_open.setIcon(mvc.getImageList().getIcon("des_open"));
 
-		btn_export.setIcon(new ImageIcon(mvc.getImageList().getImage("des_check")));
+		btn_export.setIcon(mvc.getImageList().getIcon("des_check"));
 
 		btn_add_database.setToolTipText("Add new database");
 		btn_add_table.setToolTipText("Add new table");

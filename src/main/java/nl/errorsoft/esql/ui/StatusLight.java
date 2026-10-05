@@ -6,7 +6,7 @@ import javax.swing.JComponent;
 
 /** A small red or green light, shown in front of the status message. */
 public class StatusLight extends JComponent {
-	private static final int SIZE = 15;
+	private static final int SIZE = 16;
 
 	private final ImageLoader imgldr;
 	private boolean red = false;
@@ -23,6 +23,6 @@ public class StatusLight extends JComponent {
 
 	@Override
 	protected void paintComponent(Graphics g) {
-		g.drawImage(imgldr.getImage(red ? "redLight" : "greenLight"), 0, (getHeight() - SIZE) / 2, this);
+		imgldr.getIcon(red ? "redLight" : "greenLight").paintIcon(this, g, 0, (getHeight() - SIZE) / 2);
 	}
 }

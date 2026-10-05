@@ -3,6 +3,8 @@ package nl.errorsoft.esql.ui;
 import java.awt.*;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.UIManager;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 
 public class ImageLoader {
 	private String imgpath;
@@ -32,6 +34,15 @@ public class ImageLoader {
 	private java.net.URL getResource(String path) {
 		String name = java.nio.file.Paths.get("/", path).normalize().toString().substring(1);
 		return this.getClass().getClassLoader().getResource(name);
+	}
+
+	/** Registers a vector icon (a file in icons/svg) that follows the theme: grey in the toolbar, the selection colour when it is drawn selected. */
+	public void addIcon(String name, String svg, int size, boolean selected) {
+		Color base = new Color(0x6e6e6e);
+		String key = selected ? "Tree.selectionForeground" : "Actions.Grey";
+		FlatSVGIcon icon = new FlatSVGIcon("icons/svg/" + svg + ".svg", size, size, getClass().getClassLoader());
+		icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> color.equals(base) && UIManager.getColor(key) != null ? UIManager.getColor(key) : color));
+		icons.put(name, icon);
 	}
 
 	/** Icons are created once per image, renderers ask for them on every repaint. */

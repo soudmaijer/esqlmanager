@@ -36,6 +36,9 @@ eSQLManager changelog
 - Errors: one ErrorHandler logs an error once and shows one message, services and repositories no longer swallow exceptions.
 - Appearance: the look and feel is a preference (Settings > Preferences): follow the system, light, dark or native. On macOS the Mac themes of
   FlatLaf are used, with the menu in the screen menu bar and the title bar following the system.
+- Icons: the GIF icons (also the red and green status light) are replaced by vector icons from Lucide (ISC license, in resources/icons/svg). They scale sharply on high resolution
+  screens and follow the colours of the light and dark theme.
+- Status bar: the status light is in front of the message ("Ready..."), the connection info is centred.
 - Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
   with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
 - Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.
