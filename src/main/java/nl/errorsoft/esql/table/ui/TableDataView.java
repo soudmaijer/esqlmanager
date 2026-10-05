@@ -2,6 +2,7 @@
 
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.error.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -281,32 +282,23 @@ public class TableDataView extends JPanel implements ActionListener {
 		jcep.add(jspText, BorderLayout.CENTER);
 	}
 
+	/** Keeps a button at its own width in a column that stretches. */
+	private static JPanel left(JButton button) {
+		JPanel p = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+		p.add(button);
+		return p;
+	}
+
 	public void enableBinaryDataEditor() {
-		JPanel jp = new JPanel();
-		jp.setLayout(null);
-
-		JPanel jpButtons = new JPanel();
-		jpButtons.setLayout(null);
-		jpButtons.setBorder(new TitledBorder(new EtchedBorder(BevelBorder.LOWERED), "Binary data options",
-			javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION,
-			new java.awt.Font(jpButtons.getFont().getFontName(), java.awt.Font.BOLD, jpButtons.getFont().getSize())));
-		jpButtons.setBounds(10, 15, 350, 100);
-
 		JLabel lblSaveData = new JLabel("Save cell-data to file:");
 		btnSaveData = new JButton("Download...");
 		JLabel lblAddData = new JLabel("Insert data into cell: ");
 		btnAddData = new JButton("Upload...");
 
-		lblAddData.setBounds(15, 30, 200, 20);
-		lblSaveData.setBounds(15, 55, 200, 20);
-		btnAddData.setBounds(215, 30, 90, 21);
-		btnSaveData.setBounds(215, 55, 90, 21);
-
-		jpButtons.add(lblSaveData);
-		jpButtons.add(lblAddData);
-		jpButtons.add(btnSaveData);
-		jpButtons.add(btnAddData);
-		jp.add(jpButtons);
+		JPanel jpButtons = new Forms.Grid().row(lblAddData, left(btnAddData)).row(lblSaveData, left(btnSaveData)).panel();
+		Forms.titled(jpButtons, "Binary data options");
+		JPanel jp = Forms.padded(new JPanel(new BorderLayout()));
+		jp.add(jpButtons, BorderLayout.NORTH);
 
 		btnSaveData.addActionListener(this);
 		btnAddData.addActionListener(this);

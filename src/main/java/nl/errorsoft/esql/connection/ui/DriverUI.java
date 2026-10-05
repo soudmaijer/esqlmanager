@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.connection.ui;
 
+import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.settings.Settings;
@@ -30,8 +31,7 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 		initComponents();
 		this.dbcc = dbcc;
 		this.setResizable(false);
-		this.setLocation(parent.getLocation().x + (int) ((parent.getSize().width - this.getSize().width) / 2),
-			parent.getLocation().y + (int) ((parent.getSize().height - this.getSize().height) / 2));
+		this.setLocationRelativeTo(parent);
 		this.setVisible(true);
 	}
 
@@ -42,7 +42,6 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 	 */
 	private void initComponents() {
 
-		this.getRootPane().setPreferredSize(new java.awt.Dimension(405, 305));
 		jTabbedPane1 = new javax.swing.JTabbedPane();
 		jPanel1 = new javax.swing.JPanel();
 		jPanel2 = new javax.swing.JPanel();
@@ -69,8 +68,6 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 		jbtnSave = new javax.swing.JButton();
 		jbtnSave.addActionListener(this);
 
-		getContentPane().setLayout(null);
-
 		setTitle("Driver properties");
 		setResizable(false);
 		addWindowListener(new java.awt.event.WindowAdapter() {
@@ -79,81 +76,45 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 			}
 		});
 
-		jPanel1.setLayout(null);
-		jPanel2.setLayout(null);
-
-		jPanel2.setBorder(new javax.swing.border.TitledBorder(null, "Driver properties", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
 		jLabel1.setText("Connection URL:");
-		jPanel2.add(jLabel1);
-		jLabel1.setBounds(15, 55, 100, 20);
-
-		jPanel2.add(jtxtURL);
-		jtxtURL.setBounds(120, 55, 220, 20);
-
 		jLabel11.setText("Driver class-name:");
-		jPanel2.add(jLabel11);
-		jLabel11.setBounds(15, 30, 100, 20);
-
-		jPanel2.add(jtxtClassName);
-		jtxtClassName.setBounds(120, 30, 220, 20);
-
-		jPanel2.add(jtxtDataOpenChar);
-		jtxtDataOpenChar.setBounds(120, 105, 30, 21);
-
-		jPanel2.add(jtxtDataCloseChar);
-		jtxtDataCloseChar.setBounds(250, 105, 30, 21);
-
 		jLabel3.setText("Data close char:");
-		jPanel2.add(jLabel3);
-		jLabel3.setBounds(160, 105, 90, 20);
-
 		jLabel31.setText("Data open char:");
-		jPanel2.add(jLabel31);
-		jLabel31.setBounds(15, 105, 90, 20);
-
 		jLabel311.setText("Field open char:");
-		jPanel2.add(jLabel311);
-		jLabel311.setBounds(15, 80, 90, 20);
-
 		jLabel32.setText("Field close char:");
-		jPanel2.add(jLabel32);
-		jLabel32.setBounds(160, 80, 90, 20);
+		jtxtURL.setColumns(20);
+		for (javax.swing.JTextField c : new javax.swing.JTextField[]{jtxtFieldOpenChar, jtxtFieldCloseChar, jtxtDataOpenChar, jtxtDataCloseChar}) {
+			c.setColumns(3);
+		}
+		jPanel2 = new Forms.Grid().row(jLabel11, jtxtClassName).row(jLabel1, jtxtURL).row(jLabel311, pair(jtxtFieldOpenChar, jLabel32, jtxtFieldCloseChar))
+			.row(jLabel31, pair(jtxtDataOpenChar, jLabel3, jtxtDataCloseChar)).done();
+		Forms.titled(jPanel2, "Driver properties");
 
-		jPanel2.add(jtxtFieldOpenChar);
-		jtxtFieldOpenChar.setBounds(120, 80, 30, 21);
-
-		jPanel2.add(jtxtFieldCloseChar);
-		jtxtFieldCloseChar.setBounds(250, 80, 30, 21);
-
-		jPanel1.add(jPanel2);
-		jPanel2.setBounds(10, 70, 360, 145);
-
-		jPanel3.setLayout(null);
-
-		jPanel3.setBorder(new javax.swing.border.TitledBorder(null, "Database type", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
-		jPanel3.add(jcmbType);
-		jcmbType.setBounds(15, 20, 330, 21);
 		jcmbType.addItemListener(this);
+		jPanel3.setLayout(new java.awt.BorderLayout());
+		jPanel3.add(jcmbType);
+		Forms.titled(jPanel3, "Database type");
 
-		jPanel1.add(jPanel3);
-		jPanel3.setBounds(10, 10, 360, 55);
-
+		jPanel1 = Forms.padded(new Forms.Grid().full(jPanel3).full(jPanel2).done());
 		jTabbedPane1.addTab("JDBC Settings", jPanel1);
 
-		getContentPane().add(jTabbedPane1);
-		jTabbedPane1.setBounds(10, 10, 385, 260);
-
 		jbtnClose.setText("Cancel");
-		getContentPane().add(jbtnClose);
-		jbtnClose.setBounds(315, 275, 80, 25);
-
 		jbtnSave.setText("Save");
-		getContentPane().add(jbtnSave);
-		jbtnSave.setBounds(230, 275, 80, 25);
-
+		javax.swing.JPanel root = Forms.padded(new javax.swing.JPanel(new java.awt.BorderLayout()));
+		root.add(jTabbedPane1, java.awt.BorderLayout.CENTER);
+		root.add(Forms.buttonRow(jbtnSave, jbtnClose), java.awt.BorderLayout.SOUTH);
+		setContentPane(root);
 		pack();
+	}
+
+	/** An open and a close character on one row. */
+	private static javax.swing.JPanel pair(java.awt.Component open, java.awt.Component closeLabel, java.awt.Component close) {
+		javax.swing.JPanel p = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, Forms.GAP, 0));
+		p.add(open);
+		p.add(javax.swing.Box.createHorizontalStrut(Forms.PADDING));
+		p.add(closeLabel);
+		p.add(close);
+		return p;
 	}
 
 	public void loadDrivers(DatabaseDriver[] dbda) {

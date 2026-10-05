@@ -10,6 +10,8 @@ import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
 
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 import java.awt.event.*;
 import nl.errorsoft.esql.dialect.Dialect;
@@ -46,97 +48,33 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		this.cpcc = cpcc;
 		this.setTitle("Connect to SQL server...");
 		this.setResizable(false);
-		this.getContentPane().setLayout(null);
 		sta = ServerType.getServerTypes();
-
-		JLabel j = new JLabel("Profile: ");
-		j.setBounds(10, 14, 100, 15);
-		this.getContentPane().add(j);
 
 		jc = new JComboBox<>(new DefaultComboBoxModel<>());
 		jc.setEditable(true);
-
-		jc.setBounds(100, 10, 345, 21);
-		this.getContentPane().add(jc);
-
-		JLabel lblServer = new JLabel("Server type: ");
-		lblServer.setBounds(10, 44, 100, 15);
-		this.getContentPane().add(lblServer);
-
 		jcServer = new JComboBox<>(new DefaultComboBoxModel<>());
 		jcServer.setEditable(false);
-		jcServer.setBounds(100, 40, 345, 21);
-		this.getContentPane().add(jcServer);
-
-		JLabel j1 = new JLabel("Host: ");
-		j1.setBounds(10, 74, 100, 15);
-		this.getContentPane().add(j1);
-
-		ip = new JTextField("");
-		ip.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		ip.setBounds(100, 70, 345, 21);
-		this.getContentPane().add(ip);
-
-		JLabel j2 = new JLabel("Username: ");
-		j2.setBounds(10, 104, 100, 15);
-		this.getContentPane().add(j2);
-
+		ip = new JTextField("", 28);
 		un = new JTextField("");
-		un.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		un.setBounds(100, 100, 345, 21);
-		this.getContentPane().add(un);
-
-		JLabel j3 = new JLabel("Password: ");
-		j3.setBounds(10, 134, 100, 15);
-		this.getContentPane().add(j3);
-
 		pw = new JPasswordField();
-		pw.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		pw.setBounds(100, 130, 345, 21);
-		this.getContentPane().add(pw);
-
-		JLabel j4 = new JLabel("Port: ");
-		j4.setBounds(10, 164, 100, 15);
-		this.getContentPane().add(j4);
-
 		pt = new JTextField("");
-		pt.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		pt.setBounds(100, 160, 345, 21);
-		this.getContentPane().add(pt);
-
-		JLabel j5 = new JLabel("Database(s) ( Comma seperated, example: db1,db2,db3 ): ");
-		j5.setBounds(10, 194, 435, 15);
-		this.getContentPane().add(j5);
-
 		dbs = new JTextField("");
-		dbs.setMargin(new java.awt.Insets(1, 1, 1, 1));
-		dbs.setBounds(10, 214, 435, 21);
-		this.getContentPane().add(dbs);
-
 		chkAutoConnect = new JCheckBox("Auto-connect to this server on startup");
-		chkAutoConnect.setBounds(6, 249, 435, 21);
-		this.getContentPane().add(chkAutoConnect);
 
-		JPanel jp = new JPanel();
-		jp.setLayout(new FlowLayout(FlowLayout.LEFT));
+		Forms.Grid form = new Forms.Grid().row(new JLabel("Profile: "), jc).row(new JLabel("Server type: "), jcServer).row(new JLabel("Host: "), ip)
+			.row(new JLabel("Username: "), un).row(new JLabel("Password: "), pw).row(new JLabel("Port: "), pt)
+			.full(new JLabel("Database(s) ( Comma seperated, example: db1,db2,db3 ): ")).full(dbs).full(chkAutoConnect);
 
 		btnConnect = new JButton("Connect");
-		btnConnect.setPreferredSize(new Dimension(95, 23));
-		jp.add(btnConnect);
-
 		btnSave = new JButton("Save");
-		btnSave.setPreferredSize(new Dimension(95, 23));
-		jp.add(btnSave);
-
 		btnDelete = new JButton("Delete");
-		btnDelete.setPreferredSize(new Dimension(95, 23));
-		jp.add(btnDelete);
-
 		btnClose = new JButton("Close");
-		btnClose.setPreferredSize(new Dimension(95, 23));
-		jp.add(btnClose);
-		jp.setBounds(5, 284, 450, 30);
-		this.getContentPane().add(jp);
+
+		JPanel root = Forms.padded(new JPanel(new BorderLayout()));
+		root.add(form.done(), BorderLayout.CENTER);
+		root.add(Forms.buttonRow(btnConnect, btnSave, btnDelete, btnClose), BorderLayout.SOUTH);
+		setContentPane(root);
+		getRootPane().setDefaultButton(btnConnect);
 
 		btnSave.addActionListener(this);
 		btnConnect.addActionListener(this);
@@ -149,10 +87,8 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		previousServerType = (ServerType) jcServer.getSelectedItem();
 
-		this.getRootPane().setPreferredSize(new Dimension(460, 320));
 		this.pack();
-		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
-			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
+		this.setLocationRelativeTo(jm);
 
 		jc.addItemListener(this);
 		jcServer.addItemListener(this);
