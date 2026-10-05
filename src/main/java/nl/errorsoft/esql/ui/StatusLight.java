@@ -1,30 +1,28 @@
 package nl.errorsoft.esql.ui;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import javax.swing.JComponent;
 
-public class StatusLight extends JPanel {
+/** A small red or green light, shown in front of the status message. */
+public class StatusLight extends JComponent {
+	private static final int SIZE = 15;
+
+	private final ImageLoader imgldr;
 	private boolean red = false;
-	private ImageLoader imgldr;
-	private Image img = null;
 
 	public StatusLight(ImageLoader imgldr) {
 		this.imgldr = imgldr;
+		setPreferredSize(new Dimension(SIZE, SIZE));
 	}
 
 	public void switchRedLight(boolean red) {
 		this.red = red;
-		paintComponent(getComponentGraphics(getGraphics()));
+		repaint();
 	}
 
-	public void paintComponent(Graphics g) {
-		g.setColor(this.getBackground());
-		g.fillRect(0, 0, 90, 90);
-
-		if (red) {
-			g.drawImage(imgldr.getImage("redLight"), 0, (this.getHeight() - 15) / 2, this);
-		} else {
-			g.drawImage(imgldr.getImage("greenLight"), 0, (this.getHeight() - 15) / 2, this);
-		}
+	@Override
+	protected void paintComponent(Graphics g) {
+		g.drawImage(imgldr.getImage(red ? "redLight" : "greenLight"), 0, (getHeight() - SIZE) / 2, this);
 	}
 }

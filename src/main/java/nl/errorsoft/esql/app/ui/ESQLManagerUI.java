@@ -222,19 +222,24 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		statusbar = new JPanel();
 		statusbar.setLayout(new BorderLayout());
 		stl = new StatusLight(imgLoader);
-		stl.setPreferredSize(new Dimension(20, 16));
-		statusbar.add(stl, BorderLayout.EAST);
 
 		statusMsg = new JLabel("Ready...");
-		statusMsg.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+		statusMsg.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 8));
 		statusMsg.setPreferredSize(new Dimension(200, 20));
-		statusInfo = new JLabel(" ");
+		JPanel statusState = new JPanel(new BorderLayout());
+		statusState.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+		statusState.add(stl, BorderLayout.WEST);
+		statusState.add(statusMsg, BorderLayout.CENTER);
+
+		statusInfo = new JLabel(" ", SwingConstants.CENTER);
 		statusInfo.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
 		statusInfo.setForeground(UIManager.getColor("Label.disabledForeground"));
-		JPanel statusText = new JPanel(new BorderLayout());
-		statusText.add(statusMsg, BorderLayout.WEST);
-		statusText.add(statusInfo, BorderLayout.CENTER);
-		statusbar.add(statusText, BorderLayout.CENTER);
+
+		// An empty strip as wide as the state on the left keeps the database info in the middle of the window.
+		Component balance = Box.createHorizontalStrut(statusState.getPreferredSize().width);
+		statusbar.add(statusState, BorderLayout.WEST);
+		statusbar.add(statusInfo, BorderLayout.CENTER);
+		statusbar.add(balance, BorderLayout.EAST);
 		this.getContentPane().add(statusbar, BorderLayout.SOUTH);
 
 		/*
