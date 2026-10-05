@@ -179,7 +179,7 @@ public class MySqlDialect extends AbstractDialect {
 		String statement = "CREATE TABLE " + quote(table) + " (" + String.join(", ", definitions) + ")";
 
 		if (tableType != null && tableType.length() > 0) {
-			statement += " ENGINE=" + tableType;
+			statement += " ENGINE=" + knownTableType(tableType);
 		}
 		if (comment.trim().length() > 0) {
 			statement += " COMMENT=" + literal(comment);
@@ -189,7 +189,17 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public List<String> setTableTypeSql(TableName table, String tableType) {
-		return Arrays.asList("ALTER TABLE " + quote(table) + " ENGINE=" + tableType);
+		return Arrays.asList("ALTER TABLE " + quote(table) + " ENGINE=" + knownTableType(tableType));
+	}
+
+	/** The engine as listed by {@link #getTableTypes()}; it is written into the statement as is, so anything else is refused. */
+	private String knownTableType(String tableType) {
+		for (String known : getTableTypes()) {
+			if (known.equalsIgnoreCase(tableType.trim())) {
+				return known;
+			}
+		}
+		throw new EsqlException("'" + tableType + "' is not a storage engine this server offers.");
 	}
 
 	public List<String> setTableCommentSql(TableName table, String comment) {
@@ -270,11 +280,8 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	protected String columnDefinition(CreateColumn column) {
-		String definition = column.type.getName();
+		String definition = typeWithLength(column);
 
-		if (column.length.trim().length() > 0) {
-			definition += " (" + column.length + ")";
-		}
 		if (column.unsigned) {
 			definition += " UNSIGNED";
 		}

@@ -173,6 +173,42 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void anEmptyCellIsWrittenAsNull() throws Exception {
+		String name = "nulls_" + System.nanoTime();
+		CreateColumn id = new CreateColumn("id");
+		id.type = INTEGER;
+		id.primary = true;
+		id.notnull = true;
+		CreateColumn label = new CreateColumn("label");
+		label.type = VARCHAR;
+		label.length = "20";
+		CreateColumn amount = new CreateColumn("amount");
+		amount.type = INTEGER;
+		for (String statement : dialect.createTableSql(TableName.of(name), Arrays.asList(id, label, amount), null, "")) {
+			connection.executeUpdate(statement);
+		}
+		connection.executeUpdate("INSERT INTO " + dialect.quote(TableName.of(name)) + " VALUES (1, 'text', 7)");
+		Table table = table(name);
+
+		TableData[] row = service().loadPage(table, 0, 10)[0];
+		assertEquals(1, service().changeCell(table, row, row[1], ""));
+		row = service().loadPage(table, 0, 10)[0];
+		assertTrue(row[1].isNull());
+		assertEquals(1, service().changeCell(table, row, row[2], ""));
+		row = service().loadPage(table, 0, 10)[0];
+		assertTrue(row[2].isNull());
+
+		// The text "null" is a value of its own, different from NULL.
+		assertEquals(0, service().changeCell(table, row, row[1], ""));
+		assertEquals(1, service().changeCell(table, row, row[1], "null"));
+		row = service().loadPage(table, 0, 10)[0];
+		assertFalse(row[1].isNull());
+		assertEquals("null", row[1].getData());
+		assertEquals(0, service().changeCell(table, row, row[1], "null"));
+		service().dropTable(table);
+	}
+
+	@Test
 	void managesUsersAndTheirPrivileges() throws Exception {
 		String name = "usr_" + System.nanoTime();
 		String tableName = "grants_" + System.nanoTime();

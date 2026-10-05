@@ -378,12 +378,13 @@ public class TableRepository extends AbstractRepository {
 			+ " (" + String.join(",", names) + ") VALUES (" + String.join(",", values) + ")");
 	}
 
+	/** Sets one cell of the row, {@code newValue} null writes SQL NULL. */
 	public int updateCell(Table table, TableData[] row, TableData cell, String newValue) throws Exception {
 		String where = rowFilter(row);
 
 		useDatabaseOf(table);
 		return executeUpdate("UPDATE " + quote(table)
-			+ " SET " + quote(cell.getTableColumn().getName()) + "=" + literal(newValue)
+			+ " SET " + quote(cell.getTableColumn().getName()) + "=" + (newValue == null ? "NULL" : literal(newValue))
 			+ " WHERE " + where);
 	}
 

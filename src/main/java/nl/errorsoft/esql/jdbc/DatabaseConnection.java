@@ -157,10 +157,15 @@ public class DatabaseConnection implements AutoCloseable {
 	// Closes the connection.
 	@Override
 	public void close() {
+		if (connection == null) {
+			return;
+		}
 		try {
 			connection.close();
 			log.info("Connection to {} closed", url);
-		} catch (Exception sql) {
+		} catch (Exception e) {
+			// The connection is given up either way and nothing can be done about a failed close, it is only worth a note in the log.
+			log.debug("Closing the connection to {} failed: {}", url, e.getMessage());
 		}
 	}
 

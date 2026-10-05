@@ -2,6 +2,19 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Data safety fixes
+
+- Cancel in "Save model as" no longer writes the file. When saving fails or is cancelled while closing the designer,
+  starting a new model or opening another one, the designer stays open with the unsaved model. Model files are
+  written as UTF-8.
+- Emptying a cell in the table data writes NULL (it wrote an empty text, which failed on number columns). A NULL cell
+  opens empty in the editor, so the text "null" can be typed as a value of its own.
+- Saving a binary cell whose row can no longer be found reports an error and removes the empty file; a failed
+  download removes the partial file too.
+- The Update button of the cell editor only changes the grid when the database accepted the change.
+- The length of a column must be a number or precision and scale; the values of ENUM and SET are written as quoted
+  literals. A type name that is not a plain name and an unknown MySQL storage engine are refused.
+
 05-10-2026: Connect dialog with a list of profiles
 
 - Connect to server shows the saved profiles in a list at the left, with New, Remove and Duplicate buttons above it.

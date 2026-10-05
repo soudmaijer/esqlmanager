@@ -42,7 +42,11 @@ public class MultiLineCellEditor extends AbstractCellEditor implements TableCell
 	 */
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
 		editorComponent.setBorder(focusBorder);
-		editorComponent.setText((value != null) ? value.toString() : "");
+		editorComponent.setText(switch (value) {
+			case null -> "";
+			case nl.errorsoft.esql.table.TableData cell -> cell.getEditText();
+			default -> value.toString();
+		});
 		editorComponent.grabFocus();
 		editorComponent.selectAll();
 		return editorComponent;

@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.job.Cancellation;
 import nl.errorsoft.esql.job.JobCancelledException;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableService;
@@ -51,7 +51,7 @@ public class BlobService {
 
 		try (OutputStream target = new CancellableOutputStream(Files.newOutputStream(Path.of(file)))) {
 			if (!repository.read(table, cell.getTableColumn().getName(), condition, target)) {
-				log.warn("No row found to save to {}", file);
+				throw new EsqlException("No row found for " + table + " to save " + cell.getTableColumn().getName() + " from.");
 			}
 		}
 

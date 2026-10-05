@@ -81,6 +81,7 @@ public class BlobTransferController {
 	}
 
 	/** Runs the transfer on a virtual thread, the window and the status bar are updated on the event thread. */
+	/** {@code discardPartialFile} runs when the transfer is cancelled or fails. */
 	private void transfer(String action, Transfer transfer, String outcome, Runnable discardPartialFile) {
 		BlobService service;
 		try {
@@ -105,6 +106,7 @@ public class BlobTransferController {
 						discardPartialFile.run();
 						progress.transferCancelled();
 					} else {
+						discardPartialFile.run();
 						progress.transferEnded();
 						ApplicationContext.get().errors().report((java.awt.Component) progress, action, e);
 					}

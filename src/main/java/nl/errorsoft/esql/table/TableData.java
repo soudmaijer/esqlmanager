@@ -23,10 +23,18 @@ public class TableData {
 	}
 
 	public void setData(Object data) {
-		if (data != null) {
-			nullData = false;
-		}
+		nullData = data == null;
 		this.data = data;
+	}
+
+	/** Takes text typed into a cell editor: an empty text is SQL NULL. */
+	public void setEditedText(String text) {
+		setData(text == null || text.isEmpty() ? null : text);
+	}
+
+	/** The text a cell editor starts with: empty for NULL, so that it is not mistaken for the text "null". */
+	public String getEditText() {
+		return nullData ? "" : getData();
 	}
 
 	public void setNewRow(boolean newRow) {

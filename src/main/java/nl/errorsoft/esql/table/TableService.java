@@ -263,15 +263,20 @@ public class TableService {
 		table.setRowCount(table.getRowCount() + 1);
 	}
 
-	/** Returns the number of changed rows, zero when the value is the same. */
+	/**
+	 * Writes the text typed into a cell; an empty text is SQL NULL.
+	 * Returns the number of changed rows, zero when the value is the same.
+	 */
 	public int changeCell(Table table, TableData[] row, TableData cell, Object newValue) throws Exception {
-		if (cell.getData().equals(newValue.toString())) {
+		String text = newValue == null ? "" : newValue.toString();
+		boolean unchanged = cell.isNull() ? text.isEmpty() : cell.getData().equals(text);
+		if (unchanged) {
 			return 0;
 		} else if (cell.getTableColumn().isBinary()) {
 			throw new EsqlException("Editing of binary data is not supported yet!");
 		}
 
-		return repository.updateCell(table, row, cell, newValue.toString());
+		return repository.updateCell(table, row, cell, text.isEmpty() ? null : text);
 	}
 
 	public void deleteRow(Table table, TableData[] row) throws Exception {

@@ -530,13 +530,75 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	protected String columnType(CreateColumn column) {
-		String type = column.type.getName();
+		return typeWithLength(column);
+	}
 
-		if (column.length.trim().length() > 0) {
-			type += " (" + column.length + ")";
+	private static final Pattern TYPE_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_ ]*(\\[\\])?");
+	private static final Pattern LENGTH = Pattern.compile("\\d+(\\s*,\\s*\\d+)?");
+
+	/**
+	 * The type of a column with its length, such as {@code varchar (50)} or {@code enum ('a', 'b')}. Both come from text the user typed or a model
+	 * file, so they are checked: the type is a plain name, the length a number or precision and scale, and the values of ENUM and SET are literals.
+	 */
+	protected String typeWithLength(CreateColumn column) {
+		String type = column.type.getName().trim();
+		if (!TYPE_NAME.matcher(type).matches()) {
+			throw new EsqlException("'" + type + "' is not a data type.");
 		}
+		String length = column.length == null ? "" : column.length.trim();
+		if (length.isEmpty()) {
+			return type;
+		}
+		if (type.equalsIgnoreCase("enum") || type.equalsIgnoreCase("set")) {
+			return type + " (" + String.join(", ", valueList(length).stream().map(this::literal).toList()) + ")";
+		}
+		if (!LENGTH.matcher(length).matches()) {
+			throw new EsqlException("The length of column " + column.name + " must be a number, such as 255 or 10,2, not '" + length + "'.");
+		}
+		return type + " (" + length + ")";
+	}
 
-		return type;
+	/** The values of an ENUM or SET as typed: {@code 'a','it''s'} or {@code a, b}. */
+	static List<String> valueList(String text) {
+		List<String> values = new ArrayList<>();
+		int i = 0;
+		while (i < text.length()) {
+			while (i < text.length() && Character.isWhitespace(text.charAt(i))) {
+				i++;
+			}
+			StringBuilder value = new StringBuilder();
+			if (i < text.length() && text.charAt(i) == '\'') {
+				i++;
+				while (true) {
+					if (i >= text.length()) {
+						throw new EsqlException("A value in '" + text + "' has no closing quote.");
+					}
+					char c = text.charAt(i++);
+					if (c == '\'' && i < text.length() && text.charAt(i) == '\'') {
+						value.append('\'');
+						i++;
+					} else if (c == '\'') {
+						break;
+					} else {
+						value.append(c);
+					}
+				}
+				while (i < text.length() && Character.isWhitespace(text.charAt(i))) {
+					i++;
+				}
+			} else {
+				while (i < text.length() && text.charAt(i) != ',') {
+					value.append(text.charAt(i++));
+				}
+				value = new StringBuilder(value.toString().trim());
+			}
+			if (i < text.length() && text.charAt(i) != ',') {
+				throw new EsqlException("The values '" + text + "' must be separated by commas.");
+			}
+			i++;
+			values.add(value.toString());
+		}
+		return values;
 	}
 
 	/** A text value as an SQL literal. */

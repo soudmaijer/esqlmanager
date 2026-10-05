@@ -529,7 +529,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			if (length != null) {
 				setSelectedIndex(1);
 				lst_fields.setSelectedIndex(i);
-				return "DesignerColumn '" + field.getName() + "': " + length;
+				return "Field '" + field.getName() + "': " + length;
 			}
 		}
 		return null;

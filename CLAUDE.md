@@ -34,8 +34,9 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 ### SQL safety
 
 * Identifiers go through `dialect.quote(...)`, values through `dialect.literal(...)` (or `DatabaseConnection.formatFieldValue`, which delegates to it). Never concatenate a raw name or value into a statement. MySQL escapes backslashes in literals, PostgreSQL does not, which is why this is per dialect.
+* Column types and lengths are text from the user or a model file: `AbstractDialect.typeWithLength` accepts a plain type name and a length of digits (`10,2`), and writes the values of ENUM and SET through `literal`; MySQL accepts only an engine of `getTableTypes()`. Anything else is an `EsqlException`.
 * Metadata lookups use `PreparedStatement` parameters.
-* An empty cell is SQL `NULL`, not the text "null" (`TableData.isNull()`).
+* An empty cell is SQL `NULL`, not the text "null" (`TableData.isNull()`): editing writes NULL for an empty text, and a NULL cell opens empty in an editor (`TableData.getEditText`).
 * Paging on PostgreSQL and MySQL orders by the primary key so that rows do not move after an update.
 * A script written by Export switches database with `\connect` on servers that cannot do it in SQL; Import understands it.
 

@@ -114,7 +114,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 					// Data updated.
 					if (dataChanged(rowData, td, newData)) {
-						td.setData(newData);
+						td.setEditedText(newData == null ? null : newData.toString());
 						tbData.setValueAt(td, tbData.getSelectedRow(), tbData.getSelectedColumn());
 						removeEditor();
 					}
@@ -315,7 +315,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		editingCell = (TableData) tbData.getModel().getValueAt(editingRow, editingCol);
 
 		cellData.setEnabled(true);
-		cellData.setText(editingCell.getData());
+		cellData.setText(editingCell.getEditText());
 
 		if (editingCell.getTableColumn().isWritable()) {
 			btnUpdateRowData.setEnabled(true);
@@ -490,9 +490,10 @@ public class TableDataTab extends JPanel implements ActionListener {
 				rowData[i] = (TableData) tbData.getValueAt(this.editingRow, i);
 			}
 
-			this.dataChanged(rowData, this.editingCell, this.cellData.getText());
-			editingCell.setData(this.cellData.getText());
-			stm.fireTableDataChanged();
+			if (this.dataChanged(rowData, this.editingCell, this.cellData.getText())) {
+				editingCell.setEditedText(this.cellData.getText());
+				stm.fireTableDataChanged();
+			}
 		} else if (src == btnCloseCellData) {
 			this.disableCellDataEditor();
 		} else if (src == btnSaveCellData) {
