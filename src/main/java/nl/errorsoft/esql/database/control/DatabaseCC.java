@@ -14,64 +14,53 @@ import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.database.*;
 import java.util.Vector;
 
-public class DatabaseCC
-{
+public class DatabaseCC {
 	private ConnectionWindowCC cwcc;
 
 	/**
 	* @roseuid 3E05A70C031D
 	*/
-	public DatabaseCC( ConnectionWindowCC cwcc )
-	{
+	public DatabaseCC(ConnectionWindowCC cwcc) {
 		this.cwcc = cwcc;
 	}
 
-	public java.util.Vector getDatabases() throws Exception
-	{
-		return new Vector<Database>( service().getDatabases() );
+	public java.util.Vector getDatabases() throws Exception {
+		return new Vector<Database>(service().getDatabases());
 	}
 
-	public Database createDatabase( String name ) throws Exception
-	{
-		return service().createDatabase( name );
+	public Database createDatabase(String name) throws Exception {
+		return service().createDatabase(name);
 	}
 
-	public void dropDatabase( Database data ) throws Exception
-	{
-		service().dropDatabase( data );
+	public void dropDatabase(Database data) throws Exception {
+		service().dropDatabase(data);
 	}
 
-	public java.util.Vector getTables( Database database ) throws Exception
-	{
-		return new Vector<Table>( service().getTables( database ) );
+	public java.util.Vector getTables(Database database) throws Exception {
+		return new Vector<Table>(service().getTables(database));
 	}
 
-	private DatabaseService service() throws Exception
-	{
-		return new DatabaseService( cwcc.getDatabaseConnection() );
+	private DatabaseService service() throws Exception {
+		return cwcc.getContext().databases();
 	}
 
-	public DatabaseTreeView getDatabaseTreeView() throws Exception
-	{
-		DatabaseTreeView dbtv = new DatabaseTreeView( this, cwcc.getTitle() );
-		dbtv.loadDatabases( getDatabases() );
+	public DatabaseTreeView getDatabaseTreeView() throws Exception {
+		DatabaseTreeView dbtv = new DatabaseTreeView(this, cwcc.getTitle());
+		dbtv.loadDatabases(getDatabases());
 		return dbtv;
 	}
 
-	public TableListView getTableListView( Vector tables ) throws Exception
-	{
-		TableListView tlv = new TableListView( this );
-		tlv.loadDatabases( tables );
+	public TableListView getTableListView(Vector tables) throws Exception {
+		TableListView tlv = new TableListView(this);
+		tlv.loadDatabases(tables);
 		return tlv;
 	}
 
-	public void tableSelected( Table table )
-	{
-		cwcc.selectTableInTree( table );
+	public void tableSelected(Table table) {
+		cwcc.selectTableInTree(table);
 	}
 
-	public ImageLoader getImageLoader()
-	{
+	public ImageLoader getImageLoader() {
 		return cwcc.getImageLoader();
 	}
 }

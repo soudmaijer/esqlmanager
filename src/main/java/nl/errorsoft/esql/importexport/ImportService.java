@@ -18,8 +18,8 @@ public class ImportService extends Observable implements Runnable {
 	private final Object importToDatabase;
 	private final String file;
 
-	public ImportService(DatabaseConnection dbc, Object importToDatabase, String file) {
-		this.repository = new ImportRepository(dbc);
+	public ImportService(ImportRepository repository, Object importToDatabase, String file) {
+		this.repository = repository;
 		this.importToDatabase = importToDatabase;
 		this.file = file;
 	}

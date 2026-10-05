@@ -1,4 +1,5 @@
 package nl.errorsoft.esql.connection.ui;
+import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.connection.ServerService;
 
 import nl.errorsoft.esql.database.Database;
@@ -34,6 +35,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 	private DefaultTableModel dtm;
 	ConnectionWindowCC cwcc;
 	DatabaseConnection m;
+	private ServerService servers;
 
 	public Processlist(ConnectionWindowCC cwcc, JFrame parent) {
 		super(parent, false);
@@ -62,6 +64,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 		try {
 			m = new DatabaseConnection();
 			m.connect(cp, "");
+			servers = new ConnectionContext(m).servers();
 			int selRow = 0;
 			DefaultTableModel dtm = null;
 
@@ -81,7 +84,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 					dtm.addColumn("Info");
 
 					// Get processes and add all.
-					for (ServerProcess process : new ServerService(m).getProcesses()) {
+					for (ServerProcess process : servers.getProcesses()) {
 						dtm.addRow(new Object[]{process.getId(), process.getUser(), process.getHost(), process.getDatabase(), process.getCommand(),
 							process.getTime(), process.getInfo()});
 					}
@@ -142,7 +145,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 
 			if (jtable.getSelectedRow() > -1) {
 				try {
-					new ServerService(m).killProcess(jtable.getValueAt(jtable.getSelectedRow(), 0).toString());
+					servers.killProcess(jtable.getValueAt(jtable.getSelectedRow(), 0).toString());
 				} catch (Exception ae) {
 					log.error(ae.getMessage(), ae);
 				}

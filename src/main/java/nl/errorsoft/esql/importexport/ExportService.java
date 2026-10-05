@@ -15,22 +15,13 @@ public class ExportService extends Observable implements Runnable {
 	private final ExportRepository repository;
 	private final Object[] exportObject;
 	private final String file;
-	private final boolean dumpStructure;
-	private final boolean dumpData;
-	private final boolean createDatabase;
-	private final boolean dropTable;
-	private final boolean useDatabase;
+	private final ExportOptions options;
 
-	public ExportService(DatabaseConnection dbc, Object[] exportObject, String file, boolean dumpStructure, boolean dumpData, boolean createDatabase,
-		boolean dropTable, boolean useDatabase) {
-		this.repository = new ExportRepository(dbc);
+	public ExportService(ExportRepository repository, Object[] exportObject, String file, ExportOptions options) {
+		this.repository = repository;
 		this.exportObject = exportObject;
 		this.file = file;
-		this.dumpStructure = dumpStructure;
-		this.dumpData = dumpData;
-		this.createDatabase = createDatabase;
-		this.dropTable = dropTable;
-		this.useDatabase = useDatabase;
+		this.options = options;
 	}
 
 	public void run() {
@@ -53,11 +44,11 @@ public class ExportService extends Observable implements Runnable {
 					continue;
 				}
 
-				if (createDatabase) {
+				if (options.createDatabase()) {
 					pw.println(repository.createDatabaseSql(database) + ";\n");
 				}
 
-				if (useDatabase) {
+				if (options.useDatabase()) {
 					pw.println(repository.useDatabaseSql(database) + ";\n");
 				}
 
@@ -75,15 +66,15 @@ public class ExportService extends Observable implements Runnable {
 	}
 
 	private void dumpTable(PrintWriter pw, String database, String table) throws Exception {
-		if (dropTable) {
+		if (options.dropTable()) {
 			pw.println(repository.dropTableSql(table) + ";\n");
 		}
 
-		if (dumpStructure) {
+		if (options.dumpStructure()) {
 			pw.println(repository.structureSql(table) + ";\n");
 		}
 
-		if (dumpData) {
+		if (options.dumpData()) {
 			repository.insertStatements(table, pw::println);
 
 			for (String statement : repository.afterDataStatements(table)) {

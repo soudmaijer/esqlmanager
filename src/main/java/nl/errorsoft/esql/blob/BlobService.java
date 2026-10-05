@@ -22,9 +22,9 @@ public class BlobService extends Observable {
 	private final BlobRepository repository;
 	private final TableService tables;
 
-	public BlobService(DatabaseConnection dbc) {
-		this.repository = new BlobRepository(dbc);
-		this.tables = new TableService(dbc);
+	public BlobService(BlobRepository repository, TableService tables) {
+		this.repository = repository;
+		this.tables = tables;
 	}
 
 	public void upload(Table table, TableData[] row, TableData cell, String file) throws Exception {

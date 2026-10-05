@@ -17,12 +17,11 @@ import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.database.Database;
-import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.domain.DataType;
-import nl.errorsoft.esql.importexport.ExportService;
+import nl.errorsoft.esql.importexport.ExportOptions;
+import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.user.GrantTarget;
-import nl.errorsoft.esql.importexport.ImportService;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
@@ -116,8 +115,9 @@ abstract class DialectContractTest {
 		insert(table, "third", null);
 
 		File file = dir.resolve("dump.sql").toFile();
-		runSynchronously(new ExportService(connection, new Object[]{table}, file.getAbsolutePath(), true, true, false, true, true));
-		runSynchronously(new ImportService(connection, database, file.getAbsolutePath()));
+		runSynchronously(
+			new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(), new ExportOptions(true, true, false, true, true)));
+		runSynchronously(new ConnectionContext(connection).newImport(database, file.getAbsolutePath()));
 
 		TableData[][] rows = service().loadPage(table, 0, 100);
 		assertEquals(3, rows.length);
@@ -184,12 +184,12 @@ abstract class DialectContractTest {
 		String name = "db_" + System.nanoTime();
 		assertFalse(dialect.listDatabases(connection).contains(name));
 
-		new DatabaseService(connection).createDatabase(name);
+		new ConnectionContext(connection).databases().createDatabase(name);
 		assertTrue(dialect.listDatabases(connection).contains(name));
 
 		// The connection is using the database that is dropped.
 		connection.useDatabase(name);
-		new DatabaseService(connection).dropDatabase(new Database(name));
+		new ConnectionContext(connection).databases().dropDatabase(new Database(name));
 		assertFalse(dialect.listDatabases(connection).contains(name));
 		connection.useDatabase(DATABASE);
 	}
@@ -238,7 +238,7 @@ abstract class DialectContractTest {
 	}
 
 	private TableService service() {
-		return new TableService(connection);
+		return new ConnectionContext(connection).tables();
 	}
 
 	private Table table(String name) {

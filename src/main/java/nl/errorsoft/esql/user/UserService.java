@@ -14,9 +14,9 @@ public class UserService {
 	private final UserRepository repository;
 	private final DatabaseService databases;
 
-	public UserService(DatabaseConnection dbc) {
-		this.repository = new UserRepository(dbc);
-		this.databases = new DatabaseService(dbc);
+	public UserService(UserRepository repository, DatabaseService databases) {
+		this.repository = repository;
+		this.databases = databases;
 	}
 
 	public boolean usesHost() {

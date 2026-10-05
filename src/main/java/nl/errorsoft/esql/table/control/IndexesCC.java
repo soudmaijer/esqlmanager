@@ -90,7 +90,7 @@ public class IndexesCC {
 	}
 
 	private TableService service() throws Exception {
-		return new TableService(cwcc.getDatabaseConnection());
+		return cwcc.getContext().tables();
 	}
 
 	public void addNew(String name) {

@@ -52,7 +52,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Code style
 
-* Formatting is done by Spotless with the Eclipse formatter profile in `.eclipse-formatter.xml` (Java conventions: braces at the end of the line, tabs, 160 columns, LF line endings; if, else, for and while always have braces). Run `./mvnw spotless:apply` before committing, `./mvnw spotless:check` verifies. `.editorconfig` holds the same basics for editors. IntelliJ's own formatter does not follow it.
+* Formatting is done by Spotless with the Eclipse formatter profile in `.eclipse-formatter.xml` (Java conventions: braces at the end of the line, tabs, 160 columns, LF line endings; if, else, for and while always have braces). Run `./mvnw spotless:apply` before committing, `./mvnw verify` runs `spotless:check` and fails on unformatted code. `.editorconfig` holds the same basics for editors. IntelliJ's own formatter does not follow it.
 * Resources are closed with try-with-resources. No deprecated API in new code (`new Integer`, `Dialog.show()`, ...).
 * No em-dashes in prose or documentation.
 
@@ -86,7 +86,8 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 * `query`: statements typed by the user (`QueryService`, `QueryRepository`) and the editor with syntax highlighting.
 * `connection`: profiles, drivers, the connection window, process list, server status and variables (`ServerService`).
 * `app`: main window, settings, start up. `ui`: Swing parts shared by several features (`ImageLoader`, `ColumnWidths`, ...). `data`: `DatabaseConnection` and `AbstractRepository`. `domain`: types shared by features (`CreateColumn`, `DataType`) and `domain.dialect`.
-* A service gets the connection of the window it works for (`new TableService( cwcc.getDatabaseConnection() )`) and a repository is created by its service. Services may call other services (`BlobService` uses `TableService.rowFilter`).
+* `connection.ConnectionContext` is the composition root of one connection. It creates every repository and service once and wires them with constructor injection. Controllers get a service from `cwcc.getContext()` (`getContext().tables()`, `.databases()`, `.users()`, `.servers()`, `.queries()`, `.designer()`) and never create services or repositories themselves. A service receives its repository and the services it needs in its constructor (`BlobService` uses `TableService.rowFilter`). Jobs that report progress to observers (export, import, blob transfer) are created per run with `newExport`, `newImport` and `newBlobTransfer`. A new feature adds its repository and service to `ConnectionContext`.
+* Parameters that belong together are a record (`ExportOptions`, `DesignedTable`), not a long argument list.
 
 ## Known technical debt
 

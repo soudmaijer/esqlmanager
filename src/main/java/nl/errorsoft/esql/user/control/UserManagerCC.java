@@ -13,103 +13,81 @@ import nl.errorsoft.esql.user.ui.UserManagerUI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class UserManagerCC
-{
-	private static final Logger log = LogManager.getLogger( UserManagerCC.class );
+public class UserManagerCC {
+	private static final Logger log = LogManager.getLogger(UserManagerCC.class);
 
 	private ConnectionWindowCC cwcc;
 
-	public UserManagerCC( ConnectionWindowCC cwcc )
-	{
+	public UserManagerCC(ConnectionWindowCC cwcc) {
 		this.cwcc = cwcc;
 	}
 
-	public void startUI( ESQLManagerUI emui )
-	{
-		try
-		{
-			if ( !getDialect().supports( Dialect.Feature.USER_MANAGER ) )
-			{
-				cwcc.getUI().showErrorMessage( "The user manager is not available for this database" );
+	public void startUI(ESQLManagerUI emui) {
+		try {
+			if (!getDialect().supports(Dialect.Feature.USER_MANAGER)) {
+				cwcc.getUI().showErrorMessage("The user manager is not available for this database");
 				return;
 			}
 
-			emui.updateStatus( "Starting usermanager...", true );
-			UserManagerUI ui = new UserManagerUI( emui, this );
-			emui.updateStatus( "Ready...", false );
-			ui.setVisible( true );
-		}
-		catch ( Exception e )
-		{
-			log.error( e.getMessage(), e );
-			cwcc.getUI().showErrorMessage( "Can't start the user manager: " + e.getMessage() );
+			emui.updateStatus("Starting usermanager...", true);
+			UserManagerUI ui = new UserManagerUI(emui, this);
+			emui.updateStatus("Ready...", false);
+			ui.setVisible(true);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			cwcc.getUI().showErrorMessage("Can't start the user manager: " + e.getMessage());
 		}
 	}
 
-	public boolean usesHost()
-	{
+	public boolean usesHost() {
 		return service().usesHost();
 	}
 
-	public List<String> getPrivileges( GrantTarget.Scope scope )
-	{
-		return service().getPrivileges( scope );
+	public List<String> getPrivileges(GrantTarget.Scope scope) {
+		return service().getPrivileges(scope);
 	}
 
-	public List<DatabaseUser> listUsers() throws Exception
-	{
+	public List<DatabaseUser> listUsers() throws Exception {
 		return service().listUsers();
 	}
 
-	public void createUser( DatabaseUser user, String password ) throws Exception
-	{
-		service().createUser( user, password );
+	public void createUser(DatabaseUser user, String password) throws Exception {
+		service().createUser(user, password);
 	}
 
-	public void changePassword( DatabaseUser user, String password ) throws Exception
-	{
-		service().changePassword( user, password );
+	public void changePassword(DatabaseUser user, String password) throws Exception {
+		service().changePassword(user, password);
 	}
 
-	public void dropUser( DatabaseUser user ) throws Exception
-	{
-		service().dropUser( user );
+	public void dropUser(DatabaseUser user) throws Exception {
+		service().dropUser(user);
 	}
 
-	public Set<String> getGrants( DatabaseUser user, GrantTarget target ) throws Exception
-	{
-		return service().getGrants( user, target );
+	public Set<String> getGrants(DatabaseUser user, GrantTarget target) throws Exception {
+		return service().getGrants(user, target);
 	}
 
-	public void setGrants( DatabaseUser user, GrantTarget target, Set<String> privileges ) throws Exception
-	{
-		service().setGrants( user, target, privileges );
+	public void setGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws Exception {
+		service().setGrants(user, target, privileges);
 	}
 
-	public List<String> getDatabaseNames() throws Exception
-	{
+	public List<String> getDatabaseNames() throws Exception {
 		return service().getDatabaseNames();
 	}
 
-	public List<String> getTableNames( String databaseName ) throws Exception
-	{
-		return service().getTableNames( databaseName );
+	public List<String> getTableNames(String databaseName) throws Exception {
+		return service().getTableNames(databaseName);
 	}
 
-	private UserService service()
-	{
-		try
-		{
-			return new UserService( cwcc.getDatabaseConnection() );
-		}
-		catch ( Exception e )
-		{
-			throw new IllegalStateException( e.getMessage(), e );
+	private UserService service() {
+		try {
+			return cwcc.getContext().users();
+		} catch (Exception e) {
+			throw new IllegalStateException(e.getMessage(), e);
 		}
 	}
 
-	private Dialect getDialect()
-	{
+	private Dialect getDialect() {
 		return cwcc.getConnectionProfile().getServerType().getDialect();
 	}
 }

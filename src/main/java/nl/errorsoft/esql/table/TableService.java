@@ -20,8 +20,8 @@ import nl.errorsoft.esql.domain.dialect.Dialect;
 public class TableService {
 	private final TableRepository repository;
 
-	public TableService(DatabaseConnection dbc) {
-		this.repository = new TableRepository(dbc);
+	public TableService(TableRepository repository) {
+		this.repository = repository;
 	}
 
 	// Structure

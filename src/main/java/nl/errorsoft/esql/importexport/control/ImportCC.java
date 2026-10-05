@@ -88,7 +88,7 @@ public class ImportCC implements Observer {
 				node = ((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject();
 			}
 
-			ImportService ie = new ImportService(cwcc.getDatabaseConnection(), node, file);
+			ImportService ie = cwcc.getContext().newImport(node, file);
 			ie.addObserver(this);
 			ie.start();
 		} catch (Exception e) {

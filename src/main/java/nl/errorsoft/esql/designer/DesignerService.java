@@ -12,9 +12,9 @@ public class DesignerService {
 	private final DatabaseService databases;
 	private final TableService tables;
 
-	public DesignerService(DatabaseConnection dbc) {
-		this.databases = new DatabaseService(dbc);
-		this.tables = new TableService(dbc);
+	public DesignerService(DatabaseService databases, TableService tables) {
+		this.databases = databases;
+		this.tables = tables;
 	}
 
 	/**

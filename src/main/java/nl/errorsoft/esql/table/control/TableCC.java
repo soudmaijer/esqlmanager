@@ -150,11 +150,11 @@ public class TableCC {
 	 * Server options, the query behind them depends on the database.
 	 */
 	public TableDataView showServerStatus() throws Exception {
-		return show(new ServerService(cwcc.getDatabaseConnection()).getStatus());
+		return show(cwcc.getContext().servers().getStatus());
 	}
 
 	public TableDataView showServerVariables() throws Exception {
-		return show(new ServerService(cwcc.getDatabaseConnection()).getVariables());
+		return show(cwcc.getContext().servers().getVariables());
 	}
 
 	public String optimizeTable(Table table) throws Exception {
@@ -180,6 +180,6 @@ public class TableCC {
 	}
 
 	private TableService service() throws Exception {
-		return new TableService(cwcc.getDatabaseConnection());
+		return cwcc.getContext().tables();
 	}
 }

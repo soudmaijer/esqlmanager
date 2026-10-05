@@ -16,9 +16,9 @@ public class DatabaseService {
 	private final DatabaseRepository repository;
 	private final String[] profileFilter;
 
-	public DatabaseService(DatabaseConnection dbc) {
-		this.repository = new DatabaseRepository(dbc);
-		this.profileFilter = splitFilter(dbc.getConnectionProfile().getDatabases());
+	public DatabaseService(DatabaseRepository repository, String profileDatabases) {
+		this.repository = repository;
+		this.profileFilter = splitFilter(profileDatabases);
 	}
 
 	/** The databases on the server, limited to the ones named in the profile when it names any. */

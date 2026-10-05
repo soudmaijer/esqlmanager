@@ -1,5 +1,9 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.data.DatabaseConnection;
+
+import nl.errorsoft.esql.connection.ConnectionContext;
+
 import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
@@ -35,6 +39,7 @@ public class ConnectionWindowCC extends Thread {
 	private ConnectionWindow cw;
 	private ConnectionWindowUI cwui;
 	private TableCC tbcc;
+	private ConnectionContext context;
 
 	public ConnectionWindowCC(ESQLManagerCC jmcc, nl.errorsoft.esql.connection.ConnectionProfile cp) {
 		this.jmcc = jmcc;
@@ -345,13 +350,13 @@ public class ConnectionWindowCC extends Thread {
 			cwui.disableDataEdit();
 			long start = System.nanoTime();
 
-			if (new QueryService(getDatabaseConnection()).returnsRows(query)) {
+			if (getContext().queries().returnsRows(query)) {
 				TableCC tcc = new TableCC(this);
 				TableDataView result = tcc.executeQuery(query);
 				cwui.showTableDataView("Query results", result);
 				setStatusDetail("Query returned " + result.getRowCount() + " row(s) in " + millisSince(start) + " ms");
 			} else {
-				QueryService queries = new QueryService(getDatabaseConnection());
+				QueryService queries = getContext().queries();
 
 				if (queries.isUse(query)) {
 					queries.use(query);
@@ -373,7 +378,7 @@ public class ConnectionWindowCC extends Thread {
 	 */
 	public void changeDatabase(Database db) {
 		try {
-			new DatabaseService(getDatabaseConnection()).use(db);
+			getContext().databases().use(db);
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			cwui.showErrorMessage(e.getMessage());
@@ -475,6 +480,16 @@ public class ConnectionWindowCC extends Thread {
 
 	public ImageLoader getImageLoader() {
 		return jmcc.getImageLoader();
+	}
+
+	/** The services of this connection, created on first use. Fails when the connection is lost. */
+	public ConnectionContext getContext() throws Exception {
+		DatabaseConnection connection = getDatabaseConnection();
+
+		if (context == null) {
+			context = new ConnectionContext(connection);
+		}
+		return context;
 	}
 
 	public nl.errorsoft.esql.data.DatabaseConnection getDatabaseConnection() throws Exception {

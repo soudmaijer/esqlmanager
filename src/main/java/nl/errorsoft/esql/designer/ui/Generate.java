@@ -318,7 +318,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 				model.add(new DesignedDatabase(d.getName(), designedTables));
 			}
 
-			new DesignerService(cwui.getControlClass().getDatabaseConnection()).generate(model, () -> progress.setValue(progress.getValue() + 1));
+			cwui.getControlClass().getContext().designer().generate(model, () -> progress.setValue(progress.getValue() + 1));
 		} catch (Exception e) {
 			log.error("Model generation failed", e);
 			error = true;

@@ -8,8 +8,8 @@ import nl.errorsoft.esql.data.DatabaseConnection;
 public class QueryService {
 	private final QueryRepository repository;
 
-	public QueryService(DatabaseConnection dbc) {
-		this.repository = new QueryRepository(dbc);
+	public QueryService(QueryRepository repository) {
+		this.repository = repository;
 	}
 
 	/** True for a statement that returns rows to show. */

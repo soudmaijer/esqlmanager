@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.importexport.control;
 
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.importexport.ExportOptions;
 import nl.errorsoft.esql.importexport.ExportService;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
@@ -83,8 +84,7 @@ public class ExportCC implements Observer {
 				export[i] = ((DefaultMutableTreeNode) tpa[i].getLastPathComponent()).getUserObject();
 			}
 
-			ExportService exp = new ExportService(cwcc.getDatabaseConnection(), export, file, dumpStructure, dumpData, createDatabase, dropTable,
-				useDatabase);
+			ExportService exp = cwcc.getContext().newExport(export, file, new ExportOptions(dumpStructure, dumpData, createDatabase, dropTable, useDatabase));
 			exp.addObserver(this);
 			exp.start();
 		} catch (Exception e) {
