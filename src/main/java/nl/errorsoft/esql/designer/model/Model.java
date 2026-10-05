@@ -252,7 +252,13 @@ public class Model implements MouseListener, MouseMotionListener {
 	public void mousePressed(MouseEvent e) {
 		if (!this.locked) {
 			ModelObject tmp = (ModelObject) e.getSource();
-			if (!e.isControlDown() && !tmp.isSelected()) {
+			// A right click (ctrl-click on macOS) selects the object for its context menu, it does not toggle it.
+			if (e.isPopupTrigger()) {
+				if (!tmp.isSelected()) {
+					deselectAll();
+					tmp.setSelected(true);
+				}
+			} else if (!e.isControlDown() && !tmp.isSelected()) {
 				deselectAll();
 				tmp.setSelected(true);
 			} else if (e.isControlDown()) {

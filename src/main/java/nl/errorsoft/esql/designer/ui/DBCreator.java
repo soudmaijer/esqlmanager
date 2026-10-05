@@ -14,7 +14,6 @@ import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.dialog.Generate;
-import nl.errorsoft.esql.designer.ui.diagram.ModelArranger;
 import nl.errorsoft.esql.designer.ui.diagram.ModelBrowser;
 import nl.errorsoft.esql.designer.ui.diagram.ModelFilter;
 import nl.errorsoft.esql.designer.ui.diagram.ModelViewer;
@@ -138,6 +137,8 @@ public class DBCreator extends JDialog implements MouseListener {
 		view.add(view_grid);
 		view.setMnemonic('V');
 		view_grid.addActionListener(e -> mv.setShowGrid(view_grid.isSelected()));
+		// The context menu of the canvas can switch the grid too.
+		mv.addPropertyChangeListener("showGrid", e -> view_grid.setSelected(mv.showsGrid()));
 		view.addSeparator();
 		view.add(view_arrange);
 		view_arrange.addActionListener(e -> arrangeAutomatically());
@@ -164,9 +165,7 @@ public class DBCreator extends JDialog implements MouseListener {
 
 	/** Places the tables with the automatic layout, referenced tables left of the tables that refer to them. */
 	private void arrangeAutomatically() {
-		ModelArranger.arrange(mv.getModel());
-		mv.resize();
-		mv.repaint();
+		mv.arrangeAutomatically();
 	}
 
 	public void updateTitle() {

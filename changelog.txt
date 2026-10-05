@@ -185,3 +185,9 @@ New:
 - Dialogs: one helper for all message boxes. Errors show the error icon, dropping and deleting asks with a warning
   that names the object and a button named after the action, revoking privileges asks first. Clearer texts and titles
   (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.
+- Context menus of the database tree are built per node and only show what the server supports (no MySQL, Postgres
+  or SQL Server submenus). New: Open, New query, Users, Export, Import, Indexes and Reload in the menus where they
+  apply; Check and Repair only on MySQL. Right click (ctrl-click on macOS) selects the node under the cursor first.
+- Designer context menus: the empty canvas adds a database, table or note at the click point, selects all, arranges,
+  toggles the grid and opens the model properties. Tables, databases and notes have their own menus (properties,
+  foreign key, link to a database, add a table or note, remove a link, delete), right click selects the object.

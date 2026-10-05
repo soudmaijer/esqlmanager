@@ -120,6 +120,12 @@ public class CommentObject extends ModelObject implements MouseListener, FocusLi
 		jt.repaint();
 	}
 
+	/** Puts the caret at the end of the text so the user can type. */
+	public void startEditing() {
+		jt.requestFocusInWindow();
+		jt.setCaretPosition(jt.getDocument().getLength());
+	}
+
 	public void mousePressed(MouseEvent e) {
 		jb.requestFocus();
 		this.repaint();

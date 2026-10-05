@@ -31,6 +31,7 @@ import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -65,16 +66,6 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 
 	private boolean placemode = false;
 	private ModelObject place = null;
-
-	private JPopupMenu objectmenu;
-	private JMenu objectrel = new JMenu("Remove Relation");
-	private JMenuItem remove = new JMenuItem("Remove");
-	private JMenuItem props = new JMenuItem("Properties");
-	private JMenuItem create_table_db = new JMenuItem("Attach Table");
-	private JMenuItem create_comment_mo = new JMenuItem("Attach Comment");
-
-	private Vector refs;
-	private ModelObject selected;
 
 	private JMenu model_menu = new JMenu("Model");
 	private JMenuItem create_database = new JMenuItem("Add New Database");
@@ -112,11 +103,6 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	private String linkColumn;
 	private Point linkPoint;
 
-	private JMenuItem add_foreign_key = new JMenuItem("Add Foreign Key...");
-	private JPopupMenu connectormenu = new JPopupMenu();
-	private JMenuItem edit_key = new JMenuItem("Edit Foreign Key...");
-	private JMenuItem remove_key = new JMenuItem("Remove Foreign Key");
-
 	/*
 	 	ModelViewer default constructor
 	 */
@@ -128,32 +114,6 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
-
-		objectmenu = new JPopupMenu();
-
-		objectmenu.add(props);
-		objectmenu.add(objectrel);
-		objectmenu.addSeparator();
-		objectmenu.add(create_table_db);
-		objectmenu.add(create_comment_mo);
-		objectmenu.add(add_foreign_key);
-		objectmenu.addSeparator();
-		objectmenu.add(remove);
-
-		create_comment_mo.addMouseListener(this);
-		add_foreign_key.addActionListener(e -> {
-			if (selected instanceof TableObject table) {
-				addForeignKey(table, firstColumnOf(table), null, null);
-			}
-		});
-
-		connectormenu.add(edit_key);
-		connectormenu.add(remove_key);
-		edit_key.addActionListener(e -> editForeignKey(selectedKey));
-		remove_key.addActionListener(e -> removeForeignKey(selectedKey));
-		remove.addMouseListener(this);
-		props.addMouseListener(this);
-		create_table_db.addMouseListener(this);
 
 		model_menu.add(create_database);
 		model_menu.add(create_table);
@@ -268,9 +228,26 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		return showGrid;
 	}
 
+	/** Fires the property "showGrid", so the View menu can follow a change made in the context menu. */
 	public void setShowGrid(boolean showGrid) {
+		boolean old = this.showGrid;
 		this.showGrid = showGrid;
+		firePropertyChange("showGrid", old, showGrid);
 		repaint();
+	}
+
+	/** Places the tables with the automatic layout, referenced tables left of the tables that refer to them. */
+	public void arrangeAutomatically() {
+		ModelArranger.arrange(model);
+		resize();
+		repaint();
+	}
+
+	public void showModelProperties() {
+		model.lock();
+		mvc.showModelPropertiesDialog(model);
+		mvc.updateTitle();
+		model.unlock();
 	}
 
 	/*
@@ -650,64 +627,18 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 			if (e.getSource() instanceof ModelObject) {
 				selectedKey = null;
 			}
-			if (e.getSource() instanceof TableObject table && !e.isShiftDown() && !e.isMetaDown() && table.handleAt(e.getX(), e.getY()) >= 0) {
+			if (e.getSource() instanceof TableObject table && !e.isShiftDown() && !e.isMetaDown() && !e.isPopupTrigger()
+				&& table.handleAt(e.getX(), e.getY()) >= 0) {
 				linkFrom = table;
 				linkColumn = table.getFields()[table.handleAt(e.getX(), e.getY())].getName();
 				linkPoint = null;
 			}
-			if (e.isMetaDown() && e.getSource() instanceof ModelObject) {
-				ModelObject t = (ModelObject) e.getSource();
-				objectrel.removeAll();
-				Vector v = model.getReferences(t);
-				if (v.size() == 0) {
-					objectrel.add(new JMenuItem("- No Relations -"));
-				}
-				for (int i = 0; i < v.size(); i++) {
-					ModelObject tmp = ((ModelObject) v.get(i));
-					JMenuItem mn;
-					if (tmp instanceof DatabaseObject) {
-						mn = new JMenuItem("DB: " + tmp.getName());
-					} else {
-						mn = new JMenuItem("TB: " + tmp.getName());
-					}
-
-					mn.addMouseListener(this);
-					objectrel.add(mn);
-				}
-
-				if (t instanceof TableObject) {
-					props.setVisible(true);
-					create_table.setVisible(false);
-				} else if (t instanceof DatabaseObject) {
-					props.setVisible(true);
-					create_table.setVisible(true);
-				} else if (t instanceof ModelObject) {
-					props.setVisible(false);
-					create_table.setVisible(false);
-				}
-
-				if (!(t instanceof DatabaseObject)) {
-					create_table_db.setEnabled(false);
-				} else {
-					create_table_db.setEnabled(true);
-				}
-
-				add_foreign_key.setVisible(t instanceof TableObject);
-				objectmenu.show(t, e.getX(), e.getY());
-				selected = t;
-				refs = v;
-			}
-
 			if (e.getSource() instanceof ModelViewer) {
 				model.deselectAll();
-				selected = null;
 				src = null;
 				selectedKey = connectorAt(e.getPoint());
 				if (selectedKey != null) {
 					requestFocusInWindow();
-					if (e.isPopupTrigger() || e.isMetaDown()) {
-						connectormenu.show(this, e.getX(), e.getY());
-					}
 				}
 			} else if (e.isShiftDown() && e.getSource() instanceof ModelObject) {
 				src = (ModelObject) e.getSource();
@@ -723,6 +654,7 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		this.repaint();
 
 		this.automateMenus();
+		showContextMenu(e);
 	}
 
 	public void mouseReleased(MouseEvent e) {
@@ -734,35 +666,15 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		if (!placemode) {
 			if (e.getSource() instanceof JMenuItem) {
 				JMenuItem tmp = (JMenuItem) e.getSource();
-				if (tmp == remove) {
-					model.removeObject(selected);
-					this.remove(selected);
-				} else if (tmp == props) {
-					this.showProperties();
-				} else if ((tmp == create_table_db && create_table_db.isEnabled()) || (tmp == attach_table && attach_table.isEnabled())) {
+				if (tmp == attach_table && attach_table.isEnabled()) {
 					Vector v = this.getModel().getSelectedObjects();
 					if (v.size() == 1 && v.get(0) instanceof DatabaseObject) {
 						this.createTableObject("New Table", (DatabaseObject) v.get(0));
 					}
-				} else if ((tmp == create_comment_mo && create_comment_mo.isEnabled()) || (tmp == attach_comment && attach_comment.isEnabled())) {
+				} else if (tmp == attach_comment && attach_comment.isEnabled()) {
 					Vector v = this.getModel().getSelectedObjects();
 					if (v.size() == 1 && v.get(0) instanceof ModelObject) {
 						this.createCommentObject("New Table", (ModelObject) v.get(0));
-					}
-				} else if (tmp == create_table) {
-					this.createTableObject("New Table");
-				} else {
-					try {
-						String name = tmp.getText().substring(4, tmp.getText().length());
-						for (int i = 0; i < refs.size(); i++) {
-							ModelObject mod = (ModelObject) refs.get(i);
-							if (mod.getName().equalsIgnoreCase(name)) {
-								mod.removeReference(selected);
-								selected.removeReference(mod);
-								break;
-							}
-						}
-					} catch (Exception ex) {
 					}
 				}
 			}
@@ -810,6 +722,9 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		this.repaint();
 
 		this.automateMenus();
+		if (!placemode) {
+			showContextMenu(e);
+		}
 	}
 
 	public void mouseDragged(MouseEvent e) {
@@ -871,11 +786,180 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 				model.unlock();
 			}
 		} else if (e.getSource() == show_model_properties) {
-			model.lock();
-			mvc.showModelPropertiesDialog(this.getModel());
-			mvc.updateTitle();
-			model.unlock();
+			showModelProperties();
 		}
+	}
+
+	/*
+	 *
+	 *	Context menus, built for the object, connector or empty spot under the mouse with only the items that apply.
+	 *
+	 */
+
+	/** The popup trigger comes on press on macOS (also ctrl-click) and Linux, on release on Windows. */
+	private void showContextMenu(MouseEvent e) {
+		if (!e.isPopupTrigger() || placemode) {
+			return;
+		}
+		Component source = (Component) e.getSource();
+		JPopupMenu menu;
+
+		if (source instanceof ModelObject object) {
+			if (!object.isSelected()) {
+				model.deselectAll();
+				object.setSelected(true);
+			}
+			menu = switch (object) {
+				case TableObject table -> tableMenu(table);
+				case DatabaseObject database -> databaseMenu(database);
+				case CommentObject note -> noteMenu(note);
+				default -> null;
+			};
+		} else if (source == this) {
+			menu = selectedKey != null ? connectorMenu(selectedKey) : canvasMenu(e.getPoint());
+		} else {
+			return;
+		}
+
+		if (menu != null) {
+			repaint();
+			automateMenus();
+			menu.show(source, e.getX(), e.getY());
+		}
+	}
+
+	JPopupMenu canvasMenu(Point point) {
+		JPopupMenu menu = new JPopupMenu();
+		menu.add(item("Add Database", "add_database", () -> placeAt(model.createDatabaseObject("New Database"), point)));
+		menu.add(item("Add Table", "add_table", () -> placeAt(model.createTableObject("New Table"), point)));
+		menu.add(item("Add Note", "add_comment", () -> placeAt(model.createCommentObject("New Comment"), point)));
+		menu.addSeparator();
+		if (!model.getObjects().isEmpty()) {
+			menu.add(item("Select All", null, () -> {
+				model.selectAll();
+				repaint();
+			}));
+		}
+		if (model.getObjects().stream().anyMatch(object -> object instanceof TableObject)) {
+			menu.add(item("Arrange Automatically", null, this::arrangeAutomatically));
+		}
+		JCheckBoxMenuItem grid = new JCheckBoxMenuItem("Show Grid", showGrid);
+		grid.addActionListener(e -> setShowGrid(grid.isSelected()));
+		menu.add(grid);
+		menu.addSeparator();
+		menu.add(item("Model Properties...", "des_properties", this::showModelProperties));
+		return menu;
+	}
+
+	JPopupMenu tableMenu(TableObject table) {
+		JPopupMenu menu = new JPopupMenu();
+		menu.add(item("Properties...", "des_properties", this::showProperties));
+		menu.add(item("Add Foreign Key...", "linkimg", () -> addForeignKey(table, firstColumnOf(table), null, null)));
+
+		List<ModelObject> linked = linkedObjects(table);
+		JMenu link = new JMenu("Link to Database");
+		for (Object object : model.getObjects()) {
+			if (object instanceof DatabaseObject database && !linked.contains(database)) {
+				link.add(item(database.getName(), null, () -> {
+					model.addReference(database, table);
+					repaint();
+				}));
+			}
+		}
+		if (link.getItemCount() > 0) {
+			menu.add(link);
+		}
+		addObjectItems(menu, table, linked);
+		return menu;
+	}
+
+	JPopupMenu databaseMenu(DatabaseObject database) {
+		JPopupMenu menu = new JPopupMenu();
+		menu.add(item("Properties...", "des_properties", this::showProperties));
+		menu.add(item("Add Table to This Database", "add_table", () -> {
+			TableObject table = model.createTableObject("New Table");
+			model.addReference(database, table);
+			Rectangle card = database.cardBounds();
+			placeAt(table, new Point(card.x, card.y + card.height + 40));
+		}));
+		addObjectItems(menu, database, linkedObjects(database));
+		return menu;
+	}
+
+	JPopupMenu noteMenu(CommentObject note) {
+		JPopupMenu menu = new JPopupMenu();
+		menu.add(item("Edit", "des_properties", note::startEditing));
+		addObjectItems(menu, note, linkedObjects(note));
+		return menu;
+	}
+
+	JPopupMenu connectorMenu(ForeignKey key) {
+		JPopupMenu menu = new JPopupMenu();
+		menu.add(item("Edit Foreign Key...", "des_properties", () -> editForeignKey(key)));
+		menu.add(item("Remove Foreign Key", null, () -> removeForeignKey(key)));
+		return menu;
+	}
+
+	/** What every card has: a note attached to it, removing its links (when it has any), and delete. */
+	private void addObjectItems(JPopupMenu menu, ModelObject object, List<ModelObject> linked) {
+		if (!(object instanceof CommentObject)) {
+			menu.add(item("Add Note", "add_comment", () -> {
+				CommentObject note = model.createCommentObject("New Comment");
+				model.addReference(note, object);
+				Rectangle card = object.cardBounds();
+				placeAt(note, new Point(card.x + card.width + 40, card.y));
+			}));
+		}
+		if (!linked.isEmpty()) {
+			JMenu unlink = new JMenu("Remove Link");
+			for (ModelObject other : linked) {
+				String name = other instanceof CommentObject ? "Note" : other.getName();
+				unlink.add(item(name, null, () -> {
+					other.removeReference(object);
+					object.removeReference(other);
+					repaint();
+				}));
+			}
+			menu.add(unlink);
+		}
+		menu.addSeparator();
+		int count = model.getSelectedObjects().size();
+		menu.add(item(count > 1 ? "Delete " + count + " Objects" : "Delete", null, this::removeSelectedObjects));
+	}
+
+	/** The cards an object is linked to with a database or note link, in both directions. */
+	private List<ModelObject> linkedObjects(ModelObject object) {
+		List<ModelObject> linked = new java.util.ArrayList<>();
+		for (Object other : model.getObjects()) {
+			ModelObject candidate = (ModelObject) other;
+			if (candidate != object && (candidate.getReferences().contains(object) || object.getReferences().contains(candidate))) {
+				linked.add(candidate);
+			}
+		}
+		return linked;
+	}
+
+	private JMenuItem item(String text, String icon, Runnable action) {
+		JMenuItem item = new JMenuItem(text);
+		if (icon != null) {
+			item.setIcon(mvc.getImageList().getIcon(icon));
+		}
+		item.addActionListener(e -> action.run());
+		return item;
+	}
+
+	/** Adds a new card with its top left corner at a point of the viewer and selects it. */
+	private void placeAt(ModelObject object, Point point) {
+		object.addMouseListener(this);
+		object.addMouseMotionListener(this);
+		object.setHidden(false);
+		add(object);
+		object.setCardLocation(Math.max(0, point.x), Math.max(0, point.y));
+		moveToFront(object);
+		model.deselectAll();
+		object.setSelected(true);
+		resize();
+		repaint();
 	}
 
 	public void mouseClicked(MouseEvent e) {

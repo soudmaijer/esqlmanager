@@ -52,11 +52,13 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 
 The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
+Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export and Import on a database, Edit, Indexes and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
+
 PostgreSQL shows the tables of the connection's current schema (normally `public`), and has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects.
 
 ## Database designer
 
-The designer (Tools > Database Designer) draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme.
+The designer (Tools > Database Designer) draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
 
 * Drag from the icon of a column onto a column of another table to create a foreign key, or use "Add Foreign Key..." in the table's context menu or the Foreign Keys tab of its properties. The dialog takes several column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions.
 * Foreign keys are drawn from column to column with a crow's foot at the many side. Double click a line to edit it, select it and press Delete to remove it.
