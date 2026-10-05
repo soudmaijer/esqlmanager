@@ -7,7 +7,6 @@ import nl.errorsoft.esql.blob.control.UDDataCC;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import nl.errorsoft.esql.domain.*;
 
 /*
  * JDialog.java

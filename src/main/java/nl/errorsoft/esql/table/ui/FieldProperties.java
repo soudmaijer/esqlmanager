@@ -3,7 +3,7 @@ package nl.errorsoft.esql.table.ui;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.table.TableIndex;
 
-import nl.errorsoft.esql.domain.DataType;
+import nl.errorsoft.esql.table.DataType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;

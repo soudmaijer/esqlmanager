@@ -11,8 +11,6 @@ import nl.errorsoft.esql.connection.ui.ConnectionProfileUI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.*;
-
 public class ConnectionProfileCC {
 	private static final Logger log = LogManager.getLogger(ConnectionProfileCC.class);
 

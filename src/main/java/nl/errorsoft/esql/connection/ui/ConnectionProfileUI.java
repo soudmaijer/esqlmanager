@@ -10,8 +10,7 @@ import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.domain.dialect.Dialect;
+import nl.errorsoft.esql.dialect.Dialect;
 
 public class ConnectionProfileUI extends JDialog implements ItemListener, ActionListener {
 	private JButton btnConnect;

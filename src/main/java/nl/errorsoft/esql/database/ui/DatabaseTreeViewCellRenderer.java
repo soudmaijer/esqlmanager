@@ -1,15 +1,15 @@
 package nl.errorsoft.esql.database.ui;
 
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+
 import nl.errorsoft.esql.database.Database;
 
-import nl.errorsoft.esql.ui.ImageLoader;
-
-import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import javax.swing.tree.*;
 import javax.swing.*;
 import java.awt.*;
-import nl.errorsoft.esql.domain.*;
 
 class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer {
 	private ImageLoader imgldr;

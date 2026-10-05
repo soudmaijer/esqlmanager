@@ -2,20 +2,20 @@
 
 package nl.errorsoft.esql.table.control;
 
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.TableIndex;
+import nl.errorsoft.esql.table.ui.IndexesUI;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.ui.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.dialect.Dialect;
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.domain.*;
+import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.table.TableService;
 
 public class IndexesCC {

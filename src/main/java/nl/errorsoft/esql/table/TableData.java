@@ -2,10 +2,6 @@
 
 package nl.errorsoft.esql.table;
 
-import nl.errorsoft.esql.data.*;
-
-import nl.errorsoft.esql.domain.*;
-
 public class TableData {
 	private Object data;
 	private boolean newRow = false;

@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.blob.control;
 
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableData;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -8,12 +11,9 @@ import nl.errorsoft.esql.blob.ui.UDDataIF;
 import nl.errorsoft.esql.blob.ui.UploadFileUI;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
-import nl.errorsoft.esql.table.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.blob.BlobService;
 import java.util.*;
 

@@ -1,10 +1,10 @@
 package nl.errorsoft.esql.designer.control;
 
-import nl.errorsoft.esql.designer.DBCreator;
+import nl.errorsoft.esql.designer.ui.DBCreator;
 
 import java.util.Vector;
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 public class ModelViewerControl {
 	private DBCreator db;

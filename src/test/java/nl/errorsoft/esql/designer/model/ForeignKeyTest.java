@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import nl.errorsoft.esql.designer.ui.Field;
-import nl.errorsoft.esql.designer.ui.TableObject;
-import nl.errorsoft.esql.domain.DataType;
-import nl.errorsoft.esql.domain.EsqlException;
+import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.error.EsqlException;
 import org.junit.jupiter.api.Test;
 
 class ForeignKeyTest {

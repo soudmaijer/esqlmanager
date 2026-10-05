@@ -2,10 +2,10 @@ package nl.errorsoft.esql.connection.ui;
 
 import nl.errorsoft.esql.database.Database;
 
-import nl.errorsoft.esql.app.Settings;
+import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.connection.DatabaseDriver;
 import nl.errorsoft.esql.connection.control.DatabaseDriverCC;
-import nl.errorsoft.esql.designer.ui.Field;
+import nl.errorsoft.esql.designer.ui.diagram.Field;
 
 /*
  * DriverUI.java
@@ -13,7 +13,6 @@ import nl.errorsoft.esql.designer.ui.Field;
  * Created on 6 april 2003, 0:51
  */
 
-import nl.errorsoft.esql.domain.*;
 import java.awt.event.*;
 import javax.swing.*;
 

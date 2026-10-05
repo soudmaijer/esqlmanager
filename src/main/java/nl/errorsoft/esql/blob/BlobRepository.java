@@ -6,8 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import nl.errorsoft.esql.data.AbstractRepository;
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.AbstractRepository;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 
 /** Reads and writes the binary content of one cell, the row is selected by a ready made condition. */

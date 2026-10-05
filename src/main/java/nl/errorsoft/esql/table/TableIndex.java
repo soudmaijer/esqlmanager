@@ -1,9 +1,6 @@
 
 package nl.errorsoft.esql.table;
 
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.domain.*;
-
 public class TableIndex {
 	private boolean unique = false;
 	private boolean newindex = false;

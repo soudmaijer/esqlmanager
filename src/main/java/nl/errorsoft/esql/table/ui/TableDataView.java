@@ -3,16 +3,16 @@
 package nl.errorsoft.esql.table.ui;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.domain.EsqlException;
+import nl.errorsoft.esql.error.EsqlException;
 
 import nl.errorsoft.esql.query.ui.UndoHandler;
-import nl.errorsoft.esql.ui.ColumnWidths;
-import nl.errorsoft.esql.ui.ExtentionFileFilter;
-import nl.errorsoft.esql.ui.HeaderListener;
-import nl.errorsoft.esql.ui.HeaderRenderer;
-import nl.errorsoft.esql.ui.ImageLoader;
-import nl.errorsoft.esql.ui.MultiLineCellEditor;
-import nl.errorsoft.esql.ui.SortableTableModel;
+import nl.errorsoft.esql.ui.table.ColumnWidths;
+import nl.errorsoft.esql.ui.util.ExtentionFileFilter;
+import nl.errorsoft.esql.ui.table.HeaderListener;
+import nl.errorsoft.esql.ui.table.HeaderRenderer;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.ui.table.MultiLineCellEditor;
+import nl.errorsoft.esql.ui.table.SortableTableModel;
 
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableData;

@@ -1,8 +1,16 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.control.IndexesCC;
+import nl.errorsoft.esql.table.control.TableCC;
+import nl.errorsoft.esql.table.ui.FieldProperties;
+import nl.errorsoft.esql.table.ui.TableDataView;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 import nl.errorsoft.esql.connection.ConnectionContext;
 
@@ -15,21 +23,16 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.ConnectionWindow;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
-import nl.errorsoft.esql.connection.ui.Processlist;
+import nl.errorsoft.esql.server.ui.Processlist;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.query.ui.QueryUI;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.user.control.UserManagerCC;
-
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.control.*;
-import nl.errorsoft.esql.table.ui.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.domain.dialect.Dialect;
+import nl.errorsoft.esql.dialect.Dialect;
 import java.util.*;
 
 public class ConnectionWindowCC extends Thread {
@@ -450,7 +453,7 @@ public class ConnectionWindowCC extends Thread {
 		return ApplicationContext.get().connection(getDatabaseConnection());
 	}
 
-	public nl.errorsoft.esql.data.DatabaseConnection getDatabaseConnection() throws Exception {
+	public nl.errorsoft.esql.jdbc.DatabaseConnection getDatabaseConnection() throws Exception {
 		if (!cw.getDatabaseConnection().getConnection().isClosed()) {
 			return cw.getDatabaseConnection();
 		} else {

@@ -1,11 +1,14 @@
 package nl.errorsoft.esql.app;
 
+import nl.errorsoft.esql.error.ErrorHandler;
+import nl.errorsoft.esql.settings.Settings;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import nl.errorsoft.esql.connection.ConnectionContext;
-import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 /**
  * The one place components are resolved from. It holds what exists once per application (images, settings) and the

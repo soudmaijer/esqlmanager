@@ -1,6 +1,6 @@
 package nl.errorsoft.esql;
 
-import nl.errorsoft.esql.app.Appearance;
+import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 

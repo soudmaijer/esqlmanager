@@ -4,8 +4,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.errorsoft.esql.data.AbstractRepository;
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.AbstractRepository;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 
 /** Runs the SQL for databases (schemas) and lists their tables. */

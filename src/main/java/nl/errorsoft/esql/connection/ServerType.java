@@ -1,12 +1,13 @@
 package nl.errorsoft.esql.connection;
 
-import nl.errorsoft.esql.domain.DataType;
+import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.dialect.Dialects;
+
+import nl.errorsoft.esql.table.DataType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.domain.dialect.*;
 import java.io.File;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;

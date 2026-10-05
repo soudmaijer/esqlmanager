@@ -2,9 +2,6 @@
 
 package nl.errorsoft.esql.table;
 
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.domain.*;
-
 import java.util.Vector;
 
 public class TableColumn {

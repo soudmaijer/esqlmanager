@@ -1,15 +1,16 @@
 package nl.errorsoft.esql.user.control;
 
+import nl.errorsoft.esql.user.DatabaseUser;
+import nl.errorsoft.esql.user.GrantTarget;
+import nl.errorsoft.esql.user.UserService;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
-import nl.errorsoft.esql.table.*;
-
 import java.util.List;
 import java.util.Set;
-import nl.errorsoft.esql.domain.dialect.Dialect;
-import nl.errorsoft.esql.user.*;
+import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.user.ui.UserManagerUI;
 import org.apache.logging.log4j.LogManager;

@@ -4,9 +4,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
-import nl.errorsoft.esql.data.AbstractRepository;
-import nl.errorsoft.esql.data.DatabaseConnection;
-import nl.errorsoft.esql.domain.dialect.UserAdmin;
+import nl.errorsoft.esql.jdbc.AbstractRepository;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
+import nl.errorsoft.esql.dialect.UserAdmin;
 
 /** Accounts and privileges. The SQL differs so much per server that it lives in the dialect's {@link UserAdmin}. */
 public class UserRepository extends AbstractRepository {

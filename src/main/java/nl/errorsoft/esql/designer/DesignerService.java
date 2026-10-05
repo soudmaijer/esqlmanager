@@ -4,7 +4,7 @@ import java.util.List;
 
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
-import nl.errorsoft.esql.domain.EsqlException;
+import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableForeignKey;

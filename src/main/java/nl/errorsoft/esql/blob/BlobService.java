@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableService;

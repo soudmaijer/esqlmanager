@@ -1,8 +1,8 @@
 package nl.errorsoft.esql.connection;
 
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
-import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
 public class ConnectionWindow {
 	private ConnectionWindowCC cwcc;

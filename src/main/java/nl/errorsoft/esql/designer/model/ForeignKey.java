@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import nl.errorsoft.esql.designer.ui.Field;
-import nl.errorsoft.esql.designer.ui.TableObject;
-import nl.errorsoft.esql.domain.EsqlException;
-import nl.errorsoft.esql.domain.dialect.Dialect;
+import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.TableObject;
+import nl.errorsoft.esql.error.EsqlException;
+import nl.errorsoft.esql.dialect.Dialect;
 
 /**
  * A foreign key drawn in the designer: the columns of {@code from} refer to the columns of {@code to}, pair by pair.

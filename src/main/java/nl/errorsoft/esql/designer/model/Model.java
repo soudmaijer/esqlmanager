@@ -1,10 +1,10 @@
 package nl.errorsoft.esql.designer.model;
 
-import nl.errorsoft.esql.designer.ui.CommentObject;
-import nl.errorsoft.esql.designer.ui.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.Field;
-import nl.errorsoft.esql.designer.ui.ModelObject;
-import nl.errorsoft.esql.designer.ui.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
+import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
+import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 
 import java.util.*;
 import java.awt.event.*;

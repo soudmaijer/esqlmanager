@@ -4,9 +4,9 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
-import nl.errorsoft.esql.ui.DesktopUtils;
-import nl.errorsoft.esql.ui.ImageLoader;
-import nl.errorsoft.esql.ui.StatusLight;
+import nl.errorsoft.esql.ui.util.DesktopUtils;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.ui.icon.StatusLight;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

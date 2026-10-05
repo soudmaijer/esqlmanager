@@ -2,16 +2,15 @@
 
 package nl.errorsoft.esql.database.control;
 
+import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.DatabaseService;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.ui.TableListView;
+
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.ui.*;
-
-import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.database.*;
 import java.util.Vector;
 
 public class DatabaseCC {

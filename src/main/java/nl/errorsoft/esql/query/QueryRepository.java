@@ -2,8 +2,8 @@ package nl.errorsoft.esql.query;
 
 import java.sql.SQLException;
 
-import nl.errorsoft.esql.data.AbstractRepository;
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.AbstractRepository;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 /** Runs statements typed by the user. */
 public class QueryRepository extends AbstractRepository {

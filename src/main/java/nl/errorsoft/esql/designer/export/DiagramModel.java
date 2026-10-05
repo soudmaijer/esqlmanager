@@ -7,9 +7,9 @@ import java.util.Set;
 
 import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
-import nl.errorsoft.esql.designer.ui.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.Field;
-import nl.errorsoft.esql.designer.ui.TableObject;
+import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
+import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 
 /** What a text diagram shows of a model: the databases, the tables with their columns and the foreign keys. Plain data, no Swing. */
 public record DiagramModel(List<String> databases, List<Table> tables, List<Relation> relations) {

@@ -1,16 +1,19 @@
 package nl.errorsoft.esql.connection;
 
+import nl.errorsoft.esql.server.ServerRepository;
+import nl.errorsoft.esql.server.ServerService;
+
 import nl.errorsoft.esql.blob.BlobRepository;
 import nl.errorsoft.esql.blob.BlobService;
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.DatabaseRepository;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.designer.DesignerService;
-import nl.errorsoft.esql.importexport.ExportOptions;
-import nl.errorsoft.esql.importexport.ExportRepository;
-import nl.errorsoft.esql.importexport.ExportService;
-import nl.errorsoft.esql.importexport.ImportRepository;
-import nl.errorsoft.esql.importexport.ImportService;
+import nl.errorsoft.esql.export.ExportOptions;
+import nl.errorsoft.esql.export.ExportRepository;
+import nl.errorsoft.esql.export.ExportService;
+import nl.errorsoft.esql.importer.ImportRepository;
+import nl.errorsoft.esql.importer.ImportService;
 import nl.errorsoft.esql.query.QueryRepository;
 import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.table.TableRepository;

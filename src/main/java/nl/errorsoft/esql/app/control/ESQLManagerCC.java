@@ -5,22 +5,22 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.connection.control.DatabaseDriverCC;
-import nl.errorsoft.esql.importexport.control.ExportCC;
-import nl.errorsoft.esql.importexport.control.ImportCC;
+import nl.errorsoft.esql.export.control.ExportCC;
+import nl.errorsoft.esql.importer.control.ImportCC;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.dialect.Dialect;
-import nl.errorsoft.esql.designer.DBCreator;
+import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.designer.ui.DBCreator;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.ESQLManager;
 import nl.errorsoft.esql.connection.ServerType;
-import nl.errorsoft.esql.app.Settings;
+import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
-import nl.errorsoft.esql.ui.ImageLoader;
-import nl.errorsoft.esql.app.ui.SettingsUI;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.settings.ui.SettingsUI;
 import nl.errorsoft.esql.app.ui.SplashUI;
 
 /**
@@ -119,7 +119,7 @@ public class ESQLManagerCC {
 		}
 
 		if (jmui.getConnectionWindowCount() > 0) {
-			DBCreator db = new nl.errorsoft.esql.designer.DBCreator(jmui, jmui.getConnectionWindow());
+			DBCreator db = new nl.errorsoft.esql.designer.ui.DBCreator(jmui, jmui.getConnectionWindow());
 		}
 	}
 

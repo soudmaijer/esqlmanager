@@ -10,8 +10,8 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
-import nl.errorsoft.esql.ui.HyperLinkListener;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.util.HyperLinkListener;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;

@@ -2,7 +2,7 @@ package nl.errorsoft.esql.query;
 
 import java.util.StringTokenizer;
 
-import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 /** Application logic for the statements typed in the query window. */
 public class QueryService {

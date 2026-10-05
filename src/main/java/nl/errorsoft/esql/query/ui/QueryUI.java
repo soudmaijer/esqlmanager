@@ -5,14 +5,13 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-import nl.errorsoft.esql.ui.EditorTheme;
-import nl.errorsoft.esql.ui.ExtentionFileFilter;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.editor.EditorTheme;
+import nl.errorsoft.esql.ui.util.ExtentionFileFilter;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;

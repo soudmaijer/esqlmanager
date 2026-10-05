@@ -7,8 +7,6 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.DatabaseDriver;
 import nl.errorsoft.esql.connection.ui.DriverUI;
 
-import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.data.*;
 import java.util.Vector;
 
 public class DatabaseDriverCC {

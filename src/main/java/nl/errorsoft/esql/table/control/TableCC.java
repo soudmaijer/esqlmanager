@@ -1,21 +1,23 @@
 package nl.errorsoft.esql.table.control;
 
+import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.ui.CreateTable;
+import nl.errorsoft.esql.table.ui.TableDataView;
+
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.connection.ServerService;
+import nl.errorsoft.esql.server.ServerService;
 
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.blob.control.UDDataCC;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-import nl.errorsoft.esql.ui.ImageLoader;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.ui.*;
-
-import nl.errorsoft.esql.domain.dialect.Dialect;
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.domain.*;
+import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.table.QueryResult;
 import nl.errorsoft.esql.table.TableService;
 import java.util.Vector;
