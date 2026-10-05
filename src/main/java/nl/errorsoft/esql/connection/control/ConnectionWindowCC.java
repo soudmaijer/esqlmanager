@@ -95,10 +95,17 @@ public class ConnectionWindowCC extends Thread {
 		jmcc.setStatusInfo(info);
 	}
 
-	/** What this connection did last is shown in the status bar of its own window. */
+	/** What this connection did last is shown in the status bar of its own window, as the message of the tab in front. */
 	public void setStatusDetail(String detail) {
 		statusDetail = detail;
 		cwui.setStatus(detail);
+		showStatusInfo();
+	}
+
+	/** A message about one tab (a query tab), shown in the status bar while that tab is in front. */
+	public void setStatusDetail(java.awt.Component tab, String detail) {
+		statusDetail = detail;
+		cwui.setStatus(tab, detail);
 		showStatusInfo();
 	}
 

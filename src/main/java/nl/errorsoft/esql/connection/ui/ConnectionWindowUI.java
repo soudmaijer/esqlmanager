@@ -59,6 +59,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private HelpPane html; // The user documentation from docs/.
 	private int queryTabs; // Query tabs opened so far, for their numbers
 	private static final String EDITOR_KEY = "ConnectionWindowUI.editorKey"; // Finds an editor tab again
+	private static final String STATUS_KEY = "ConnectionWindowUI.status"; // The status message of a tab
 
 	// Internal toolbar.
 	private JToolBar tbTable;
@@ -207,7 +208,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		cell.gridx = 2;
 		cell.weightx = 1;
 		statusBar.add(Box.createHorizontalGlue(), cell);
-		tabbedPane.addChangeListener(e -> showNavigation());
+		tabbedPane.addChangeListener(e -> {
+			showNavigation();
+			showTabStatus();
+		});
 		JPanel tabsWithStatus = new JPanel(new BorderLayout());
 		tabsWithStatus.add(tabbedPane, BorderLayout.CENTER);
 		tabsWithStatus.add(statusBar, BorderLayout.SOUTH);
@@ -474,13 +478,36 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		showNavigation();
 	}
 
-	/** Shows what the connection did last at the bottom of its window. */
+	/** Shows what the connection did last below the tab in front, as the message of that tab. */
 	public void setStatus(String text) {
 		if (!SwingUtilities.isEventDispatchThread()) {
 			SwingUtilities.invokeLater(() -> setStatus(text));
 			return;
 		}
 
+		setStatus(tabbedPane.getSelectedComponent(), text);
+	}
+
+	/** Keeps a message with its tab; the status bar shows it while that tab is in front. */
+	public void setStatus(Component tab, String text) {
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(() -> setStatus(tab, text));
+			return;
+		}
+
+		if (tab instanceof JComponent component) {
+			component.putClientProperty(STATUS_KEY, text);
+		}
+		if (tab == null || tab == tabbedPane.getSelectedComponent()) {
+			showStatus(text);
+		}
+	}
+
+	private void showTabStatus() {
+		showStatus(tabbedPane.getSelectedComponent() instanceof JComponent tab ? (String) tab.getClientProperty(STATUS_KEY) : null);
+	}
+
+	private void showStatus(String text) {
 		String shown = text == null || text.isEmpty() ? READY : text;
 
 		status.setText(shown);

@@ -178,7 +178,7 @@ public class QueryCC implements SchemaNames {
 					log.info("{}: {} row(s) affected in {} ms", which, rows, millisSince(started));
 				}
 			} catch (Exception e) {
-				cwcc.setStatusDetail(which + " failed: " + firstLine(sql));
+				cwcc.setStatusDetail(parent, which + " failed: " + firstLine(sql));
 				ApplicationContext.get().errors().report(parent, which + " (" + firstLine(sql) + ")", e);
 				return new RunResult(results, false);
 			}
@@ -187,7 +187,7 @@ public class QueryCC implements SchemaNames {
 		String summary = statements.size() == 1 && view != null
 			? "Query returned " + view.getRowCount() + " row(s) in " + millisSince(start) + " ms"
 			: statements.size() + " statement(s) executed in " + millisSince(start) + " ms";
-		cwcc.setStatusDetail(summary);
+		cwcc.setStatusDetail(parent, summary);
 		return new RunResult(results, true);
 	}
 
