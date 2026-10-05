@@ -67,7 +67,7 @@ public class DesignerWindow extends JInternalFrame {
 	 * @param model a model to show, such as one read from an existing database, which is then arranged automatically; null for a new model.
 	 */
 	public DesignerWindow(MainWindow mainWindow, ConnectionWindow connectionWindow, Model model) {
-		super("eSQLDesigner", true, true, true, true);
+		super("eSQLDesigner", false, true);
 		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon("imgDesigner"));
 		this.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
 		this.addInternalFrameListener(new InternalFrameAdapter() {
@@ -78,8 +78,6 @@ public class DesignerWindow extends JInternalFrame {
 
 		this.mainWindow = mainWindow;
 		this.connectionWindow = connectionWindow;
-
-		this.setSize(640, 480);
 
 		canvas = new DesignerCanvas(new DesignerCanvasController(this));
 

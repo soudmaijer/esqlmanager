@@ -10,10 +10,8 @@ import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
-import nl.errorsoft.esql.connection.ui.ServerIconRenderer;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
-import nl.errorsoft.esql.ui.util.DesktopWindows;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.icon.StatusLight;
 
@@ -24,6 +22,7 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.*;
@@ -53,9 +52,8 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JMenuItem designerItem;
 
 	private JMenu windowMenu;
-	private JMenuItem tileCascadeItem;
-	private JMenuItem tileHorizontalItem;
-	private JMenuItem tileVerticalItem;
+	private JMenuItem nextWindowItem;
+	private JMenuItem previousWindowItem;
 	private JMenu helpMenu;
 	private JMenuItem aboutItem;
 
@@ -63,10 +61,6 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JToolBar toolbar;
 	private JButton connectButton;
 	private JButton disconnectButton;
-	private JButton cascadeButton;
-	private JButton tileHorizontalButton;
-	private JButton tileVerticalButton;
-	private JComboBox<JInternalFrame> windowsCombo; // Connection windows and designers
 
 	// Statusbar
 	private JPanel statusbar;
@@ -82,6 +76,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JScrollPane outputScroll;
 	private RSyntaxTextArea outputText;
 	private JDesktopPane desktop;
+	private WindowTabsPanel windowTabs; // Connection windows and designers
 	private ImageLoader imageLoader;
 
 	public MainWindow(MainController mainController) {
@@ -167,13 +162,30 @@ public class MainWindow extends JFrame implements ActionListener {
 		importExportMenu.add(designerItem);
 		menubar.add(importExportMenu);
 
+		// The open windows are listed when the menu opens, below next and previous.
 		windowMenu = new JMenu("Window");
-		tileCascadeItem = new JMenuItem("Cascade");
-		tileHorizontalItem = new JMenuItem("Tile horizontal");
-		tileVerticalItem = new JMenuItem("Tile vertical");
-		windowMenu.add(tileCascadeItem);
-		windowMenu.add(tileHorizontalItem);
-		windowMenu.add(tileVerticalItem);
+		int menuKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		nextWindowItem = new JMenuItem("Next window");
+		nextWindowItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_CLOSE_BRACKET, menuKey | KeyEvent.SHIFT_DOWN_MASK));
+		previousWindowItem = new JMenuItem("Previous window");
+		previousWindowItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, menuKey | KeyEvent.SHIFT_DOWN_MASK));
+		windowMenu.addMenuListener(new javax.swing.event.MenuListener() {
+			@Override
+			public void menuSelected(javax.swing.event.MenuEvent e) {
+				fillWindowMenu();
+			}
+
+			@Override
+			public void menuDeselected(javax.swing.event.MenuEvent e) {
+				// Nothing to undo, the items are built again when the menu opens.
+			}
+
+			@Override
+			public void menuCanceled(javax.swing.event.MenuEvent e) {
+				// Nothing to undo, the items are built again when the menu opens.
+			}
+		});
+		fillWindowMenu();
 		menubar.add(windowMenu);
 
 		helpMenu = new JMenu("Help");
@@ -199,52 +211,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		disconnectButton.setToolTipText("Disconnect");
 		toolbar.add(disconnectButton);
 
-		toolbar.addSeparator();
-
-		cascadeButton = new JButton(imageLoader.getIcon("imgCascade"));
-		cascadeButton.setEnabled(false);
-		cascadeButton.setToolTipText("Cascade");
-		toolbar.add(cascadeButton);
-
-		tileHorizontalButton = new JButton(imageLoader.getIcon("imgTileHorizontal"));
-		tileHorizontalButton.setEnabled(false);
-		tileHorizontalButton.setToolTipText("Tile horizontal");
-		toolbar.add(tileHorizontalButton);
-
-		tileVerticalButton = new JButton(imageLoader.getIcon("imgTileVertical"));
-		tileVerticalButton.setEnabled(false);
-		tileVerticalButton.setToolTipText("Tile vertical");
-		toolbar.add(tileVerticalButton);
-
-		toolbar.addSeparator();
-
-		windowsCombo = new JComboBox<>();
-		windowsCombo.setRenderer(new ServerIconRenderer());
-		windowsCombo.addActionListener(e -> {
-			try {
-				if (windowsCombo.getItemCount() <= 0) {
-					return;
-				}
-
-				JInternalFrame window = (JInternalFrame) windowsCombo.getSelectedItem();
-
-				if (window != null) {
-					if (window.isIcon()) {
-						window.setIcon(false);
-					}
-					window.setSelected(true);
-				}
-			} catch (Exception ae) {
-				ApplicationContext.get().errors().report(this, "Switch window", ae);
-			}
-		});
-
-		windowsCombo.setToolTipText("Active window");
-		windowsCombo.setMinimumSize(new Dimension(160, ToolbarButtons.HEIGHT));
-		windowsCombo.setPreferredSize(new Dimension(220, ToolbarButtons.HEIGHT));
-		toolbar.add(windowsCombo);
-		updateMenus();
-		ToolbarButtons.style(connectButton, disconnectButton, cascadeButton, tileHorizontalButton, tileVerticalButton);
+		ToolbarButtons.style(connectButton, disconnectButton);
 		this.getContentPane().add(toolbar, BorderLayout.NORTH);
 
 		/*
@@ -292,13 +259,10 @@ public class MainWindow extends JFrame implements ActionListener {
 		// DesktopPane.
 		desktop = new JDesktopPane();
 		desktop.setBackground(UIManager.getColor("Desktop.background"));
-		// A designer that is not maximized stays reachable when the main window gets smaller.
-		desktop.addComponentListener(new java.awt.event.ComponentAdapter() {
-			@Override
-			public void componentResized(java.awt.event.ComponentEvent e) {
-				DesktopWindows.keepFramesInside(desktop);
-			}
-		});
+		windowTabs = new WindowTabsPanel(desktop);
+		JPanel workArea = new JPanel(new BorderLayout());
+		workArea.add(windowTabs, BorderLayout.NORTH);
+		workArea.add(desktop, BorderLayout.CENTER);
 
 		//ScrollPane for tree.
 		outputScroll = new JScrollPane(outputText);
@@ -306,11 +270,12 @@ public class MainWindow extends JFrame implements ActionListener {
 		outputScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		outputPanel.add(outputScroll, BorderLayout.CENTER);
 
-		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, desktop, outputPanel);
+		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, workArea, outputPanel);
 		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
 		split.setContinuousLayout(true);
 		// A maximized internal frame must not limit how far the divider can move.
 		desktop.setMinimumSize(new Dimension(0, 0));
+		workArea.setMinimumSize(new Dimension(0, 0));
 		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
 		split.setResizeWeight(1.0);
 		outputPanel.setMinimumSize(new Dimension(0, 60));
@@ -325,23 +290,19 @@ public class MainWindow extends JFrame implements ActionListener {
 		exitItem.addActionListener(this);
 
 		settingsItem.addActionListener(this);
-		tileCascadeItem.addActionListener(this);
-		tileVerticalItem.addActionListener(this);
-		tileHorizontalItem.addActionListener(this);
+		nextWindowItem.addActionListener(e -> windowTabs.selectNext(1));
+		previousWindowItem.addActionListener(e -> windowTabs.selectNext(-1));
 
 		exportToFileItem.addActionListener(this);
 		importFromFileItem.addActionListener(this);
 		designerItem.addActionListener(this);
-
-		cascadeButton.addActionListener(this);
-		tileVerticalButton.addActionListener(this);
-		tileHorizontalButton.addActionListener(this);
 
 		aboutItem.addActionListener(this);
 
 		// Toolbar
 		connectButton.addActionListener(this);
 		disconnectButton.addActionListener(this);
+		updateMenus();
 	}
 
 	public void closeWindow() {
@@ -351,7 +312,25 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public JInternalFrame getSelectedFrame() {
-		return this.desktop.getSelectedFrame();
+		return windowTabs.selectedFrame();
+	}
+
+	/** Next and previous, then a check item per open window that brings it to the front. */
+	private void fillWindowMenu() {
+		windowMenu.removeAll();
+		java.util.List<JInternalFrame> frames = windowTabs == null ? java.util.List.of() : windowTabs.getFrames();
+		nextWindowItem.setEnabled(frames.size() > 1);
+		previousWindowItem.setEnabled(frames.size() > 1);
+		windowMenu.add(nextWindowItem);
+		windowMenu.add(previousWindowItem);
+		if (!frames.isEmpty()) {
+			windowMenu.addSeparator();
+		}
+		for (JInternalFrame frame : frames) {
+			JCheckBoxMenuItem item = new JCheckBoxMenuItem(frame.getTitle(), frame.getFrameIcon(), frame == windowTabs.selectedFrame());
+			item.addActionListener(e -> windowTabs.select(frame));
+			windowMenu.add(item);
+		}
 	}
 
 	/** The resting state: green and connected while a connection window is open, red when there is none. */
@@ -420,42 +399,18 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public void addConnectionWindow(ConnectionWindow connectionWindow) {
-		connectButton.setEnabled(true);
 		disconnectButton.setEnabled(true);
-		cascadeButton.setEnabled(true);
-		tileHorizontalButton.setEnabled(true);
-		tileVerticalButton.setEnabled(true);
-
-		desktop.add(connectionWindow);
-
-		// A maximized frame follows the size of the desktop, so the content scales with the output panel.
-		try {
-			connectionWindow.setMaximum(true);
-		} catch (java.beans.PropertyVetoException e) {
-			log.warn("Could not maximize the connection window", e);
-		}
-
-		windowsCombo.addItem(connectionWindow);
-		windowsCombo.setSelectedIndex(windowsCombo.getItemCount() - 1);
+		windowTabs.addWindow(connectionWindow);
 		updateMenus();
 	}
 
-	/** Shows a designer on the desktop, centred and in front, and lists it in the window selector. */
+	/** Shows a designer on the desktop with a tab of its own, in front. */
 	public void addDesignerWindow(DesignerWindow designer) {
-		Dimension desktopSize = desktop.getSize();
-		designer.setSize(Math.min(designer.getWidth(), desktopSize.width), Math.min(designer.getHeight(), desktopSize.height));
-		designer.setLocation((desktopSize.width - designer.getWidth()) / 2, (desktopSize.height - designer.getHeight()) / 2);
-		desktop.add(designer);
-		designer.addPropertyChangeListener(JInternalFrame.TITLE_PROPERTY, e -> windowsCombo.repaint());
-		designer.setVisible(true);
-
-		windowsCombo.addItem(designer);
-		windowsCombo.setSelectedItem(designer);
+		windowTabs.addWindow(designer);
 	}
 
 	public void removeDesignerWindow(DesignerWindow designer) {
-		windowsCombo.removeItem(designer);
-		designer.dispose();
+		windowTabs.removeWindow(designer);
 	}
 
 	/**
@@ -463,7 +418,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	 * @return false when the user cancelled one of them
 	 */
 	public boolean closeDesigners(ConnectionWindow connectionWindow) {
-		for (JInternalFrame frame : desktop.getAllFrames()) {
+		for (JInternalFrame frame : windowTabs.getFrames()) {
 			if (frame instanceof DesignerWindow designer && designer.getConnectionWindow() == connectionWindow && !designer.close()) {
 				return false;
 			}
@@ -473,7 +428,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	/** The connection window in front, or the one the designer in front belongs to. */
 	public ConnectionWindow getConnectionWindow() {
-		return switch (windowsCombo.getSelectedItem()) {
+		return switch (windowTabs.selectedFrame()) {
 			case ConnectionWindow connectionWindow -> connectionWindow;
 			case DesignerWindow designer -> designer.getConnectionWindow();
 			case null, default -> null;
@@ -481,25 +436,14 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public int getConnectionWindowCount() {
-		int count = 0;
-		for (int i = 0; i < windowsCombo.getItemCount(); i++) {
-			if (windowsCombo.getItemAt(i) instanceof ConnectionWindow) {
-				count++;
-			}
-		}
-		return count;
+		return (int) windowTabs.getFrames().stream().filter(ConnectionWindow.class::isInstance).count();
 	}
 
 	public void removeConnectionWindow(ConnectionWindow connectionWindow) {
-		windowsCombo.removeItem(connectionWindow);
-		desktop.getDesktopManager().closeFrame(connectionWindow);
+		windowTabs.removeWindow(connectionWindow);
 
 		if (getConnectionWindowCount() == 0) {
-			connectButton.setEnabled(true);
 			disconnectButton.setEnabled(false);
-			cascadeButton.setEnabled(false);
-			tileHorizontalButton.setEnabled(false);
-			tileVerticalButton.setEnabled(false);
 			mainController.showConnectionProfileDialog();
 		}
 
@@ -521,12 +465,6 @@ public class MainWindow extends JFrame implements ActionListener {
 			if (connectionWindow != null) {
 				connectionWindow.closeWindow(true);
 			}
-		} else if (object == tileVerticalItem || object == tileVerticalButton) {
-			DesktopWindows.tileVertical(desktop);
-		} else if (object == tileHorizontalItem || object == tileHorizontalButton) {
-			DesktopWindows.tileHorizontal(desktop);
-		} else if (object == tileCascadeItem || object == cascadeButton) {
-			DesktopWindows.cascadeAll(desktop);
 		} else if (object == aboutItem) {
 			new AboutDialog(this, mainController.getAppName(), mainController.getAppVersion(), mainController.getAppCommit(),
 				() -> mainController.showSplashScreen(0)).showDialog();

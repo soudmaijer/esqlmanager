@@ -39,9 +39,6 @@ public final class ApplicationContext {
 			images.addImage("../images/splash.gif", "esql");
 			images.addIcon("imgConnect", "connect", 20, false);
 			images.addIcon("imgDisconnect", "disconnect", 20, false);
-			images.addIcon("imgCascade", "cascade", 20, false);
-			images.addIcon("imgTileHorizontal", "tile-horizontal", 20, false);
-			images.addIcon("imgTileVertical", "tile-vertical", 20, false);
 			images.addIcon("pc", "server", 16, false);
 			images.addBrandIcon("serverPostgres", "brand-postgresql", 18);
 			images.addBrandIcon("serverMySql", "brand-mysql", 18);

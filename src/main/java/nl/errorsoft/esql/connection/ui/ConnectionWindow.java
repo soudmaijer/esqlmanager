@@ -77,10 +77,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		this.connectionWindowController = connectionWindowController;
 		this.setTitle(connectionWindowController.getTitle());
 		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon(connectionWindowController.getConnectionProfile().getServerType().iconName()));
-		this.setResizable(true);
-		this.setMaximizable(true);
 		this.setClosable(true);
-		this.setIconifiable(true);
 
 		// Set internal variables
 		this.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
