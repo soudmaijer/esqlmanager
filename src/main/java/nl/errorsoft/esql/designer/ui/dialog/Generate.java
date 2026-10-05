@@ -24,289 +24,222 @@ import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedTable;
 import nl.errorsoft.esql.designer.DesignedForeignKey;
 import nl.errorsoft.esql.designer.model.ForeignKey;
+import java.awt.BorderLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Generate extends javax.swing.JDialog implements Runnable {
+public class Generate extends JDialog {
 	private static final Logger log = LogManager.getLogger(Generate.class);
-	private ConnectionWindowUI cwui;
-	private ESQLManagerUI eui;
-	private Model m;
+	private static final String[] STEPS = {"Checking Databases", "Checking Tables", "Checking Columns", "Checking Relations", "Checking Model"};
+
+	private final ConnectionWindowUI cwui;
+	private final Model m;
+	private final JLabel[] checks = new JLabel[STEPS.length];
+	private final JTextArea problems = new JTextArea(6, 36);
+	private final JProgressBar progress = new JProgressBar();
+	private final JButton generate = new JButton("Generate");
+	private final JButton close = new JButton("Close");
+	/** True while checking or generating, the dialog cannot be closed then. */
+	private boolean busy;
 
 	public Generate(ESQLManagerUI eui, ConnectionWindowUI cwui, Model m) {
-		super((JFrame) eui, true);
-
-		this.eui = eui;
+		super((JFrame) eui, "Analyze / Generate model", true);
 		this.cwui = cwui;
 		this.m = m;
 
 		initComponents();
+		setLocationRelativeTo(eui);
+		startChecking();
+		setVisible(true);
 	}
 
 	private void initComponents() {
-		jPanel1 = new javax.swing.JPanel();
-		jPanel2 = new javax.swing.JPanel();
-		jLabel1 = new javax.swing.JLabel();
-		jLabel2 = new javax.swing.JLabel();
-		jLabel3 = new javax.swing.JLabel();
-		jLabel4 = new javax.swing.JLabel();
-		jLabel5 = new javax.swing.JLabel();
-		progress = new javax.swing.JProgressBar();
-		jButton1 = new javax.swing.JButton();
-		generate = new javax.swing.JButton();
-
 		setResizable(false);
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		setTitle("Analyze / Generate model");
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				if (!busy) {
+					dispose();
+				}
+			}
+		});
 
-		jPanel2.setLayout(new BoxLayout(jPanel2, BoxLayout.Y_AXIS));
-		JLabel[] checks = {jLabel1, jLabel2, jLabel3, jLabel4, jLabel5};
-		String[] texts = {"Checking Databases", "Checking Tables", "Checking Columns", "Checking Relations", "Checking Model"};
-		for (int i = 0; i < checks.length; i++) {
-			checks[i].setText(texts[i]);
-			checks[i].setIcon(ApplicationContext.get().imageLoader().getIcon("check_off"));
+		JPanel steps = new JPanel();
+		steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
+		for (int i = 0; i < STEPS.length; i++) {
+			checks[i] = new JLabel(STEPS[i], ApplicationContext.get().imageLoader().getIcon("check_off"), SwingConstants.LEADING);
 			checks[i].setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-			jPanel2.add(checks[i]);
+			steps.add(checks[i]);
 		}
-		jPanel2.add(Box.createVerticalStrut(Forms.GAP));
+		steps.add(Box.createVerticalStrut(Forms.GAP));
 		progress.setAlignmentX(LEFT_ALIGNMENT);
-		progress.setPreferredSize(new java.awt.Dimension(200, progress.getPreferredSize().height));
-		jPanel2.add(progress);
-		Forms.titled(jPanel2, "Checking Model");
+		steps.add(progress);
+		Forms.titled(steps, "Checking Model");
 
-		jButton1.setText("Close");
-		jButton1.addActionListener(evt -> jButton1ActionPerformed(evt));
-		generate.setText("Generate");
-		generate.addActionListener(evt -> generateActionPerformed(evt));
+		problems.setEditable(false);
+		problems.setLineWrap(true);
+		problems.setWrapStyleWord(true);
+		JScrollPane problemScroll = new JScrollPane(problems);
+		Forms.titled(problemScroll, "Problems");
+
+		close.addActionListener(e -> dispose());
+		close.setEnabled(false);
+		generate.addActionListener(e -> generateModel());
 		generate.setEnabled(false);
 
-		jPanel1.setLayout(new java.awt.BorderLayout());
-		Forms.padded(jPanel1);
-		jPanel1.add(jPanel2, java.awt.BorderLayout.CENTER);
-		jPanel1.add(Forms.buttonRow(generate, jButton1), java.awt.BorderLayout.SOUTH);
-		setContentPane(jPanel1);
-
+		JPanel root = Forms.padded(new JPanel(new BorderLayout(0, Forms.GAP)));
+		root.add(steps, BorderLayout.NORTH);
+		root.add(problemScroll, BorderLayout.CENTER);
+		root.add(Forms.buttonRow(generate, close), BorderLayout.SOUTH);
+		setContentPane(root);
+		getRootPane().setDefaultButton(generate);
 		pack();
-
-		this.setLocationRelativeTo(eui);
-
-		Thread t = new Thread(this);
-		t.start();
-
-		this.setVisible(true);
 	}
 
-	public void run() {
-		List<ModelObject> v = m.getObjects();
+	/** Checks the model on a virtual thread, the dialog is updated on the event thread. */
+	private void startChecking() {
+		setBusy(true);
+		progress.setMaximum(STEPS.length);
+		Thread.ofVirtual().name("generate-check").start(() -> {
+			List<List<String>> found = new ArrayList<>();
+			for (int step = 0; step < STEPS.length; step++) {
+				found.add(check(step));
+				int done = step;
+				List<String> stepProblems = found.get(step);
+				SwingUtilities.invokeLater(() -> {
+					checks[done].setIcon(ApplicationContext.get().imageLoader().getIcon(stepProblems.isEmpty() ? "check_good" : "check_error"));
+					progress.setValue(done + 1);
+				});
+			}
+			boolean ok = found.stream().allMatch(List::isEmpty);
+			String text = String.join("\n", found.stream().flatMap(List::stream).toList());
+			SwingUtilities.invokeLater(() -> {
+				problems.setText(text);
+				setBusy(false);
+				generate.setEnabled(ok);
+			});
+		});
+	}
 
-		if (v.size() != 0) {
-			List<ModelObject> db = new ArrayList<>();
-			List<ModelObject> tb = new ArrayList<>();
+	/** The problems of one step of the check, empty when it passed. */
+	private List<String> check(int step) {
+		List<ModelObject> objects = m.getObjects();
+		List<DatabaseObject> databases = objects.stream().filter(DatabaseObject.class::isInstance).map(DatabaseObject.class::cast).toList();
+		List<TableObject> tables = objects.stream().filter(TableObject.class::isInstance).map(TableObject.class::cast).toList();
+		List<String> found = new ArrayList<>();
 
-			// Split objects
-			for (int i = 0; i < v.size(); i++) {
-				if (v.get(i) instanceof DatabaseObject) {
-					db.add(v.get(i));
-				} else if (v.get(i) instanceof TableObject) {
-					tb.add(v.get(i));
+		switch (step) {
+			case 0 -> {
+				for (int i = 0; i < databases.size(); i++) {
+					for (int j = i + 1; j < databases.size(); j++) {
+						if (databases.get(i).getName().equalsIgnoreCase(databases.get(j).getName())) {
+							found.add("The model has two databases named '" + databases.get(i).getName() + "'.");
+						}
+					}
 				}
 			}
-
-			progress.setMaximum(db.size() * db.size());
-
-			// Check databases
-			boolean db_error = false;
-			boolean tb_error = false;
-			boolean fd_error = false;
-
-			for (int i = 0; i < db.size(); i++) {
-				DatabaseObject d = (DatabaseObject) db.get(i);
-
-				for (int j = 0; j < db.size(); j++) {
-					DatabaseObject tmp2 = (DatabaseObject) db.get(j);
-					if (d.getName().equalsIgnoreCase(tmp2.getName()) && tmp2 != d) {
-						db_error = true;
-						Dialogs.error(this, getTitle(), "The model has two databases named '" + d.getName() + "'.");
-						break;
-					}
-					progress.setValue(progress.getValue() + 1);
-				}
-				if (db_error) {
-					break;
-				}
-
-				tb = m.getReferences(d);
-
-				progress.setMaximum(tb.size() * tb.size());
-				progress.setValue(0);
-
-				for (int h = 0; h < tb.size(); h++) {
-					TableObject tmp = (TableObject) tb.get(h);
-
-					for (int j = 0; j < tb.size(); j++) {
-						TableObject tmp2 = (TableObject) tb.get(j);
-						if (tmp.getName().equalsIgnoreCase(tmp2.getName()) && tmp2 != tmp) {
-							tb_error = true;
-							Dialogs.error(this, getTitle(), "Database '" + d.getName() + "' has two tables named '" + tmp.getName() + "'.");
-							break;
-						}
-						progress.setValue(progress.getValue() + 1);
-					}
-
-					Field[] f = tmp.getFields();
-
-					if (f.length == 0) {
-						Dialogs.error(this, getTitle(), "Table '" + tmp.getName() + "' has no columns.");
-						fd_error = true;
-						break;
-					}
-
-					for (int k = 0; k < f.length; k++) {
-						for (int l = 0; l < f.length; l++) {
-							if (f[k].getName().equalsIgnoreCase(f[l].getName()) && k != l) {
-								Dialogs.error(this, getTitle(),
-									"Table '" + tmp.getName() + "' has two columns named '" + f[l].getName() + "'.");
-								fd_error = true;
-								break;
+			case 1 -> {
+				for (DatabaseObject database : databases) {
+					List<ModelObject> own = m.getReferences(database);
+					for (int i = 0; i < own.size(); i++) {
+						for (int j = i + 1; j < own.size(); j++) {
+							if (own.get(i) instanceof TableObject a && own.get(j) instanceof TableObject b && a.getName().equalsIgnoreCase(b.getName())) {
+								found.add("Database '" + database.getName() + "' has two tables named '" + a.getName() + "'.");
 							}
 						}
-						if (fd_error) {
-							break;
+					}
+				}
+			}
+			case 2 -> {
+				for (TableObject table : tables) {
+					Field[] fields = table.getFields();
+					if (fields.length == 0) {
+						found.add("Table '" + table.getName() + "' has no columns.");
+					}
+					for (int k = 0; k < fields.length; k++) {
+						for (int l = k + 1; l < fields.length; l++) {
+							if (fields[k].getName().equalsIgnoreCase(fields[l].getName())) {
+								found.add("Table '" + table.getName() + "' has two columns named '" + fields[k].getName() + "'.");
+							}
 						}
 					}
 				}
-				if (tb_error || fd_error) {
-					break;
-				}
 			}
-
-			if (db_error) {
-				jLabel1.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			} else {
-				jLabel1.setIcon(ApplicationContext.get().imageLoader().getIcon("check_good"));
-			}
-
-			if (tb_error) {
-				jLabel2.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			} else {
-				jLabel2.setIcon(ApplicationContext.get().imageLoader().getIcon("check_good"));
-			}
-
-			if (fd_error) {
-				jLabel3.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			} else {
-				jLabel3.setIcon(ApplicationContext.get().imageLoader().getIcon("check_good"));
-			}
-
-			progress.setValue(0);
-			progress.setMaximum(v.size());
-
-			boolean ref_error = false;
-			for (int i = 0; i < v.size(); i++) {
-				if (!(v.get(i) instanceof CommentObject)) {
-					ModelObject mo = (ModelObject) v.get(i);
-					if (m.getReferences(mo).size() == 0) {
-						ref_error = true;
+			case 3 -> {
+				for (TableObject table : tables) {
+					boolean inDatabase = databases.stream().anyMatch(d -> m.getReferences(d).contains(table));
+					if (!inDatabase) {
+						found.add("Table '" + table.getName() + "' is not linked to a database.");
 					}
 				}
-				progress.setValue(progress.getValue() + 1);
 			}
-
-			if (ref_error) {
-				jLabel4.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			} else {
-				jLabel4.setIcon(ApplicationContext.get().imageLoader().getIcon("check_good"));
-			}
-
-			// Cheat past the model :)
-			jLabel5.setIcon(ApplicationContext.get().imageLoader().getIcon("check_good"));
-
-			if (db_error == false && tb_error == false && fd_error == false) {
-				generate.setEnabled(true);
-			}
-		} else {
-			jLabel1.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			jLabel2.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			jLabel3.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			jLabel4.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-			jLabel5.setIcon(ApplicationContext.get().imageLoader().getIcon("check_error"));
-		}
-	}
-
-	private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {
-		this.dispose();
-	}
-
-	private void generateActionPerformed(java.awt.event.ActionEvent evt) {
-		List<ModelObject> v = m.getObjects();
-
-		List<ModelObject> db = new ArrayList<>();
-
-		// Split objects
-		for (int i = 0; i < v.size(); i++) {
-			if (v.get(i) instanceof DatabaseObject) {
-				db.add(v.get(i));
+			default -> {
+				if (databases.isEmpty()) {
+					found.add("The model has no database.");
+				}
 			}
 		}
+		return found;
+	}
 
+	private void setBusy(boolean busy) {
+		this.busy = busy;
+		close.setEnabled(!busy);
+	}
+
+	/** Reads the model on the event thread, creates the databases and tables on a virtual thread. */
+	private void generateModel() {
+		List<DesignedDatabase> model = new ArrayList<>();
 		int count = 0;
-		for (int i = 0; i < db.size(); i++) {
-			DatabaseObject d = (DatabaseObject) db.get(i);
-			count++;
 
-			List<ModelObject> tb = m.getReferences(d);
-
-			for (int j = 0; j < tb.size(); j++) {
+		for (ModelObject object : m.getObjects()) {
+			if (object instanceof DatabaseObject d) {
+				List<DesignedTable> designedTables = new ArrayList<>();
 				count++;
 
-				TableObject tbs = (TableObject) tb.get(j);
-				for (int k = 0; k < tbs.getFields().length; k++) {
-					count++;
+				for (ModelObject reference : m.getReferences(d)) {
+					TableObject table = (TableObject) reference;
+					List<CreateColumn> columns = new ArrayList<>();
+
+					for (Field field : table.getFields()) {
+						columns.add(toCreateColumn(field));
+					}
+					count += 1 + columns.size();
+					designedTables.add(new DesignedTable(table.getName(), table.getType(), table.getComment(), columns, foreignKeysOf(table)));
 				}
+				model.add(new DesignedDatabase(d.getName(), designedTables));
 			}
 		}
 
 		progress.setValue(0);
 		progress.setMaximum(count);
+		generate.setEnabled(false);
+		setBusy(true);
 
-		boolean error = false;
-
-		try {
-			List<DesignedDatabase> model = new ArrayList<>();
-
-			for (int i = 0; i < db.size(); i++) {
-				DatabaseObject d = (DatabaseObject) db.get(i);
-				List<DesignedTable> designedTables = new ArrayList<>();
-				List<ModelObject> tb = m.getReferences(d);
-
-				for (int j = 0; j < tb.size(); j++) {
-					TableObject tbs = (TableObject) tb.get(j);
-					List<CreateColumn> columns = new ArrayList<>();
-
-					for (int k = 0; k < tbs.getFields().length; k++) {
-						columns.add(toCreateColumn(tbs.getFields()[k]));
-					}
-
-					designedTables.add(new DesignedTable(tbs.getName(), tbs.getType(), tbs.getComment(), columns, foreignKeysOf(tbs)));
-				}
-				model.add(new DesignedDatabase(d.getName(), designedTables));
+		Thread.ofVirtual().name("generate-model").start(() -> {
+			Exception failure = null;
+			try {
+				cwui.getControlClass().getContext().designer().generate(model,
+					() -> SwingUtilities.invokeLater(() -> progress.setValue(progress.getValue() + 1)));
+			} catch (Exception e) {
+				log.debug("Model generation failed", e);
+				failure = e;
 			}
-
-			cwui.getControlClass().getContext().designer().generate(model, () -> progress.setValue(progress.getValue() + 1));
-		} catch (Exception e) {
-			log.error("Model generation failed", e);
-			error = true;
-		}
-
-		if (error) {
-			Dialogs.error(this, getTitle(), "Model generation failed, the output panel shows why.");
-		} else {
-			Dialogs.info(this, getTitle(), "Model generated.");
-		}
-
-		cwui.getControlClass().showDatabaseTree();
-
-		this.dispose();
+			Exception error = failure;
+			SwingUtilities.invokeLater(() -> {
+				setBusy(false);
+				cwui.getControlClass().showDatabaseTree();
+				if (error == null) {
+					dispose();
+				} else {
+					generate.setEnabled(true);
+					ApplicationContext.get().errors().report(this, "Generate model", error);
+				}
+			});
+		});
 	}
 
 	/** The keys the table has on other tables; the keys other tables have on it are generated with those tables. */
@@ -336,15 +269,4 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		column.zerofill = f.zerofill;
 		return column;
 	}
-
-	private javax.swing.JLabel jLabel4;
-	private javax.swing.JButton generate;
-	private javax.swing.JLabel jLabel1;
-	private javax.swing.JLabel jLabel3;
-	private javax.swing.JLabel jLabel2;
-	private javax.swing.JButton jButton1;
-	private javax.swing.JPanel jPanel2;
-	private javax.swing.JPanel jPanel1;
-	private javax.swing.JProgressBar progress;
-	private javax.swing.JLabel jLabel5;
 }

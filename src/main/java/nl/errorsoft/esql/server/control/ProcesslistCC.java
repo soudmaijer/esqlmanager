@@ -43,15 +43,19 @@ public class ProcesslistCC {
 		running = false;
 	}
 
+	/** Kills a process on a virtual thread, the next refresh shows the result. */
 	public void killProcess(String id) {
-		try {
-			ServerService service = servers;
-			if (service != null) {
-				service.killProcess(id);
-			}
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(ui, "Kill process", e);
+		ServerService service = servers;
+		if (service == null) {
+			return;
 		}
+		Thread.ofVirtual().name("kill-process").start(() -> {
+			try {
+				service.killProcess(id);
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(ui, "Kill process", e));
+			}
+		});
 	}
 
 	private void refreshLoop() {
@@ -71,7 +75,7 @@ public class ProcesslistCC {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(ui, "Load processes", e));
 		} finally {
 			servers = null;
 			ApplicationContext.get().release(connection);

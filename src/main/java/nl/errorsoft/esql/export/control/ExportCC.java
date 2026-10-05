@@ -9,7 +9,7 @@ import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.export.ui.ExportAsSQLUI;
-import nl.errorsoft.esql.export.ui.ExportSelectionUI;
+import nl.errorsoft.esql.error.Dialogs;
 import nl.errorsoft.esql.job.ui.ImportExportProgressUI;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ApplicationContext;
+import java.io.File;
 import javax.swing.tree.*;
 
 public class ExportCC implements ProgressListener {
@@ -31,22 +32,13 @@ public class ExportCC implements ProgressListener {
 		this.ecc = ecc;
 	}
 
-	/*
-	 * @description: starts the export selection ui
-	 */
-	public void startExportSelectionUI(ConnectionWindowCC cwcc) {
+	/** Opens the export window (SQL statements are the only format). */
+	public void startExport(ConnectionWindowCC cwcc) {
 		if (!cwcc.requireFeature(Dialect.Feature.EXPORT, "Export")) {
 			return;
 		}
 
 		this.cwcc = cwcc;
-		new ExportSelectionUI(this, ecc.getUI()).setVisible(true);
-	}
-
-	/*
-	 * @description: starts the export ui for the option: Export data as SQL statements
-	 */
-	public void startExportSQLUI() {
 		try {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			ExportAsSQLUI iasu = new ExportAsSQLUI(ecc.getUI(), this);
@@ -68,10 +60,21 @@ public class ExportCC implements ProgressListener {
 
 	public void exportNodesAsSQL(ExportAsSQLUI iasu, TreePath[] tpa, String file, boolean dumpStructure, boolean dumpData, boolean createDatabase,
 		boolean dropTable, boolean useDatabase) {
-		// open progress window...
+		String title = iasu.getTitle();
+		if (tpa == null || tpa.length == 0) {
+			Dialogs.warn(iasu, title, "Select the database(s), schema(s) or table(s) to export in the tree.");
+			return;
+		}
+		if (!dumpStructure && !dumpData) {
+			Dialogs.warn(iasu, title, "Select at least one of 'Dump table structure' and 'Dump table data'.");
+			return;
+		}
+		if (new File(file).exists() && !Dialogs.confirmDestructive(iasu, title, "Overwrite the existing file '" + file + "'?", "Overwrite")) {
+			return;
+		}
+
 		ies = new ImportExportProgressUI(iasu);
 
-		// start export...
 		try {
 			Object[] export = new Object[tpa.length];
 
@@ -96,11 +99,5 @@ public class ExportCC implements ProgressListener {
 	public void failed(Exception error) {
 		ApplicationContext.get().errors().report(ies, "Export as SQL", error);
 		ies.dispose();
-	}
-
-	/*
-	 * @description: starts the export ui for the option: Export data as CSV comma-separated
-	 */
-	public void startExportCSVUI() {
 	}
 }

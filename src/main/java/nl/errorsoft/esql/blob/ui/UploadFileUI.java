@@ -8,6 +8,8 @@ import nl.errorsoft.esql.blob.control.UDDataCC;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.swing.*;
 
 import nl.errorsoft.esql.ui.util.Forms;
@@ -25,15 +27,20 @@ import nl.errorsoft.esql.ui.util.Forms;
 public class UploadFileUI extends javax.swing.JDialog implements UDDataIF, ActionListener {
 
 	private UDDataCC udcc;
+	/** True while a transfer runs, the window cannot be closed then. */
+	private boolean busy;
 
 	/** Creates new form JDialog */
 	public UploadFileUI(UDDataCC udcc, JFrame parent) {
-		//super(parent, modal);
+		super(parent, true);
 		this.udcc = udcc;
 		initComponents();
-		this.setLocation(parent.getLocation().x + (int) ((parent.getSize().width - this.getSize().width) / 2),
-			parent.getLocation().y + (int) ((parent.getSize().height - this.getSize().height) / 2));
-		this.setVisible(true);
+		setLocationRelativeTo(parent);
+	}
+
+	@Override
+	public void open() {
+		setVisible(true);
 	}
 
 	/** This method is called from within the constructor to
@@ -50,14 +57,14 @@ public class UploadFileUI extends javax.swing.JDialog implements UDDataIF, Actio
 		jTextField1 = new javax.swing.JTextField();
 		jButton3 = new javax.swing.JButton();
 
-		setTitle("Upload file");
+		setTitle("Upload data");
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {
 				closeDialog(evt);
 			}
 		});
-		jLabel1.setText("Press \"Upload\" to start the transfer now!");
-		jButton1.setText("Upload!");
+		jLabel1.setText("Click Upload to start the transfer.");
+		jButton1.setText("Upload");
 		jButton2.setText("Cancel");
 		jLabel2.setText("Select a file from disk:");
 		jButton3.setText("Browse...");
@@ -75,22 +82,36 @@ public class UploadFileUI extends javax.swing.JDialog implements UDDataIF, Actio
 		root.add(content, BorderLayout.CENTER);
 		root.add(Forms.buttonRow(jButton1, jButton2), BorderLayout.SOUTH);
 		setContentPane(root);
+		getRootPane().setDefaultButton(jButton1);
 		pack();
 	}//GEN-END:initComponents
 
+	private void setBusy(boolean busy) {
+		this.busy = busy;
+		jButton1.setEnabled(!busy);
+		jButton2.setEnabled(!busy);
+		jButton3.setEnabled(!busy);
+	}
+
+	@Override
+	public void transferEnded() {
+		setBusy(false);
+	}
+
+	@Override
 	public void setProgressValue(int percentage) {
 		this.jProgressBar1.setValue(percentage);
 
 		if (percentage == 100) {
-			Dialogs.info(this, getTitle(), "Upload completed.");
 			this.dispose();
 		}
 	}
 
 	/** Closes the dialog */
 	private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-		setVisible(false);
-		dispose();
+		if (!busy) {
+			dispose();
+		}
 	}//GEN-LAST:event_closeDialog
 
 	public void actionPerformed(ActionEvent e) {
@@ -109,7 +130,16 @@ public class UploadFileUI extends javax.swing.JDialog implements UDDataIF, Actio
 		} else if (e.getSource() == jButton2) {
 			this.dispose();
 		} else if (e.getSource() == jButton1) {
-			udcc.uploadFile(jTextField1.getText());
+			String file = jTextField1.getText().trim();
+
+			if (file.isEmpty()) {
+				Dialogs.warn(this, getTitle(), "Select a file from disk first.");
+			} else if (!Files.isRegularFile(Path.of(file))) {
+				Dialogs.error(this, getTitle(), "The file '" + file + "' does not exist.");
+			} else {
+				setBusy(true);
+				udcc.uploadFile(file);
+			}
 		}
 	}
 

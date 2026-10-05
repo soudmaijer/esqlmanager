@@ -161,8 +161,10 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		DefaultListModel<Field> dlm = (DefaultListModel<Field>) lst_fields.getModel();
 		Field[] f = tb.getFields();
 		for (int i = 0; i < f.length; i++) {
-			dlm.addElement(f[i]);
-			namesBefore.put(f[i], f[i].getName());
+			// The dialog edits copies, the table gets them on OK.
+			Field copy = f[i].copy();
+			dlm.addElement(copy);
+			namesBefore.put(copy, f[i].getName());
 		}
 	}
 

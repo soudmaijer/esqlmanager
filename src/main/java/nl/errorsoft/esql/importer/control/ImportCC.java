@@ -11,7 +11,6 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.importer.ui.ImportAsSQLUI;
 import nl.errorsoft.esql.job.ui.ImportExportProgressUI;
-import nl.errorsoft.esql.importer.ui.ImportSelectionUI;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import org.apache.logging.log4j.LogManager;
@@ -33,22 +32,13 @@ public class ImportCC implements ProgressListener {
 		this.ecc = ecc;
 	}
 
-	/*
-	 * @description: starts the Import selection ui
-	 */
-	public void startImportSelectionUI(ConnectionWindowCC cwcc) {
+	/** Opens the import window (SQL statements are the only format). */
+	public void startImport(ConnectionWindowCC cwcc) {
 		if (!cwcc.requireFeature(Dialect.Feature.IMPORT, "Import")) {
 			return;
 		}
 
 		this.cwcc = cwcc;
-		new ImportSelectionUI(this, ecc.getUI()).setVisible(true);
-	}
-
-	/*
-	 * @description: starts the Import ui for the option: Import data as SQL statements
-	 */
-	public void startImportSQLUI() {
 		try {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			iasu = new ImportAsSQLUI(ecc.getUI(), this);
@@ -69,15 +59,21 @@ public class ImportCC implements ProgressListener {
 	}
 
 	public void importNodesAsSQL(ImportAsSQLUI iasu, TreePath tpa, String file) {
-		// check if file exist...
-		if (!(new java.io.File(file).exists())) {
-			Dialogs.error(iasu, iasu.getTitle(), "File does not exist.");
+		if (file.isBlank()) {
+			Dialogs.warn(iasu, iasu.getTitle(), "Select a file first.");
 			return;
 		}
-		// open progress window...
+		if (!(new java.io.File(file).isFile())) {
+			Dialogs.error(iasu, iasu.getTitle(), "The file '" + file + "' does not exist.");
+			return;
+		}
+		String target = tpa == null ? "the current database" : String.valueOf(((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject());
+		if (!Dialogs.confirm(iasu, iasu.getTitle(), "Run the statements of '" + file + "' in " + target + "?", "Import")) {
+			return;
+		}
+
 		ies = new ImportExportProgressUI(iasu);
 
-		// start export...
 		try {
 			Object node = null;
 
@@ -102,12 +98,6 @@ public class ImportCC implements ProgressListener {
 	public void failed(Exception error) {
 		ApplicationContext.get().errors().report(ies, "Import as SQL", error);
 		ies.dispose();
-	}
-
-	/*
-	 * @description: starts the Import ui for the option: Import data as CSV comma-separated
-	 */
-	public void startImportCSVUI() {
 	}
 
 }

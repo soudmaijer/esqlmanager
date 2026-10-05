@@ -71,9 +71,9 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 	private JList<Object> fieldlist = new JList<>();
 
 	// Field property checkboxes
-	private JCheckBox primary = new JCheckBox("Primary");
+	private JCheckBox primary = new JCheckBox("Primary Key");
 	private JCheckBox notnull = new JCheckBox("Not null");
-	private JCheckBox autoincrement = new JCheckBox("AutoIncrement");
+	private JCheckBox autoincrement = new JCheckBox("Auto Increment");
 	private JCheckBox unsigned = new JCheckBox("Unsigned");
 
 	// Panel with the field properties
@@ -408,7 +408,7 @@ public class TableEditor extends JPanel implements ActionListener, ListSelection
 		if (fieldlist.getSelectedIndex() != -1) {
 			if (fieldlist.getSelectedValue() instanceof TableColumn tc) {
 				primary.setSelected(tc.isPrimary());
-				notnull.setSelected(tc.isNullable());
+				notnull.setSelected(!tc.isNullable());
 				unsigned.setSelected(!tc.isSigned());
 				autoincrement.setSelected(tc.isAutoIncrement());
 				length.setText(String.valueOf(tc.getSize()));

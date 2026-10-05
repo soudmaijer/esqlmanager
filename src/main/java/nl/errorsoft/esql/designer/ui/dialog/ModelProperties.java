@@ -14,15 +14,10 @@ public class ModelProperties extends JTabbedPane implements PropertiesInterface 
 	private JLabel lbl_name = new JLabel("Name");
 	private JLabel lbl_comm = new JLabel("Description");
 	private JLabel lbl_author = new JLabel("Author");
-	private JLabel lbl_history = new JLabel("History");
 
 	private JTextField txt_name = new JTextField();
 	private JTextField txt_author = new JTextField();
 	private JTextArea txt_comm = new JTextArea();
-
-	private JTable tbl_history = new JTable();
-	private JButton btn_add = new JButton("Add");
-	private JButton btn_del = new JButton("Delete");
 
 	public ModelProperties(Model m) {
 		this.m = m;

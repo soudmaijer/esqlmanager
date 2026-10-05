@@ -105,14 +105,14 @@ public class ESQLManagerCC {
 	public void dispatchImportUI() {
 		if (jmui.getConnectionWindowCount() > 0) {
 			ImportCC dbcc = new ImportCC(this);
-			dbcc.startImportSelectionUI(jmui.getConnectionWindow().getControlClass());
+			dbcc.startImport(jmui.getConnectionWindow().getControlClass());
 		}
 	}
 
 	public void dispatchExportUI() {
 		if (jmui.getConnectionWindowCount() > 0) {
 			ExportCC dbcc = new ExportCC(this);
-			dbcc.startExportSelectionUI(jmui.getConnectionWindow().getControlClass());
+			dbcc.startExport(jmui.getConnectionWindow().getControlClass());
 		}
 	}
 

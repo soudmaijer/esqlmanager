@@ -8,6 +8,8 @@ import nl.errorsoft.esql.blob.control.UDDataCC;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.swing.*;
 
 import nl.errorsoft.esql.ui.util.Forms;
@@ -25,15 +27,20 @@ import nl.errorsoft.esql.ui.util.Forms;
 public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, ActionListener {
 
 	private UDDataCC udcc;
+	/** True while a transfer runs, the window cannot be closed then. */
+	private boolean busy;
 
 	/** Creates new form JDialog */
 	public DownloadFileUI(UDDataCC udcc, JFrame parent) {
-		//super(parent, modal);
+		super(parent, true);
 		this.udcc = udcc;
 		initComponents();
-		this.setLocation(parent.getLocation().x + (int) ((parent.getSize().width - this.getSize().width) / 2),
-			parent.getLocation().y + (int) ((parent.getSize().height - this.getSize().height) / 2));
-		this.setVisible(true);
+		setLocationRelativeTo(parent);
+	}
+
+	@Override
+	public void open() {
+		setVisible(true);
 	}
 
 	/** This method is called from within the constructor to
@@ -56,8 +63,8 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 				closeDialog(evt);
 			}
 		});
-		jLabel1.setText("Press \"Download\" to start the transfer now!");
-		jButton1.setText("Download now!");
+		jLabel1.setText("Click Download to start the transfer.");
+		jButton1.setText("Download");
 		jButton2.setText("Cancel");
 		jLabel2.setText("Select a location on disk:");
 		jButton3.setText("Save as...");
@@ -75,22 +82,36 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 		root.add(content, BorderLayout.CENTER);
 		root.add(Forms.buttonRow(jButton1, jButton2), BorderLayout.SOUTH);
 		setContentPane(root);
+		getRootPane().setDefaultButton(jButton1);
 		pack();
 	}//GEN-END:initComponents
 
+	private void setBusy(boolean busy) {
+		this.busy = busy;
+		jButton1.setEnabled(!busy);
+		jButton2.setEnabled(!busy);
+		jButton3.setEnabled(!busy);
+	}
+
+	@Override
+	public void transferEnded() {
+		setBusy(false);
+	}
+
+	@Override
 	public void setProgressValue(int percentage) {
 		this.jProgressBar1.setValue(percentage);
 
 		if (percentage == 100) {
-			Dialogs.info(this, getTitle(), "Download completed.");
 			this.dispose();
 		}
 	}
 
 	/** Closes the dialog */
 	private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-		setVisible(false);
-		dispose();
+		if (!busy) {
+			dispose();
+		}
 	}//GEN-LAST:event_closeDialog
 
 	public void actionPerformed(ActionEvent e) {
@@ -109,7 +130,15 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 		} else if (e.getSource() == jButton2) {
 			this.dispose();
 		} else if (e.getSource() == jButton1) {
-			udcc.downloadFile(jTextField1.getText());
+			String file = jTextField1.getText().trim();
+
+			if (file.isEmpty()) {
+				Dialogs.warn(this, getTitle(), "Select a location on disk first.");
+			} else if (!Files.exists(Path.of(file))
+				|| Dialogs.confirmDestructive(this, getTitle(), "Overwrite the existing file '" + file + "'?", "Overwrite")) {
+				setBusy(true);
+				udcc.downloadFile(file);
+			}
 		}
 	}
 

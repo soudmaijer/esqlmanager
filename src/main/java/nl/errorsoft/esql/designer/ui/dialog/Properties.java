@@ -24,7 +24,7 @@ public class Properties extends JDialog implements ActionListener {
 		super(jm, true);
 		this.serverType = serverType;
 		this.setTitle("Properties");
-		this.setResizable(false);
+		this.setResizable(true);
 
 		cont = new JPanel(new BorderLayout());
 		cont.setPreferredSize(new Dimension(270, 300));
@@ -36,6 +36,7 @@ public class Properties extends JDialog implements ActionListener {
 		ok.addActionListener(this);
 		cancel.addActionListener(this);
 
+		getRootPane().setDefaultButton(ok);
 		this.pack();
 		this.setLocationRelativeTo(jm);
 	}

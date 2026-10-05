@@ -9,8 +9,6 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.DatabaseDriver;
 import nl.errorsoft.esql.connection.ui.DriverUI;
 
-import java.util.Vector;
-
 public class DatabaseDriverCC {
 	private ESQLManagerCC cwcc;
 	private DatabaseDriver[] drivers;
@@ -31,10 +29,9 @@ public class DatabaseDriverCC {
 		return drivers;
 	}
 
-	public void saveProperties(int id, String name, String url, String className, String filePath, String fieldOpen, String fieldClose, String dataOpen,
-		String dataClose) {
+	public void saveProperties(int id, String name, String url, String className, String fieldOpen, String fieldClose, String dataOpen, String dataClose) {
 		try {
-			new DatabaseDriver().saveProperties(drivers, id, name, url, className, filePath, fieldOpen, fieldClose, dataOpen, dataClose);
+			new DatabaseDriver().saveProperties(drivers, id, name, url, className, "", fieldOpen, fieldClose, dataOpen, dataClose);
 			Dialogs.info(du, du.getTitle(), "Driver properties saved.");
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(du, "Save properties", e);

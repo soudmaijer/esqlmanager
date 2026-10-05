@@ -24,6 +24,20 @@ public class Field {
 		this.comment = comment;
 	}
 
+	/** A copy to edit, so that cancelling a dialog leaves the original untouched. */
+	public Field copy() {
+		Field copy = new Field(name, type, length, dfault, comment);
+		copy.primary = primary;
+		copy.index = index;
+		copy.unique = unique;
+		copy.binary = binary;
+		copy.notnull = notnull;
+		copy.unsigned = unsigned;
+		copy.autoincrement = autoincrement;
+		copy.zerofill = zerofill;
+		return copy;
+	}
+
 	public String getName() {
 		return name;
 	}

@@ -27,16 +27,12 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 	private JTextField ip;
 	private JTextField pt;
 	private JTextField dbs;
-	private String ipt = "";
-	private String ptt = "";
-	private String unt = "";
 
 	private ESQLManagerUI jm;
 	private ConnectionProfileCC cpcc;
 	private JComboBox<Object> jc;
 	private JComboBox<ServerType> jcServer;
 	private JCheckBox chkAutoConnect;
-	private boolean useAutoConnect = true;
 	private ServerType[] sta;
 	private ServerType previousServerType;
 	private boolean loadingProfile = false;
@@ -64,8 +60,9 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		chkAutoConnect = new JCheckBox("Auto-connect to this server on startup");
 
 		Forms.Grid form = new Forms.Grid().row(new JLabel("Profile: "), jc).row(new JLabel("Server type: "), jcServer).row(new JLabel("Host: "), ip)
-			.row(new JLabel("Username: "), un).row(new JLabel("Password: "), pw).row(new JLabel("Port: "), pt)
-			.full(new JLabel("Database(s), comma separated (example: db1,db2,db3)")).full(dbs).full(chkAutoConnect);
+			.row(new JLabel("Port: "), pt).row(new JLabel("Username: "), un).row(new JLabel("Password: "), pw).row(new JLabel("Database(s): "), dbs)
+			.full(chkAutoConnect);
+		dbs.setToolTipText("Comma separated, for example db1,db2,db3. The first one is connected to.");
 
 		btnConnect = new JButton("Connect");
 		btnSave = new JButton("Save");
@@ -212,22 +209,10 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		if (jc.getSelectedItem() instanceof ConnectionProfile) {
 			return ((ConnectionProfile) jc.getSelectedItem()).getName();
 		}
-		return (String) jc.getSelectedItem();
-	}
-
-	public int getPort() {
-		if (pt.getText().trim().length() == 0) {
-			return -1;
-		}
-
-		return Integer.parseInt(pt.getText());
+		return jc.getSelectedItem() == null ? "" : jc.getSelectedItem().toString();
 	}
 
 	public String getPortAsString() {
-		if (pt.getText().trim().length() == 0) {
-			return "";
-		}
-
 		return pt.getText().trim();
 	}
 
@@ -254,27 +239,64 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		return new String(pw.getPassword()).trim();
 	}
 
+	/**
+	 * A profile made of what is typed in the form, the saved profiles are not changed. A blank port becomes the default port of the server type, null (after
+	 * a message) when the port is not a number.
+	 */
+	private ConnectionProfile profileFromForm() {
+		ServerType serverType = (ServerType) jcServer.getSelectedItem();
+		String port = getPortAsString();
+
+		if (port.isEmpty()) {
+			port = serverType.getDialect().getDefaultPort();
+		}
+		try {
+			int number = Integer.parseInt(port);
+			if (number < 1 || number > 65535) {
+				throw new NumberFormatException(port);
+			}
+		} catch (NumberFormatException e) {
+			Dialogs.warn(this, getTitle(), "The port must be a number between 1 and 65535.");
+			return null;
+		}
+
+		ConnectionProfile profile = new ConnectionProfile();
+		String name = getName();
+		profile.setName(name == null || name.isBlank() ? "" : name.trim());
+		profile.setServerType(serverType);
+		profile.setHost(getAddress());
+		profile.setPort(port);
+		profile.setUsername(getUsername());
+		profile.setPassword(getPassword());
+		profile.setDatabases(getDatabases());
+		profile.setAutoConnect(chkAutoConnect.isSelected());
+		return profile;
+	}
+
 	public void actionPerformed(java.awt.event.ActionEvent event) {
 		Object object = event.getSource();
 
 		if (object == btnConnect) {
-			if (jc.getSelectedItem() != null) {
-				ConnectionProfile temp = (ConnectionProfile) jc.getSelectedItem();
-				temp.setHost(this.getAddress());
-				temp.setPort(Integer.toString(this.getPort()));
-				temp.setUsername(this.getUsername());
-				temp.setPassword(this.getPassword());
-				temp.setServerType((ServerType) jcServer.getSelectedItem());
-				temp.setDatabases(this.getDatabases());
-				cpcc.connect(temp);
+			ConnectionProfile typed = profileFromForm();
+			if (typed != null) {
+				if (typed.getName().isBlank()) {
+					typed.setName(typed.getHost());
+				}
+				cpcc.connect(typed);
 			}
 		} else if (object == btnSave) {
-			if (jc.getSelectedItem() instanceof ConnectionProfile) {
-				cpcc.editProfile((ConnectionProfile) jc.getSelectedItem(), getName(), (ServerType) jcServer.getSelectedItem(), getAddress(),
-					getPortAsString(), getUsername(), getPassword(), getDatabases(), chkAutoConnect.isSelected());
+			ConnectionProfile typed = profileFromForm();
+			if (typed == null) {
+				return;
+			}
+			if (typed.getName().isBlank()) {
+				Dialogs.warn(this, getTitle(), "Enter a name for the profile.");
+			} else if (jc.getSelectedItem() instanceof ConnectionProfile saved) {
+				cpcc.editProfile(saved, typed.getName(), typed.getServerType(), typed.getHost(), typed.getPort(), typed.getUsername(), typed.getPassword(),
+					typed.getDatabases(), typed.isAutoConnect());
 			} else {
-				cpcc.addProfile(getName(), (ServerType) jcServer.getSelectedItem(), getAddress(), getPortAsString(), getUsername(), getPassword(),
-					getDatabases(), chkAutoConnect.isSelected());
+				cpcc.addProfile(typed.getName(), typed.getServerType(), typed.getHost(), typed.getPort(), typed.getUsername(), typed.getPassword(),
+					typed.getDatabases(), typed.isAutoConnect());
 			}
 		} else if (object == btnClose) {
 			this.dispose();

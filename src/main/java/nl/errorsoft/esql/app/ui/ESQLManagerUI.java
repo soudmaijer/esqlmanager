@@ -128,7 +128,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		 */
 		menubar = new JMenuBar();
 		mnuGroupOptions = new JMenu("Options");
-		mnuConnect = new JMenuItem("Connect");
+		mnuConnect = new JMenuItem("Connect...");
 		mnuDisconnect = new JMenuItem("Disconnect");
 		mnuExit = new JMenuItem("Exit");
 		mnuGroupOptions.add(mnuConnect);
@@ -138,8 +138,8 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		menubar.add(mnuGroupOptions);
 
 		mnuGroupSettings = new JMenu("Settings");
-		mnuSettings = new JMenuItem("Preferences");
-		mnuJDBC = new JMenuItem("JDBC Driver settings");
+		mnuSettings = new JMenuItem("Preferences...");
+		mnuJDBC = new JMenuItem("JDBC Driver settings...");
 		mnuJDBC.addActionListener(this);
 		mnuGroupSettings.add(mnuSettings);
 		mnuGroupSettings.add(mnuJDBC);
@@ -154,6 +154,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		mnuGroupImportExport.addSeparator();
 		mnuGroupImportExport.add(mnuDesigner);
 		menubar.add(mnuGroupImportExport);
+		updateMenus();
 
 		mnuGroupWindow = new JMenu("Window");
 		mnuTileCascade = new JMenuItem("Cascade");
@@ -165,8 +166,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		menubar.add(mnuGroupWindow);
 
 		mnuGroupHelp = new JMenu("Help");
-		mnuAbout = new JMenuItem("About");
-		mnuGroupHelp.addSeparator();
+		mnuAbout = new JMenuItem("About...");
 		mnuGroupHelp.add(mnuAbout);
 		menubar.add(mnuGroupHelp);
 
@@ -351,6 +351,15 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 
 		boolean connected = getConnectionWindowCount() > 0;
 		updateStatus(connected ? "Connected" : NO_CONNECTION, !connected);
+		updateMenus();
+	}
+
+	/** The items that work on a connection are enabled while a connection window is open. */
+	private void updateMenus() {
+		boolean connected = getConnectionWindowCount() > 0;
+		for (JMenuItem item : new JMenuItem[]{mnuDisconnect, mnuImportFromFile, mnuExportToFile, mnuDesigner}) {
+			item.setEnabled(connected);
+		}
 	}
 
 	public void updateStatus(final String message, final boolean red) {
@@ -416,6 +425,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 
 		cmbWindows.addItem(cw);
 		cmbWindows.setSelectedIndex(cmbWindows.getItemCount() - 1);
+		updateMenus();
 	}
 
 	/** Shows a designer on the desktop, centred and in front, and lists it in the window selector. */

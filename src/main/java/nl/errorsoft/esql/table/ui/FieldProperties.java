@@ -1,157 +1,106 @@
 package nl.errorsoft.esql.table.ui;
 
-import nl.errorsoft.esql.error.Dialogs;
-
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-import nl.errorsoft.esql.table.TableIndex;
-
+import nl.errorsoft.esql.error.Dialogs;
 import nl.errorsoft.esql.table.DataType;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.ui.util.Forms;
+
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.*;
+import java.util.regex.Pattern;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
-import nl.errorsoft.esql.ui.util.Forms;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
-
+/** Adds a column to a table or edits one. */
 public class FieldProperties extends JDialog implements ActionListener {
-	// Control class.
-	private ConnectionWindowCC cwcc;
+	/** A length is a number, or two numbers for the precision and scale of a decimal ("10,2"). */
+	private static final Pattern LENGTH = Pattern.compile("\\d+(\\s*,\\s*\\d+)?");
 
-	private JPanel top;
-	private JTextField name = new JTextField();
-	private JTextField length = new JTextField();
-	private JTextField dfault = new JTextField();
-	private JComboBox<DataType> fieldtypes = new JComboBox<>();
-	private JList<TableIndex> indexList = new JList<>();
-	private DefaultListModel<TableIndex> dlm = new DefaultListModel<>();
-	private JScrollPane indexListScroll;
+	private final ConnectionWindowCC cwcc;
+	private final TableColumn column;
+	private final boolean add;
+	private final boolean edit;
 
-	// Field property checkboxes
-	private JCheckBox primary = new JCheckBox("Primary Key");
-	private JCheckBox unique = new JCheckBox("Unique");
-	private JCheckBox notnull = new JCheckBox("Nullable");
-	private JCheckBox autoIncrement = new JCheckBox("Auto Increment");
-	private JCheckBox binary = new JCheckBox("Binary");
-	private JCheckBox unsigned = new JCheckBox("Unsigned");
-	private JCheckBox zerofill = new JCheckBox("Zerofill");
-	private JCheckBox index = new JCheckBox("Index");
-	private JButton btnCancel = new JButton("Cancel");
-	private JButton btnSave = new JButton("Save");
+	private final JTextField name = new JTextField(16);
+	private final JTextField length = new JTextField();
+	private final JTextField dfault = new JTextField();
+	private final JComboBox<DataType> fieldtypes = new JComboBox<>();
 
-	// Panel with checkboxes
-	private JPanel p3;
-	private String db;
-	private String table;
-	private String field;
-	private nl.errorsoft.esql.table.TableColumn column;
-	public boolean edit;
-	public boolean add;
-	private JPanel properties;
-	private JPanel indexes;
-	private JTabbedPane tabs;
-	JButton addIndex;
-	JButton dropIndex;
+	private final JCheckBox primary = new JCheckBox("Primary Key");
+	private final JCheckBox unsigned = new JCheckBox("Unsigned");
+	private final JCheckBox autoIncrement = new JCheckBox("Auto Increment");
+	private final JCheckBox notnull = new JCheckBox("Not null");
+	private final JButton btnCancel = new JButton("Cancel");
+	private final JButton btnSave = new JButton("Save");
 
-	public FieldProperties(JFrame parent, ConnectionWindowCC cwcc, nl.errorsoft.esql.table.TableColumn column, boolean add, boolean edit) {
-		super(parent, true);
+	public FieldProperties(JFrame parent, ConnectionWindowCC cwcc, TableColumn column, boolean add, boolean edit) {
+		super(parent, add ? "Add a field" : "Edit field properties", true);
 		this.cwcc = cwcc;
-		this.db = db;
 		this.add = add;
 		this.edit = edit;
 		this.column = column;
-		this.setResizable(false);
-
-		if (add) {
-			this.setTitle("Add a field");
-		} else {
-			this.setTitle("Edit field properties");
-		}
-		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setResizable(false);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 		fieldtypes.addActionListener(this);
-		DataType[] ftp = cwcc.getConnectionProfile().getServerType().getDataTypes();
-		for (int i = 0; i < ftp.length; i++) {
-			fieldtypes.addItem(ftp[i]);
+		DataType[] types = cwcc.getConnectionProfile().getServerType().getDataTypes();
+		for (int i = 0; i < types.length; i++) {
+			fieldtypes.addItem(types[i]);
 
-			if (edit && column.getNativeTypeName().equalsIgnoreCase(ftp[i].getName())) {
+			if (edit && column.getNativeTypeName().equalsIgnoreCase(types[i].getName())) {
 				fieldtypes.setSelectedIndex(i);
 			}
 		}
 
-		// Properties tab: the field and its options.
-		name.setColumns(16);
-		name.setText(field);
-		top = new Forms.Grid().row(new JLabel("Name "), name).row(new JLabel("Type "), fieldtypes).row(new JLabel("Length "), length)
-			.row(new JLabel("Default "), dfault).panel();
-		Forms.titled(top, "Field properties");
+		JPanel top = Forms.titled(new Forms.Grid().row(new JLabel("Name "), name).row(new JLabel("Type "), fieldtypes).row(new JLabel("Length "), length)
+			.row(new JLabel("Default "), dfault).panel(), "Field properties");
 
-		p3 = new JPanel(new java.awt.GridLayout(2, 2, Forms.GAP, 0));
-		p3.add(primary);
-		p3.add(unsigned);
-		p3.add(autoIncrement);
-		p3.add(notnull);
-		Forms.titled(p3, "Options");
-
-		properties = Forms.padded(new Forms.Grid().full(top).full(p3).done());
-
-		tabs = new JTabbedPane();
-		tabs.addTab("Properties", properties);
-		//tabs.addTab("Indexes", indexes );
+		JPanel options = new JPanel(new GridLayout(2, 2, Forms.GAP, 0));
+		options.add(primary);
+		options.add(unsigned);
+		options.add(autoIncrement);
+		options.add(notnull);
+		Forms.titled(options, "Options");
 
 		btnCancel.addActionListener(this);
 		btnSave.addActionListener(this);
-		JPanel root = Forms.padded(new JPanel(new java.awt.BorderLayout()));
-		root.add(tabs, java.awt.BorderLayout.CENTER);
-		root.add(Forms.buttonRow(btnSave, btnCancel), java.awt.BorderLayout.SOUTH);
+		JPanel root = Forms.padded(new JPanel(new BorderLayout()));
+		root.add(new Forms.Grid().full(top).full(options).done(), BorderLayout.CENTER);
+		root.add(Forms.buttonRow(btnSave, btnCancel), BorderLayout.SOUTH);
 		setContentPane(root);
-
-		// Indexes tab (not shown at the moment).
-		indexListScroll = new JScrollPane(indexList);
-		indexListScroll.setPreferredSize(new java.awt.Dimension(220, 100));
-		indexListScroll.setBorder(new TitledBorder(new EtchedBorder(BevelBorder.LOWERED), "Indexes"));
-		indexList.setBorder(new EtchedBorder(BevelBorder.LOWERED));
-		unique.addActionListener(this);
-
-		JPanel indexOptionsPanel = new JPanel(new java.awt.BorderLayout());
-		indexOptionsPanel.add(unique);
-		Forms.titled(indexOptionsPanel, "Options");
-
-		addIndex = new JButton("Add index");
-		addIndex.addActionListener(this);
-		dropIndex = new JButton("Drop index");
-		dropIndex.addActionListener(this);
-
-		indexes = Forms.padded(new Forms.Grid().full(indexListScroll).full(indexOptionsPanel).full(Forms.buttonRow(addIndex, dropIndex)).done());
+		getRootPane().setDefaultButton(btnSave);
 
 		if (edit) {
-			this.name.setText(column.getName());
-			this.primary.setSelected(column.isPrimary());
-			this.primary.setEnabled(false);
-			this.autoIncrement.setSelected(column.isAutoIncrement());
-			this.notnull.setSelected(column.isNullable());
-			this.unsigned.setSelected(!column.isSigned());
-			this.length.setText(Integer.toString(column.getSize()));
-			this.dfault.setText(column.getDefault());
+			name.setText(column.getName());
+			primary.setSelected(column.isPrimary());
+			primary.setEnabled(false);
+			autoIncrement.setSelected(column.isAutoIncrement());
+			notnull.setSelected(!column.isNullable());
+			unsigned.setSelected(!column.isSigned());
+			// The server reports a size for every type, only types that are written with a length show it.
+			length.setText(takesLength(column.getNativeTypeName()) ? Integer.toString(column.getSize()) : "");
+			dfault.setText(column.getDefault());
 		}
 
 		pack();
 		setLocationRelativeTo(parent);
-
-		// Listeners.
-		indexList.addListSelectionListener(lse -> {
-			if (indexList.getSelectedIndex() > -1) {
-				Object obj = dlm.getElementAt(indexList.getSelectedIndex());
-
-				if (obj instanceof TableIndex temp) {
-					unique.setSelected(temp.isUnique());
-				}
-			}
-		});
 	}
 
-	// Actionlistener
+	/** True for the types that are written with a length, such as varchar(50) or decimal(10,2). */
+	private static boolean takesLength(String typeName) {
+		String type = typeName == null ? "" : typeName.toLowerCase();
+		return type.contains("char") || type.contains("binary") || type.contains("decimal") || type.contains("numeric") || type.equals("bit");
+	}
+
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 
@@ -163,35 +112,31 @@ public class FieldProperties extends JDialog implements ActionListener {
 			unsigned.setEnabled(f.unsigned);
 			autoIncrement.setEnabled(f.autoincrement);
 		} else if (source == btnCancel) {
-			this.dispose();
+			dispose();
 		} else if (source == btnSave) {
-			if (add && name.getText().trim().length() > 0) {
-				DataType f = (DataType) fieldtypes.getSelectedItem();
-				cwcc.addTableColumn(this, name.getText(), length.getText(), dfault.getText(), f, primary.isSelected(), unique.isSelected(), index.isSelected(),
-					autoIncrement.isSelected(), unsigned.isSelected(), notnull.isSelected());
-			}
-			if (edit && name.getText().trim().length() > 0) {
-				DataType f = (DataType) fieldtypes.getSelectedItem();
-				cwcc.editTableColumn(this, column, name.getText(), length.getText(), dfault.getText(), f, primary.isSelected(), unique.isSelected(),
-					index.isSelected(), autoIncrement.isSelected(), unsigned.isSelected(), notnull.isSelected());
-			}
-		} else if (source == addIndex) {
-			String input = Dialogs.input(this, "New index", "Name of the new index:");
+			save();
+		}
+	}
 
-			if (input != null) {
-				TableIndex ti = new TableIndex(null);
-				ti.setName(input);
-				dlm.addElement(ti);
-			}
-		} else if (source == dropIndex) {
-			if (indexList.getSelectedIndex() > -1 && Dialogs.confirm(this, "Remove index",
-				"Remove index '" + indexList.getSelectedValue() + "'? It is dropped when you click Save.", "Remove")) {
-				dlm.removeElementAt(indexList.getSelectedIndex());
-			}
-		} else if (source == unique) {
-			if (indexList.getSelectedIndex() > -1) {
-				((TableIndex) dlm.getElementAt(indexList.getSelectedIndex())).setUnique(unique.isSelected());
-			}
+	private void save() {
+		if (name.getText().isBlank()) {
+			Dialogs.warn(this, getTitle(), "Enter a name for the field.");
+			return;
+		}
+		String size = length.getText().trim();
+		if (!size.isEmpty() && !LENGTH.matcher(size).matches()) {
+			Dialogs.warn(this, getTitle(), "The length must be a number, for example 50, or two numbers for a decimal, for example 10,2.");
+			return;
+		}
+
+		DataType f = (DataType) fieldtypes.getSelectedItem();
+		boolean nullable = !notnull.isSelected();
+		if (add) {
+			cwcc.addTableColumn(this, name.getText().trim(), size, dfault.getText(), f, primary.isSelected(), false, false, autoIncrement.isSelected(),
+				unsigned.isSelected(), nullable);
+		} else if (edit) {
+			cwcc.editTableColumn(this, column, name.getText().trim(), size, dfault.getText(), f, primary.isSelected(), false, false,
+				autoIncrement.isSelected(), unsigned.isSelected(), nullable);
 		}
 	}
 }

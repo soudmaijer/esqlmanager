@@ -485,13 +485,13 @@ public class ConnectionWindowCC extends Thread {
 	/** Export and import of this connection, the same windows as in the Tools menu. */
 	public void dispatchExportUI() {
 		if (requireFeature(Dialect.Feature.EXPORT, "Export")) {
-			new nl.errorsoft.esql.export.control.ExportCC(jmcc).startExportSelectionUI(this);
+			new nl.errorsoft.esql.export.control.ExportCC(jmcc).startExport(this);
 		}
 	}
 
 	public void dispatchImportUI() {
 		if (requireFeature(Dialect.Feature.IMPORT, "Import")) {
-			new nl.errorsoft.esql.importer.control.ImportCC(jmcc).startImportSelectionUI(this);
+			new nl.errorsoft.esql.importer.control.ImportCC(jmcc).startImport(this);
 		}
 	}
 

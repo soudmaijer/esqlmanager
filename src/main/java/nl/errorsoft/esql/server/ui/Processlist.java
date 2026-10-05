@@ -1,7 +1,6 @@
 package nl.errorsoft.esql.server.ui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -17,7 +16,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 
+import nl.errorsoft.esql.error.Dialogs;
 import nl.errorsoft.esql.server.ServerProcess;
+import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.server.control.ProcesslistCC;
 
 /** The window of the process list. It shows what {@link ProcesslistCC} gives it. */
@@ -27,6 +28,7 @@ public class Processlist extends JDialog {
 
 	private final JTable jtable;
 	private final JLabel lblInterval = new JLabel();
+	private final JButton kill = new JButton("Kill process");
 
 	public Processlist(ProcesslistCC controller, JFrame parent, String title) {
 		super(parent, title, false);
@@ -41,20 +43,22 @@ public class Processlist extends JDialog {
 
 		JScrollPane jsp = new JScrollPane(jtable);
 		jsp.getViewport().setBackground(UIManager.getColor("Table.background"));
-		getContentPane().add(jsp, BorderLayout.CENTER);
 
-		JButton btnKillProcess = new JButton("Kill process");
-		btnKillProcess.addActionListener(e -> {
-			int row = jtable.getSelectedRow();
-			if (row > -1) {
-				controller.killProcess(jtable.getValueAt(row, 0).toString());
-			}
-		});
-		JPanel buttons = new JPanel(new FlowLayout());
-		buttons.add(btnKillProcess);
-		buttons.add(new JLabel("Refreshing in:"));
-		buttons.add(lblInterval);
-		getContentPane().add(buttons, BorderLayout.SOUTH);
+		kill.setEnabled(false);
+		kill.addActionListener(e -> killSelected(controller));
+		jtable.getSelectionModel().addListSelectionListener(e -> kill.setEnabled(jtable.getSelectedRow() > -1));
+		JButton close = new JButton("Close");
+		close.addActionListener(e -> dispose());
+
+		JPanel south = new JPanel(new BorderLayout());
+		south.add(lblInterval, BorderLayout.WEST);
+		south.add(Forms.buttonRow(kill, close), BorderLayout.EAST);
+
+		JPanel root = Forms.padded(new JPanel(new BorderLayout(0, Forms.GAP)));
+		root.add(jsp, BorderLayout.CENTER);
+		root.add(south, BorderLayout.SOUTH);
+		setContentPane(root);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 		addWindowListener(new WindowAdapter() {
 			@Override
@@ -72,17 +76,30 @@ public class Processlist extends JDialog {
 		setLocationRelativeTo(parent);
 	}
 
-	/** Replaces the rows, keeping the selected row. */
+	private void killSelected(ProcesslistCC controller) {
+		int row = jtable.getSelectedRow();
+		if (row > -1) {
+			String id = jtable.getValueAt(row, 0).toString();
+			String description = "process " + id + " of " + jtable.getValueAt(row, 1) + " on " + jtable.getValueAt(row, 2);
+			if (Dialogs.confirmDestructive(this, "Kill process", "Kill " + description + "? Its running statement is stopped.", "Kill")) {
+				controller.killProcess(id);
+			}
+		}
+	}
+
+	/** Replaces the rows in the same table model, so that the column widths stay and the process that was selected is still selected. */
 	public void showProcesses(List<ServerProcess> processes) {
 		int selected = jtable.getSelectedRow();
-		DefaultTableModel model = new DefaultTableModel(COLUMNS, 0);
+		Object selectedId = selected > -1 ? jtable.getValueAt(selected, 0) : null;
+		DefaultTableModel model = (DefaultTableModel) jtable.getModel();
+		model.setRowCount(0);
 		for (ServerProcess p : processes) {
 			model.addRow(new Object[]{p.id(), p.user(), p.host(), p.database(), p.command(), p.time(), p.info()});
 		}
-		jtable.setModel(model);
-		setColumnWidths();
-		if (selected > -1 && selected < model.getRowCount()) {
-			jtable.setRowSelectionInterval(selected, selected);
+		for (int row = 0; selectedId != null && row < model.getRowCount(); row++) {
+			if (selectedId.equals(model.getValueAt(row, 0))) {
+				jtable.setRowSelectionInterval(row, row);
+			}
 		}
 	}
 
@@ -93,6 +110,6 @@ public class Processlist extends JDialog {
 	}
 
 	public void showCountdown(int seconds) {
-		lblInterval.setText(Integer.toString(seconds));
+		lblInterval.setText("Refreshing in " + seconds + " s");
 	}
 }

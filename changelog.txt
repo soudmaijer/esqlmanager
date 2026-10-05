@@ -4,6 +4,13 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Dialog fixes from an audit: Export validates the selection, the options and an existing file before it starts, and
+  Import checks the file and names its target; both open directly (the format step with only SQL is gone). Cancel in
+  the designer's property dialog discards field edits; the Generate dialog checks and generates on a virtual thread and
+  lists the problems in the dialog. The driver, profile, process list, field, index, upload and download dialogs
+  validate their input, confirm destructive actions and keep the window usable while they work. Import, Export and
+  Designer are disabled in the Tools menu while no connection is open. The "Not null" option means the same in the
+  column editor and the table editor (an existing column was shown inverted).
 - Distribution: Maven profiles `jlink` (runtime image with only the needed JDK modules, 59 MB) and `package`
   (jpackage: eSQLManager.app 89 MB, `-Djpackage.type=dmg` 71 MB), scripts in src/package. The packaged application
   keeps conf/ and credits.txt in ~/.esqlmanager (app.DataDirectory, seeded from the bundled runtime/); started from

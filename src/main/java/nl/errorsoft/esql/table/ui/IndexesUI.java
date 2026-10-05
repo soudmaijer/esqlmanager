@@ -14,6 +14,9 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -42,12 +45,17 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	private final JButton jbtnRemoveFromList = new JButton(">");
 	private final JCheckBox jrdUnique = new JCheckBox("Unique");
 	private final JCheckBox jrdFulltext = new JCheckBox("Fulltext");
+	private final JButton jbtnUp = new JButton("Up");
+	private final JButton jbtnDown = new JButton("Down");
 	private final JButton jbtnSave = new JButton("Save");
 	private final JButton jbtnDrop = new JButton("Drop");
 	private final JButton jbtnCancel = new JButton("Cancel");
 
 	// Columns, type or a new index changed since the indexes were loaded.
 	private boolean modified;
+	// The index whose columns are shown, and whether the combo box is being filled by the code (not chosen by the user).
+	private TableIndex shown;
+	private boolean loading;
 
 	public IndexesUI(IndexesCC tcc, String title) {
 		super(new BorderLayout(8, 8));
@@ -86,6 +94,19 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		c.weightx = 1;
 		c.weighty = 1;
 		columns.add(new JScrollPane(jlstAvail), c);
+		JPanel order = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+		order.add(jbtnUp);
+		order.add(jbtnDown);
+		c = constraints(0, 2);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		columns.add(order, c);
+
+		jbtnAddToList.setToolTipText("Use the selected available column in the index");
+		jbtnRemoveFromList.setToolTipText("Remove the selected column from the index");
+		jbtnUp.setToolTipText("Move the selected column up: the order of the columns matters for the index");
+		jbtnDown.setToolTipText("Move the selected column down");
+		jlstAvail.addMouseListener(doubleClick(jlstAvail, jlstUsed));
+		jlstUsed.addMouseListener(doubleClick(jlstUsed, jlstAvail));
 
 		JPanel type = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		type.setBorder(BorderFactory.createTitledBorder("Index type"));
@@ -104,16 +125,38 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		south.add(buttons, BorderLayout.SOUTH);
 		add(south, BorderLayout.SOUTH);
 
-		for (JButton button : new JButton[]{jbtnAdd, jbtnPrimary, jbtnAddToList, jbtnRemoveFromList, jbtnSave, jbtnDrop, jbtnCancel}) {
+		for (JButton button : new JButton[]{jbtnAdd, jbtnPrimary, jbtnAddToList, jbtnRemoveFromList, jbtnUp, jbtnDown, jbtnSave, jbtnDrop, jbtnCancel}) {
 			button.addActionListener(this);
 		}
 		jrdUnique.addActionListener(this);
 		jrdFulltext.addActionListener(this);
 		jcmbIndexes.addItemListener(e -> {
-			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti) {
+			if (e.getStateChange() == ItemEvent.SELECTED && !loading && jcmbIndexes.getSelectedItem() instanceof TableIndex ti && ti != shown) {
+				if (modified && !confirmDiscard()) {
+					loading = true;
+					jcmbIndexes.setSelectedItem(shown);
+					loading = false;
+					return;
+				}
+				modified = false;
 				itemSelected(ti);
 			}
 		});
+	}
+
+	private MouseAdapter doubleClick(JList<TableColumn> from, JList<TableColumn> to) {
+		return new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && from.locationToIndex(e.getPoint()) > -1) {
+					moveSelected(from, to);
+				}
+			}
+		};
+	}
+
+	private boolean confirmDiscard() {
+		return Dialogs.confirmDestructive(this, "Discard changes?", "Discard the unsaved changes to index '" + shown + "'?", "Discard");
 	}
 
 	private static GridBagConstraints constraints(int x, int y) {
@@ -139,6 +182,10 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 			moveSelected(jlstUsed, jlstAvail);
 		} else if (source == jbtnAddToList) {
 			moveSelected(jlstAvail, jlstUsed);
+		} else if (source == jbtnUp) {
+			moveUsed(-1);
+		} else if (source == jbtnDown) {
+			moveUsed(1);
 		} else if (source == jrdFulltext) {
 			jrdUnique.setSelected(false);
 			modified = true;
@@ -146,17 +193,23 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 			jrdFulltext.setSelected(false);
 			modified = true;
 		} else if (source == jbtnDrop) {
-			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti) {
+			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti
+				&& Dialogs.confirmDestructive(this, "Drop index", "Drop index '" + ti + "' of " + title + "? This cannot be undone.", "Drop")) {
 				tcc.dropIndex(ti);
 			}
 		} else if (source == jbtnAdd) {
+			if (modified && !confirmDiscard()) {
+				return;
+			}
 			String input = Dialogs.input(this, "New index", "Name of the new index:");
 
 			if (input != null) {
 				tcc.addNew(input);
 			}
 		} else if (source == jbtnPrimary) {
-			tcc.addPrimary();
+			if (!modified || confirmDiscard()) {
+				tcc.addPrimary();
+			}
 		} else if (source == jbtnSave) {
 			if (jcmbIndexes.getSelectedItem() instanceof TableIndex ti) {
 				DefaultListModel<TableColumn> dlm = (DefaultListModel<TableColumn>) jlstUsed.getModel();
@@ -179,6 +232,18 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 		}
 	}
 
+	private void moveUsed(int step) {
+		DefaultListModel<TableColumn> used = (DefaultListModel<TableColumn>) jlstUsed.getModel();
+		int from = jlstUsed.getSelectedIndex();
+		int to = from + step;
+
+		if (from > -1 && to > -1 && to < used.getSize()) {
+			used.add(to, used.remove(from));
+			jlstUsed.setSelectedIndex(to);
+			modified = true;
+		}
+	}
+
 	private void moveSelected(JList<TableColumn> from, JList<TableColumn> to) {
 		if (from.getSelectedValue() instanceof TableColumn column) {
 			((DefaultListModel<TableColumn>) from.getModel()).removeElement(column);
@@ -190,29 +255,32 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	/** Shows the indexes as they are in the database, nothing is modified any more. */
 	public void loadIndexes(TableIndex[] tia) {
 		modified = false;
+		loading = true;
+		shown = null;
 		jbtnPrimary.setEnabled(true);
 		jcmbIndexes.setModel(new DefaultComboBoxModel<>());
 		jlstUsed.setModel(new DefaultListModel<>());
 		jlstAvail.setModel(new DefaultListModel<>());
 
-		if (tia == null || tia.length == 0) {
-			return;
-		}
-
-		for (TableIndex index : tia) {
-			if (index.isPrimary()) {
-				jbtnPrimary.setEnabled(false);
+		if (tia != null && tia.length > 0) {
+			for (TableIndex index : tia) {
+				if (index.isPrimary()) {
+					jbtnPrimary.setEnabled(false);
+				}
+				jcmbIndexes.addItem(index);
 			}
-			jcmbIndexes.addItem(index);
+			itemSelected(tia[0]);
 		}
-
-		itemSelected(tia[0]);
+		loading = false;
 	}
 
 	public void addNewIndex(TableIndex ti, TableColumn[] tc) {
 		DefaultListModel<TableColumn> dlmAvail = new DefaultListModel<>();
+		loading = true;
 		jcmbIndexes.addItem(ti);
 		jcmbIndexes.setSelectedItem(ti);
+		loading = false;
+		shown = ti;
 
 		for (TableColumn column : tc) {
 			dlmAvail.addElement(column);
@@ -224,6 +292,7 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 	}
 
 	public void itemSelected(TableIndex index) {
+		shown = index;
 		TableColumn[] used = index.getTableColumns();
 		TableColumn[] avail = index.getTable().getColumns();
 		DefaultListModel<TableColumn> dlmUsed = new DefaultListModel<>();
