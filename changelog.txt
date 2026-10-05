@@ -7,8 +7,9 @@ eSQLManager changelog
 - Selected tabs stand out: a darker background and the accent underline, also when the focus is elsewhere
   (TabbedPane defaults in settings.Appearance). A tab that is opened is put in front.
 - Status bar per tab: the message below the tabs of a connection window belongs to the tab it is about; switching
-  tabs shows that tab's message, and a query reports in the status of its own query tab. Tree actions belong to the
-  table view tab, never to Help.
+  tabs shows that tab's message, and a query reports in the status of its own query tab. A tab without a message
+  of its own (Help) leaves the bar empty. Tree actions (schemas listed, opened in the designer) only go to the
+  output panel; loading a table or table list is the message of the table view tab.
 - Designer as an internal frame: the model designer (designer.ui.DBCreator) is a JInternalFrame on the desktop of
   the main window instead of a separate modal window, with its own menu bar, toolbar and frame icon. The window
   selector of the toolbar lists designers next to the connection windows. Closing it asks to save the model;

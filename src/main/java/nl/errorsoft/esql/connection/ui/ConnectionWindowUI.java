@@ -52,7 +52,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JSplitPane jsplp; // Tree and jsplData
 	private JTabbedPane tabbedPane; // Contains jsp2
 	private JScrollPane helpPane;
-	private static final String READY = "Ready";
+	private static final String READY = "Ready"; // Only sizes the status bar
 	private JLabel status;
 	private JPanel navigation;
 	private Component viewTab; // The table data or table list, shown in front of the help
@@ -192,6 +192,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		status = new JLabel(READY, SwingConstants.LEFT);
 		status.setPreferredSize(new Dimension(0, status.getPreferredSize().height));
 		status.setMinimumSize(new Dimension(0, 0));
+		status.setText(""); // The height is taken from the placeholder text above, a tab without a message leaves the bar empty
 		status.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
 		status.setForeground(UIManager.getColor("Label.disabledForeground"));
 		navigation = new JPanel(new BorderLayout());
@@ -479,8 +480,8 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	}
 
 	/**
-	 * What the connection did in the tree or the table view (tables listed, a table loaded) belongs to the view tab, the first tab with the table
-	 * data or table list. Without a view tab the message is only in the log: the help and the query and editor tabs keep their own messages.
+	 * A message about the view tab, the first tab with the table data or table list (a table loaded, tables listed). The help and the query and
+	 * editor tabs keep their own messages.
 	 */
 	public void setStatus(String text) {
 		if (!SwingUtilities.isEventDispatchThread()) {
@@ -513,10 +514,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	}
 
 	private void showStatus(String text) {
-		String shown = text == null || text.isEmpty() ? READY : text;
-
-		status.setText(shown);
-		status.setToolTipText(shown);
+		// A tab without a message of its own leaves the bar empty.
+		boolean empty = text == null || text.isEmpty();
+		status.setText(empty ? "" : text);
+		status.setToolTipText(empty ? null : text);
 	}
 
 	public String toString() {

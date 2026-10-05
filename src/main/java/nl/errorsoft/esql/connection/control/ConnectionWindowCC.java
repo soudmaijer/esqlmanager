@@ -95,8 +95,17 @@ public class ConnectionWindowCC extends Thread {
 		jmcc.setStatusInfo(info);
 	}
 
-	/** What this connection did last is shown in the status bar of its own window, as the message of the tab in front. */
+	/** What the connection did in the tree (schemas listed, a schema created) belongs to no tab, it goes to the output panel only. */
 	public void setStatusDetail(String detail) {
+		statusDetail = detail;
+		if (!detail.isEmpty()) {
+			log.info(detail);
+		}
+		showStatusInfo();
+	}
+
+	/** A message about the table view tab (a table loaded, a table list shown), shown in the status bar while that tab is in front. */
+	public void setViewStatus(String detail) {
 		statusDetail = detail;
 		cwui.setStatus(detail);
 		showStatusInfo();
@@ -358,7 +367,7 @@ public class ConnectionWindowCC extends Thread {
 			DatabaseCC dbcc = new DatabaseCC(this);
 			java.util.List<Table> tables = dbcc.getTables(database);
 			cwui.showTableListView(database.getName(), dbcc.getTableListView(tables));
-			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
+			setViewStatus(database.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Open database", e);
@@ -448,7 +457,7 @@ public class ConnectionWindowCC extends Thread {
 				? table.getDatabase().getName() + "." + table.getSchema().getName()
 				: table.getDatabase().getName();
 			cwui.showTableDataView(place + " : " + table.getName(), tbcc.getTableDataView(table, 0, 50));
-			setStatusDetail(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
+			setViewStatus(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Load table data", e);
