@@ -1,6 +1,13 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Window tabs next to the toolbar buttons, Help and Preferences buttons
+
+- The window tabs are in the same row as the toolbar, filling the width; Connect and Disconnect are at the right end
+  behind a thin line, followed by a Help button and a Preferences button (three dots).
+- The help is a tab of its own in the window bar, also without a connection. The connection windows no longer have
+  a help tab.
+
 05-10-2026: Window tabs instead of the window selector
 
 - Connection windows and designers each have a tab at the top of the main window, with the server logo (or the

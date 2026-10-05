@@ -2,6 +2,7 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.ui.dialog.AboutDialog;
 
+import nl.errorsoft.esql.help.ui.HelpWindow;
 import nl.errorsoft.esql.ui.util.ToolbarButtons;
 
 import nl.errorsoft.esql.ui.dialog.Dialogs;
@@ -43,6 +44,10 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JMenuItem exitItem;
 	private JMenu settingsMenu;
 	private JMenuItem settingsItem;
+	private JButton helpButton;
+	private JMenuItem helpItem;
+	private HelpWindow helpWindow; // The documentation, null while it is closed.
+	private JButton preferencesButton;
 	private JMenuItem jdbcItem;
 	private JMenu serverMenu;
 	private JMenuItem processesItem;
@@ -190,6 +195,8 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		helpMenu = new JMenu("Help");
 		aboutItem = new JMenuItem("About...");
+		helpItem = new JMenuItem("eSQLManager Help");
+		helpMenu.add(helpItem);
 		helpMenu.add(aboutItem);
 		menubar.add(helpMenu);
 
@@ -200,7 +207,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		 */
 		toolbar = new JToolBar();
 		toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
-		toolbar.setFloatable(true);
+		toolbar.setFloatable(false);
 		connectButton = new JButton(imageLoader.getIcon("imgConnect"));
 		connectButton.setEnabled(true);
 		connectButton.setToolTipText("Connect");
@@ -211,8 +218,20 @@ public class MainWindow extends JFrame implements ActionListener {
 		disconnectButton.setToolTipText("Disconnect");
 		toolbar.add(disconnectButton);
 
-		ToolbarButtons.style(connectButton, disconnectButton);
-		this.getContentPane().add(toolbar, BorderLayout.NORTH);
+		helpButton = new JButton(imageLoader.getIcon("imgHelp"));
+		helpButton.setToolTipText("Help");
+		helpButton.getAccessibleContext().setAccessibleName("Help");
+		JSeparator buttonsSeparator = new JSeparator(SwingConstants.VERTICAL);
+		buttonsSeparator.setPreferredSize(new Dimension(6, 22));
+		toolbar.add(buttonsSeparator);
+		toolbar.add(helpButton);
+
+		preferencesButton = new JButton(imageLoader.getIcon("imgPreferences"));
+		preferencesButton.setToolTipText("Preferences");
+		preferencesButton.getAccessibleContext().setAccessibleName("Preferences");
+		toolbar.add(preferencesButton);
+
+		ToolbarButtons.style(connectButton, disconnectButton, helpButton, preferencesButton);
 
 		/*
 		 *	Statusbar
@@ -260,8 +279,16 @@ public class MainWindow extends JFrame implements ActionListener {
 		desktop = new JDesktopPane();
 		desktop.setBackground(UIManager.getColor("Desktop.background"));
 		windowTabs = new WindowTabsPanel(desktop);
+		// The window tabs share the row with the toolbar buttons: tabs fill the width, the buttons sit at the right end behind a thin line.
+		JPanel topRow = new JPanel(new BorderLayout());
+		JPanel toolbarEnd = new JPanel(new BorderLayout());
+		toolbarEnd.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 0));
+		toolbarEnd.add(new JSeparator(SwingConstants.VERTICAL), BorderLayout.WEST);
+		toolbarEnd.add(toolbar, BorderLayout.CENTER);
+		topRow.add(windowTabs, BorderLayout.CENTER);
+		topRow.add(toolbarEnd, BorderLayout.EAST);
+		this.getContentPane().add(topRow, BorderLayout.NORTH);
 		JPanel workArea = new JPanel(new BorderLayout());
-		workArea.add(windowTabs, BorderLayout.NORTH);
 		workArea.add(desktop, BorderLayout.CENTER);
 
 		//ScrollPane for tree.
@@ -290,6 +317,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		exitItem.addActionListener(this);
 
 		settingsItem.addActionListener(this);
+		preferencesButton.addActionListener(this);
+		helpButton.addActionListener(e -> showHelp());
+		helpItem.addActionListener(e -> showHelp());
 		nextWindowItem.addActionListener(e -> windowTabs.selectNext(1));
 		previousWindowItem.addActionListener(e -> windowTabs.selectNext(-1));
 
@@ -404,6 +434,19 @@ public class MainWindow extends JFrame implements ActionListener {
 		updateMenus();
 	}
 
+	/** Shows the help in a tab of its own, or brings it to the front when it is open. */
+	public void showHelp() {
+		if (helpWindow == null) {
+			helpWindow = new HelpWindow(() -> {
+				windowTabs.removeWindow(helpWindow);
+				helpWindow = null;
+			});
+			windowTabs.addWindow(helpWindow);
+		} else {
+			windowTabs.select(helpWindow);
+		}
+	}
+
 	/** Shows a designer on the desktop with a tab of its own, in front. */
 	public void addDesignerWindow(DesignerWindow designer) {
 		windowTabs.addWindow(designer);
@@ -458,7 +501,7 @@ public class MainWindow extends JFrame implements ActionListener {
 			closeWindow();
 		} else if (object == connectItem || object == connectButton) {
 			mainController.showConnectionProfileDialog();
-		} else if (object == settingsItem) {
+		} else if (object == settingsItem || object == preferencesButton) {
 			mainController.showSettingsDialog();
 		} else if (object == disconnectItem || object == disconnectButton) {
 			ConnectionWindow connectionWindow = getConnectionWindow();

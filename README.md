@@ -10,7 +10,7 @@ A graphical database manager written in Java Swing. It started in 2002 as a grad
 
 ## Documentation
 
-The user documentation is in [docs/](docs/index.md): [getting started](docs/getting-started.md), [tables and columns](docs/tables-and-columns.md), [SQL query](docs/query.md), [database designer](docs/designer.md) and [settings](docs/settings.md). The same Markdown pages are the help tab of the application.
+The user documentation is in [docs/](docs/index.md): [getting started](docs/getting-started.md), [tables and columns](docs/tables-and-columns.md), [SQL query](docs/query.md), [database designer](docs/designer.md) and [settings](docs/settings.md). The same Markdown pages are the help of the application, a tab of its own in the window bar.
 
 ## Features
 
@@ -69,9 +69,9 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Appearance: follow the system, light, dark or native | yes | yes | yes | yes |
 | Preferences: editor font size, default folder and file encoding | yes | yes | yes | yes |
 | Brand icons of the servers, the eSQL logo as window and Dock icon | yes | yes | yes | yes |
-| In-app help: the Markdown pages of docs/ in a help tab | yes | yes | yes | yes |
+| In-app help: the Markdown pages of docs/ in a help tab of its own | yes | yes | yes | yes |
 
-The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. The bar below the tabs shows the message of the tab in front (a query's outcome, the rows loaded on the table data) and is empty for a tab without one, such as the help. The tab in front has a darker background and a coloured underline. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
+The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. The bar below the tabs shows the message of the tab in front (a query's outcome, the rows loaded on the table data) and is empty for a tab without one, such as a fresh query tab. The tab in front has a darker background and a coloured underline. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
 Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export, Import and Properties on a database, Edit, Indexes, Rename, Duplicate, Properties and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 

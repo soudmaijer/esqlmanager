@@ -194,7 +194,6 @@ public class ConnectionWindowController {
 			mainController.updateStatus("Loading databases...", true);
 			DatabaseController databaseController = new DatabaseController(this);
 			connectionWindow.showDatabaseTree(databaseController.getDatabaseTree());
-			connectionWindow.showHelp();
 			mainController.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Load databases", e);
@@ -204,7 +203,6 @@ public class ConnectionWindowController {
 	/** Shows the databases listed on another thread in the tree, on the event thread. */
 	private void showDatabaseTree(List<Database> databases) {
 		connectionWindow.showDatabaseTree(new DatabaseController(this).databaseTree(databases));
-		connectionWindow.showHelp();
 		mainController.showConnectionState();
 	}
 

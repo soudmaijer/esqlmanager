@@ -36,7 +36,7 @@ Several connections can be open at the same time. Each connection window, and ea
   * schema (PostgreSQL): New query, Create table, Open in designer, Export, Import, Rename schema, Drop schema, Reload tables;
   * table: Open, Edit table, Indexes, Add field, Rename table, Duplicate table, Export, the maintenance commands, Empty table, Drop table, Properties, Reload columns;
   * column: Add field, Edit field, Drop field.
-* **Tabs** on the right: the table list or the table data in the first tab, query tabs ("Query", "Query 2", ...) and this help. Every tab has a close button; the tab in front has a darker background and a coloured underline.
+* **Tabs** on the right: the table list or the table data in the first tab, query tabs ("Query", "Query 2", ...). Every tab has a close button; the tab in front has a darker background and a coloured underline.
 * **Toolbar**: create and drop a table, add and delete a field, insert, update and delete a row, run an SQL query, open the database in the designer, the user manager and refresh the tree. Buttons are enabled when they apply to what is selected.
 * **Output panel** at the bottom: the log of the connection, with the server version and driver and every executed statement.
 
@@ -44,5 +44,5 @@ Closing the window asks "Disconnect from ...?" first.
 
 ## Status bars
 
-* The bar below the tabs shows the message of the tab in front: on the table data how many rows were loaded and how long it took, on a query tab the outcome of its last run. A tab without a message of its own, such as the help, leaves it empty. While the table data is in front, the paging buttons are in the same bar. What happens in the tree (schemas listed, a model opened in the designer) is in the output panel.
+* The bar below the tabs shows the message of the tab in front: on the table data how many rows were loaded and how long it took, on a query tab the outcome of its last run. A tab without a message of its own, such as a fresh query tab, leaves it empty. While the table data is in front, the paging buttons are in the same bar. What happens in the tree (schemas listed, a model opened in the designer) is in the output panel.
 * The status bar of the application shows a light for the state of the active connection and, on the right, its server and account.

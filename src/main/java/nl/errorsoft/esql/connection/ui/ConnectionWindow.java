@@ -15,7 +15,6 @@ import nl.errorsoft.esql.connection.TreeMenu;
 import nl.errorsoft.esql.connection.TreeSelection;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.query.ui.QueryTab;
-import nl.errorsoft.esql.help.ui.HelpPanel;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.component.EditorTab;
 
@@ -48,12 +47,10 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	private JScrollPane treeScroll; // Scroll pane for the tree
 	private JSplitPane treeSplit; // Tree and the tabs
 	private JTabbedPane tabbedPane; // Contains the tabs
-	private JScrollPane helpPane;
 	private static final String READY = "Ready"; // Only sizes the status bar
 	private JLabel status;
 	private JPanel navigation;
 	private Component viewTab; // The table data or table list, shown in front of the help
-	private HelpPanel html; // The user documentation from docs/.
 	private int queryTabs; // Query tabs opened so far, for their numbers
 	private static final String EDITOR_KEY = "ConnectionWindow.editorKey"; // Finds an editor tab again
 	private static final String STATUS_KEY = "ConnectionWindow.status"; // The status message of a tab
@@ -160,16 +157,10 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		 *		Right SplitPane setup
 		 */
 
-		// EditorPane
-		html = new HelpPanel();
-
 		// TabbedPane properties.
 		tabbedPane = new JTabbedPane();
 		tabbedPane.putClientProperty("JTabbedPane.tabClosable", true);
 		tabbedPane.putClientProperty("JTabbedPane.tabCloseCallback", (java.util.function.BiConsumer<JTabbedPane, Integer>) (pane, index) -> closeTab(index));
-		helpPane = new JScrollPane(html);
-		tabbedPane.addTab("eSQLManager Help", helpPane);
-		tabbedPane.setSelectedIndex(0);
 
 		/******************************************************************
 		 *
@@ -384,15 +375,6 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		}
 
 		viewTab = view;
-	}
-
-	/** Shows the help, also when its tab has been closed. */
-	public void showHelp() {
-		if (this.tabbedPane.indexOfComponent(helpPane) < 0) {
-			this.tabbedPane.addTab("eSQLManager Help", helpPane);
-		}
-
-		this.tabbedPane.setSelectedComponent(helpPane);
 	}
 
 	/** The paging buttons belong to the table data, they are only shown while that tab is in front. */
