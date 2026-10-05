@@ -64,9 +64,14 @@ public class DatabaseController {
 	}
 
 	public DatabaseTree getDatabaseTree() throws Exception {
+		return databaseTree(getDatabases());
+	}
+
+	/** A tree of the given databases, which were listed beforehand (on another thread). */
+	public DatabaseTree databaseTree(java.util.List<Database> databases) {
 		DatabaseTree databaseTree = new DatabaseTree(connectionWindowController.getTitle(),
 			connectionWindowController.getConnectionProfile().getServerType().iconName());
-		databaseTree.loadDatabases(getDatabases());
+		databaseTree.loadDatabases(databases);
 		return databaseTree;
 	}
 

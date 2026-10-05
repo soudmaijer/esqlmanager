@@ -49,8 +49,9 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.dialect.Dialect;
 import java.util.*;
+import javax.swing.SwingUtilities;
 
-public class ConnectionWindowController extends Thread {
+public class ConnectionWindowController {
 	private String statusDetail = "";
 	private static final Logger log = LogManager.getLogger(ConnectionWindowController.class);
 
@@ -59,33 +60,39 @@ public class ConnectionWindowController extends Thread {
 	private ConnectionWindow connectionWindow;
 	private TableController tableController;
 
+	/** Opens the connection window at once and connects in the background; the tree is filled when the databases are listed. */
 	public ConnectionWindowController(MainController mainController, nl.errorsoft.esql.connection.ConnectionProfile cp) {
 		this.mainController = mainController;
 		this.session = new ConnectionSession(this, cp);
-		this.start();
+		SwingUtilities.invokeLater(this::open);
 	}
 
-	public void run() {
-		// Create Frame.
-		log.info("Connecting to `" + session.getConnectionProfile().getServerType().getDescription() + "` @ `" + session.getConnectionProfile().getHost()
-			+ "` with username `" + session.getConnectionProfile().getUsername() + "` on port `" + session.getConnectionProfile().getPort() + "`");
+	/** Shows the window on the event thread, then connects and lists the databases on a virtual thread. */
+	private void open() {
+		ConnectionProfile profile = session.getConnectionProfile();
+		log.info("Connecting to `" + profile.getServerType().getDescription() + "` @ `" + profile.getHost() + "` with username `" + profile.getUsername()
+			+ "` on port `" + profile.getPort() + "`");
 		connectionWindow = new ConnectionWindow(this, mainController.getMainWindow());
-
-		// Create database connection to Server.
 		mainController.showConnectionWindow(connectionWindow);
 		mainController.updateStatus("Connecting...", true);
 
-		try {
-			session.start();
-			mainController.updateStatus("Loading databases...", true);
-			showDatabaseTree();
-			setStatusDetail("");
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			connectionWindow.closeWindow(false);
-			mainController.updateStatus("Cannot connect to server...", true);
-			ApplicationContext.get().errors().report("Connect to " + session.getConnectionProfile().getName(), e);
-		}
+		Thread.ofVirtual().name("connect").start(() -> {
+			try {
+				session.start();
+				SwingUtilities.invokeLater(() -> mainController.updateStatus("Loading databases...", true));
+				List<Database> databases = getContext().databases().getDatabases();
+				SwingUtilities.invokeLater(() -> {
+					showDatabaseTree(databases);
+					setStatusDetail("");
+				});
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(() -> {
+					connectionWindow.closeWindow(false);
+					mainController.updateStatus("Cannot connect to server...", true);
+					ApplicationContext.get().errors().report("Connect to " + profile.getName(), e);
+				});
+			}
+		});
 	}
 
 	/** Shows the server and account of this connection in the status bar of the application. */
@@ -161,6 +168,13 @@ public class ConnectionWindowController extends Thread {
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Load databases", e);
 		}
+	}
+
+	/** Shows the databases listed on another thread in the tree, on the event thread. */
+	private void showDatabaseTree(List<Database> databases) {
+		connectionWindow.showDatabaseTree(new DatabaseController(this).databaseTree(databases));
+		connectionWindow.showHelp();
+		mainController.showConnectionState();
 	}
 
 	/** Asks for the name and the options of the new database (character set, owner, ...) and creates it. */

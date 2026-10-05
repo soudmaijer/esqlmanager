@@ -34,6 +34,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.query.SqlScript;
 import nl.errorsoft.esql.query.control.QueryController;
+import nl.errorsoft.esql.table.ui.TableDataTab;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
@@ -60,6 +61,10 @@ public class QueryTab extends JPanel {
 
 	private final JLabel noResult = new JLabel("Run a statement to see its result here", JLabel.CENTER);
 	private final JTabbedPane results = new JTabbedPane();
+	private final JButton runSelectionButton;
+	private final JButton runAllButton;
+	/** Set while statements run on their thread; another run waits until they are done. */
+	private boolean running;
 
 	public QueryTab(QueryController controller, List<Database> databaseList, Database selected) {
 		super(new BorderLayout());
@@ -89,8 +94,10 @@ public class QueryTab extends JPanel {
 		toolbar.add(button(images, "imgOpen", "Open query file", e -> open()));
 		toolbar.add(button(images, "imgSave", "Save query", e -> save()));
 		toolbar.addSeparator();
-		toolbar.add(button(images, "imgRunSelection", "Run selection, or the statement at the caret (" + MENU_KEY + "+Enter)", e -> runSelection()));
-		toolbar.add(button(images, "imgRunAll", "Run all statements (" + MENU_KEY + "+Shift+Enter)", e -> runAll()));
+		runSelectionButton = button(images, "imgRunSelection", "Run selection, or the statement at the caret (" + MENU_KEY + "+Enter)", e -> runSelection());
+		runAllButton = button(images, "imgRunAll", "Run all statements (" + MENU_KEY + "+Shift+Enter)", e -> runAll());
+		toolbar.add(runSelectionButton);
+		toolbar.add(runAllButton);
 		toolbar.addSeparator();
 		toolbar.add(new JLabel(" Database: "));
 		databases = new JComboBox<>(databaseList.toArray(new Database[0]));
@@ -203,25 +210,41 @@ public class QueryTab extends JPanel {
 		run(SqlScript.split(editor.getText()));
 	}
 
+	/** Runs the statements off the event thread; the run buttons are disabled until they are done. */
 	private void run(List<SqlScript.Statement> statements) {
-		if (statements.isEmpty()) {
+		if (statements.isEmpty() || running) {
 			return;
 		}
 
-		QueryController.RunResult result = controller.run(statements.stream().map(SqlScript.Statement::sql).toList(), this);
+		setRunning(true);
+		controller.run(statements.stream().map(SqlScript.Statement::sql).toList(), this, result -> {
+			setRunning(false);
+			for (QueryController.StatementResult statement : result.results()) {
+				showResult(statement);
+			}
+			editor.requestFocusInWindow();
+		});
+	}
 
-		for (QueryController.StatementResult statement : result.results()) {
-			showResult(statement);
-		}
-		SwingUtilities.invokeLater(editor::requestFocusInWindow);
+	private void setRunning(boolean running) {
+		this.running = running;
+		runSelectionButton.setEnabled(!running);
+		runAllButton.setEnabled(!running);
+	}
+
+	/** Whether statements are running, for a check from a test or harness. */
+	boolean isRunning() {
+		return running;
 	}
 
 	private void showResult(QueryController.StatementResult statement) {
 		JLabel details = new JLabel("Ran at " + TIME.format(statement.ranAt()) + (statement.database().isEmpty() ? "" : " on " + statement.database()) + ", "
-			+ statement.view().getRowCount() + " row(s) in " + statement.millis() + " ms");
+			+ statement.rowCount() + " row(s) in " + statement.millis() + " ms");
 		details.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 6));
+		TableDataTab view = new TableDataTab(controller.tableController());
+		view.loadData(statement.result().table(), statement.result().table().getColumns(), statement.result().rows());
 		JPanel tab = new JPanel(new BorderLayout());
-		tab.add(statement.view(), BorderLayout.CENTER);
+		tab.add(view, BorderLayout.CENTER);
 		tab.add(details, BorderLayout.SOUTH);
 
 		if (results.getTabCount() >= MAX_RESULTS) {

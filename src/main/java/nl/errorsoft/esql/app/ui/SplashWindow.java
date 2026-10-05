@@ -7,8 +7,9 @@ import nl.errorsoft.esql.app.control.MainController;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.JFrame;
+import javax.swing.Timer;
 
-public class SplashWindow extends javax.swing.JWindow implements MouseListener, Runnable {
+public class SplashWindow extends javax.swing.JWindow implements MouseListener {
 	private MainWindow mainWindow;
 	private MainController mainController;
 	private int time = 0;
@@ -37,18 +38,14 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener, 
 		splash = ApplicationContext.get().imageLoader().getImage("esql");
 		this.setVisible(true);
 
-		Thread t = new Thread(this);
-		t.start();
-	}
-
-	public void run() {
-		try {
-			if (time > 0) {
-				Thread.sleep(time);
+		if (time > 0) {
+			// A Swing timer, so that closing the splash and what follows run on the event thread.
+			Timer timer = new Timer(time, e -> {
 				cleanUp();
 				mainController.splashReady();
-			}
-		} catch (Exception e) {
+			});
+			timer.setRepeats(false);
+			timer.start();
 		}
 	}
 

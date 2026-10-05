@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.swing.SwingUtilities;
 
@@ -24,7 +25,7 @@ import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.TableController;
-import nl.errorsoft.esql.table.ui.TableDataTab;
+import nl.errorsoft.esql.table.QueryResult;
 
 /**
  * The controller of one query tab: runs the statements of the editor and gives the completion the names of the current database (of all its schemas). The names are loaded
@@ -39,7 +40,7 @@ public class QueryController implements SchemaNames {
 	private volatile List<String> schemaNames = List.of();
 	/** The schema unqualified names resolve to, lower case; "" on servers without schemas. */
 	private volatile String currentSchema = "";
-	private String database = "";
+	private volatile String database = "";
 	/** The schema chosen in the tab, null until one is (and on servers without schemas). */
 	private volatile String chosenSchema;
 	private BiConsumer<List<String>, String> schemaListener = (schemas, current) -> {
@@ -51,7 +52,10 @@ public class QueryController implements SchemaNames {
 	}
 
 	/** The rows of one statement, with what is shown below them: when it ran, on which database, how many rows and how long it took. */
-	public record StatementResult(String sql, TableDataTab view, LocalTime ranAt, String database, long millis) {
+	public record StatementResult(String sql, QueryResult result, LocalTime ranAt, String database, long millis) {
+		public int rowCount() {
+			return result.table().getRowCount();
+		}
 	}
 
 	public QueryController(ConnectionWindowController connectionWindowController) {
@@ -129,17 +133,31 @@ public class QueryController implements SchemaNames {
 		currentSchema = schema.toLowerCase();
 	}
 
+	/** The controller of the grid a result is shown in, so that its rows can be edited like the rows of a table. */
+	public TableController tableController() {
+		return new TableController(connectionWindowController);
+	}
+
 	/**
-	 * Runs the statements in order and stops at the first that fails. The outcome of each goes to the log, the total or the failing statement to the status
-	 * bar.
+	 * Runs the statements in order on a virtual thread and stops at the first that fails. The outcome of each goes to the log, the total or the failing
+	 * statement to the status bar; {@code done} gets the results on the event thread.
 	 */
-	public RunResult run(List<String> statements, Component parent) {
+	public void run(List<String> statements, Component parent, Consumer<RunResult> done) {
+		connectionWindowController.setStatusDetail(parent, "Running " + (statements.size() == 1 ? "statement" : statements.size() + " statements") + "...");
+		Thread.ofVirtual().name("query").start(() -> {
+			RunResult result = run(statements, parent);
+			SwingUtilities.invokeLater(() -> done.accept(result));
+		});
+	}
+
+	/** Runs the statements on the calling thread (not the event thread); errors and the status are shown on the event thread. */
+	private RunResult run(List<String> statements, Component parent) {
 		QueryService queries;
 
 		try {
 			queries = connectionWindowController.getContext().queries();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent, "Run query", e);
+			report(parent, "Run query", e);
 			return new RunResult(List.of(), false);
 		}
 
@@ -149,12 +167,12 @@ public class QueryController implements SchemaNames {
 				queries.useSchema(database, chosenSchema);
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent, "Change " + schemaTerm(), e);
+			report(parent, "Change " + schemaTerm(), e);
 			return new RunResult(List.of(), false);
 		}
 
 		List<StatementResult> results = new ArrayList<>();
-		TableDataTab view = null;
+		StatementResult last = null;
 		long start = System.nanoTime();
 
 		for (int i = 0; i < statements.size(); i++) {
@@ -166,10 +184,11 @@ public class QueryController implements SchemaNames {
 				LocalTime ranAt = LocalTime.now().withNano(0);
 
 				if (queries.returnsRows(sql)) {
-					view = new TableController(connectionWindowController).executeQuery(sql);
+					QueryResult rows = connectionWindowController.getContext().tables().executeQuery(sql);
 					long millis = millisSince(started);
-					results.add(new StatementResult(sql.strip(), view, ranAt, currentDatabase(), millis));
-					log.info("{}: {} row(s) in {} ms", which, view.getRowCount(), millis);
+					last = new StatementResult(sql.strip(), rows, ranAt, currentDatabase(), millis);
+					results.add(last);
+					log.info("{}: {} row(s) in {} ms", which, last.rowCount(), millis);
 				} else if (queries.isUse(sql)) {
 					queries.use(sql);
 					log.info("{}: database changed", which);
@@ -178,17 +197,22 @@ public class QueryController implements SchemaNames {
 					log.info("{}: {} row(s) affected in {} ms", which, rows, millisSince(started));
 				}
 			} catch (Exception e) {
-				connectionWindowController.setStatusDetail(parent, which + " failed: " + firstLine(sql));
-				ApplicationContext.get().errors().report(parent, which + " (" + firstLine(sql) + ")", e);
+				String status = which + " failed: " + firstLine(sql);
+				SwingUtilities.invokeLater(() -> connectionWindowController.setStatusDetail(parent, status));
+				report(parent, which + " (" + firstLine(sql) + ")", e);
 				return new RunResult(results, false);
 			}
 		}
 
-		String summary = statements.size() == 1 && view != null
-			? "Query returned " + view.getRowCount() + " row(s) in " + millisSince(start) + " ms"
+		String summary = statements.size() == 1 && last != null
+			? "Query returned " + last.rowCount() + " row(s) in " + millisSince(start) + " ms"
 			: statements.size() + " statement(s) executed in " + millisSince(start) + " ms";
-		connectionWindowController.setStatusDetail(parent, summary);
+		SwingUtilities.invokeLater(() -> connectionWindowController.setStatusDetail(parent, summary));
 		return new RunResult(results, true);
+	}
+
+	private static void report(Component parent, String action, Exception e) {
+		SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(parent, action, e));
 	}
 
 	private String currentDatabase() {

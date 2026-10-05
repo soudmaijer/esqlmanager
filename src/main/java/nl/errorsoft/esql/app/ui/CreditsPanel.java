@@ -3,8 +3,15 @@ package nl.errorsoft.esql.app.ui;
 import nl.errorsoft.esql.app.DataDirectory;
 import java.awt.*;
 import java.io.*;
+import javax.swing.Timer;
 
-public class CreditsPanel extends Canvas implements Runnable {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class CreditsPanel extends Canvas {
+	private static final Logger log = LogManager.getLogger(CreditsPanel.class);
+	/** Moves the credits up a pixel at a time, on the event thread. */
+	private final Timer scroller = new Timer(45, e -> scroll());
 	private CreditObject root;
 	private CreditObject curr;
 
@@ -12,7 +19,6 @@ public class CreditsPanel extends Canvas implements Runnable {
 	private int y_offset = 0;
 
 	private int nodes = 0;
-	private boolean run = true;
 
 	private Image bg;
 
@@ -31,9 +37,10 @@ public class CreditsPanel extends Canvas implements Runnable {
 				}
 			}
 
-			Thread t = new Thread(this);
-			t.start();
+			scroller.start();
 		} catch (Exception e) {
+			// Without credits the panel stays empty, the splash and the About window still work.
+			log.warn("The credits could not be read: {}", e.getMessage());
 		}
 	}
 
@@ -96,21 +103,15 @@ public class CreditsPanel extends Canvas implements Runnable {
 	}
 
 	public void switchoff() {
-		run = false;
+		scroller.stop();
 	}
 
-	public void run() {
-		while (run) {
-			try {
-				Thread.sleep(45);
-				y_offset--;
-				repaint();
+	private void scroll() {
+		y_offset--;
+		repaint();
 
-				if (y_offset + nodes * 11 < 0) {
-					y_offset = (int) this.getSize().getHeight();
-				}
-			} catch (Exception e) {
-			}
+		if (y_offset + nodes * 11 < 0) {
+			y_offset = (int) this.getSize().getHeight();
 		}
 	}
 }

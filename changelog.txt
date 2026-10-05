@@ -2,6 +2,13 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Slow work off the event thread
+
+- The query tab runs its statements in the background: the window stays responsive, the run buttons are disabled and
+  the status bar says "Running..." until the statements are done.
+- A new connection window opens at once and connects and lists its databases in the background.
+- The splash and the scrolling credits run on the event thread; credits that cannot be read are noted in the log.
+
 05-10-2026: Data safety fixes
 
 - Cancel in "Save model as" no longer writes the file. When saving fails or is cancelled while closing the designer,
