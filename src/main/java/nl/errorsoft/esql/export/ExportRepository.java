@@ -26,31 +26,45 @@ public class ExportRepository extends AbstractRepository {
 
 	/** The tables of a database that have structure and data of their own, so no views; on servers with schemas those of every schema. */
 	public List<TableName> tableNames(Database database) throws SQLException {
+		return names(database, false);
+	}
+
+	/** The tables of one schema, no views. */
+	public List<TableName> tableNames(Schema schema) throws SQLException {
+		return names(listTables(schema), false);
+	}
+
+	/** The views of a database, on servers with schemas those of every schema. */
+	public List<TableName> viewNames(Database database) throws SQLException {
+		return names(database, true);
+	}
+
+	/** The views of one schema. */
+	public List<TableName> viewNames(Schema schema) throws SQLException {
+		return names(listTables(schema), true);
+	}
+
+	private List<TableName> names(Database database, boolean views) throws SQLException {
 		String schemas = dialect().listSchemasSql();
 
 		if (schemas == null) {
-			return withoutViews(listTables(database));
+			return names(listTables(database), views);
 		}
 
 		useDatabase(database.getName());
 		List<TableName> names = new ArrayList<>();
 
 		for (String schema : queryStrings(schemas)) {
-			names.addAll(tableNames(new Schema(database, schema)));
+			names.addAll(names(listTables(new Schema(database, schema)), views));
 		}
 		return names;
 	}
 
-	/** The tables of one schema, no views. */
-	public List<TableName> tableNames(Schema schema) throws SQLException {
-		return withoutViews(listTables(schema));
-	}
-
-	private static List<TableName> withoutViews(List<Table> tables) {
+	private static List<TableName> names(List<Table> tables, boolean views) {
 		List<TableName> names = new ArrayList<>();
 
 		for (Table table : tables) {
-			if (!"VIEW".equalsIgnoreCase(table.getType())) {
+			if ("VIEW".equalsIgnoreCase(table.getType()) == views) {
 				names.add(table.qualifiedName());
 			}
 		}
@@ -70,8 +84,48 @@ public class ExportRepository extends AbstractRepository {
 		return dialect().createSchemaIfMissingSql(schema);
 	}
 
-	public String dropTableSql(TableName table) {
-		return "DROP TABLE IF EXISTS " + quote(table);
+	public String dropTableSql(TableName table, boolean ifExists) {
+		return dialect().dropTableSql(table, ifExists);
+	}
+
+	public String dropViewSql(TableName view, boolean ifExists) {
+		return dialect().dropViewSql(view, ifExists);
+	}
+
+	/** The statement that creates the table, written to leave an existing table alone when asked. */
+	public String structureSql(TableName table, boolean ifNotExists) throws SQLException {
+		String create = structureSql(table);
+		return ifNotExists ? dialect().createTableIfNotExists(create) : create;
+	}
+
+	/** The CREATE VIEW statement of a view, null when the server cannot give it. */
+	public String viewSql(TableName view) throws SQLException {
+		String show = dialect().showCreateViewSql(view);
+
+		if (show == null) {
+			return null;
+		}
+		try (ResultSet rs = dbc.executeQuery(show)) {
+			rs.first();
+			return rs.getString(2).replaceAll(";\\s*$", "");
+		}
+	}
+
+	/** The statement that starts a transaction in a script, null when the server has none. */
+	public String beginSql() {
+		return dialect().beginTransactionSql();
+	}
+
+	public String commitSql() {
+		return dialect().commitSql();
+	}
+
+	public String disableForeignKeyChecksSql() {
+		return dialect().disableForeignKeyChecksSql();
+	}
+
+	public String enableForeignKeyChecksSql() {
+		return dialect().enableForeignKeyChecksSql();
 	}
 
 	public String structureSql(TableName table) throws SQLException {
@@ -105,10 +159,14 @@ public class ExportRepository extends AbstractRepository {
 		return dialect().createTableDdl(table, columns, new ArrayList<>(primary.values()));
 	}
 
-	/** Passes every row of the table to the sink as an INSERT statement, binary columns are left empty. */
-	public void insertStatements(TableName table, Consumer<String> sink) throws SQLException {
+	/**
+	 * Passes the rows of the table to the sink as INSERT statements, binary columns are left empty.
+	 * @param rowsPerInsert how many rows share one statement, 1 gives an INSERT per row.
+	 */
+	public void insertStatements(TableName table, int rowsPerInsert, Consumer<String> sink) throws SQLException {
 		try (ResultSet rs = dbc.executeQuery("SELECT * FROM " + quote(table))) {
 			ResultSetMetaData rsm = rs.getMetaData();
+			List<String> batch = new ArrayList<>();
 
 			while (rs.next()) {
 				List<String> values = new ArrayList<>();
@@ -126,9 +184,22 @@ public class ExportRepository extends AbstractRepository {
 					}
 				}
 
-				sink.accept("INSERT INTO " + quote(table) + " VALUES(" + String.join(",", values) + ");");
+				batch.add("(" + String.join(",", values) + ")");
+
+				if (batch.size() == rowsPerInsert) {
+					sink.accept(insert(table, batch));
+					batch.clear();
+				}
+			}
+
+			if (!batch.isEmpty()) {
+				sink.accept(insert(table, batch));
 			}
 		}
+	}
+
+	private String insert(TableName table, List<String> tuples) {
+		return "INSERT INTO " + quote(table) + " VALUES" + String.join(",\n", tuples) + ";";
 	}
 
 	/** Statements that must follow the data, such as moving a sequence past the imported rows. */

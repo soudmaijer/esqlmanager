@@ -48,6 +48,20 @@ public class PostgresDialect extends AbstractDialect {
 		return statements;
 	}
 
+	/** The definition text is built on the server, the view is named as the script will name it. */
+	public String showCreateViewSql(TableName view) {
+		String name = literal(quote(view));
+		return "SELECT NULL, 'CREATE VIEW ' || " + name + " || ' AS ' || pg_get_viewdef(" + name + "::regclass, true)";
+	}
+
+	public String beginTransactionSql() {
+		return "BEGIN";
+	}
+
+	public String commitSql() {
+		return "COMMIT";
+	}
+
 	public java.util.Set<Maintenance> maintenanceCommands() {
 		return java.util.EnumSet.of(Maintenance.OPTIMIZE, Maintenance.ANALYZE);
 	}

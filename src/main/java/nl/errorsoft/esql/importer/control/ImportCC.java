@@ -4,6 +4,7 @@ import nl.errorsoft.esql.error.Dialogs;
 
 import nl.errorsoft.esql.job.ProgressListener;
 
+import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.ImportService;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
@@ -18,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ApplicationContext;
+import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.*;
 
@@ -59,7 +61,7 @@ public class ImportCC implements ProgressListener {
 		}
 	}
 
-	public void importNodesAsSQL(ImportAsSQLUI iasu, TreePath tpa, String file) {
+	public void importNodesAsSQL(ImportAsSQLUI iasu, TreePath tpa, String file, ImportOptions options) {
 		if (file.isBlank()) {
 			Dialogs.warn(iasu, iasu.getTitle(), "Select a file first.");
 			return;
@@ -80,8 +82,8 @@ public class ImportCC implements ProgressListener {
 				node = ((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject();
 			}
 
-			ies = new ImportExportProgressUI(iasu, "Import data", file + " into " + target);
-			ImportService ie = cwcc.getContext().newImport(node, file);
+			ImportService ie = cwcc.getContext().newImport(node, file, options);
+			ies = new ImportExportProgressUI(iasu, "Import data", file + " into " + target, ie::cancel);
 			ie.setListener(this);
 			ie.start();
 		} catch (Exception e) {
@@ -92,6 +94,23 @@ public class ImportCC implements ProgressListener {
 	@Override
 	public void progressed(int percent) {
 		ies.setProgressValue(percent);
+	}
+
+	@Override
+	public void status(String text) {
+		ies.setStatus(text);
+	}
+
+	@Override
+	public void finished(String summary, List<String> details) {
+		log.info(summary);
+		ies.finish(summary, details);
+	}
+
+	@Override
+	public void cancelled(String summary) {
+		log.info(summary);
+		ies.cancelled(summary);
 	}
 
 	@Override

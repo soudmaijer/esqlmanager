@@ -261,7 +261,7 @@ public class ConnectionWindowCC extends Thread {
 		return dialect().supports(Dialect.Feature.SCHEMAS);
 	}
 
-	private Dialect dialect() {
+	public Dialect dialect() {
 		return cw.getConnectionProfile().getServerType().getDialect();
 	}
 

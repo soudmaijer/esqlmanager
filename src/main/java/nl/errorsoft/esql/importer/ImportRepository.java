@@ -25,6 +25,24 @@ public class ImportRepository extends AbstractRepository {
 		useSchema(name);
 	}
 
+	/** Statements from now on belong to a transaction that {@link #commit} or {@link #rollback} ends. */
+	public void beginTransaction() throws SQLException {
+		dbc.getConnection().setAutoCommit(false);
+	}
+
+	public void commit() throws SQLException {
+		dbc.getConnection().commit();
+	}
+
+	public void rollback() throws SQLException {
+		dbc.getConnection().rollback();
+	}
+
+	/** Every statement commits by itself again. */
+	public void endTransaction() throws SQLException {
+		dbc.getConnection().setAutoCommit(true);
+	}
+
 	/** A statement that returns a result, such as moving a sequence, cannot go through executeUpdate. */
 	public void run(String statement) throws SQLException {
 		if (statement.trim().toUpperCase().startsWith("SELECT")) {

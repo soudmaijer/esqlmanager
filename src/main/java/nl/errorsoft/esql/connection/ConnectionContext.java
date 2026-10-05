@@ -13,6 +13,7 @@ import nl.errorsoft.esql.designer.DesignerService;
 import nl.errorsoft.esql.export.ExportOptions;
 import nl.errorsoft.esql.export.ExportRepository;
 import nl.errorsoft.esql.export.ExportService;
+import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.ImportRepository;
 import nl.errorsoft.esql.importer.ImportService;
 import nl.errorsoft.esql.query.QueryRepository;
@@ -75,7 +76,11 @@ public class ConnectionContext {
 	}
 
 	public ImportService newImport(Object target, String file) {
-		return new ImportService(new ImportRepository(connection), target, file);
+		return newImport(target, file, ImportOptions.DEFAULT);
+	}
+
+	public ImportService newImport(Object target, String file, ImportOptions options) {
+		return new ImportService(new ImportRepository(connection), target, file, options);
 	}
 
 	public BlobService newBlobTransfer() {

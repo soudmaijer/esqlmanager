@@ -10,4 +10,7 @@ public interface UDDataIF {
 
 	/** Called on the event thread when the transfer failed, so that it can be started again. */
 	void transferEnded();
+
+	/** Called on the event thread when the user cancelled the transfer, so that it can be started again. */
+	void transferCancelled();
 }

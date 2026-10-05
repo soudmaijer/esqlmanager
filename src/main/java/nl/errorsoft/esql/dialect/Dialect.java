@@ -205,6 +205,28 @@ public interface Dialect {
 	/** A query whose second column is the CREATE TABLE statement of an existing table, null when it is built from the metadata with {@link #createTableDdl}. */
 	String showCreateTableSql(TableName table);
 
+	/** A query whose second column is the CREATE VIEW statement of an existing view, null when the server cannot give the definition. */
+	String showCreateViewSql(TableName view);
+
+	String dropTableSql(TableName table, boolean ifExists);
+
+	String dropViewSql(TableName view, boolean ifExists);
+
+	/** The CREATE TABLE statement made to leave an existing table alone. */
+	String createTableIfNotExists(String createTableSql);
+
+	/** Starts a transaction in a script, null when the server has no such statement for a script. */
+	String beginTransactionSql();
+
+	/** Ends the transaction {@link #beginTransactionSql} started. */
+	String commitSql();
+
+	/** Makes the server stop checking foreign keys in this session so tables can be loaded in any order, null when it cannot be done safely. */
+	String disableForeignKeyChecksSql();
+
+	/** Undoes {@link #disableForeignKeyChecksSql}. */
+	String enableForeignKeyChecksSql();
+
 	/** A column definition for CREATE TABLE, from the current row of {@link java.sql.DatabaseMetaData#getColumns}. */
 	String columnDdl(ResultSet columns) throws SQLException;
 

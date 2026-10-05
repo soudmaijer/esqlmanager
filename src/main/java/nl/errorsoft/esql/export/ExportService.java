@@ -1,26 +1,48 @@
 package nl.errorsoft.esql.export;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.zip.GZIPOutputStream;
 
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
+import nl.errorsoft.esql.job.Cancellation;
+import nl.errorsoft.esql.job.JobCancelledException;
 import nl.errorsoft.esql.job.ProgressListener;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableName;
 
-/** Writes databases and tables to an SQL script on its own thread and reports progress (0 to 100) or an Exception to its listener. */
+/**
+ * Writes databases and tables to an SQL script on its own thread and reports progress (0 to 100), the table it is on, or an Exception to its listener.
+ * A file name ending in .gz gets a gzip compressed script. {@link #cancel} stops the job between two rows; the partial file is deleted.
+ */
 public class ExportService implements Runnable {
+	private static final Logger log = LogManager.getLogger(ExportService.class);
+
 	private ProgressListener listener = ProgressListener.NONE;
+	private final Cancellation cancellation = new Cancellation();
 	private final ExportRepository repository;
 	private final Object[] exportObject;
 	private final String file;
 	private final ExportOptions options;
+	private int tablesDone;
+	private int tablesTotal;
+
+	/** What one exported object contributes: the database it is in, its tables and, when asked for, its views. */
+	private record Part(String database, List<TableName> tables, List<TableName> views) {
+	}
 
 	public ExportService(ExportRepository repository, Object[] exportObject, String file, ExportOptions options) {
 		this.repository = repository;
@@ -33,69 +55,159 @@ public class ExportService implements Runnable {
 		this.listener = listener;
 	}
 
+	/** Asks the job to stop at the next table or row. Safe to call from any thread. */
+	public void cancel() {
+		cancellation.cancel();
+	}
+
 	public void run() {
-		try (PrintWriter pw = new PrintWriter(file, StandardCharsets.UTF_8)) {
-			progress(10);
-
-			for (int i = 0; i < exportObject.length; i++) {
-				String database;
-				List<TableName> tables = new ArrayList<>();
-
-				if (exportObject[i] instanceof Database source) {
-					database = source.getName();
-					tables = repository.tableNames(source);
-				} else if (exportObject[i] instanceof Schema source) {
-					database = source.getDatabase().getName();
-					tables = repository.tableNames(source);
-				} else if (exportObject[i] instanceof Table source) {
-					database = source.getDatabase().getName();
-					tables.add(source.qualifiedName());
-				} else {
-					continue;
-				}
-
-				if (options.createDatabase()) {
-					pw.println(repository.createDatabaseSql(database) + ";\n");
-				}
-
-				if (options.useDatabase()) {
-					pw.println(repository.useDatabaseSql(database) + ";\n");
-				}
-
-				if (options.dumpStructure()) {
-					// A table is restored into its own schema, which may not exist on the server the script is run on.
-					for (String schema : new LinkedHashSet<>(tables.stream().map(TableName::schema).filter(Objects::nonNull).toList())) {
-						pw.println(repository.createSchemaSql(schema) + ";\n");
-					}
-				}
-
-				for (TableName table : tables) {
-					dumpTable(pw, database, table);
-				}
-
-				progress(((100 / exportObject.length) * (i + 1)) - 1);
-			}
+		try {
+			write();
 			progress(100);
+			listener.finished("Exported " + tablesDone + " table(s) to " + file, List.of());
+		} catch (JobCancelledException e) {
+			deletePartialFile();
+			listener.cancelled("Cancelled after " + tablesDone + " of " + tablesTotal + " table(s). The partial file was deleted.");
 		} catch (Exception e) {
 			listener.failed(e);
 		}
 	}
 
-	private void dumpTable(PrintWriter pw, String database, TableName table) throws Exception {
-		if (options.dropTable()) {
-			pw.println(repository.dropTableSql(table) + ";\n");
+	private void write() throws Exception {
+		try (PrintWriter pw = open()) {
+			progress(10);
+			List<Part> parts = parts();
+			tablesTotal = parts.stream().mapToInt(part -> part.tables().size()).sum();
+
+			for (Part part : parts) {
+				writePart(pw, part);
+			}
+
+			if (pw.checkError()) {
+				throw new IOException("The file " + file + " could not be written");
+			}
+		}
+	}
+
+	private List<Part> parts() throws Exception {
+		List<Part> parts = new ArrayList<>();
+		boolean views = options.includeViews() && options.dumpStructure();
+
+		for (Object object : exportObject) {
+			cancellation.check();
+
+			if (object instanceof Database source) {
+				parts.add(new Part(source.getName(), repository.tableNames(source), views ? repository.viewNames(source) : List.of()));
+			} else if (object instanceof Schema source) {
+				parts.add(new Part(source.getDatabase().getName(), repository.tableNames(source), views ? repository.viewNames(source) : List.of()));
+			} else if (object instanceof Table source) {
+				parts.add(new Part(source.getDatabase().getName(), List.of(source.qualifiedName()), List.of()));
+			}
+		}
+		return parts;
+	}
+
+	private void writePart(PrintWriter pw, Part part) throws Exception {
+		if (options.createDatabase()) {
+			pw.println(repository.createDatabaseSql(part.database()) + ";\n");
+		}
+
+		if (options.useDatabase()) {
+			pw.println(repository.useDatabaseSql(part.database()) + ";\n");
 		}
 
 		if (options.dumpStructure()) {
-			pw.println(repository.structureSql(table) + ";\n");
+			// A table is restored into its own schema, which may not exist on the server the script is run on.
+			for (String schema : new LinkedHashSet<>(part.tables().stream().map(TableName::schema).filter(Objects::nonNull).toList())) {
+				pw.println(repository.createSchemaSql(schema) + ";\n");
+			}
+		}
+
+		boolean transaction = options.useTransaction() && repository.beginSql() != null;
+		boolean foreignKeys = options.disableForeignKeyChecks() && repository.disableForeignKeyChecksSql() != null;
+
+		if (transaction) {
+			pw.println(repository.beginSql() + ";\n");
+		}
+		if (foreignKeys) {
+			pw.println(repository.disableForeignKeyChecksSql() + ";\n");
+		}
+
+		for (TableName table : part.tables()) {
+			cancellation.check();
+			listener.status("Exporting " + table);
+			dumpTable(pw, table);
+			tablesDone++;
+			progress(10 + 85 * tablesDone / Math.max(1, tablesTotal));
+		}
+
+		for (TableName view : part.views()) {
+			cancellation.check();
+			dumpView(pw, view);
+		}
+
+		if (foreignKeys) {
+			pw.println(repository.enableForeignKeyChecksSql() + ";\n");
+		}
+		if (transaction) {
+			pw.println(repository.commitSql() + ";\n");
+		}
+	}
+
+	private void dumpTable(PrintWriter pw, TableName table) throws Exception {
+		if (options.dropTable()) {
+			pw.println(repository.dropTableSql(table, options.dropIfExists()) + ";\n");
+		}
+
+		if (options.dumpStructure()) {
+			pw.println(repository.structureSql(table, options.createIfNotExists()) + ";\n");
 		}
 
 		if (options.dumpData()) {
-			repository.insertStatements(table, pw::println);
+			repository.insertStatements(table, options.rowsPerInsert(), statement -> {
+				cancellation.check();
+				pw.println(statement);
+			});
 
 			for (String statement : repository.afterDataStatements(table)) {
 				pw.println(statement + ";\n");
 			}
+		}
+	}
+
+	private void dumpView(PrintWriter pw, TableName view) throws Exception {
+		String definition = repository.viewSql(view);
+
+		if (definition == null) {
+			log.warn("The definition of view {} cannot be exported on this server", view);
+			return;
+		}
+		if (options.dropTable()) {
+			pw.println(repository.dropViewSql(view, options.dropIfExists()) + ";\n");
+		}
+		pw.println(definition + ";\n");
+	}
+
+	/** The file is written as UTF-8 unless another encoding was chosen, compressed when the name ends in .gz. */
+	private PrintWriter open() throws IOException {
+		OutputStream out = Files.newOutputStream(Path.of(file));
+
+		try {
+			if (file.toLowerCase().endsWith(".gz")) {
+				out = new GZIPOutputStream(out);
+			}
+		} catch (IOException e) {
+			out.close();
+			throw e;
+		}
+		return new PrintWriter(new BufferedWriter(new OutputStreamWriter(out, options.charset())));
+	}
+
+	private void deletePartialFile() {
+		try {
+			Files.deleteIfExists(Path.of(file));
+		} catch (IOException e) {
+			log.warn("The partial file {} could not be deleted: {}", file, e.getMessage());
 		}
 	}
 

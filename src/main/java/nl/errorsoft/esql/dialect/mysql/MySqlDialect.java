@@ -85,6 +85,26 @@ public class MySqlDialect extends AbstractDialect {
 		return "SHOW CREATE TABLE " + quote(table);
 	}
 
+	public String showCreateViewSql(TableName view) {
+		return "SHOW CREATE VIEW " + quote(view);
+	}
+
+	public String beginTransactionSql() {
+		return "START TRANSACTION";
+	}
+
+	public String commitSql() {
+		return "COMMIT";
+	}
+
+	public String disableForeignKeyChecksSql() {
+		return "SET FOREIGN_KEY_CHECKS=0";
+	}
+
+	public String enableForeignKeyChecksSql() {
+		return "SET FOREIGN_KEY_CHECKS=1";
+	}
+
 	public String quote(String identifier) {
 		return "`" + identifier.replace("`", "``") + "`";
 	}
@@ -251,7 +271,8 @@ public class MySqlDialect extends AbstractDialect {
 	public Table readTable(ResultSet rs, Database db) throws SQLException {
 		Table table = new Table(db);
 		table.setName(rs.getString("Name"));
-		table.setType(rs.getString("Engine"));
+		// A view has no engine, SHOW TABLE STATUS lists it with the comment VIEW.
+		table.setType(rs.getString("Engine") == null && "VIEW".equals(rs.getString("Comment")) ? "VIEW" : rs.getString("Engine"));
 		table.setRowCount(rs.getInt("Rows"));
 		table.setComment(rs.getString("Comment"));
 		return table;

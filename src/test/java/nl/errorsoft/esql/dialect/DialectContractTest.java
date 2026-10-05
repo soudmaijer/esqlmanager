@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicReference;
 import nl.errorsoft.esql.job.ProgressListener;
 import nl.errorsoft.esql.export.ExportService;
+import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.ImportService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -221,6 +222,172 @@ abstract class DialectContractTest {
 		});
 		assertTrue(failed.await(30, java.util.concurrent.TimeUnit.SECONDS));
 		assertFalse(result.get().success());
+	}
+
+	@Test
+	void exportOptionsShapeTheScript(@TempDir Path dir) throws Exception {
+		String name = "opts_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		insert(table, "first", "caf\u00e9");
+		insert(table, "second", "b");
+		insert(table, "third", null);
+
+		File file = dir.resolve("dump.sql.gz").toFile();
+		ExportOptions options = new ExportOptions(true, true, false, true, false, false, true, java.nio.charset.StandardCharsets.ISO_8859_1, 2, false, true,
+			dialect.disableForeignKeyChecksSql() != null);
+		ExportService export = new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(), options);
+		runSynchronously(export::setListener, export);
+
+		String script;
+		try (var in = new java.util.zip.GZIPInputStream(java.nio.file.Files.newInputStream(file.toPath()))) {
+			script = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.ISO_8859_1);
+		}
+		assertTrue(script.contains("DROP TABLE " + dialect.quote(name) + ";"), script);
+		assertFalse(script.contains("IF EXISTS"), script);
+		assertTrue(script.contains("CREATE TABLE IF NOT EXISTS"), script);
+		assertTrue(script.contains("caf\u00e9"), script);
+		// Three rows, two per statement.
+		assertEquals(2, script.split("INSERT INTO", -1).length - 1, script);
+		assertEquals(dialect.beginTransactionSql() != null, script.contains(dialect.beginTransactionSql() + ";"), script);
+		assertEquals(dialect.disableForeignKeyChecksSql() != null, script.contains("FOREIGN_KEY_CHECKS=0"), script);
+
+		// The script drops the table (without IF EXISTS) and creates it again.
+		ImportService imported = new ConnectionContext(connection).newImport(database, file.getAbsolutePath(),
+			new ImportOptions(true, false, java.nio.charset.StandardCharsets.ISO_8859_1));
+		runSynchronously(imported::setListener, imported);
+		TableData[][] rows = service().loadPage(table, 0, 100);
+		assertEquals(3, rows.length);
+		assertEquals("caf\u00e9", rows[0][2].getData());
+		service().dropTable(table);
+	}
+
+	@Test
+	void exportCanLeaveOutTheDropAndWriteViews(@TempDir Path dir) throws Exception {
+		Assumptions.assumeTrue(dialect.showCreateViewSql(TableName.of("v")) != null, "The server cannot give view definitions");
+		var databases = new ConnectionContext(connection).databases();
+		Database other = databases.createDatabase("views_" + System.nanoTime());
+		connection.useDatabase(other.getName());
+		createTable("base", "");
+		connection.executeUpdate("CREATE VIEW " + dialect.quote("base_names") + " AS SELECT " + dialect.quote("name") + " FROM " + dialect.quote("base"));
+
+		File file = dir.resolve("views.sql").toFile();
+		ExportOptions options = new ExportOptions(true, false, false, true, false, true, false, null, 1, true, false, false);
+		ExportService export = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(), options);
+		runSynchronously(export::setListener, export);
+		String script = java.nio.file.Files.readString(file.toPath());
+		assertTrue(script.contains("DROP VIEW IF EXISTS"), script);
+		assertTrue(script.contains("CREATE "), script);
+		assertTrue(script.indexOf("base_names") > script.indexOf("CREATE TABLE"), script);
+
+		// Without the option the view is not in the script.
+		ExportService without = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(),
+			new ExportOptions(true, false, false, true, false));
+		runSynchronously(without::setListener, without);
+		assertFalse(java.nio.file.Files.readString(file.toPath()).contains("base_names"));
+
+		// The script brings the view back.
+		export = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(), options);
+		runSynchronously(export::setListener, export);
+		connection.executeUpdate("DROP VIEW " + dialect.quote("base_names"));
+		ImportService imported = new ConnectionContext(connection).newImport(other, file.getAbsolutePath());
+		runSynchronously(imported::setListener, imported);
+		try (ResultSet rs = connection.executeQuery("SELECT count(*) FROM " + dialect.quote("base_names"))) {
+			assertTrue(rs.next());
+		}
+
+		connection.useDatabase(DATABASE);
+		databases.dropDatabase(other);
+	}
+
+	@Test
+	void cancelledExportDeletesThePartialFile(@TempDir Path dir) throws Exception {
+		String name = "cancel_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		insert(table, "first", "a");
+
+		File file = dir.resolve("cancelled.sql").toFile();
+		ExportService export = new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, true));
+		Recording recording = new Recording();
+		recording.onStatus = status -> export.cancel();
+		export.setListener(recording);
+		export.run();
+
+		assertTrue(recording.cancelled.startsWith("Cancelled after 0 of 1 table(s)"), String.valueOf(recording.cancelled));
+		assertFalse(file.exists());
+		service().dropTable(table);
+	}
+
+	@Test
+	void importContinuesAfterErrorsOrStopsAtTheFirst(@TempDir Path dir) throws Exception {
+		String name = "imp_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		String q = dialect.quote(name);
+		Path script = dir.resolve("errors.sql");
+		java.nio.file.Files.writeString(script,
+			"INSERT INTO " + q + " (" + dialect.quote("name") + ") VALUES('one');\nINSERT INTO no_such_table_here VALUES(1);\n"
+				+ "INSERT INTO " + q + " (" + dialect.quote("name") + ") VALUES('two');\n");
+
+		Recording stopped = new Recording();
+		ImportService stopping = new ConnectionContext(connection).newImport(database, script.toString());
+		stopping.setListener(stopped);
+		stopping.run();
+		assertNotNull(stopped.failure);
+		assertTrue(stopped.failure.getMessage().startsWith("Statement 2 ("), stopped.failure.getMessage());
+		assertEquals(1, service().loadPage(table, 0, 100).length);
+
+		Recording continued = new Recording();
+		ImportService continuing = new ConnectionContext(connection).newImport(database, script.toString(),
+			new ImportOptions(false, false, java.nio.charset.StandardCharsets.UTF_8));
+		continuing.setListener(continued);
+		continuing.run();
+		assertEquals(null, continued.failure);
+		assertEquals(1, continued.details.size());
+		assertTrue(continued.finished.contains("1 failed"), continued.finished);
+		assertEquals(3, service().loadPage(table, 0, 100).length);
+		service().dropTable(table);
+	}
+
+	@Test
+	void importInASingleTransactionRollsBackOnErrorAndCancel(@TempDir Path dir) throws Exception {
+		String name = "tx_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		String insert = "INSERT INTO " + dialect.quote(name) + " (" + dialect.quote("name") + ") VALUES('x');\n";
+		Path failing = dir.resolve("failing.sql");
+		java.nio.file.Files.writeString(failing, insert + insert + "INSERT INTO no_such_table_here VALUES(1);\n");
+		ImportOptions transaction = new ImportOptions(true, true, java.nio.charset.StandardCharsets.UTF_8);
+
+		Recording failed = new Recording();
+		ImportService failing1 = new ConnectionContext(connection).newImport(database, failing.toString(), transaction);
+		failing1.setListener(failed);
+		failing1.run();
+		assertNotNull(failed.failure);
+		assertEquals(0, service().loadPage(table, 0, 100).length);
+
+		// Cancelled after the first statement: the one that ran is rolled back.
+		Path three = dir.resolve("three.sql");
+		java.nio.file.Files.writeString(three, insert + insert + insert);
+		ImportService cancelling = new ConnectionContext(connection).newImport(database, three.toString(), transaction);
+		Recording cancelled = new Recording();
+		cancelled.onStatus = status -> cancelling.cancel();
+		cancelling.setListener(cancelled);
+		cancelling.run();
+		assertTrue(cancelled.cancelled.contains("rolled back"), String.valueOf(cancelled.cancelled));
+		assertEquals(0, service().loadPage(table, 0, 100).length);
+
+		// Without a transaction the statement that ran stays.
+		ImportService plain = new ConnectionContext(connection).newImport(database, three.toString());
+		Recording plainCancelled = new Recording();
+		plainCancelled.onStatus = status -> plain.cancel();
+		plain.setListener(plainCancelled);
+		plain.run();
+		assertTrue(plainCancelled.cancelled.contains("not undone"), String.valueOf(plainCancelled.cancelled));
+		assertEquals(1, service().loadPage(table, 0, 100).length);
+		service().dropTable(table);
 	}
 
 	@Test
@@ -602,5 +769,40 @@ abstract class DialectContractTest {
 		});
 		work.run();
 		assertEquals(null, failure.get());
+	}
+
+	/** Keeps what a job told its listener, and can react to a status line (to cancel the job from inside). */
+	private static final class Recording implements ProgressListener {
+		Exception failure;
+		String finished;
+		String cancelled;
+		List<String> details = List.of();
+		Consumer<String> onStatus = status -> {
+		};
+
+		@Override
+		public void progressed(int percent) {
+		}
+
+		@Override
+		public void failed(Exception error) {
+			failure = error;
+		}
+
+		@Override
+		public void status(String text) {
+			onStatus.accept(text);
+		}
+
+		@Override
+		public void finished(String summary, List<String> lines) {
+			finished = summary;
+			details = lines;
+		}
+
+		@Override
+		public void cancelled(String summary) {
+			cancelled = summary;
+		}
 	}
 }

@@ -2,6 +2,22 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Cancel for jobs, export and import options
+
+- Export, import and the upload and download of a binary cell can be cancelled. The progress window has a Cancel
+  button that becomes Close at the end (closing the window or Esc cancels as well) and a status line with what it is
+  doing ("Exporting shop.orders", "120 statement(s) done"). A cancelled export deletes the partial file, a cancelled
+  import reports how many statements ran and whether they were rolled back, a cancelled download removes the partial
+  file. The upload and download windows have a working Cancel while the transfer runs.
+- Export options: DROP ... IF EXISTS and CREATE ... IF NOT EXISTS, the file encoding (UTF-8, UTF-16, ISO-8859-1,
+  windows-1252, US-ASCII), several rows per INSERT, the views of a database or schema (structure), wrapping the script
+  in a transaction, and disabling foreign key checks (MySQL only, PostgreSQL needs superuser rights for that). A file
+  name ending in .gz is gzip compressed. The defaults give the same script as before. MySQL views are no longer
+  exported as tables.
+- Import options: stop on the first error or continue and list the failed statements, run in a single transaction
+  (rolled back on an error or cancel), the file encoding, .gz files, and the statement count in the progress window.
+  An error now names the statement that failed.
+
 05-10-2026: Test connection, duplicate profile and optional saved password
 
 - Connection profile: "Test connection" connects with the values in the form (not the saved profile) on a background

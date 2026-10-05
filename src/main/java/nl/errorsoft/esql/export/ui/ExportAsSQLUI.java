@@ -3,15 +3,20 @@ package nl.errorsoft.esql.export.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.JTextField;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -21,7 +26,11 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
+import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.export.ExportOptions;
 import nl.errorsoft.esql.export.control.ExportCC;
+import nl.errorsoft.esql.table.TableName;
+import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -38,6 +47,13 @@ public class ExportAsSQLUI extends FormDialog {
 	private final JCheckBox createDatabase = Forms.mnemonic(new JCheckBox("", true), "&Create database");
 	private final JCheckBox dropTable = Forms.mnemonic(new JCheckBox("", true), "Dr&op table");
 	private final JCheckBox useDatabase = Forms.mnemonic(new JCheckBox("", true), "&Use database");
+	private final JCheckBox views = Forms.mnemonic(new JCheckBox("", false), "&Views (structure)");
+	private final JCheckBox dropIfExists = Forms.mnemonic(new JCheckBox("", true), "DROP ... &IF EXISTS");
+	private final JCheckBox createIfNotExists = Forms.mnemonic(new JCheckBox("", false), "CREATE ... IF &NOT EXISTS");
+	private final JCheckBox transaction = Forms.mnemonic(new JCheckBox("", false), "Wrap in a &transaction");
+	private final JCheckBox foreignKeys = Forms.mnemonic(new JCheckBox("", false), "Disable &foreign key checks");
+	private final JSpinner rowsPerInsert = new JSpinner(new SpinnerNumberModel(1, 1, 10000, 1));
+	private final JComboBox<Charset> encoding = Encodings.combo(StandardCharsets.UTF_8);
 
 	private DatabaseTreeView dtv;
 
@@ -79,8 +95,20 @@ public class ExportAsSQLUI extends FormDialog {
 	}
 
 	private void initComponents() {
-		JPanel content = Forms.titled(box(structure, data), "Content");
-		JPanel statements = Forms.titled(box(createDatabase, dropTable, useDatabase), "Statements");
+		Dialect dialect = ecc.dialect();
+		views.setEnabled(dialect.showCreateViewSql(TableName.of("v")) != null);
+		views.setToolTipText("Writes CREATE VIEW for the views of the selected databases or schemas, after their tables. Needs Structure.");
+		transaction.setEnabled(dialect.beginTransactionSql() != null);
+		foreignKeys.setEnabled(dialect.disableForeignKeyChecksSql() != null);
+		foreignKeys.setToolTipText(foreignKeys.isEnabled()
+			? "Loads the tables in any order without checking foreign keys."
+			: "This server has no safe way to switch foreign key checks off for a script.");
+		rowsPerInsert.setToolTipText("1 writes an INSERT for every row, a larger number puts that many rows in one INSERT.");
+
+		JPanel content = Forms.titled(box(structure, data, views), "Content");
+		JPanel statements = Forms.titled(box(createDatabase, dropTable, useDatabase, dropIfExists, createIfNotExists), "Statements");
+		JPanel script = Forms.titled(box(transaction, foreignKeys), "Script");
+		JPanel format = Forms.titled(new Forms.Grid().row("&Rows per INSERT:", rowsPerInsert).row("E&ncoding:", encoding).panel(), "Format");
 
 		JButton browse = Forms.button("&Browse...");
 		browse.addActionListener(e -> chooseFile());
@@ -95,7 +123,7 @@ public class ExportAsSQLUI extends FormDialog {
 		export.addActionListener(e -> export());
 		close.addActionListener(e -> dispose());
 
-		JPanel options = new Forms.Grid().full(content).full(statements).full(target).done();
+		JPanel options = new Forms.Grid().full(content).full(statements).full(script).full(format).full(target).done();
 
 		JButton selectAll = Forms.button("Select a&ll");
 		JButton clear = Forms.button("Clea&r");
@@ -147,7 +175,7 @@ public class ExportAsSQLUI extends FormDialog {
 	private void chooseFile() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setAcceptAllFileFilterUsed(true);
-		chooser.setDialogTitle("Save as");
+		chooser.setDialogTitle("Save as (a name ending in .gz is compressed)");
 
 		try {
 			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -162,8 +190,11 @@ public class ExportAsSQLUI extends FormDialog {
 		String problem = Validation.required("the file to save to", file.getText());
 		showError(problem);
 		if (problem == null) {
-			ecc.exportNodesAsSQL(this, dtv.getSelectionPaths(), file.getText().trim(), structure.isSelected(), data.isSelected(),
-				createDatabase.isSelected(), dropTable.isSelected(), useDatabase.isSelected());
+			ExportOptions options = new ExportOptions(structure.isSelected(), data.isSelected(), createDatabase.isSelected(), dropTable.isSelected(),
+				useDatabase.isSelected(), dropIfExists.isSelected(), createIfNotExists.isSelected(), (Charset) encoding.getSelectedItem(),
+				(Integer) rowsPerInsert.getValue(), views.isEnabled() && views.isSelected(), transaction.isEnabled() && transaction.isSelected(),
+				foreignKeys.isEnabled() && foreignKeys.isSelected());
+			ecc.exportNodesAsSQL(this, dtv.getSelectionPaths(), file.getText().trim(), options);
 		}
 	}
 }

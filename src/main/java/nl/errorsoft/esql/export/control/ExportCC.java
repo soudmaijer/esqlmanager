@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ApplicationContext;
 import java.io.File;
+import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.*;
 
@@ -59,14 +60,13 @@ public class ExportCC implements ProgressListener {
 		}
 	}
 
-	public void exportNodesAsSQL(ExportAsSQLUI iasu, TreePath[] tpa, String file, boolean dumpStructure, boolean dumpData, boolean createDatabase,
-		boolean dropTable, boolean useDatabase) {
+	public void exportNodesAsSQL(ExportAsSQLUI iasu, TreePath[] tpa, String file, ExportOptions options) {
 		String title = iasu.getTitle();
 		if (tpa == null || tpa.length == 0) {
 			Dialogs.warn(iasu, title, "Select the database(s), schema(s) or table(s) to export in the tree.");
 			return;
 		}
-		if (!dumpStructure && !dumpData) {
+		if (!options.dumpStructure() && !options.dumpData()) {
 			Dialogs.warn(iasu, title, "Select at least one of 'Structure' and 'Data'.");
 			return;
 		}
@@ -81,13 +81,18 @@ public class ExportCC implements ProgressListener {
 				export[i] = ((DefaultMutableTreeNode) tpa[i].getLastPathComponent()).getUserObject();
 			}
 
-			ies = new ImportExportProgressUI(iasu, "Export data", describe(export) + " to " + file);
-			ExportService exp = cwcc.getContext().newExport(export, file, new ExportOptions(dumpStructure, dumpData, createDatabase, dropTable, useDatabase));
+			ExportService exp = cwcc.getContext().newExport(export, file, options);
+			ies = new ImportExportProgressUI(iasu, "Export data", describe(export) + " to " + file, exp::cancel);
 			exp.setListener(this);
 			exp.start();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(iasu, "Export data", e);
 		}
+	}
+
+	/** The dialect of the connection, for the options the server supports. */
+	public Dialect dialect() {
+		return cwcc.dialect();
 	}
 
 	/** The objects that are exported, for the progress window: the name of one, or the count. */
@@ -98,6 +103,23 @@ public class ExportCC implements ProgressListener {
 	@Override
 	public void progressed(int percent) {
 		ies.setProgressValue(percent);
+	}
+
+	@Override
+	public void status(String text) {
+		ies.setStatus(text);
+	}
+
+	@Override
+	public void finished(String summary, List<String> details) {
+		log.info(summary);
+		ies.finish(summary, details);
+	}
+
+	@Override
+	public void cancelled(String summary) {
+		log.info(summary);
+		ies.cancelled(summary);
 	}
 
 	@Override

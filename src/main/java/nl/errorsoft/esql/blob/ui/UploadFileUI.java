@@ -81,8 +81,14 @@ public class UploadFileUI extends FormDialog implements UDDataIF, ActionListener
 			showError(null);
 		}
 		jButton1.setEnabled(!busy);
-		jButton2.setEnabled(!busy);
 		jButton3.setEnabled(!busy);
+	}
+
+	@Override
+	public void transferCancelled() {
+		setBusy(false);
+		showError("Cancelled.");
+		jProgressBar1.setValue(0);
 	}
 
 	@Override
@@ -99,9 +105,11 @@ public class UploadFileUI extends FormDialog implements UDDataIF, ActionListener
 		}
 	}
 
-	/** Closes the dialog */
+	/** Closes the dialog; while a transfer runs, closing (also with Esc) cancels the transfer. */
 	private void closeDialog(java.awt.event.WindowEvent evt) {
-		if (!busy) {
+		if (busy) {
+			udcc.cancelTransfer();
+		} else {
 			dispose();
 		}
 	}
@@ -120,7 +128,11 @@ public class UploadFileUI extends FormDialog implements UDDataIF, ActionListener
 				ApplicationContext.get().errors().report(this, "Choose file", err);
 			}
 		} else if (e.getSource() == jButton2) {
-			this.dispose();
+			if (busy) {
+				udcc.cancelTransfer();
+			} else {
+				this.dispose();
+			}
 		} else if (e.getSource() == jButton1) {
 			String file = jTextField1.getText().trim();
 

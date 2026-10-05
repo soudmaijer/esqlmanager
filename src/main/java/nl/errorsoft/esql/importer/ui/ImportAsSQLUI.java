@@ -2,6 +2,13 @@ package nl.errorsoft.esql.importer.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JRadioButton;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -16,7 +23,9 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
+import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.control.ImportCC;
+import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.ui.util.ExtentionFileFilter;
 import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -30,6 +39,10 @@ public class ImportAsSQLUI extends FormDialog {
 	private final JScrollPane treeScroll = new JScrollPane();
 	private final JTextField file = new JTextField(24);
 	private final JLabel target = new JLabel(CURRENT);
+	private final JRadioButton stopOnError = Forms.mnemonic(new JRadioButton("", true), "&Stop on the first error");
+	private final JRadioButton continueOnError = Forms.mnemonic(new JRadioButton(), "Co&ntinue and report the errors at the end");
+	private final JCheckBox singleTransaction = Forms.mnemonic(new JCheckBox(), "Run in a single &transaction");
+	private final JComboBox<Charset> encoding = Encodings.combo(StandardCharsets.UTF_8);
 
 	private DatabaseTreeView dtv;
 
@@ -54,13 +67,31 @@ public class ImportAsSQLUI extends FormDialog {
 			"<html><body style='width: 260px'>Select the database or schema to run the script in. Without a selection it runs in the current one."
 				+ "</body></html>");
 
+		ButtonGroup errors = new ButtonGroup();
+		errors.add(stopOnError);
+		errors.add(continueOnError);
+		singleTransaction.setToolTipText("All statements are rolled back when one fails or the import is cancelled. MySQL commits at every CREATE or DROP.");
+		singleTransaction.addActionListener(e -> {
+			// A transaction cannot go on after an error.
+			continueOnError.setEnabled(!singleTransaction.isSelected());
+			if (singleTransaction.isSelected()) {
+				stopOnError.setSelected(true);
+			}
+		});
+		JPanel box = new JPanel();
+		box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+		box.add(stopOnError);
+		box.add(continueOnError);
+		box.add(singleTransaction);
+		JPanel script = Forms.titled(new Forms.Grid().full(box).row("E&ncoding:", encoding).panel(), "Script");
+
 		JButton run = Forms.button("&Import");
 		JButton close = Forms.button("Close");
 		run.addActionListener(e -> run());
 		close.addActionListener(e -> dispose());
 
 		treeScroll.setPreferredSize(new Dimension(240, 300));
-		JPanel right = new Forms.Grid().full(hint).full(options).done();
+		JPanel right = new Forms.Grid().full(hint).full(options).full(script).done();
 
 		JPanel main = new JPanel(new BorderLayout(Forms.PADDING, 0));
 		main.add(treeScroll, BorderLayout.CENTER);
@@ -100,11 +131,11 @@ public class ImportAsSQLUI extends FormDialog {
 
 	private void chooseFile() {
 		JFileChooser chooser = new JFileChooser();
-		ExtentionFileFilter sql = new ExtentionFileFilter("SQL file", new String[]{".sql"});
+		ExtentionFileFilter sql = new ExtentionFileFilter("SQL file", new String[]{".sql", ".gz"});
 		chooser.addChoosableFileFilter(sql);
 		chooser.setAcceptAllFileFilterUsed(true);
 		chooser.setFileFilter(sql);
-		chooser.setDialogTitle("Select file");
+		chooser.setDialogTitle("Select file (.sql or compressed .sql.gz)");
 
 		try {
 			if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -119,7 +150,8 @@ public class ImportAsSQLUI extends FormDialog {
 		String problem = Validation.required("the file to import", file.getText());
 		showError(problem);
 		if (problem == null) {
-			ecc.importNodesAsSQL(this, dtv.getSelectionPath(), file.getText().trim());
+			ecc.importNodesAsSQL(this, dtv.getSelectionPath(), file.getText().trim(),
+				new ImportOptions(!continueOnError.isSelected(), singleTransaction.isSelected(), (Charset) encoding.getSelectedItem()));
 		}
 	}
 }

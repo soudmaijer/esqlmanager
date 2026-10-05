@@ -283,6 +283,38 @@ public abstract class AbstractDialect implements Dialect {
 		return null;
 	}
 
+	public String showCreateViewSql(TableName view) {
+		return null;
+	}
+
+	public String dropTableSql(TableName table, boolean ifExists) {
+		return "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + quote(table);
+	}
+
+	public String dropViewSql(TableName view, boolean ifExists) {
+		return "DROP VIEW " + (ifExists ? "IF EXISTS " : "") + quote(view);
+	}
+
+	public String createTableIfNotExists(String createTableSql) {
+		return createTableSql.replaceFirst("^CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ");
+	}
+
+	public String beginTransactionSql() {
+		return null;
+	}
+
+	public String commitSql() {
+		return null;
+	}
+
+	public String disableForeignKeyChecksSql() {
+		return null;
+	}
+
+	public String enableForeignKeyChecksSql() {
+		return null;
+	}
+
 	public String columnDdl(ResultSet rs) throws SQLException {
 		String definition = quote(rs.getString("COLUMN_NAME")) + " ";
 		String defaultValue = rs.getString("COLUMN_DEF");
