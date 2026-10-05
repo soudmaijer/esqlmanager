@@ -6,59 +6,38 @@ eSQLManager changelog
 
 - Server icons: the profile lists, the connection window and the server node of the tree show the logo of the
   server (PostgreSQL, MySQL, Oracle, SQL Server, Simple Icons), lighter on a dark theme.
-- Build: Maven with the Maven wrapper, standard src/main/java and src/main/resources layout, Java 25, UTF-8 sources.
-  The old dist and lib folders are gone, JDBC drivers (MySQL, PostgreSQL, SQL Server, Oracle) come from Maven Central.
-- Packages: merged esql and nl.errorsoft into nl.errorsoft.esql, the database designer lives under it as dbcreator.
-- Runtime files (conf, credits) are grouped in runtime/, passwords are no longer part of the committed profiles.
-- Dialect layer: everything that differs per database (quoting, literals, DDL, paging, switching database,
-  maintenance, export, process list, status, users) is decided by a Dialect. Callers no longer check the server type.
-  The dialect only writes SQL and reads result rows, the repositories are the only code that runs statements.
-- PostgreSQL support with the right defaults (port 5432, user postgres). All features work on PostgreSQL and MySQL:
-  create/modify/drop tables, columns and indexes, import and export as SQL, database designer, user manager
-  (roles and privileges), process list, server status and variables, table maintenance (VACUUM, ANALYZE).
-- User manager rebuilt: a UserAdmin per dialect and a new window. It works on MySQL 8, which the old one did not
-  (it wrote into the mysql.user table).
-- Generated SQL: values are escaped per database and names are quoted by the dialect. The WHERE clause that finds a
-  row for editing, deleting and uploading is built in one place. An empty cell is stored as NULL, not as the text "null".
-- Paging orders by the primary key, so rows no longer move after an update on PostgreSQL.
-- Export/import: one code path, UTF-8, NULL values, auto numbering continues after an import on PostgreSQL.
-- Logging with Log4j 2 instead of System.out, with connection details and queries in the output panel.
-- Look and feel: FlatLaf instead of the native macOS look, which made resizing very slow. Resizing the window and the
-  output panel is fast, the output panel scales with its panel, has a vertical scrollbar and no longer wraps lines.
-- Status bar shows the server, the account and the last action (rows loaded, time taken) instead of a copyright text.
-- Data grids show subtle grid lines and size their columns to the content.
-- Removed: license and registration checks, the auto-updater and its dialog, the dynamic class loader, old unused
-  files and commented out code.
-- Cleaned up: resources are closed with try-with-resources, deprecated API calls replaced.
-- Tests: JUnit and Testcontainers run the same scenarios against PostgreSQL 17 and MySQL 8.
-- Documentation: README with a feature list per database and a screenshot, CLAUDE.md with the design decisions.
-- Architecture: packages per feature (table, database, importexport, blob, user, designer, query, connection, app), each with
-  controller, service and repository layers. SQL only runs in repositories, which ask the Dialect. The domain classes are plain data.
-- ApplicationContext resolves the image loader, settings and the ConnectionContext of every open connection. A ConnectionContext wires the
-  repositories and services of one connection once, controllers no longer create them.
-- Errors: one ErrorHandler logs an error once and shows one message, services and repositories no longer swallow exceptions.
-- Connection profiles: the default profiles are PostgreSQL (port 5432, user postgres, no password stored, selected at start) and MySQL on localhost;
-  the SQL Server profile is gone.
-- start.sh: the sample PostgreSQL container uses the first free port from 5432, so it does not clash with another PostgreSQL on the machine.
-- Version: the title bar and splash show the version from the pom and the commit hash of the build (with -dirty for uncommitted changes) instead of a
-  build number.
-- Connect dialog: has a Close button. The status bar shows a green light and "Connected" while a connection is open and a red light and
-  "No connection" otherwise, instead of "Ready...".
-- Database tree: selecting a database or table no longer opens a tab; a double click does, and the tab comes to the front with focus.
-- Dialogs: Esc closes them, the same as the close button.
-- Appearance: the look and feel is a preference (Settings > Preferences): follow the system, light, dark or native. On macOS the Mac themes of
-  FlatLaf are used, with the menu in the screen menu bar and the title bar following the system.
-- Icons: the GIF icons (also the red and green status light) are replaced by vector icons from Lucide (ISC license, in resources/icons/svg). They scale sharply on high resolution
-  screens and follow the colours of the light and dark theme.
-- Output panel: log lines are shown exactly as written (the first line was indented one space less than the others), and the text colour
-  follows the theme.
-- Query editor: RSyntaxTextArea replaces the home-made highlighter (SQL highlighting, line numbers, undo and redo), its colours
-  follow the light and dark theme. The output panel uses the same SQL colouring as the editor, syntax.xml is gone.
-- Status bar: the status light is in front of the message ("Ready..."), the server and account of the active connection are on the right.
-  Each connection window has its own status bar below the tabs with what that connection did last (for example "shop: 4 table(s) opened in the
-  designer"), on the right, with the paging buttons of the table data on the left of the same bar.
-- Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
-  with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
+- SQL query: every statement that returns rows gets its own closable result tab, named after the statement with the
+  full text as tooltip, and a line with the time it ran, the database, the rows and the duration (at most 20 tabs).
+- Help tab: dark pages in a dark theme, white pages in a light theme.
+- Documentation: new screenshots (connection window, designer) and a screenshot of the query tab with completion.
+- Layout fixes after looking at every screen in light and dark: Settings only has the appearance (the auto-update
+  fields and their settings.xml entries are gone), the user manager has padding and a Granted group, the process list
+  opens wide enough for its columns and stops refreshing when it closes, the foreign key dialog centres its labels,
+  the Add field button lines up with the buttons below it, grid lines and tree and desktop backgrounds follow the
+  theme, "separated" is spelled correctly.
+- Dialogs: settings, connection profile, driver, field properties, import, export, upload and download, progress and the
+  designer property and generate dialogs use layout managers instead of absolute positions, with padding and the buttons
+  at the bottom right.
+- Process list: ProcesslistCC holds the connection, the refresh thread and the kill action, the window only shows the list.
+  The database tree keeps one tree model and only shows what its controller loads.
+- Create table, Edit table and Indexes open as closable tabs of the connection window ("New table", "Edit orders",
+  "Indexes orders"), one per table, with Save and Cancel at the bottom; closing with unsaved changes asks first.
+  The screens use layout managers instead of absolute positions.
+- Toolbars and menu bar are compact, the paging buttons of the table data sit in the centre of the status bar below
+  the tabs, with what the connection did last on the left.
+- Help: the user documentation is Markdown in docs/ (shown by GitHub and rendered in the help tab with commonmark),
+  links between pages stay in the help tab, web links open in the browser. The old HTML help pages are gone.
+- Designer context menus: the empty canvas adds a database, table or note at the click point, selects all, arranges,
+  toggles the grid and opens the model properties. Tables, databases and notes have their own menus (properties,
+  foreign key, link to a database, add a table or note, remove a link, delete), right click selects the object.
+- Context menus of the database tree are built per node and only show what the server supports (no MySQL, Postgres
+  or SQL Server submenus). New: Open, New query, Users, Export, Import, Indexes and Reload in the menus where they
+  apply; Check and Repair only on MySQL. Right click (ctrl-click on macOS) selects the node under the cursor first.
+- Dialogs: one helper for all message boxes. Errors show the error icon, dropping and deleting asks with a warning
+  that names the object and a button named after the action, revoking privileges asks first. Clearer texts and titles
+  (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.
+- Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
+  for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.
 - SQL query: opens as a tab of the connection window instead of a separate window (several tabs, "Query 2", ...), with the result of
   the last statement that returned rows below the editor. Open and save .sql files.
 - SQL query: "Run selection" runs the selected text or the statement at the caret (Cmd/Ctrl+Enter), "Run all" every statement in
@@ -68,21 +47,18 @@ eSQLManager changelog
   the database and their columns; aliases are resolved, names that need quotes are inserted quoted.
 - Connection window: the Create database and Drop database toolbar buttons are gone, the context menus of the tree still have them.
 - Disconnect asks "Disconnect from <connection>?" with the buttons Disconnect and Cancel.
-- Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.
-- Designer foreign keys (backend): a model holds foreign keys between tables, saves them in model files of version 0.2
-  (0.1 files still open) and Generate creates them after all tables exist. Model files are written with JDOM, so names
-  with < & " no longer break them. The dialects add and drop foreign keys, on MySQL only for InnoDB tables.
-- Designer look: tables are cards with a coloured header, an icon per field (key, link for foreign key columns), the type
-  right aligned, a soft shadow and a hover row, in the colours of the light or dark theme. The database is a pill and a
-  comment a note. The header shows the storage engine only on servers that have them (no more "(InnoDB)" on PostgreSQL).
-  A subtle dotted grid can be switched off in View > Show Grid.
-- Designer relations: foreign keys are drawn from column to column as orthogonal lines with rounded corners, a crow's
-  foot at the many side and a bar at the one side. Clicking a line selects it, hovering highlights it.
-- Designer foreign keys: drag from the field icon of a column onto a column of another table, or use "Add Foreign Key..."
-  in the table menu or the Foreign Keys tab of the table properties. The dialog supports several column pairs, a name
-  and the ON DELETE and ON UPDATE actions, and checks that the columns exist and their types fit. Double click a line to
-  edit it, Delete removes it.
-- Designer export: File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram.
+- Database tree: selecting a database or table no longer opens a tab; a double click does, and the tab comes to the front with focus.
+- Dialogs: Esc closes them, the same as the close button.
+- Connect dialog: has a Close button. The status bar shows a green light and "Connected" while a connection is open and a red light and
+  "No connection" otherwise, instead of "Ready...".
+- Status bar: the status light is in front of the message ("Ready..."), the server and account of the active connection are on the right.
+  Each connection window has its own status bar below the tabs with what that connection did last (for example "shop: 4 table(s) opened in the
+  designer"), on the right, with the paging buttons of the table data on the left of the same bar.
+- Connection profiles: the default profiles are PostgreSQL (port 5432, user postgres, no password stored, selected at start) and MySQL on localhost;
+  the SQL Server profile is gone.
+- start.sh: the sample PostgreSQL container uses the first free port from 5432, so it does not clash with another PostgreSQL on the machine.
+- Version: the title bar and splash show the version from the pom and the commit hash of the build (with -dirty for uncommitted changes) instead of a
+  build number.
 - Designer reverse engineering: "Open in designer" on a database reads its tables, columns, primary keys and
   foreign keys (composite keys too, views left out) into a model that can be saved and generated again.
 - Designer layout: tables are placed automatically with the Eclipse Layout Kernel (layered, referenced tables first,
@@ -90,38 +66,62 @@ eSQLManager changelog
 - Package structure by feature: dialect (with mysql, postgres, sqlserver and oracle sub packages), jdbc, error, job,
   export, importer, server, settings, and shared ui split into icon, table, editor and util. The designer UI is split
   into diagram and dialog. The old domain, data and importexport packages are gone.
-- Help: the user documentation is Markdown in docs/ (shown by GitHub and rendered in the help tab with commonmark),
-  links between pages stay in the help tab, web links open in the browser. The old HTML help pages are gone.
-- Create table, Edit table and Indexes open as closable tabs of the connection window ("New table", "Edit orders",
-  "Indexes orders"), one per table, with Save and Cancel at the bottom; closing with unsaved changes asks first.
-  The screens use layout managers instead of absolute positions.
-- Dialogs: settings, connection profile, driver, field properties, import, export, upload and download, progress and the
-  designer property and generate dialogs use layout managers instead of absolute positions, with padding and the buttons
-  at the bottom right.
-- Process list: ProcesslistCC holds the connection, the refresh thread and the kill action, the window only shows the list.
-  The database tree keeps one tree model and only shows what its controller loads.
-- Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
-  for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.
-- Dialogs: one helper for all message boxes. Errors show the error icon, dropping and deleting asks with a warning
-  that names the object and a button named after the action, revoking privileges asks first. Clearer texts and titles
-  (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.
-- Context menus of the database tree are built per node and only show what the server supports (no MySQL, Postgres
-  or SQL Server submenus). New: Open, New query, Users, Export, Import, Indexes and Reload in the menus where they
-  apply; Check and Repair only on MySQL. Right click (ctrl-click on macOS) selects the node under the cursor first.
-- Designer context menus: the empty canvas adds a database, table or note at the click point, selects all, arranges,
-  toggles the grid and opens the model properties. Tables, databases and notes have their own menus (properties,
-  foreign key, link to a database, add a table or note, remove a link, delete), right click selects the object.
-- Toolbars and menu bar are compact, the paging buttons of the table data sit in the centre of the status bar below
-  the tabs, with what the connection did last on the left.
-- Layout fixes after looking at every screen in light and dark: Settings only has the appearance (the auto-update
-  fields and their settings.xml entries are gone), the user manager has padding and a Granted group, the process list
-  opens wide enough for its columns and stops refreshing when it closes, the foreign key dialog centres its labels,
-  the Add field button lines up with the buttons below it, grid lines and tree and desktop backgrounds follow the
-  theme, "separated" is spelled correctly.
-- SQL query: every statement that returns rows gets its own closable result tab, named after the statement with the
-  full text as tooltip, and a line with the time it ran, the database, the rows and the duration (at most 20 tabs).
-- Help tab: dark pages in a dark theme, white pages in a light theme.
-- Documentation: new screenshots (connection window, designer) and a screenshot of the query tab with completion.
+- Designer export: File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram.
+- Designer foreign keys: drag from the field icon of a column onto a column of another table, or use "Add Foreign Key..."
+  in the table menu or the Foreign Keys tab of the table properties. The dialog supports several column pairs, a name
+  and the ON DELETE and ON UPDATE actions, and checks that the columns exist and their types fit. Double click a line to
+  edit it, Delete removes it.
+- Designer relations: foreign keys are drawn from column to column as orthogonal lines with rounded corners, a crow's
+  foot at the many side and a bar at the one side. Clicking a line selects it, hovering highlights it.
+- Designer look: tables are cards with a coloured header, an icon per field (key, link for foreign key columns), the type
+  right aligned, a soft shadow and a hover row, in the colours of the light or dark theme. The database is a pill and a
+  comment a note. The header shows the storage engine only on servers that have them (no more "(InnoDB)" on PostgreSQL).
+  A subtle dotted grid can be switched off in View > Show Grid.
+- Query editor: RSyntaxTextArea replaces the home-made highlighter (SQL highlighting, line numbers, undo and redo), its colours
+  follow the light and dark theme. The output panel uses the same SQL colouring as the editor, syntax.xml is gone.
+- Designer foreign keys (backend): a model holds foreign keys between tables, saves them in model files of version 0.2
+  (0.1 files still open) and Generate creates them after all tables exist. Model files are written with JDOM, so names
+  with < & " no longer break them. The dialects add and drop foreign keys, on MySQL only for InnoDB tables.
+- Output panel: log lines are shown exactly as written (the first line was indented one space less than the others), and the text colour
+  follows the theme.
+- Icons: the GIF icons (also the red and green status light) are replaced by vector icons from Lucide (ISC license, in resources/icons/svg). They scale sharply on high resolution
+  screens and follow the colours of the light and dark theme.
+- Appearance: the look and feel is a preference (Settings > Preferences): follow the system, light, dark or native. On macOS the Mac themes of
+  FlatLaf are used, with the menu in the screen menu bar and the title bar following the system.
+- Errors: one ErrorHandler logs an error once and shows one message, services and repositories no longer swallow exceptions.
+- Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
+  with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
+- ApplicationContext resolves the image loader, settings and the ConnectionContext of every open connection. A ConnectionContext wires the
+  repositories and services of one connection once, controllers no longer create them.
+- Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.
+- Architecture: packages per feature (table, database, importexport, blob, user, designer, query, connection, app), each with
+  controller, service and repository layers. SQL only runs in repositories, which ask the Dialect. The domain classes are plain data.
+- Documentation: README with a feature list per database and a screenshot, CLAUDE.md with the design decisions.
+- Tests: JUnit and Testcontainers run the same scenarios against PostgreSQL 17 and MySQL 8.
+- Removed: license and registration checks, the auto-updater and its dialog, the dynamic class loader, old unused
+  files and commented out code.
+- Cleaned up: resources are closed with try-with-resources, deprecated API calls replaced.
+- Generated SQL: values are escaped per database and names are quoted by the dialect. The WHERE clause that finds a
+  row for editing, deleting and uploading is built in one place. An empty cell is stored as NULL, not as the text "null".
+- Paging orders by the primary key, so rows no longer move after an update on PostgreSQL.
+- Status bar shows the server, the account and the last action (rows loaded, time taken) instead of a copyright text.
+- User manager rebuilt: a UserAdmin per dialect and a new window. It works on MySQL 8, which the old one did not
+  (it wrote into the mysql.user table).
+- PostgreSQL support with the right defaults (port 5432, user postgres). All features work on PostgreSQL and MySQL:
+  create/modify/drop tables, columns and indexes, import and export as SQL, database designer, user manager
+  (roles and privileges), process list, server status and variables, table maintenance (VACUUM, ANALYZE).
+- Export/import: one code path, UTF-8, NULL values, auto numbering continues after an import on PostgreSQL.
+- Look and feel: FlatLaf instead of the native macOS look, which made resizing very slow. Resizing the window and the
+  output panel is fast, the output panel scales with its panel, has a vertical scrollbar and no longer wraps lines.
+- Data grids show subtle grid lines and size their columns to the content.
+- Logging with Log4j 2 instead of System.out, with connection details and queries in the output panel.
+- Dialect layer: everything that differs per database (quoting, literals, DDL, paging, switching database,
+  maintenance, export, process list, status, users) is decided by a Dialect. Callers no longer check the server type.
+  The dialect only writes SQL and reads result rows, the repositories are the only code that runs statements.
+- Runtime files (conf, credits) are grouped in runtime/, passwords are no longer part of the committed profiles.
+- Packages: merged esql and nl.errorsoft into nl.errorsoft.esql, the database designer lives under it as dbcreator.
+- Build: Maven with the Maven wrapper, standard src/main/java and src/main/resources layout, Java 25, UTF-8 sources.
+  The old dist and lib folders are gone, JDBC drivers (MySQL, PostgreSQL, SQL Server, Oracle) come from Maven Central.
 
 build #64 - RC3
 
