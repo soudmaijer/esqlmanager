@@ -4,6 +4,7 @@ package nl.errorsoft.esql.job.ui;
  *
  * Created on 9 april 2003, 20:53
  */
+import nl.errorsoft.esql.ui.util.EscapeToClose;
 import javax.swing.*;
 import javax.swing.tree.*;
 import javax.swing.event.*;
@@ -19,6 +20,8 @@ public class ImportExportProgressUI extends javax.swing.JDialog {
 	public ImportExportProgressUI(JDialog jm) {
 
 		super(jm, "Import / Export progress");
+		// Esc does not close this window: a running job must not be hidden by accident.
+		getRootPane().putClientProperty(EscapeToClose.DISABLED, true);
 		this.getRootPane().setPreferredSize(new java.awt.Dimension(360, 100));
 		initComponents();
 		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),

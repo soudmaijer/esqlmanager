@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.designer.ui;
 
+import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
@@ -67,6 +68,8 @@ public class DBCreator extends JDialog implements MouseListener {
 	 */
 	public DBCreator(ESQLManagerUI eui, ConnectionWindowUI cwui, Model model) {
 		super(eui, true);
+		// Esc does not close this window: a work window with a model that may have unsaved changes.
+		getRootPane().putClientProperty(EscapeToClose.DISABLED, true);
 
 		this.eui = eui;
 		this.cwui = cwui;

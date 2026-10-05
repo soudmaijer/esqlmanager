@@ -55,7 +55,11 @@ public class ConnectionProfileCC {
 		try {
 			cp.setLastUsed(selcp);
 			jmcc.dispatchConnectionWindowUI(selcp);
-			cpui.dispose();
+
+			// An auto-connect at startup happens before the profile dialog exists.
+			if (cpui != null) {
+				cpui.dispose();
+			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cpui, "Connect", e);
 		}

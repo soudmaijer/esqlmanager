@@ -17,6 +17,7 @@ import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.ESQLManager;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.settings.Appearance;
+import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -36,6 +37,7 @@ public class ESQLManagerCC {
 	public ESQLManagerCC() {
 		// Both must happen before the first window or icon exists: macOS reads its desktop properties only once.
 		Appearance.prepareDesktop();
+		EscapeToClose.install();
 		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> ApplicationContext.get().errors().report("Unexpected error", error));
 
 		// Start domein class.

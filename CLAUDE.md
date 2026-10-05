@@ -42,7 +42,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * The query editor is an `RSyntaxTextArea` (com.fifesoft) in an `RTextScrollPane` with SQL highlighting, line numbers and the library's undo. `ui.EditorTheme.install` gives it the RSyntaxTextArea theme `idea.xml` or `dark.xml` matching `FlatLaf.isLafDark()` and applies it again when the look and feel changes.
 * The output panel is a read-only `RSyntaxTextArea` with SQL colouring (`ui.editor.EditorTheme`, same theme as the query editor): it shows the log exactly as written.
 * The output panel does not wrap lines (re-wrapping a long log made resizing slow), keeps at most 200000 characters, and the split pane uses continuous layout with `resizeWeight` 1.0.
-* The status bar of the application shows the state with its light on the left and the server and account of the active connection on the right (`ConnectionWindowCC.showStatusInfo`). What a connection did last ("shop: 4 table(s) opened in the designer") is shown in the status bar at the bottom of that connection's own window (`ConnectionWindowUI.setStatus`).
+* The status bar of the application shows the state with its light on the left and the server and account of the active connection on the right (`ConnectionWindowCC.showStatusInfo`). What a connection did last ("shop: 4 table(s) opened in the designer") is shown in the status bar below the tabs of that connection's window (`ConnectionWindowUI.setStatus`), on the right; the paging buttons of the table data (`TableDataView.getNavigationBar`) sit on the left of the same bar while the data tab is in front.
 
 ### Logging and output
 

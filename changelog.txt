@@ -41,6 +41,8 @@ eSQLManager changelog
   build number.
 - Connect dialog: has a Close button. The status bar shows a green light and "Connected" while a connection is open and a red light and
   "No connection" otherwise, instead of "Ready...".
+- Database tree: selecting a database or table no longer opens a tab; a double click does, and the tab comes to the front with focus.
+- Dialogs: Esc closes them, the same as the close button.
 - Appearance: the look and feel is a preference (Settings > Preferences): follow the system, light, dark or native. On macOS the Mac themes of
   FlatLaf are used, with the menu in the screen menu bar and the title bar following the system.
 - Icons: the GIF icons (also the red and green status light) are replaced by vector icons from Lucide (ISC license, in resources/icons/svg). They scale sharply on high resolution
@@ -50,7 +52,8 @@ eSQLManager changelog
 - Query editor: RSyntaxTextArea replaces the home-made highlighter (SQL highlighting, line numbers, undo and redo), its colours
   follow the light and dark theme. The output panel uses the same SQL colouring as the editor, syntax.xml is gone.
 - Status bar: the status light is in front of the message ("Ready..."), the server and account of the active connection are on the right.
-  Each connection window has its own status bar with what that connection did last (for example "shop: 4 table(s) opened in the designer").
+  Each connection window has its own status bar below the tabs with what that connection did last (for example "shop: 4 table(s) opened in the
+  designer"), on the right, with the paging buttons of the table data on the left of the same bar.
 - Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
   with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
 - Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.

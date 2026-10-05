@@ -44,6 +44,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JScrollPane helpPane;
 	private static final String READY = "Ready";
 	private JLabel status;
+	private JPanel navigation;
 	private Component viewTab; // The table data or table list, shown in front of the help
 	private JEditorPane html; // The HTML info data.
 
@@ -371,15 +372,20 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		jsp.getViewport().setBackground(Color.white);
 
 		// SplitPane properties.
-		// What this connection did last, below the tabs.
-		status = new JLabel(READY);
-		status.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Component.borderColor")),
-			BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+		// One bar below the tabs: the paging of the table data on the left, what this connection did last on the right.
+		status = new JLabel(READY, SwingConstants.RIGHT);
+		status.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
 		status.setForeground(UIManager.getColor("Label.disabledForeground"));
-		status.setPreferredSize(new Dimension(10, 24));
+		navigation = new JPanel(new BorderLayout());
+		navigation.setVisible(false);
+		JPanel statusBar = new JPanel(new BorderLayout());
+		statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Component.borderColor")));
+		statusBar.add(navigation, BorderLayout.WEST);
+		statusBar.add(status, BorderLayout.CENTER);
+		tabbedPane.addChangeListener(e -> showNavigation());
 		JPanel tabsWithStatus = new JPanel(new BorderLayout());
 		tabsWithStatus.add(tabbedPane, BorderLayout.CENTER);
-		tabsWithStatus.add(status, BorderLayout.SOUTH);
+		tabsWithStatus.add(statusBar, BorderLayout.SOUTH);
 
 		jsplp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jsp, tabsWithStatus);
 		jsplp.setDividerLocation(200);
@@ -580,11 +586,17 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 	public void showTableDataView(String tabTitle, TableDataView tdv) {
 		showView(tabTitle, tdv);
+		navigation.removeAll();
+		navigation.add(tdv.getNavigationBar(), BorderLayout.CENTER);
 		this.tabbedPane.setSelectedComponent(tdv);
+		showNavigation();
+		SwingUtilities.invokeLater(tdv::requestFocusInWindow);
 	}
 
 	public void showTableListView(String tabTitle, TableListView tlv) {
 		showView(tabTitle, tlv);
+		this.tabbedPane.setSelectedComponent(tlv);
+		SwingUtilities.invokeLater(tlv::requestFocusInWindow);
 	}
 
 	/** The table data or table list takes the first tab, the help stays available behind it. */
@@ -608,12 +620,19 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		this.tabbedPane.setSelectedComponent(helpPane);
 	}
 
+	/** The paging buttons belong to the table data, they are only shown while that tab is in front. */
+	private void showNavigation() {
+		navigation.setVisible(viewTab instanceof TableDataView && tabbedPane.getSelectedComponent() == viewTab);
+		navigation.revalidate();
+	}
+
 	private void closeTab(int index) {
 		if (this.tabbedPane.getComponentAt(index) == viewTab) {
 			viewTab = null;
 		}
 
 		this.tabbedPane.removeTabAt(index);
+		showNavigation();
 	}
 
 	/** Shows what the connection did last at the bottom of its window. */
@@ -825,6 +844,8 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		if (viewTab != null) {
 			this.tabbedPane.remove(viewTab);
 			viewTab = null;
+			navigation.removeAll();
+			showNavigation();
 		}
 	}
 
@@ -854,7 +875,21 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 
 	public void mousePressed(MouseEvent e) {
 	}
+	/** A double click on a database or table opens its tab, a single click only selects. */
 	public void mouseClicked(MouseEvent e) {
+		if (e.getSource() != dtv || e.getClickCount() != 2 || e.isMetaDown()) {
+			return;
+		}
+
+		TreePath path = dtv.getPathForLocation(e.getX(), e.getY());
+
+		if (path != null && path.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
+			if (node.getUserObject() instanceof Database database) {
+				cwcc.openDatabase(database);
+			} else if (node.getUserObject() instanceof Table table) {
+				cwcc.openTable(table);
+			}
+		}
 	}
 	public void mouseEntered(MouseEvent e) {
 		if (e.getSource() == dtv) {

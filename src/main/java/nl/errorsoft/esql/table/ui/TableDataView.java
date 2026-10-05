@@ -51,6 +51,7 @@ public class TableDataView extends JPanel implements ActionListener {
 	private JTextArea cellData; // Contains cell data.
 	private JScrollPane jspText; // ScrollPane for cellData textArea
 
+	private JComponent navigationBar;
 	private JButton btnFirst;
 	private JButton btnPrev;
 	private JButton btnRun;
@@ -229,7 +230,7 @@ public class TableDataView extends JPanel implements ActionListener {
 		jsplit.setOneTouchExpandable(true);
 		jsplit.setTopComponent(jsp);
 		this.add(jsplit, BorderLayout.CENTER);
-		this.add(toolbar, BorderLayout.SOUTH);
+		navigationBar = toolbar;
 
 		// Create TextArea for row data.
 		cellData = new JTextArea();
@@ -489,6 +490,11 @@ public class TableDataView extends JPanel implements ActionListener {
 		tbData.setModel(stm);
 		ColumnWidths.fitToContent(tbData);
 		jsp.getViewport().revalidate();
+	}
+
+	/** The paging buttons with skip, show and total. The window shows them in its own status bar, next to what the connection did last. */
+	public JComponent getNavigationBar() {
+		return navigationBar;
 	}
 
 	public void actionPerformed(ActionEvent e) {

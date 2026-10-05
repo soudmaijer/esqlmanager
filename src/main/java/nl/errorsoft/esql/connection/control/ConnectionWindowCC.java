@@ -236,19 +236,14 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	/*
-	 * @description: updates the tree view with all tables in the selected database.
+	 * @description: shows the tables of the selected database in the tree. The tab with the table list opens on a double click, see openDatabase.
 	 */
 	public void databaseSelected(Database database) {
 		try {
-			// Load tables.
 			jmcc.updateStatus("Loading tables...", true);
 
-			// Show tables in tab.
 			DatabaseCC dbcc = new DatabaseCC(this);
 			Vector tables = dbcc.getTables(database);
-			cwui.showTableListView(database.getName(), dbcc.getTableListView(tables));
-
-			// Show tables in tree.
 			cwui.getDatabaseTreeView().loadTables(database, tables);
 			cwui.databaseSelected();
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
@@ -258,28 +253,42 @@ public class ConnectionWindowCC extends Thread {
 		}
 	}
 
+	/** Double click on a database: opens the table list in a tab and puts that tab in front. */
+	public void openDatabase(Database database) {
+		try {
+			jmcc.updateStatus("Loading tables...", true);
+
+			DatabaseCC dbcc = new DatabaseCC(this);
+			Vector tables = dbcc.getTables(database);
+			cwui.showTableListView(database.getName(), dbcc.getTableListView(tables));
+			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
+			jmcc.showConnectionState();
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Open database", e);
+		}
+	}
+
 	/*
-	 * @description: updates the tree view with all columns in the selected table.
+	 * @description: loads the columns of the selected table in the tree. The data opens on a double click, see openTable.
 	 */
 	public void tableSelected(Table table, boolean addTreeColumns) {
 		try {
-			// 1th Show table data.
-			showTableData(table);
-
-			// 2nd Load tables columns in tree if not already loaded.
 			if (addTreeColumns) {
-				jmcc.updateStatus("Fetching table data...", true);
-				TableCC tbcc = new TableCC(this);
-				TableColumn[] fields = table.getColumns();
+				jmcc.updateStatus("Fetching table columns...", true);
+				TableColumn[] fields = new TableCC(this).getColumns(table);
 				cwui.getDatabaseTreeView().loadTableColumns(table, fields);
 			}
 
-			// 3th enable buttons.
 			cwui.tableSelected();
 			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Table selected", e);
 		}
+	}
+
+	/** Double click on a table: opens its data in a tab and puts that tab in front. */
+	public void openTable(Table table) {
+		showTableData(table);
 	}
 
 	public void fieldSelected() {

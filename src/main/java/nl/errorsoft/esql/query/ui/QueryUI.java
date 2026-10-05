@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.query.ui;
 
+import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
@@ -37,6 +38,8 @@ public class QueryUI extends JDialog implements ActionListener {
 
 	public QueryUI(ConnectionWindowCC cwcc, JFrame parent, ImageLoader imgLoader, java.util.Vector databases, Database d) {
 		super(parent, false);
+		// Esc does not close this window: a work window, Esc belongs to the editor.
+		getRootPane().putClientProperty(EscapeToClose.DISABLED, true);
 
 		// Set vars
 		this.imgLoader = imgLoader;
