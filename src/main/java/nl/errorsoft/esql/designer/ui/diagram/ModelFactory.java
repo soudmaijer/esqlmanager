@@ -6,7 +6,7 @@ import java.util.Map;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedForeignKey;
 import nl.errorsoft.esql.designer.DesignedTable;
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
@@ -40,15 +40,16 @@ public final class ModelFactory {
 
 		for (DesignedTable designed : database.tables()) {
 			for (DesignedForeignKey key : designed.foreignKeys()) {
-				model.addForeignKey(new ForeignKey(tables.get(designed.name()), key.columns(), tables.get(key.referencedTable()), key.referencedColumns(),
-					key.name(), key.onDelete(), key.onUpdate()));
+				model.addForeignKey(
+					new DesignerForeignKey(tables.get(designed.name()), key.columns(), tables.get(key.referencedTable()), key.referencedColumns(),
+						key.name(), key.onDelete(), key.onUpdate()));
 			}
 		}
 		return model;
 	}
 
-	private static Field field(CreateColumn column, DataType[] dataTypes) {
-		Field field = new Field(column.name, dataType(column.type, dataTypes), column.length, column.defaultval, "");
+	private static DesignerColumn field(CreateColumn column, DataType[] dataTypes) {
+		DesignerColumn field = new DesignerColumn(column.name, dataType(column.type, dataTypes), column.length, column.defaultval, "");
 		field.primary = column.primary;
 		field.index = column.index;
 		field.unique = column.unique;

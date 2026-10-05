@@ -6,18 +6,18 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** What the application calls itself: the version from the pom and the commit this build was made from. */
-public class ESQLManager {
-	private static final Logger log = LogManager.getLogger(ESQLManager.class);
+/** Build information of the application: its name, the version from the pom and the commit this build was made from. */
+public class BuildInfo {
+	private static final Logger log = LogManager.getLogger(BuildInfo.class);
 	private static final String NAME = "eSQLManager";
 
 	private final String version;
 	private final String commit;
 
-	public ESQLManager() {
+	public BuildInfo() {
 		Properties build = new Properties();
 
-		try (InputStream in = ESQLManager.class.getResourceAsStream("/build.properties")) {
+		try (InputStream in = BuildInfo.class.getResourceAsStream("/build.properties")) {
 			if (in != null) {
 				build.load(in);
 			}

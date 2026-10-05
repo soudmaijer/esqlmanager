@@ -8,8 +8,9 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public class DesktopUtils {
-	private static final Logger log = LogManager.getLogger(DesktopUtils.class);
+/** Arranges the internal frames on the desktop of the main window (tile, cascade, keep inside) and opens links in the browser. */
+public class DesktopWindows {
+	private static final Logger log = LogManager.getLogger(DesktopWindows.class);
 
 	protected static final int UNUSED_HEIGHT = 0;
 	protected static int nextX; // Next X position

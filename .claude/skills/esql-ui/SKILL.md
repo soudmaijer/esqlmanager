@@ -30,7 +30,7 @@ JOptionPane.showConfirmDialog(window, "Are you sure?");
 ## Rule U2: Layout
 
 **Flag:**
-- A null layout with absolute bounds outside the allowed places: the designer canvas (`DesignerCanvas`, its cards, text inside a `CommentObject`), internal frames placed by `DesktopUtils`, and the splash.
+- A null layout with absolute bounds outside the allowed places: the designer canvas (`DesignerCanvas`, its cards, text inside a `CommentObject`), internal frames placed by `DesktopWindows`, and the splash.
 - A dialog or panel not built with `ui.util.Forms` (12px padding, button row bottom right, titled groups, label/field grid).
 - AWT widgets (`Label`, `Button`, `TextField`) instead of Swing.
 
@@ -64,7 +64,7 @@ JOptionPane.showConfirmDialog(window, "Are you sure?");
 - A context menu built once at start up instead of when it opens, or showing items that do not apply.
 - A popup opened on only one of `mousePressed` / `mouseReleased`, or without `isPopupTrigger()`, or before selecting what is under the cursor.
 - A tree menu item not coming from `TreeMenu.itemsFor(node, dialect)`.
-- An editor (create or edit table, indexes, a similar work area) that is a dialog or separate window instead of a tab implementing `ui.util.EditorTab` (`confirmClose()`, `removeTab` after a successful save).
+- An editor (create or edit table, indexes, a similar work area) that is a dialog or separate window instead of a tab implementing `ui.component.EditorTab` (`confirmClose()`, `removeTab` after a successful save).
 - Esc closing a tab. Esc (`EscapeToClose`) is for dialogs only.
 - A feature opening a separate top level window. Work windows are internal frames on the desktop.
 

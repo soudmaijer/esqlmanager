@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.export.ui.dialog;
+package nl.errorsoft.esql.exporter.ui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -27,8 +27,8 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.export.ExportOptions;
-import nl.errorsoft.esql.export.control.ExportController;
+import nl.errorsoft.esql.exporter.ExportOptions;
+import nl.errorsoft.esql.exporter.control.ExportController;
 import nl.errorsoft.esql.table.TableName;
 import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.table.Table;

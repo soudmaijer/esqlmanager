@@ -30,9 +30,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import nl.errorsoft.esql.connection.ServerType;
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.DataType;
@@ -47,7 +47,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	private final JComboBox<String> cmb_type = new JComboBox<>();
 
 	// Fields
-	private final JList<Field> lst_fields = new JList<>(new DefaultListModel<>());
+	private final JList<DesignerColumn> lst_fields = new JList<>(new DefaultListModel<>());
 	private final JTextField txt_fieldname = new JTextField();
 	private final JComboBox<DataType> cmb_types = new JComboBox<>();
 	private final JTextField txt_length = new JTextField();
@@ -64,17 +64,17 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	private final JCheckBox zerofill = Forms.mnemonic(new JCheckBox(), "&Zerofill");
 
 	private JPanel fieldForm;
-	private Field selField = null;
+	private DesignerColumn selField = null;
 	/** True while the form is filled from a field, so that filling it does not write back. */
 	private boolean loading;
 
-	private final JList<ForeignKey> lst_keys = new JList<>();
+	private final JList<DesignerForeignKey> lst_keys = new JList<>();
 
 	private final TableObject tb;
 
 	// The model keeps its foreign keys in step with renamed and removed fields.
 	private final Model model;
-	private final Map<Field, String> namesBefore = new IdentityHashMap<>();
+	private final Map<DesignerColumn, String> namesBefore = new IdentityHashMap<>();
 
 	public TablePropertiesPanel(TableObject tb, ServerType serverType, Model model) {
 		this.model = model;
@@ -86,10 +86,10 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			addTab("Foreign keys", foreignKeysTab());
 		}
 
-		DefaultListModel<Field> dlm = (DefaultListModel<Field>) lst_fields.getModel();
-		for (Field original : tb.getFields()) {
+		DefaultListModel<DesignerColumn> dlm = (DefaultListModel<DesignerColumn>) lst_fields.getModel();
+		for (DesignerColumn original : tb.getFields()) {
 			// The dialog edits copies, the table gets them on OK.
-			Field copy = original.copy();
+			DesignerColumn copy = original.copy();
 			dlm.addElement(copy);
 			namesBefore.put(copy, original.getName());
 		}
@@ -278,19 +278,19 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	private List<String> fieldNames() {
 		List<String> names = new ArrayList<>();
-		DefaultListModel<Field> fields = fields();
+		DefaultListModel<DesignerColumn> fields = fields();
 		for (int i = 0; i < fields.getSize(); i++) {
 			names.add(fields.get(i).getName());
 		}
 		return names;
 	}
 
-	private DefaultListModel<Field> fields() {
-		return (DefaultListModel<Field>) lst_fields.getModel();
+	private DefaultListModel<DesignerColumn> fields() {
+		return (DefaultListModel<DesignerColumn>) lst_fields.getModel();
 	}
 
 	private void addField() {
-		Field field = new Field(FieldRules.uniqueName("new_field", fieldNames()), cmb_types.getItemAt(0), "", "", "");
+		DesignerColumn field = new DesignerColumn(FieldRules.uniqueName("new_field", fieldNames()), cmb_types.getItemAt(0), "", "", "");
 		fields().addElement(field);
 		lst_fields.setSelectedIndex(fields().getSize() - 1);
 		txt_fieldname.requestFocusInWindow();
@@ -298,11 +298,11 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	}
 
 	private void duplicateField() {
-		Field source = lst_fields.getSelectedValue();
+		DesignerColumn source = lst_fields.getSelectedValue();
 		if (source == null) {
 			return;
 		}
-		Field copy = source.copy();
+		DesignerColumn copy = source.copy();
 		copy.setName(FieldRules.uniqueName(source.getName() + "_copy", fieldNames()));
 		// A copy cannot be a second primary key or auto number.
 		copy.primary = false;
@@ -337,13 +337,13 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		if (at < 0 || to < 0 || to >= fields().getSize()) {
 			return;
 		}
-		Field field = fields().remove(at);
+		DesignerColumn field = fields().remove(at);
 		fields().add(to, field);
 		lst_fields.setSelectedIndex(to);
 	}
 
 	/** Fills the form from a field, or disables it when there is none. */
-	private void showField(Field field) {
+	private void showField(DesignerColumn field) {
 		selField = field;
 		setEnabledDeep(fieldForm, field != null);
 		if (field == null) {
@@ -443,7 +443,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		lst_keys.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int i, boolean selected, boolean focus) {
-				ForeignKey key = (ForeignKey) value;
+				DesignerForeignKey key = (DesignerForeignKey) value;
 				String text = key.name() + ": " + String.join(", ", key.fromColumns()) + " -> " + key.to().getName() + "(" + String.join(", ", key.toColumns())
 					+ ")";
 				return super.getListCellRendererComponent(list, text, i, selected, focus);
@@ -454,7 +454,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		JButton edit = new JButton("Edit...");
 		JButton remove = new JButton("Remove");
 		add.addActionListener(e -> {
-			Field[] f = tb.getFields();
+			DesignerColumn[] f = tb.getFields();
 			String column = f.length == 0 ? "" : f[0].getName();
 			TableObject parent = tb;
 			for (Object object : model.getObjects()) {
@@ -463,17 +463,18 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 					break;
 				}
 			}
-			ForeignKey key = ForeignKeyDialog.edit(this, model, new ForeignKey(tb, column.isEmpty() ? java.util.List.of() : java.util.List.of(column), parent,
-				java.util.List.of(), "", "", ""));
+			DesignerForeignKey key = ForeignKeyDialog.edit(this, model,
+				new DesignerForeignKey(tb, column.isEmpty() ? java.util.List.of() : java.util.List.of(column), parent,
+					java.util.List.of(), "", "", ""));
 			if (key != null) {
 				model.addForeignKey(key);
 			}
 			refreshKeys();
 		});
 		edit.addActionListener(e -> {
-			ForeignKey key = lst_keys.getSelectedValue();
+			DesignerForeignKey key = lst_keys.getSelectedValue();
 			if (key != null) {
-				ForeignKey edited = ForeignKeyDialog.edit(this, model, key);
+				DesignerForeignKey edited = ForeignKeyDialog.edit(this, model, key);
 				if (edited != null) {
 					model.removeForeignKey(key);
 					model.addForeignKey(edited);
@@ -482,7 +483,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			}
 		});
 		remove.addActionListener(e -> {
-			ForeignKey key = lst_keys.getSelectedValue();
+			DesignerForeignKey key = lst_keys.getSelectedValue();
 			if (key != null) {
 				model.removeForeignKey(key);
 				refreshKeys();
@@ -499,8 +500,8 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	}
 
 	private void refreshKeys() {
-		DefaultListModel<ForeignKey> keys = new DefaultListModel<>();
-		for (ForeignKey key : model.foreignKeysOf(tb)) {
+		DefaultListModel<DesignerForeignKey> keys = new DefaultListModel<>();
+		for (DesignerForeignKey key : model.foreignKeysOf(tb)) {
 			if (key.from() == tb) {
 				keys.addElement(key);
 			}
@@ -521,14 +522,14 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			setSelectedIndex(1);
 			return names;
 		}
-		DefaultListModel<Field> fields = fields();
+		DefaultListModel<DesignerColumn> fields = fields();
 		for (int i = 0; i < fields.getSize(); i++) {
-			Field field = fields.get(i);
+			DesignerColumn field = fields.get(i);
 			String length = FieldRules.lengthProblem(field.getType().getName(), field.getLength());
 			if (length != null) {
 				setSelectedIndex(1);
 				lst_fields.setSelectedIndex(i);
-				return "Field '" + field.getName() + "': " + length;
+				return "DesignerColumn '" + field.getName() + "': " + length;
 			}
 		}
 		return null;
@@ -543,7 +544,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 		tb.removeAllFields();
 
-		DefaultListModel<Field> dtm = fields();
+		DefaultListModel<DesignerColumn> dtm = fields();
 		for (int i = 0; i < dtm.getSize(); i++) {
 			tb.addField(dtm.getElementAt(i));
 		}

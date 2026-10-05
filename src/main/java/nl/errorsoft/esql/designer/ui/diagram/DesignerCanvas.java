@@ -41,7 +41,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 public class DesignerCanvas extends JLayeredPane implements MouseListener, MouseMotionListener, ActionListener, AWTEventListener { //	Model for this component
@@ -94,8 +94,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private boolean showGrid = true;
 
 	// The foreign key connector that is selected or under the mouse, and the card under the mouse
-	private ForeignKey selectedKey;
-	private ForeignKey hoveredKey;
+	private DesignerForeignKey selectedKey;
+	private DesignerForeignKey hoveredKey;
 	private ModelObject hoveredObject;
 
 	// A foreign key being dragged from a column row: the table, the column and the mouse in viewer coordinates
@@ -380,14 +380,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			for (Object reference : from.getReferences()) {
 				ModelObject to = (ModelObject) reference;
 				if (!from.isHidden() && !to.isHidden()) {
-					ConnectorRenderer.paintLink(lines, from, to);
+					ConnectorPainter.paintLink(lines, from, to);
 				}
 			}
 		}
 
-		for (ForeignKey key : model.getForeignKeys()) {
+		for (DesignerForeignKey key : model.getForeignKeys()) {
 			if (!key.from().isHidden() && !key.to().isHidden()) {
-				ConnectorRenderer.paint(lines, key, isHighlighted(key));
+				ConnectorPainter.paint(lines, key, isHighlighted(key));
 			}
 		}
 
@@ -403,13 +403,13 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			lines.drawLine(src.getX() + (src.getWidth() / 2), src.getY() + (src.getHeight() / 2), refx, refy);
 		}
 		if (linkFrom != null && linkPoint != null) {
-			ConnectorRenderer.paintGhost(lines, linkFrom, linkColumn, linkPoint);
+			ConnectorPainter.paintGhost(lines, linkFrom, linkColumn, linkPoint);
 		}
 		lines.dispose();
 	}
 
 	/** A connector is drawn in the accent colour when it, or one of its tables, is selected or under the mouse. */
-	private boolean isHighlighted(ForeignKey key) {
+	private boolean isHighlighted(DesignerForeignKey key) {
 		return key == selectedKey || key == hoveredKey || key.from().isSelected() || key.to().isSelected() || key.from() == hoveredObject
 			|| key.to() == hoveredObject;
 	}
@@ -421,10 +421,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	public void addForeignKey(TableObject from, String column, TableObject to, String toColumn) {
 		TableObject parent = to != null ? to : firstOtherTable(from);
 		String parentColumn = toColumn != null ? toColumn : ForeignKeyDialog.primaryColumn(parent);
-		ForeignKey initial = new ForeignKey(from, column.isEmpty() ? List.of() : List.of(column), parent, column.isEmpty() ? List.of() : List.of(parentColumn),
+		DesignerForeignKey initial = new DesignerForeignKey(from, column.isEmpty() ? List.of() : List.of(column), parent,
+			column.isEmpty() ? List.of() : List.of(parentColumn),
 			"",
 			"", "");
-		ForeignKey key = ForeignKeyDialog.edit(this, model, initial);
+		DesignerForeignKey key = ForeignKeyDialog.edit(this, model, initial);
 		if (key != null) {
 			model.addForeignKey(key);
 			selectedKey = key;
@@ -432,11 +433,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		repaint();
 	}
 
-	public void editForeignKey(ForeignKey key) {
+	public void editForeignKey(DesignerForeignKey key) {
 		if (key == null) {
 			return;
 		}
-		ForeignKey edited = ForeignKeyDialog.edit(this, model, key);
+		DesignerForeignKey edited = ForeignKeyDialog.edit(this, model, key);
 		if (edited != null) {
 			model.removeForeignKey(key);
 			model.addForeignKey(edited);
@@ -445,7 +446,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		repaint();
 	}
 
-	public void removeForeignKey(ForeignKey key) {
+	public void removeForeignKey(DesignerForeignKey key) {
 		if (key != null) {
 			model.removeForeignKey(key);
 			if (selectedKey == key) {
@@ -474,7 +475,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	private static String firstColumnOf(TableObject table) {
-		Field[] fields = table.getFields();
+		DesignerColumn[] fields = table.getFields();
 		return fields.length == 0 ? "" : fields[0].getName();
 	}
 
@@ -502,10 +503,10 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	/** The connector under a point of the viewer, the one painted last wins. */
-	private ForeignKey connectorAt(Point point) {
-		List<ForeignKey> keys = model.getForeignKeys();
+	private DesignerForeignKey connectorAt(Point point) {
+		List<DesignerForeignKey> keys = model.getForeignKeys();
 		for (int i = keys.size() - 1; i >= 0; i--) {
-			if (ConnectorRenderer.hit(keys.get(i), point)) {
+			if (ConnectorPainter.hit(keys.get(i), point)) {
 				return keys.get(i);
 			}
 		}
@@ -531,7 +532,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	/** Columns that are part of a foreign key get the link icon in their table. */
 	private void markForeignKeyColumns() {
 		java.util.Map<TableObject, java.util.Set<String>> columns = new java.util.HashMap<>();
-		for (nl.errorsoft.esql.designer.model.ForeignKey key : model.getForeignKeys()) {
+		for (nl.errorsoft.esql.designer.model.DesignerForeignKey key : model.getForeignKeys()) {
 			columns.computeIfAbsent(key.from(), table -> new java.util.HashSet<>()).addAll(key.fromColumns());
 		}
 		for (Object object : model.getObjects()) {
@@ -894,7 +895,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return menu;
 	}
 
-	JPopupMenu connectorMenu(ForeignKey key) {
+	JPopupMenu connectorMenu(DesignerForeignKey key) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Edit Foreign Key...", "des_properties", () -> editForeignKey(key)));
 		menu.add(item("Remove Foreign Key", null, () -> removeForeignKey(key)));
@@ -985,7 +986,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public void mouseMoved(MouseEvent e) {
 		if (e.getSource() == this) {
-			ForeignKey key = connectorAt(e.getPoint());
+			DesignerForeignKey key = connectorAt(e.getPoint());
 			if (key != hoveredKey) {
 				hoveredKey = key;
 				setToolTipText(key == null ? null : key.name());

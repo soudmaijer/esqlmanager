@@ -9,7 +9,7 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.CreateTableController;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
-import nl.errorsoft.esql.ui.util.EditorTab;
+import nl.errorsoft.esql.ui.component.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
 
 import java.awt.BorderLayout;

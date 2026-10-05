@@ -1,8 +1,7 @@
-package nl.errorsoft.esql;
+package nl.errorsoft.esql.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import nl.errorsoft.esql.user.PrivilegeGroup;
 import org.junit.jupiter.api.Test;
 
 class PrivilegeGroupTest {

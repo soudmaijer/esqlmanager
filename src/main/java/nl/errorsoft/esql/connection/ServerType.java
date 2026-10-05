@@ -2,7 +2,7 @@ package nl.errorsoft.esql.connection;
 
 import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.dialect.Dialects;
+import nl.errorsoft.esql.dialect.DialectFactory;
 
 import nl.errorsoft.esql.table.DataType;
 
@@ -79,7 +79,7 @@ public class ServerType {
 	}
 
 	public Dialect getDialect() {
-		return Dialects.forType(type);
+		return DialectFactory.forType(type);
 	}
 
 	/** The name of this server's brand icon in the {@code ImageLoader}, the only place that maps a server type to an icon. */

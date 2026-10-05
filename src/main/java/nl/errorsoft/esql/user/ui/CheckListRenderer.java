@@ -2,13 +2,13 @@ package nl.errorsoft.esql.user.ui;
 import java.awt.*;
 import javax.swing.*;
 
-public class CheckListRenderer extends JCheckBox implements ListCellRenderer<CheckableItem> {
+public class CheckListRenderer extends JCheckBox implements ListCellRenderer<CheckListItem> {
 	public CheckListRenderer() {
 		setBackground(UIManager.getColor("List.textBackground"));
 		setForeground(UIManager.getColor("List.textForeground"));
 	}
 
-	public Component getListCellRendererComponent(JList<? extends CheckableItem> list, CheckableItem value, int index, boolean isSelected, boolean hasFocus) {
+	public Component getListCellRendererComponent(JList<? extends CheckListItem> list, CheckListItem value, int index, boolean isSelected, boolean hasFocus) {
 		setEnabled(list.isEnabled());
 		this.setSelected(value.isSelected());
 		if (isSelected) {

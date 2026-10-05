@@ -19,7 +19,7 @@ import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.query.ui.QueryTab;
 import nl.errorsoft.esql.help.ui.HelpPanel;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
-import nl.errorsoft.esql.ui.util.EditorTab;
+import nl.errorsoft.esql.ui.component.EditorTab;
 
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;

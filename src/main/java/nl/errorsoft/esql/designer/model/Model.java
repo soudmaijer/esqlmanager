@@ -2,7 +2,7 @@ package nl.errorsoft.esql.designer.model;
 
 import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 
@@ -15,7 +15,7 @@ public class Model implements MouseListener, MouseMotionListener {
 	private String comment = "";
 	private String author = "";
 	private final List<ModelObject> modelobjects = new ArrayList<>();
-	private final List<ForeignKey> foreignKeys = new ArrayList<>();
+	private final List<DesignerForeignKey> foreignKeys = new ArrayList<>();
 	private boolean locked = false;
 	private int identifier = 1;
 	private File file = null;
@@ -92,24 +92,24 @@ public class Model implements MouseListener, MouseMotionListener {
 	}
 
 	/** Adds a foreign key between two tables, a key with the same name on the same table is replaced. */
-	public void addForeignKey(ForeignKey key) {
+	public void addForeignKey(DesignerForeignKey key) {
 		foreignKeys.removeIf(existing -> existing.from() == key.from() && existing.name().equals(key.name()));
 		foreignKeys.add(key);
 	}
 
-	public void removeForeignKey(ForeignKey key) {
+	public void removeForeignKey(DesignerForeignKey key) {
 		foreignKeys.remove(key);
 	}
 
-	public List<ForeignKey> getForeignKeys() {
+	public List<DesignerForeignKey> getForeignKeys() {
 		return Collections.unmodifiableList(foreignKeys);
 	}
 
 	/** The keys the table has on other tables and the keys other tables have on it. */
-	public List<ForeignKey> foreignKeysOf(TableObject table) {
-		List<ForeignKey> keys = new ArrayList<>();
+	public List<DesignerForeignKey> foreignKeysOf(TableObject table) {
+		List<DesignerForeignKey> keys = new ArrayList<>();
 
-		for (ForeignKey key : foreignKeys) {
+		for (DesignerForeignKey key : foreignKeys) {
 			if (key.involves(table)) {
 				keys.add(key);
 			}
@@ -131,11 +131,11 @@ public class Model implements MouseListener, MouseMotionListener {
 	 * Updates the foreign keys after the fields of a table were edited.
 	 * @param namesBefore every field the table had before the edit, with the name it had then.
 	 */
-	public void fieldsEdited(TableObject table, Map<Field, String> namesBefore) {
-		List<Field> now = Arrays.asList(table.getFields());
+	public void fieldsEdited(TableObject table, Map<DesignerColumn, String> namesBefore) {
+		List<DesignerColumn> now = Arrays.asList(table.getFields());
 		Map<String, String> renames = new HashMap<>();
 
-		for (Map.Entry<Field, String> before : namesBefore.entrySet()) {
+		for (Map.Entry<DesignerColumn, String> before : namesBefore.entrySet()) {
 			if (!now.contains(before.getKey())) {
 				fieldRemoved(table, before.getValue());
 			} else if (!before.getValue().equals(before.getKey().getName())) {

@@ -7,7 +7,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.query.ui.UndoHandler;
+import nl.errorsoft.esql.query.ui.UndoListener;
 import nl.errorsoft.esql.ui.table.ColumnWidths;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
 import nl.errorsoft.esql.ui.table.HeaderListener;
@@ -324,7 +324,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 			// Listener for edits on a document.
 			ndo = new UndoManager();
-			undoHandler = new UndoHandler(ndo);
+			undoHandler = new UndoListener(ndo);
 			cellData.getDocument().addUndoableEditListener(undoHandler);
 		} else {
 			btnUpdateRowData.setEnabled(false);

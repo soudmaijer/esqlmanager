@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.ui.util;
+package nl.errorsoft.esql.ui.component;
 
 import java.awt.BorderLayout;
 import java.awt.Component;

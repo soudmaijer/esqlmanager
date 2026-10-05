@@ -13,12 +13,12 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
  * scratch connection from the typed settings and moves it to a database to list its schemas (PostgreSQL needs a connection per database). Not thread
  * safe: use it from one thread at a time, and close it when done.
  */
-public class DatabaseCatalog implements AutoCloseable {
+public class DatabaseLister implements AutoCloseable {
 	private final ConnectionProfile profile;
 	private final DatabaseConnection connection = new DatabaseConnection();
 	private DatabaseRepository repository;
 
-	public DatabaseCatalog(ConnectionProfile profile) {
+	public DatabaseLister(ConnectionProfile profile) {
 		this.profile = profile;
 	}
 

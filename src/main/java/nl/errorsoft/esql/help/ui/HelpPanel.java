@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.help.ui;
 
 import nl.errorsoft.esql.help.HelpPages;
-import nl.errorsoft.esql.ui.util.DesktopUtils;
+import nl.errorsoft.esql.ui.util.DesktopWindows;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +63,7 @@ public class HelpPanel extends JEditorPane {
 	private void follow(String href) {
 		switch (HelpPages.resolve(href)) {
 			case HelpPages.Link.Page page -> show(page.name());
-			case HelpPages.Link.Web web -> DesktopUtils.openInBrowser(web.uri());
+			case HelpPages.Link.Web web -> DesktopWindows.openInBrowser(web.uri());
 			case HelpPages.Link.Ignored ignored -> log.debug("Link not followed: {}", ignored.href());
 		}
 	}

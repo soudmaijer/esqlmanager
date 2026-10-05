@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.export;
+package nl.errorsoft.esql.exporter;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;

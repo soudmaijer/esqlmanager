@@ -4,6 +4,6 @@ import java.util.List;
 
 import nl.errorsoft.esql.table.CreateColumn;
 
-/** A table as drawn in the designer, ready to be created. */
+/** Input of the generation: a table as drawn in the designer, ready to be created. */
 public record DesignedTable(String name, String type, String comment, List<CreateColumn> columns, List<DesignedForeignKey> foreignKeys) {
 }

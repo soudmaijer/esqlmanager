@@ -1,4 +1,4 @@
-package nl.errorsoft.esql;
+package nl.errorsoft.esql.table;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import nl.errorsoft.esql.table.ColumnNames;
 import org.junit.jupiter.api.Test;
 
 class ColumnNamesTest {

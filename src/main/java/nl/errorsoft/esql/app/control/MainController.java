@@ -7,7 +7,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.control.ConnectionProfileController;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.control.DatabaseDriverController;
-import nl.errorsoft.esql.export.control.ExportController;
+import nl.errorsoft.esql.exporter.control.ExportController;
 import nl.errorsoft.esql.importer.control.ImportController;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.app.ESQLManager;
+import nl.errorsoft.esql.app.BuildInfo;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.ui.util.EscapeToClose;
@@ -33,7 +33,7 @@ import nl.errorsoft.esql.app.ui.SplashWindow;
 public class MainController {
 	private static final Logger log = LogManager.getLogger(MainController.class);
 
-	private ESQLManager application;
+	private BuildInfo buildInfo;
 	private MainWindow mainWindow;
 
 	public MainController() {
@@ -43,9 +43,9 @@ public class MainController {
 		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> ApplicationContext.get().errors().report("Unexpected error", error));
 
 		// Start domein class.
-		application = new ESQLManager();
+		buildInfo = new BuildInfo();
 
-		// Show ESQLManager Window.
+		// Show eSQLManager Window.
 		mainWindow = new MainWindow(this);
 		OutputPanelAppender.install(mainWindow);
 		log.info("{} starting on Java {} ({}), {} {}", getTitle(), System.getProperty("java.version"), System.getProperty("java.vendor"),
@@ -67,8 +67,8 @@ public class MainController {
 	}
 
 	/**
-	 *		Use-case: 	show ESQLManager splash screen
-	 *		Requires: 	ESQLManager UI use-case
+	 *		Use-case: 	show eSQLManager splash screen
+	 *		Requires: 	eSQLManager UI use-case
 	 */
 	public void showSplashScreen(int time) {
 		// Show a new Splash screen UI.
@@ -153,15 +153,15 @@ public class MainController {
 	}
 
 	public String getAppName() {
-		return application.getAppName();
+		return buildInfo.getAppName();
 	}
 
 	public String getAppVersion() {
-		return application.getAppVersion();
+		return buildInfo.getAppVersion();
 	}
 
 	public String getAppCommit() {
-		return application.getAppCommit();
+		return buildInfo.getAppCommit();
 	}
 
 }

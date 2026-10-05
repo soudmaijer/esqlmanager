@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 import nl.errorsoft.esql.table.DataType;
@@ -91,7 +91,7 @@ final class ModelXml {
 		element.addContent(bounds(tb));
 
 		Element fields = new Element("fields");
-		for (Field fd : tb.getFields()) {
+		for (DesignerColumn fd : tb.getFields()) {
 			Element field = new Element("field");
 			field.addContent(text("name", fd.getName()));
 			field.addContent(text("comment", fd.getComment()));
@@ -122,7 +122,7 @@ final class ModelXml {
 
 	private static Element foreignKeys(Model model) {
 		Element keys = new Element("foreignkeys");
-		for (ForeignKey key : model.getForeignKeys()) {
+		for (DesignerForeignKey key : model.getForeignKeys()) {
 			Element element = new Element("foreignkey");
 			element.addContent(text("name", key.name()));
 			element.addContent(text("from_identifier", key.from().getIdentifier()));
@@ -194,7 +194,7 @@ final class ModelXml {
 
 			for (Element fd : children(tb, "fields", "field")) {
 				DataType type = new DataType(text(fd, "type", ""), false, false, false, false, false, false, false, false);
-				Field f = new Field(text(fd, "name", ""), type, text(fd, "length", ""), text(fd, "default", ""), text(fd, "comment", ""));
+				DesignerColumn f = new DesignerColumn(text(fd, "name", ""), type, text(fd, "length", ""), text(fd, "default", ""), text(fd, "comment", ""));
 				f.primary = flag(fd, "primary");
 				f.autoincrement = flag(fd, "autoincrement");
 				f.binary = flag(fd, "binary");
@@ -242,7 +242,7 @@ final class ModelXml {
 				toColumns.add(column.getAttributeValue("to", ""));
 			}
 
-			model.addForeignKey(new ForeignKey(fromTable, fromColumns, toTable, toColumns, text(fk, "name", ""),
+			model.addForeignKey(new DesignerForeignKey(fromTable, fromColumns, toTable, toColumns, text(fk, "name", ""),
 				text(fk, "on_delete", ""), text(fk, "on_update", "")));
 		}
 	}

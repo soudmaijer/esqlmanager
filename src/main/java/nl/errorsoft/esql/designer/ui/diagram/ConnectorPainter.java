@@ -13,14 +13,14 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 
 /**
  * Draws the relations of the designer. A foreign key is an orthogonal connector from the row of its column in the child table to the row of the referenced
  * column in the parent, with a crow's foot at the child (many) and a double bar at the parent (exactly one). Links between a database or a note and another
  * object are dashed curves.
  */
-public final class ConnectorRenderer {
+public final class ConnectorPainter {
 	/** How far a connector leaves a card before it turns. */
 	private static final int STUB = 24;
 	private static final int CORNER = 8;
@@ -28,7 +28,7 @@ public final class ConnectorRenderer {
 	private static final int SPREAD = 6;
 	private static final float HIT_WIDTH = 8f;
 
-	private ConnectorRenderer() {
+	private ConnectorPainter() {
 	}
 
 	/**
@@ -39,7 +39,7 @@ public final class ConnectorRenderer {
 	record Route(List<Point2D> points, int startOut, int endOut) {
 	}
 
-	static Route route(ForeignKey key) {
+	static Route route(DesignerForeignKey key) {
 		Rectangle from = key.from().cardBounds();
 		Rectangle to = key.to().cardBounds();
 		int fromY = key.from().rowAnchorY(key.fromColumns().getFirst());
@@ -101,7 +101,7 @@ public final class ConnectorRenderer {
 		return path;
 	}
 
-	public static void paint(Graphics2D g2, ForeignKey key, boolean highlighted) {
+	public static void paint(Graphics2D g2, DesignerForeignKey key, boolean highlighted) {
 		paint(g2, route(key), highlighted);
 	}
 
@@ -144,7 +144,7 @@ public final class ConnectorRenderer {
 	}
 
 	/** Whether a point (in viewer coordinates) is on the connector or close to it. */
-	public static boolean hit(ForeignKey key, Point point) {
+	public static boolean hit(DesignerForeignKey key, Point point) {
 		return new BasicStroke(HIT_WIDTH).createStrokedShape(path(route(key))).contains(point);
 	}
 

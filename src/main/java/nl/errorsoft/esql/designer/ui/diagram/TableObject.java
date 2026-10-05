@@ -25,7 +25,7 @@ public class TableObject extends ModelObject {
 
 	private String name;
 	private String description = "";
-	private final List<Field> fields = new ArrayList<>();
+	private final List<DesignerColumn> fields = new ArrayList<>();
 	private String type = "InnoDB";
 	private String comment = "";
 
@@ -115,7 +115,7 @@ public class TableObject extends ModelObject {
 		g2.clip(shape);
 
 		for (int i = 0; i < fields.size(); i++) {
-			Field field = (Field) fields.get(i);
+			DesignerColumn field = (DesignerColumn) fields.get(i);
 			int top = card.y + HEADER + i * ROW;
 
 			if (i == hoveredRow) {
@@ -139,7 +139,7 @@ public class TableObject extends ModelObject {
 		g2.setClip(clip);
 	}
 
-	private String iconName(Field field) {
+	private String iconName(DesignerColumn field) {
 		if (field.primary) {
 			return "keyimg";
 		}
@@ -147,7 +147,7 @@ public class TableObject extends ModelObject {
 	}
 
 	/** The type as the card shows it, lower case with the length: varchar(100). */
-	public static String typeText(Field field) {
+	public static String typeText(DesignerColumn field) {
 		String length = field.getLength() == null ? "" : field.getLength().trim();
 		String typeName = field.getType() == null ? "" : field.getType().getName().toLowerCase();
 		return length.isEmpty() ? typeName : typeName + "(" + length + ")";
@@ -159,7 +159,7 @@ public class TableObject extends ModelObject {
 		return typesShown && type != null ? type : "";
 	}
 
-	public void addField(Field f) {
+	public void addField(DesignerColumn f) {
 		this.fields.add(f);
 		this.reviewSize();
 		this.repaint();
@@ -174,7 +174,7 @@ public class TableObject extends ModelObject {
 		int width = PAD + 22 + bold.stringWidth(name) + (engine.isEmpty() ? 0 : 16 + small.stringWidth(engine)) + PAD;
 
 		for (int i = 0; i < fields.size(); i++) {
-			Field field = (Field) fields.get(i);
+			DesignerColumn field = (DesignerColumn) fields.get(i);
 			width = Math.max(width, PAD + 22 + plain.stringWidth(field.getName()) + 24 + plain.stringWidth(typeText(field)) + PAD);
 		}
 
@@ -196,7 +196,7 @@ public class TableObject extends ModelObject {
 	public int rowAnchorY(String column) {
 		Rectangle card = cardBounds();
 		for (int i = 0; i < fields.size(); i++) {
-			if (((Field) fields.get(i)).getName().equals(column)) {
+			if (((DesignerColumn) fields.get(i)).getName().equals(column)) {
 				return card.y + HEADER + i * ROW + ROW / 2;
 			}
 		}
@@ -218,16 +218,16 @@ public class TableObject extends ModelObject {
 		}
 	}
 
-	public Field[] getFields() {
-		Field[] f = new Field[fields.size()];
+	public DesignerColumn[] getFields() {
+		DesignerColumn[] f = new DesignerColumn[fields.size()];
 		for (int i = 0; i < fields.size(); i++) {
-			f[i] = (Field) fields.get(i);
+			f[i] = (DesignerColumn) fields.get(i);
 		}
 		return f;
 	}
 
-	public Field getField(String name) {
-		for (Field field : getFields()) {
+	public DesignerColumn getField(String name) {
+		for (DesignerColumn field : getFields()) {
 			if (field.getName().equals(name)) {
 				return field;
 			}

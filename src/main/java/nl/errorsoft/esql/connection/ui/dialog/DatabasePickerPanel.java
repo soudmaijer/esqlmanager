@@ -28,7 +28,7 @@ import javax.swing.tree.TreePath;
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.ui.util.CheckBoxTree;
+import nl.errorsoft.esql.ui.component.CheckBoxTree;
 import nl.errorsoft.esql.ui.util.Forms;
 
 /**

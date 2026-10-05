@@ -20,7 +20,7 @@ Orchestrator that delegates review to `code-reviewer` agents. It never edits fil
 
 2. **Group by feature package**
 
-   Group files by the feature package below `nl/errorsoft/esql/` (`table`, `database`, `designer`, `query`, `connection`, `export`/`importer`, `user`, `server`, `app`/`settings`, shared `ui`/`jdbc`/`dialect`/`error`/`job`). Split a group with more than about 15 files. Fewer than 15 files in total: one agent.
+   Group files by the feature package below `nl/errorsoft/esql/` (`table`, `database`, `designer`, `query`, `connection`, `exporter`/`importer`, `user`, `server`, `app`/`settings`, shared `ui`/`jdbc`/`dialect`/`error`/`job`). Split a group with more than about 15 files. Fewer than 15 files in total: one agent.
 
 3. **Spawn `code-reviewer` agents in parallel** (several Agent calls in one message), each with:
 

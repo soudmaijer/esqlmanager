@@ -7,7 +7,7 @@ import nl.errorsoft.esql.dialect.sqlserver.SqlServerDialect;
 
 import nl.errorsoft.esql.connection.ServerType;
 
-public class Dialects {
+public class DialectFactory {
 	private static final Dialect MY_SQL = new MySqlDialect();
 	private static final Dialect POSTGRES = new PostgresDialect();
 	private static final Dialect SQL_SERVER = new SqlServerDialect();

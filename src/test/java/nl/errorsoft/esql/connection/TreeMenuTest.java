@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 import nl.errorsoft.esql.connection.TreeMenu.Item;
 import nl.errorsoft.esql.connection.TreeMenu.Node;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.dialect.Dialects;
+import nl.errorsoft.esql.dialect.DialectFactory;
 
 class TreeMenuTest {
-	private static final Dialect MY_SQL = Dialects.forType(ServerType.MY_SQL);
-	private static final Dialect POSTGRES = Dialects.forType(ServerType.POSTGRES);
-	private static final Dialect SQL_SERVER = Dialects.forType(ServerType.MS_SQL_SERVER);
+	private static final Dialect MY_SQL = DialectFactory.forType(ServerType.MY_SQL);
+	private static final Dialect POSTGRES = DialectFactory.forType(ServerType.POSTGRES);
+	private static final Dialect SQL_SERVER = DialectFactory.forType(ServerType.MS_SQL_SERVER);
 
 	@Test
 	void mySqlTableMenuHasEveryMaintenanceCommand() {
@@ -89,7 +89,7 @@ class TreeMenuTest {
 
 	@Test
 	void noMenuStartsOrEndsWithASeparatorOrHasTwoInARow() {
-		for (Dialect dialect : List.of(MY_SQL, POSTGRES, SQL_SERVER, Dialects.forType(ServerType.ORACLE))) {
+		for (Dialect dialect : List.of(MY_SQL, POSTGRES, SQL_SERVER, DialectFactory.forType(ServerType.ORACLE))) {
 			for (Node node : Node.values()) {
 				List<Item> items = TreeMenu.itemsFor(node, dialect);
 				assertFalse(items.isEmpty());

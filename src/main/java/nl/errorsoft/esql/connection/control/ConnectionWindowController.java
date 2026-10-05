@@ -634,7 +634,7 @@ public class ConnectionWindowController extends Thread {
 	/** Export and import of this connection, the same windows as in the Tools menu. */
 	public void showExportDialog() {
 		if (requireFeature(Dialect.Feature.EXPORT, "Export")) {
-			new nl.errorsoft.esql.export.control.ExportController(mainController).startExport(this);
+			new nl.errorsoft.esql.exporter.control.ExportController(mainController).startExport(this);
 		}
 	}
 

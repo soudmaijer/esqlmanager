@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.error.EsqlException;
 import org.junit.jupiter.api.Test;
 
-class ForeignKeyTest {
+class DesignerForeignKeyTest {
 	private final Model model = new Model("shop");
 	private final TableObject customers = table("customers", "id", "INT", "name", "VARCHAR");
 	private final TableObject orders = table("orders", "id", "INT", "customer_id", "BIGINT");
@@ -46,17 +46,17 @@ class ForeignKeyTest {
 
 	@Test
 	void defaultNameIsTableAndColumn() {
-		assertEquals("fk_orders_customer_id", ForeignKey.defaultName(orders, "customer_id"));
+		assertEquals("fk_orders_customer_id", DesignerForeignKey.defaultName(orders, "customer_id"));
 	}
 
-	private ForeignKey key(List<String> from, List<String> to, String onDelete) {
-		return new ForeignKey(orders, from, customers, to, "fk_orders_customer_id", onDelete, "");
+	private DesignerForeignKey key(List<String> from, List<String> to, String onDelete) {
+		return new DesignerForeignKey(orders, from, customers, to, "fk_orders_customer_id", onDelete, "");
 	}
 
 	private TableObject table(String name, String... columns) {
 		TableObject table = model.createTableObject(name);
 		for (int i = 0; i < columns.length; i += 2) {
-			Field field = new Field(columns[i], new DataType(columns[i + 1], true, true, true, false, true, true, true, false), "", "", "");
+			DesignerColumn field = new DesignerColumn(columns[i], new DataType(columns[i + 1], true, true, true, false, true, true, true, false), "", "", "");
 			field.primary = i == 0;
 			table.addField(field);
 		}

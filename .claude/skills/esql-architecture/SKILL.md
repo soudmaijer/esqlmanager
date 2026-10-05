@@ -159,7 +159,7 @@ This is the naming standard. New and renamed classes must follow it. Existing cl
 
 ### N2: Static-only helpers are a plural noun
 
-`Forms`, `Encodings`. Never `Util` / `Utils` / `Helper`.
+`Forms`, `Encodings`, `Validation`, `DesktopWindows`. Never `Util` / `Utils` / `Helper`.
 
 ### N3: Interfaces have no `I` prefix or `IF` / `Interface` suffix
 
@@ -172,7 +172,7 @@ Name them by role (`ProgressListener`, `EditorTab`).
 - `<feature>.ui`: `Window`, `Tab`, `Panel`, `Renderer`, `Listener`.
 - `<feature>.ui.dialog`: every `Dialog`.
 - Shared Swing: `ui.dialog`, `ui.table`, `ui.icon`, `ui.component`.
-- Export and import are a pair: `export` / `importer`.
+- Export and import are a pair: `exporter` / `importer`.
 
 ### N5: No abbreviations
 
@@ -193,3 +193,16 @@ class TableController { }
 class ForeignKeyUI { }
 class TableController { }
 ```
+
+## Current deviations (open on purpose)
+
+Known layer and naming problems that are not fixed yet. Do not report them again as new findings, fix them one feature at a time.
+
+- `settings.Appearance` mixes an enum with look-and-feel (Swing/FlatLaf) code.
+- `designer.model.Model` and `ModelXml` import Swing/AWT classes (they hold canvas objects such as `TableObject`).
+- Controllers import `javax.swing` components directly.
+- Services refer to `jdbc.DatabaseConnection`.
+- `database.DatabaseLister` runs JDBC itself outside a repository.
+- Some dialogs extend `JDialog` directly instead of `ui.dialog.FormDialog`.
+- `app.ui.CreditsPanel` extends `java.awt.Canvas` (an AWT widget).
+- `ui.util.DesktopWindows` also holds `openInBrowser`, which is not about the desktop.

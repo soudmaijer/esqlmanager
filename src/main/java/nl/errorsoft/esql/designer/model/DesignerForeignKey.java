@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.dialect.Dialect;
@@ -13,8 +13,9 @@ import nl.errorsoft.esql.dialect.Dialect;
  * A foreign key drawn in the designer: the columns of {@code from} refer to the columns of {@code to}, pair by pair.
  * The actions are NO ACTION, CASCADE, SET NULL, RESTRICT or SET DEFAULT, empty for the server default.
  */
-public record ForeignKey(TableObject from, List<String> fromColumns, TableObject to, List<String> toColumns, String name, String onDelete, String onUpdate) {
-	public ForeignKey {
+public record DesignerForeignKey(TableObject from, List<String> fromColumns, TableObject to, List<String> toColumns, String name, String onDelete,
+	String onUpdate) {
+	public DesignerForeignKey {
 		fromColumns = List.copyOf(fromColumns);
 		toColumns = List.copyOf(toColumns);
 	}
@@ -39,8 +40,8 @@ public record ForeignKey(TableObject from, List<String> fromColumns, TableObject
 			throw new EsqlException("A foreign key needs at least one pair of columns.");
 		}
 		for (int i = 0; i < fromColumns.size(); i++) {
-			Field column = field(from, fromColumns.get(i));
-			Field referenced = field(to, toColumns.get(i));
+			DesignerColumn column = field(from, fromColumns.get(i));
+			DesignerColumn referenced = field(to, toColumns.get(i));
 			if (!compatible(column, referenced)) {
 				throw new EsqlException("Column " + from.getName() + "." + column.getName() + " (" + column.getType() + ") can't refer to " + to.getName() + "."
 					+ referenced.getName() + " (" + referenced.getType() + "), the types differ.");
@@ -53,8 +54,8 @@ public record ForeignKey(TableObject from, List<String> fromColumns, TableObject
 		}
 	}
 
-	private static Field field(TableObject table, String column) {
-		Field field = column == null ? null : table.getField(column);
+	private static DesignerColumn field(TableObject table, String column) {
+		DesignerColumn field = column == null ? null : table.getField(column);
 		if (field == null) {
 			throw new EsqlException("Table " + table.getName() + " has no column '" + (column == null ? "" : column) + "'.");
 		}
@@ -62,7 +63,7 @@ public record ForeignKey(TableObject from, List<String> fromColumns, TableObject
 	}
 
 	/** The same type, or two types of the same kind (whole numbers, text, decimals): an int may refer to a bigint, a varchar to a char. */
-	static boolean compatible(Field a, Field b) {
+	static boolean compatible(DesignerColumn a, DesignerColumn b) {
 		String typeA = a.getType() == null ? "" : a.getType().getName().toUpperCase();
 		String typeB = b.getType() == null ? "" : b.getType().getName().toUpperCase();
 		return typeA.equals(typeB) || (!kind(typeA).isEmpty() && kind(typeA).equals(kind(typeB)));
@@ -86,8 +87,9 @@ public record ForeignKey(TableObject from, List<String> fromColumns, TableObject
 	}
 
 	/** This key with the columns of the given table renamed (old name to new name), all at once so that swapped names stay right. */
-	ForeignKey withColumnsRenamed(TableObject table, Map<String, String> renames) {
-		return new ForeignKey(from, from == table ? replace(fromColumns, renames) : fromColumns, to, to == table ? replace(toColumns, renames) : toColumns,
+	DesignerForeignKey withColumnsRenamed(TableObject table, Map<String, String> renames) {
+		return new DesignerForeignKey(from, from == table ? replace(fromColumns, renames) : fromColumns, to,
+			to == table ? replace(toColumns, renames) : toColumns,
 			name, onDelete, onUpdate);
 	}
 

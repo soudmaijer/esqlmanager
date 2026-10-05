@@ -13,7 +13,7 @@ import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.connection.ui.ServerIconRenderer;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
-import nl.errorsoft.esql.ui.util.DesktopUtils;
+import nl.errorsoft.esql.ui.util.DesktopWindows;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.icon.StatusLight;
 
@@ -31,7 +31,7 @@ import javax.swing.*;
 public class MainWindow extends JFrame implements ActionListener {
 	private static final Logger log = LogManager.getLogger(MainWindow.class);
 
-	// Control class for ESQLManager UI, manages all use-cases actions.
+	// Control class for BuildInfo UI, manages all use-cases actions.
 	private MainController mainController;
 	private static final int MAX_OUTPUT_CHARS = 200000;
 	private JPanel outputPanel;
@@ -286,7 +286,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		jdp.addComponentListener(new java.awt.event.ComponentAdapter() {
 			@Override
 			public void componentResized(java.awt.event.ComponentEvent e) {
-				DesktopUtils.keepFramesInside(jdp);
+				DesktopWindows.keepFramesInside(jdp);
 			}
 		});
 
@@ -512,11 +512,11 @@ public class MainWindow extends JFrame implements ActionListener {
 				connectionWindow.closeWindow(true);
 			}
 		} else if (object == mnuTileVertical || object == btnTileVertical) {
-			DesktopUtils.tileVertical(jdp);
+			DesktopWindows.tileVertical(jdp);
 		} else if (object == mnuTileHorizontal || object == btnTileHorizontal) {
-			DesktopUtils.tileHorizontal(jdp);
+			DesktopWindows.tileHorizontal(jdp);
 		} else if (object == mnuTileCascade || object == btnCascade) {
-			DesktopUtils.cascadeAll(jdp);
+			DesktopWindows.cascadeAll(jdp);
 		} else if (object == mnuAbout) {
 			new AboutDialog(this, mainController.getAppName(), mainController.getAppVersion(), mainController.getAppCommit(),
 				() -> mainController.showSplashScreen(0)).showDialog();

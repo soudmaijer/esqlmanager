@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.errorsoft.esql.designer.layout.AutoLayout;
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 /** Moves the cards of a model to the places {@link AutoLayout} gives them: the databases in a row at the top, the tables below. */
@@ -36,7 +36,7 @@ public final class ModelArranger {
 		}
 
 		List<AutoLayout.Edge> edges = new ArrayList<>();
-		for (ForeignKey key : model.getForeignKeys()) {
+		for (DesignerForeignKey key : model.getForeignKeys()) {
 			edges.add(new AutoLayout.Edge(String.valueOf(key.from().getIdentifier()), String.valueOf(key.to().getIdentifier())));
 		}
 

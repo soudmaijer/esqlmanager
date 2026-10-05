@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 
 import java.awt.BorderLayout;
@@ -27,7 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.dialog.FormDialog;
@@ -48,10 +48,10 @@ public class ForeignKeyDialog extends FormDialog {
 	private final JLabel referencedHint = hint(" ");
 
 	private String suggestedName;
-	private ForeignKey result;
-	private ForeignKey candidate;
+	private DesignerForeignKey result;
+	private DesignerForeignKey candidate;
 
-	private ForeignKeyDialog(Window owner, Model model, ForeignKey initial) {
+	private ForeignKeyDialog(Window owner, Model model, DesignerForeignKey initial) {
 		super(owner, initial.name().isEmpty() ? "Add foreign key" : "Edit foreign key", true);
 		this.from = initial.from();
 
@@ -76,7 +76,7 @@ public class ForeignKeyDialog extends FormDialog {
 			pairs.addRow(new Object[]{firstColumn(from), primaryColumn(initial.to())});
 		}
 
-		suggestedName = ForeignKey.defaultName(from, String.valueOf(pairs.getValueAt(0, 0)));
+		suggestedName = DesignerForeignKey.defaultName(from, String.valueOf(pairs.getValueAt(0, 0)));
 		name.setText(initial.name().isEmpty() ? suggestedName : initial.name());
 		onDelete.setSelectedItem(initial.onDelete() == null ? "" : initial.onDelete());
 		onUpdate.setSelectedItem(initial.onUpdate() == null ? "" : initial.onUpdate());
@@ -104,7 +104,7 @@ public class ForeignKeyDialog extends FormDialog {
 	 * Shows the dialog and returns the key as it was edited, or null when the user cancels. A key that is not valid is reported and the dialog stays open.
 	 * @param initial the key to edit; a new key has an empty name and the columns that were dragged (or none).
 	 */
-	public static ForeignKey edit(Component parent, Model model, ForeignKey initial) {
+	public static DesignerForeignKey edit(Component parent, Model model, DesignerForeignKey initial) {
 		ForeignKeyDialog dialog = new ForeignKeyDialog(SwingUtilities.getWindowAncestor(parent), model, initial);
 		return dialog.showDialog() ? dialog.result : null;
 	}
@@ -159,7 +159,7 @@ public class ForeignKeyDialog extends FormDialog {
 			toColumns.add(text(pairs.getValueAt(i, 1)));
 		}
 
-		ForeignKey key = new ForeignKey(from, fromColumns, selectedTable(), toColumns, name.getText().trim(), text(onDelete.getSelectedItem()),
+		DesignerForeignKey key = new DesignerForeignKey(from, fromColumns, selectedTable(), toColumns, name.getText().trim(), text(onDelete.getSelectedItem()),
 			text(onUpdate.getSelectedItem()));
 		try {
 			key.validate();
@@ -190,7 +190,7 @@ public class ForeignKeyDialog extends FormDialog {
 	/** The name follows the first column for as long as the user has not typed a name of their own. */
 	private void renameIfSuggested() {
 		if (pairs.getRowCount() > 0 && name.getText().equals(suggestedName)) {
-			suggestedName = ForeignKey.defaultName(from, text(pairs.getValueAt(0, 0)));
+			suggestedName = DesignerForeignKey.defaultName(from, text(pairs.getValueAt(0, 0)));
 			name.setText(suggestedName);
 		}
 	}
@@ -211,7 +211,7 @@ public class ForeignKeyDialog extends FormDialog {
 
 	private static JComboBox<String> columnBox(TableObject table) {
 		JComboBox<String> box = new JComboBox<>();
-		for (Field field : table.getFields()) {
+		for (DesignerColumn field : table.getFields()) {
 			box.addItem(field.getName());
 		}
 		return box;
@@ -233,7 +233,7 @@ public class ForeignKeyDialog extends FormDialog {
 	}
 
 	private static String firstColumn(TableObject table) {
-		Field[] fields = table.getFields();
+		DesignerColumn[] fields = table.getFields();
 		return fields.length == 0 ? "" : fields[0].getName();
 	}
 
@@ -242,7 +242,7 @@ public class ForeignKeyDialog extends FormDialog {
 		if (table == null) {
 			return "";
 		}
-		for (Field field : table.getFields()) {
+		for (DesignerColumn field : table.getFields()) {
 			if (field.primary) {
 				return field.getName();
 			}

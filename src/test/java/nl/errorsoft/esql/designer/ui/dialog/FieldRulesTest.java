@@ -1,4 +1,4 @@
-package nl.errorsoft.esql.designer;
+package nl.errorsoft.esql.designer.ui.dialog;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
-import nl.errorsoft.esql.designer.ui.dialog.FieldRules;
 import org.junit.jupiter.api.Test;
 
 class FieldRulesTest {

@@ -252,7 +252,7 @@ Design decisions and the architecture are described in `CLAUDE.md`. Format the c
 ```
 src/main/java/nl/errorsoft/esql
   Main.java  starts the application
-  table/ database/ export/ importer/ blob/ user/ designer/ query/
+  table/ database/ exporter/ importer/ blob/ user/ designer/ query/
   connection/ server/ settings/
              one package per feature: data, service and repository, with
              control/ and ui/ below it for the controllers and Swing windows

@@ -4,7 +4,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.diagram.Field;
+import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
 import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
 import nl.errorsoft.esql.designer.ui.diagram.TableObject;
 
@@ -23,7 +23,7 @@ import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedTable;
 import nl.errorsoft.esql.designer.DesignedForeignKey;
-import nl.errorsoft.esql.designer.model.ForeignKey;
+import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -155,7 +155,7 @@ public class GenerateDialog extends JDialog {
 			}
 			case 2 -> {
 				for (TableObject table : tables) {
-					Field[] fields = table.getFields();
+					DesignerColumn[] fields = table.getFields();
 					if (fields.length == 0) {
 						found.add("Table '" + table.getName() + "' has no columns.");
 					}
@@ -204,7 +204,7 @@ public class GenerateDialog extends JDialog {
 					TableObject table = (TableObject) reference;
 					List<CreateColumn> columns = new ArrayList<>();
 
-					for (Field field : table.getFields()) {
+					for (DesignerColumn field : table.getFields()) {
 						columns.add(toCreateColumn(field));
 					}
 					count += 1 + columns.size();
@@ -246,7 +246,7 @@ public class GenerateDialog extends JDialog {
 	private List<DesignedForeignKey> foreignKeysOf(TableObject table) {
 		List<DesignedForeignKey> keys = new ArrayList<>();
 
-		for (ForeignKey key : m.foreignKeysOf(table)) {
+		for (DesignerForeignKey key : m.foreignKeysOf(table)) {
 			if (key.from() == table) {
 				keys.add(new DesignedForeignKey(key.name(), key.fromColumns(), key.to().getName(), key.toColumns(), key.onDelete(), key.onUpdate()));
 			}
@@ -254,7 +254,7 @@ public class GenerateDialog extends JDialog {
 		return keys;
 	}
 
-	private CreateColumn toCreateColumn(Field f) {
+	private CreateColumn toCreateColumn(DesignerColumn f) {
 		CreateColumn column = new CreateColumn(f.getName());
 		column.type = f.getType();
 		column.length = f.getLength();

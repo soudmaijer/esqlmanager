@@ -19,7 +19,7 @@ import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.table.Table;
 
 /**
- * Plain JDBC and ANSI SQL behaviour that works on any database. Dialects override what is different.
+ * Plain JDBC and ANSI SQL behaviour that works on any database. DialectFactory override what is different.
  */
 public abstract class AbstractDialect implements Dialect {
 	/** A text default with an optional cast, as PostgreSQL reports it: 'it''s'::character varying. */

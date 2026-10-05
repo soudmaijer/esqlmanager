@@ -1,10 +1,10 @@
 package nl.errorsoft.esql.user.ui;
 
-public class CheckableItem {
+public class CheckListItem {
 	private String str;
 	private boolean isSelected;
 
-	public CheckableItem(String str) {
+	public CheckListItem(String str) {
 		this.str = str;
 		isSelected = false;
 	}

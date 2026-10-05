@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
-public class Field {
+/** A column of a table drawn on the designer canvas (the canvas counterpart of {@code table.CreateColumn}). */
+public class DesignerColumn {
 	private String name;
 	private String length;
 	private String dfault;
@@ -16,7 +17,7 @@ public class Field {
 	public boolean autoincrement = false;
 	public boolean zerofill = false;
 
-	public Field(String name, nl.errorsoft.esql.table.DataType type, String length, String dfault, String comment) {
+	public DesignerColumn(String name, nl.errorsoft.esql.table.DataType type, String length, String dfault, String comment) {
 		this.name = name;
 		this.type = type;
 		this.length = length;
@@ -25,8 +26,8 @@ public class Field {
 	}
 
 	/** A copy to edit, so that cancelling a dialog leaves the original untouched. */
-	public Field copy() {
-		Field copy = new Field(name, type, length, dfault, comment);
+	public DesignerColumn copy() {
+		DesignerColumn copy = new DesignerColumn(name, type, length, dfault, comment);
 		copy.primary = primary;
 		copy.index = index;
 		copy.unique = unique;

@@ -4,7 +4,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.control.IndexesController;
-import nl.errorsoft.esql.ui.util.EditorTab;
+import nl.errorsoft.esql.ui.component.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
 
 import java.awt.BorderLayout;

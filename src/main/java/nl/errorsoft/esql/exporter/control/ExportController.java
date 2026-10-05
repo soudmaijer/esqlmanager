@@ -1,14 +1,14 @@
-package nl.errorsoft.esql.export.control;
+package nl.errorsoft.esql.exporter.control;
 
 import nl.errorsoft.esql.job.ProgressListener;
 
-import nl.errorsoft.esql.export.ExportOptions;
-import nl.errorsoft.esql.export.ExportService;
+import nl.errorsoft.esql.exporter.ExportOptions;
+import nl.errorsoft.esql.exporter.ExportService;
 
 import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.control.DatabaseController;
-import nl.errorsoft.esql.export.ui.dialog.ExportSqlDialog;
+import nl.errorsoft.esql.exporter.ui.dialog.ExportSqlDialog;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.job.ui.dialog.ImportExportProgressDialog;
 import nl.errorsoft.esql.ui.icon.ImageLoader;

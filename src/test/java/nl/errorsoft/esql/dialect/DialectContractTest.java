@@ -18,13 +18,13 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.database.Database;
-import nl.errorsoft.esql.database.DatabaseCatalog;
+import nl.errorsoft.esql.database.DatabaseLister;
 import nl.errorsoft.esql.database.DatabaseRepository;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.table.DataType;
-import nl.errorsoft.esql.export.ExportOptions;
+import nl.errorsoft.esql.exporter.ExportOptions;
 import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.user.GrantTarget;
 import nl.errorsoft.esql.user.UserService;
@@ -46,7 +46,7 @@ import java.sql.SQLException;
 import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicReference;
 import nl.errorsoft.esql.job.ProgressListener;
-import nl.errorsoft.esql.export.ExportService;
+import nl.errorsoft.esql.exporter.ExportService;
 import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.ImportService;
 import org.junit.jupiter.api.AfterAll;
@@ -796,7 +796,7 @@ abstract class DialectContractTest {
 		ConnectionProfile typed = profile();
 		// A selection that names a database which is gone must not stop the catalog from connecting.
 		typed.setDatabases("no_such_database");
-		try (DatabaseCatalog catalog = new DatabaseCatalog(typed)) {
+		try (DatabaseLister catalog = new DatabaseLister(typed)) {
 			catalog.connect();
 			assertFalse(catalog.serverDescription().isEmpty());
 			assertTrue(catalog.databases().containsAll(List.of(DATABASE, extra.getName())));
