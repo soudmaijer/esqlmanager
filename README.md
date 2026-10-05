@@ -193,7 +193,7 @@ Everything the application reads and writes at runtime lives in `runtime/`:
 | `runtime/conf/driver.xml` | JDBC driver class and URL per database type |
 | `runtime/conf/datatypes.xml` | Column types |
 
-Profiles are normally created in the connection dialog. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
+Profiles are normally created in the connection dialog, which lists the saved profiles at the left (add, remove and duplicate with the buttons above the list) and shows the selected one at the right. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
 
 The connection dialog has a second tab, **Databases and schemas**, that is available after Test connection succeeded. Tick the databases (and on PostgreSQL the schemas) the profile should show; nothing ticked shows everything, and the first ticked database is the one the connection is made to (`postgres` by default). The selection is stored in `profiles.xml` as `<databases>db1,db2</databases>` plus an optional `<schemas><database name="db1"><schema>public</schema></database></schemas>`; a database without schema elements shows all its schemas. Unticked schemas are left out of the tree, the export and import windows, the query tab and the designer, but exporting a whole database still includes them, which the export window notes.
 

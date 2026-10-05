@@ -2,6 +2,16 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Connect dialog with a list of profiles
+
+- Connect to server shows the saved profiles in a list at the left, with New, Remove and Duplicate buttons above it.
+  This replaces the Profile drop-down and the Delete and Duplicate buttons next to Save and Connect.
+- The name of a profile is a field of its own and can be changed; Save renames the profile.
+- Selecting another profile with unsaved changes asks to save or discard them. New makes an unsaved "New profile",
+  Duplicate saves "<name> copy". An empty list shows a hint.
+- Test connection and its result are at the bottom left of the dialog; a long error is cut off and shown in full
+  as a tooltip. The dialog can be resized.
+
 05-10-2026: Choose the databases and schemas of a profile
 
 - Connect to server has two tabs. "Connection" holds the server settings; "Databases and schemas" opens after a
