@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.control.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -16,6 +19,8 @@ import javax.swing.*;
 
 public class ExportSelectionUI extends JDialog implements ActionListener
 {
+	private static final Logger log = LogManager.getLogger( ExportSelectionUI.class );
+
 	JPanel jPanel1 = new JPanel();
 	JRadioButton jRadioButton1 = new JRadioButton();
 	JRadioButton jRadioButton2 = new JRadioButton();
@@ -35,7 +40,7 @@ public class ExportSelectionUI extends JDialog implements ActionListener
 		}
 		catch(Exception ex) 
 		{
-			ex.printStackTrace();
+			log.error( ex.getMessage(), ex );
 		}
   	}
   	

@@ -1,10 +1,15 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
 
 public class ConnectionProfileCC
 {
+	private static final Logger log = LogManager.getLogger( ConnectionProfileCC.class );
+
 	private ESQLManagerCC jmcc;
 	private ConnectionProfileUI cpui;
 	private ConnectionProfile cp;
@@ -19,7 +24,7 @@ public class ConnectionProfileCC
 		}
 		catch( Exception e )
 		{
-			jmcc.println("An error occured while loading profiles.xml file!");
+			log.error("An error occured while loading profiles.xml file!");
 		}
 	}
 	
@@ -28,6 +33,7 @@ public class ConnectionProfileCC
 		// Create Frame.
 		jmui.updateStatus("Starting profile manager...", true );
 		ConnectionProfile [] cpa = cp.getProfiles();
+		log.info( "Loaded {} connection profile(s) from conf/profiles.xml", cpa.length );
 		boolean conLastUsed = false;
 		
 		if( autoConnect )

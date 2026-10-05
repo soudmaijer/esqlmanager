@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
@@ -8,6 +11,8 @@ import java.util.Vector;
 
 public class UserManagerCC
 {	
+	private static final Logger log = LogManager.getLogger( UserManagerCC.class );
+
 	private ConnectionWindowCC cwcc;
 	private UserManager um;
 	
@@ -65,7 +70,7 @@ public class UserManagerCC
 	   }
 	   catch( Exception e )
 	   {
-	   	e.printStackTrace();
+	   	log.error( e.getMessage(), e );
 	   }   	
    } 
   
@@ -78,7 +83,7 @@ public class UserManagerCC
 	   }
 	   catch( Exception e )
 	   {
-	   	e.printStackTrace();
+	   	log.error( e.getMessage(), e );
 	   }   	
    }    
      
@@ -91,7 +96,7 @@ public class UserManagerCC
 	   }
 	   catch( Exception e )
 	   {
-	   	e.printStackTrace();
+	   	log.error( e.getMessage(), e );
 	   }
    }
    

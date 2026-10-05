@@ -2,12 +2,17 @@
 
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
 import java.util.Vector;
 import nl.errorsoft.esql.data.*;
 
 public class Table 
 {
+	private static final Logger log = LogManager.getLogger( Table.class );
+
    private String name;
    private String type;
    private String comment;
@@ -163,7 +168,7 @@ public class Table
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 		return new TableIndex[0];
 	}	

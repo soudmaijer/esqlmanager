@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.dialect.*;
 import java.io.File;
@@ -8,6 +11,8 @@ import org.jdom.input.SAXBuilder;
 
 public class ServerType
 {
+	private static final Logger log = LogManager.getLogger( ServerType.class );
+
 	public static final int MY_SQL = 0;
 	public static final int MS_SQL_SERVER = 1;
 	public static final int POSTGRES = 2;
@@ -164,7 +169,7 @@ public class ServerType
 			 		}
 			 		catch( Exception e )
 			 		{
-			 			System.out.println( "Warning: no datatype specified for this servertype!" );
+			 			log.warn( "Warning: no datatype specified for this servertype!" );
 			 		}
 			 		
 				 	if( typeid == this.getType() )
@@ -188,7 +193,7 @@ public class ServerType
 			}
 		}
 		catch(Exception e)
-		{	e.printStackTrace();
+		{	log.error( e.getMessage(), e );
 		}	
 		return new DataType[0];
 	}	
@@ -228,7 +233,7 @@ public class ServerType
 			}
 		}
 		catch(Exception e)
-		{	e.printStackTrace();
+		{	log.error( e.getMessage(), e );
 		}	
 		return mysqlTableTypes;
 	}	

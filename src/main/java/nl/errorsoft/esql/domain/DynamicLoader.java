@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 import java.util.*;
 import java.net.*;
@@ -8,6 +11,8 @@ import nl.errorsoft.esql.control.*;
 
 public class DynamicLoader 
 {
+	private static final Logger log = LogManager.getLogger( DynamicLoader.class );
+
 	private static final Class[] parameters = new Class[]{URL.class};
 	
 	public static void addFile(String s) throws IOException 
@@ -32,7 +37,7 @@ public class DynamicLoader
 			method.invoke(sysloader,new Object[]{ u });	
 		} 
 		catch (Throwable t) 
-		{	t.printStackTrace();		
+		{	log.error( t.getMessage(), t );		
 			throw new IOException("Error, could not add URL to system classloader");	
 		}//end try catch		
 	}//end method

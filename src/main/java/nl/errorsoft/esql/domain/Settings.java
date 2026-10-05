@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 public class Settings
 {	
+	private static final Logger log = LogManager.getLogger( Settings.class );
+
 	// Autoupdater
 	private boolean updater_enabled = false;
 	private String  update_server = "";
@@ -49,7 +54,7 @@ public class Settings
 			builder = null;
 		}
 		catch(Exception e)
-		{	System.out.println( e.getMessage() );
+		{	log.error( e.getMessage(), e );
 		}
 	}
 	

@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 public class ConnectionProfile
 {	
+	private static final Logger log = LogManager.getLogger( ConnectionProfile.class );
+
 	private String name = "";
 	private String databases = "";
 	private String host = "";
@@ -26,7 +31,7 @@ public class ConnectionProfile
 		}
 		catch( Exception e )
 		{
-			System.out.println("Warning: profiles.xml could not be loaded, no profiles will be available!");
+			log.warn( "Warning: profiles.xml could not be loaded, no profiles will be available!" );
 		}
 	}
 
@@ -63,7 +68,7 @@ public class ConnectionProfile
 			}
 		}
 		catch(Exception e)
-		{	System.out.println(e.getMessage());
+		{	log.error( e.getMessage(), e );
 		}
 		
 		return p;

@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.control.*;
 import nl.errorsoft.esql.domain.*;
 import java.awt.*;
@@ -10,6 +13,8 @@ import javax.swing.undo.UndoManager;
 
 public class QueryUI extends JDialog implements ActionListener
 {
+	private static final Logger log = LogManager.getLogger( QueryUI.class );
+
 	private String db;
 	private JTextPane jt;
 	private UndoManager ndo = new UndoManager();
@@ -187,7 +192,7 @@ public class QueryUI extends JDialog implements ActionListener
 				}
 				catch( Exception ex )
 				{
-					ex.printStackTrace();
+					log.error( ex.getMessage(), ex );
 				}
 			}
 			

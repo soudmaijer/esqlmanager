@@ -1,6 +1,9 @@
 
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
 import nl.errorsoft.esql.data.*;
 import java.util.*;
@@ -8,6 +11,8 @@ import java.io.*;
 
 public class UDData extends Observable
 {
+	private static final Logger log = LogManager.getLogger( UDData.class );
+
 	private DatabaseConnection dbc;
 	
 	public UDData( DatabaseConnection dbc )
@@ -49,7 +54,7 @@ public class UDData extends Observable
 			outStream.write( aByte );
 
 		byte [] temp = outStream.toByteArray();
-		System.out.println( temp.length );
+		log.debug( "Read {} bytes from {}", temp.length, file );
 		ByteArrayInputStream bai = new ByteArrayInputStream( temp );
 
 		dbc.useDatabase( tb.getDatabase().getName() );

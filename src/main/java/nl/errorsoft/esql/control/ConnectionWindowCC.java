@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
 import java.util.*;
 
 public class ConnectionWindowCC extends Thread
 {
+	private static final Logger log = LogManager.getLogger( ConnectionWindowCC.class );
+
 	private ESQLManagerCC jmcc;
 	private ConnectionWindow cw;
 	private ConnectionWindowUI cwui;
@@ -21,7 +26,7 @@ public class ConnectionWindowCC extends Thread
 	public void run()
 	{
 		// Create Frame.
-		jmcc.println( "Connecting to `"+ cw.getConnectionProfile().getServerType().getDescription() +"` @ `"+ cw.getConnectionProfile().getHost() +"` with username `"+ cw.getConnectionProfile().getUsername() +"` on port `"+ cw.getConnectionProfile().getPort() +"`" );
+		log.info( "Connecting to `"+ cw.getConnectionProfile().getServerType().getDescription() +"` @ `"+ cw.getConnectionProfile().getHost() +"` with username `"+ cw.getConnectionProfile().getUsername() +"` on port `"+ cw.getConnectionProfile().getPort() +"`" );
 		cwui = new ConnectionWindowUI( this, jmcc.getUI() );
 		
 		// Create database connection to Server.
@@ -52,7 +57,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 		
 		// Remove references
@@ -75,7 +80,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -93,7 +98,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -114,7 +119,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -134,7 +139,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -152,7 +157,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -170,7 +175,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -190,7 +195,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -221,7 +226,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}	
@@ -249,7 +254,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}			
@@ -280,7 +285,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}			
@@ -323,7 +328,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 		}
 	}
@@ -339,7 +344,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 		}
 	}	
@@ -378,7 +383,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}			
@@ -395,7 +400,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}				
@@ -423,7 +428,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}			
@@ -438,27 +443,24 @@ public class ConnectionWindowCC extends Thread
 	{
 		try
 		{
-			if( jmcc.checkPro() ) return;
 			IndexesCC tcc = new IndexesCC( this, (Table)cwui.getSelectedNode().getUserObject() );
 			tcc.startUI( jmcc.getUI() );		
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 		}		
 	}
 		
 	public void dispatchUserManagerUI()
 	{
-		if( jmcc.checkPro() ) return;
 		UserManagerCC umcc = new UserManagerCC( this );
 		umcc.startUI( jmcc.getUI() );
 	}
 	
 	public void dispatchProcessUI()
 	{
-		if( jmcc.checkPro() ) return;
 		Processlist pl = new Processlist( this, jmcc.getUI() );
 	}	
 
@@ -471,7 +473,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}
@@ -481,13 +483,12 @@ public class ConnectionWindowCC extends Thread
 	{
 		try
 		{		
-			if( jmcc.checkPro() ) return;
 			TableCC dbcc = new TableCC( this );
 			dbcc.startEditTableUI( jmcc.getUI(), cwui.getDatabase(), cwui.getTable() );
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			cwui.showErrorMessage( e.getMessage() );
 			jmcc.updateStatus( "Error...", false );
 		}		
@@ -533,7 +534,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 	public void showMySQLVariables()
@@ -545,7 +546,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}	
 	
@@ -558,7 +559,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 
@@ -571,7 +572,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 	
@@ -584,7 +585,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}		
 
@@ -597,7 +598,7 @@ public class ConnectionWindowCC extends Thread
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}		
 }

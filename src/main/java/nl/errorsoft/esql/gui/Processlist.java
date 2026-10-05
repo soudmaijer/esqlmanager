@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.control.*;
@@ -11,6 +14,8 @@ import javax.swing.table.*;
 
 public class Processlist extends JDialog implements Runnable, ActionListener
 {
+	private static final Logger log = LogManager.getLogger( Processlist.class );
+
 	private ESQLManagerUI jm;
 	private nl.errorsoft.esql.domain.ConnectionProfile cp;
 	private JScrollPane jsp;
@@ -113,7 +118,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 		}
 		catch( Exception e )
 		{
-			System.out.println( e.getMessage() );
+			log.error( e.getMessage(), e );
 		}
 	}
 	
@@ -162,7 +167,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 				}
 				catch( Exception ae )
 				{
-					System.out.println( ae.getMessage() );
+					log.error( ae.getMessage(), ae );
 				}
 			}	
 		}

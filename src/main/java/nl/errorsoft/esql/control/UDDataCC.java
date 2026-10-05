@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
 import java.util.*;
 
 public class UDDataCC implements Observer
 {	
+	private static final Logger log = LogManager.getLogger( UDDataCC.class );
+
 	private ConnectionWindowCC cwcc;
 	private UDDataIF udif;
 	private Table table;
@@ -43,7 +48,7 @@ public class UDDataCC implements Observer
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}		
 	}
 
@@ -57,7 +62,7 @@ public class UDDataCC implements Observer
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 	

@@ -1,70 +1,46 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.dbcreator.DBCreator;
 import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.ESQLManager;
-import nl.errorsoft.esql.domain.Registration;
 import nl.errorsoft.esql.domain.ServerType;
 import nl.errorsoft.esql.domain.Settings;
 import nl.errorsoft.esql.gui.CheckUpdateUI;
 import nl.errorsoft.esql.gui.ConnectionWindowUI;
 import nl.errorsoft.esql.gui.ESQLManagerUI;
 import nl.errorsoft.esql.gui.ImageLoader;
-import nl.errorsoft.esql.gui.RegistrationUI;
 import nl.errorsoft.esql.gui.SettingsUI;
 import nl.errorsoft.esql.gui.SplashUI;
 
 /**
  *		Controls all users-systems actions for the ESQLManagerUI.
  */
-public class ESQLManagerCC extends java.io.OutputStream
+public class ESQLManagerCC
 {
+	private static final Logger log = LogManager.getLogger( ESQLManagerCC.class );
+
 	private ESQLManager jm;
 	private ESQLManagerUI jmui;
-	private String buffer = "";
- 	private Registration reg;
  	
 	public ESQLManagerCC()
 	{
 		// Start domein class.
 		jm = new ESQLManager();
 		
-		// Redirect output stream to eSQLManager output window.
-		System.setOut( new java.io.PrintStream( this ) );
-		
 		// Show ESQLManager Window.
 		jmui = new ESQLManagerUI( this );
-		println( "------------------- "+ jm.getAppName() +" : output -------------------\n");		
-		reg = new Registration( jm.getAppName() + "_"+ jm.getMajorVersion() );
-		
-		if( jm.isPro() )
-		{
-			if(reg.isTrialVersion())
-			{
-				jmui.showMessage("Evaluation notice!", "<html><b>This is an evaluation version of eSQLManager!</b><br>There are "+ reg.getDaysLeft() +" days left in your evaluation!<br>Please register for a fully functional version!<br>For more details about products and pricing see: http://www.errorsoft.nl</html>");
-				
-				if( reg.isExpired() )
-				{
-				  this.startRegistrationUI();
-				  return;
-				}
-			}
-		}
-		else
-		{	jmui.showMessage("Evaluation notice!", "<html><b>This is an evaluation version of eSQLManager!</b><br>If you want a fully functional version of eSQLManager then purchase eSQLManager Pro!<br>For more details about products and pricing see: http://www.errorsoft.nl</html>");
-		}
-
+		OutputPanelAppender.install( jmui );
+		log.info( "{} starting on Java {} ({}), {} {}", getTitle(), System.getProperty("java.version"), System.getProperty("java.vendor"), System.getProperty("os.name"), System.getProperty("os.arch") );
+		log.info( "Working directory: {}", System.getProperty("user.dir") );
 		// Show splash.
 		showSplashScreen( 3000 );		
 		jmui.updateStatus( "(C) Copyright 2002-2003 - Errorsoft", false );
 	}
 	
-	public void startRegistrationUI()
-	{
-		new RegistrationUI( jmui, this, reg );
-	}
-
 	public void splashReady()
 	{
 		// 1st Check for updates.
@@ -137,7 +113,6 @@ public class ESQLManagerCC extends java.io.OutputStream
 	
 	public void dispatchImportUI()
 	{
-		if( checkPro() ) return;
 		if( jmui.getConnectionWindowCount() > 0 )
 		{
 			ImportCC dbcc = new ImportCC( this );
@@ -147,7 +122,6 @@ public class ESQLManagerCC extends java.io.OutputStream
 	
 	public void dispatchExportUI()
 	{
-		if( checkPro() ) return;
 		if( jmui.getConnectionWindowCount() > 0 )
 		{
 			ExportCC dbcc = new ExportCC( this );
@@ -167,37 +141,12 @@ public class ESQLManagerCC extends java.io.OutputStream
 	   {
 	   }
 	   		
-		if( checkPro() ) return;
 		if( jmui.getConnectionWindowCount() > 0 )
 		{
 			DBCreator db = new nl.errorsoft.esql.dbcreator.DBCreator(jmui, jmui.getConnectionWindow());
 		}
 	}	
 
-	public void println( String line )
-	{
-		synchronized( this )
-		{
-			//jmui.print( line + "\n" );
-		}
-	}
-	
-	public void print( String line )
-	{
-		println( line );
-	}
-	
-	public void write ( int charCode )
-	{	
-		if( (char)charCode == '\n' )
-		{	println( buffer );
-			buffer = "";
-		}
-		else
-		{	buffer = buffer + (char)charCode;
-		}
-	}
-	
 	public void updateStatus( String message, boolean red )
 	{
 		jmui.updateStatus( message, red );
@@ -243,13 +192,4 @@ public class ESQLManagerCC extends java.io.OutputStream
 		return jm.getImageLoader();
 	}	 
 
-	public boolean checkPro()
-	{
-		if( !isPro() )
-		{
-			this.jmui.showErrorMessage("This option is avaiable only in the Professional Edition of eSQLManager!");
-			return true;
-		}
-		return false;
-	}	
 }

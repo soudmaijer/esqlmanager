@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.net.*;
 import java.io.*;
 import javax.swing.*;
@@ -11,6 +14,8 @@ import nl.errorsoft.esql.control.*;
 
 public class CheckUpdateUI extends JDialog implements ActionListener, Runnable
 {	
+	private static final Logger log = LogManager.getLogger( CheckUpdateUI.class );
+
 	private JProgressBar jp = new JProgressBar();
 	private JProgressBar jp2 = new JProgressBar();
 	private JButton stop = new JButton("Quit");
@@ -97,7 +102,7 @@ public class CheckUpdateUI extends JDialog implements ActionListener, Runnable
 		}
 		else
 		{	
-			jmcc.println("Auto-update: there are no new updates available.");
+			log.info("Auto-update: there are no new updates available.");
 		}		
 	}
 	

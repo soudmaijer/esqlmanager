@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
@@ -7,6 +10,8 @@ import java.awt.event.*;
 
 public class DesktopUtils
 {
+	private static final Logger log = LogManager.getLogger( DesktopUtils.class );
+
     protected static final int UNUSED_HEIGHT = 0;
     protected static int nextX; // Next X position
     protected static int nextY; // Next Y position
@@ -209,7 +214,7 @@ public class DesktopUtils
                     }
                     catch (java.beans.PropertyVetoException e)
                     {
- 	                   e.printStackTrace();
+ 	                   log.error( e.getMessage(), e );
                     }
                 }
             }

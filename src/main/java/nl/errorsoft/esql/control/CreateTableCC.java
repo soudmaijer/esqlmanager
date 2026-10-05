@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
@@ -8,6 +11,8 @@ import java.util.Vector;
 
 public class CreateTableCC
 {	private ConnectionWindowCC cwcc;
+	private static final Logger log = LogManager.getLogger( CreateTableCC.class );
+
 	
 	public CreateTableCC ( ConnectionWindowCC cwcc )
 	{	
@@ -33,7 +38,7 @@ public class CreateTableCC
 			return dbc.getDatabases();
 		}
 		catch(Exception e)
-		{	e.printStackTrace();
+		{	log.error( e.getMessage(), e );
 			return null;
 		}
 	}

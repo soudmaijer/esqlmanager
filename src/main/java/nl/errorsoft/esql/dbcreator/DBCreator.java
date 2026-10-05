@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.dbcreator;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.dbcreator.control.*;
 import nl.errorsoft.esql.dbcreator.gui.component.*;
 import java.awt.*;
@@ -13,6 +16,8 @@ import java.io.*;
 
 public class DBCreator extends JDialog implements MouseListener
 {	private JMenuBar menu;
+	private static final Logger log = LogManager.getLogger( DBCreator.class );
+
 	
 	private JMenu file = new JMenu("File");
 	private JMenuItem file_new = new JMenuItem("New Model...");
@@ -155,7 +160,7 @@ public class DBCreator extends JDialog implements MouseListener
 				}
 			}
 			catch( Exception ex )
-			{	ex.printStackTrace();
+			{	log.error( ex.getMessage(), ex );
 			}
 		}
 		
@@ -172,7 +177,7 @@ public class DBCreator extends JDialog implements MouseListener
 				out.close();
 			}
 			catch( Exception ex )
-			{	System.out.println(ex.getMessage());
+			{	log.error( ex.getMessage(), ex );
 			}	
 		}
 		else
@@ -206,7 +211,7 @@ public class DBCreator extends JDialog implements MouseListener
 					mv.getModel().setFile( f );
 				}
 				catch( Exception ex )
-				{	System.out.println(ex.getMessage());
+				{	log.error( ex.getMessage(), ex );
 				}				
 			}
 		}

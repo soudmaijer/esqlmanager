@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.control.*;
 import java.sql.*;
 import java.util.Vector;
 
 public class UserManager
 {	
+	private static final Logger log = LogManager.getLogger( UserManager.class );
+
 	private ConnectionWindowCC cwcc;
 
 	public UserManager ( ConnectionWindowCC cwcc )
@@ -204,7 +209,7 @@ public class UserManager
 		}
 		catch( Exception e )
 		{	
-			//System.out.println(e.getMessage());
+			//log.error( e.getMessage(), e );
 			return e.getMessage();
 		}
 		
@@ -223,7 +228,7 @@ public class UserManager
 		}
 		catch( Exception e )
 		{	
-			//System.out.println(e.getMessage());
+			//log.error( e.getMessage(), e );
 			return e.getMessage();
 		}
 		
@@ -242,7 +247,7 @@ public class UserManager
 		}
 		catch( Exception e )
 		{	
-			//System.out.println(e.getMessage());
+			//log.error( e.getMessage(), e );
 			return e.getMessage();
 		}
 		
@@ -348,7 +353,7 @@ public class UserManager
 				}
 				catch( Exception e )
 				{
-					System.out.println(e.getMessage());
+					log.error( e.getMessage(), e );
 				}
 			}
 			else
@@ -423,7 +428,7 @@ public class UserManager
 				}
 				catch( Exception e )
 				{
-					System.out.println(e.getMessage());
+					log.error( e.getMessage(), e );
 				}
 			}	
 		}

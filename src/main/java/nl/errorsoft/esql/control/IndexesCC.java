@@ -2,6 +2,9 @@
 
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
@@ -9,6 +12,8 @@ import nl.errorsoft.esql.domain.*;
 
 public class IndexesCC 
 {
+	private static final Logger log = LogManager.getLogger( IndexesCC.class );
+
   	private ConnectionWindowCC cwcc;
 	private Table t;
 	private IndexesUI iu;
@@ -53,7 +58,7 @@ public class IndexesCC
 		catch( Exception e )
 		{
 			iu.showErrorMessage("Error while adding the index! " + e.getMessage() );
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 
@@ -77,7 +82,7 @@ public class IndexesCC
 		catch( Exception e )
 		{
 			iu.showErrorMessage("Error while saving changed to the index! " + e.getMessage() );
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}	
 	
@@ -92,7 +97,7 @@ public class IndexesCC
 		catch( Exception e )
 		{
 			iu.showErrorMessage("Error while dropping the index! " + e.getMessage() );
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 

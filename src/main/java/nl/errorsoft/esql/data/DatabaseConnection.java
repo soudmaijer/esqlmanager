@@ -1,11 +1,16 @@
 package nl.errorsoft.esql.data;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.*;
 import java.sql.*;
 import java.io.*;
 
 public class DatabaseConnection
 {
+	private static final Logger log = LogManager.getLogger( DatabaseConnection.class );
+
 	private String driver	= "";
 	private String url		= "";
 	private String database = "";
@@ -57,7 +62,11 @@ public class DatabaseConnection
 			this.close();
 		
 		Class.forName( cp.getServerType().getDriverName() ).getDeclaredConstructor().newInstance();
+		log.info( "Connecting to {} as {}", url, cp.getUsername() );
 		connection = java.sql.DriverManager.getConnection( url, cp.getUsername(), cp.getPassword() );
+		
+		DatabaseMetaData meta = connection.getMetaData();
+		log.info( "Connected to {} {} using driver {} {}", meta.getDatabaseProductName(), meta.getDatabaseProductVersion(), meta.getDriverName(), meta.getDriverVersion() );
 	}
 
 	// The database the connection was made to.
@@ -84,17 +93,16 @@ public class DatabaseConnection
 	// Execute a query.
 	public java.sql.ResultSet executeQuery( String query ) throws java.sql.SQLException
 	{
-		System.out.println( query );
+		log.debug( "Query: {}", query );
 		statement = connection.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 		return statement.executeQuery( query );
 	}
 
 	public int executeUpdate( String query ) throws java.sql.SQLException
 	{
-		System.out.print( query );
 		statement = connection.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE );
 		int i = statement.executeUpdate( query );
-		System.out.println( " [ "+ i +" row(s) updated ] " );
+		log.debug( "Update: {} [{} row(s) updated]", query, i );
 		return i;
 	}
 
@@ -129,6 +137,7 @@ public class DatabaseConnection
 
 		try
 		{	connection.close();
+			log.info( "Connection to {} closed", url );
 		}
 		catch( Exception sql )
 		{

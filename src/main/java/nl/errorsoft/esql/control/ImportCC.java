@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
@@ -10,6 +13,8 @@ import java.util.Observable;
 
 public class ImportCC implements Observer
 {
+	private static final Logger log = LogManager.getLogger( ImportCC.class );
+
   	private ESQLManagerCC ecc;
   	private ConnectionWindowCC cwcc;
 	private ImportExportProgressUI ies;
@@ -52,7 +57,7 @@ public class ImportCC implements Observer
 	   }
 	   catch( Exception e )
 	   {
-	   	e.printStackTrace();
+	   	log.error( e.getMessage(), e );
 	   }
    }
    
@@ -65,7 +70,7 @@ public class ImportCC implements Observer
 	   }
 	   catch( Exception e )
 	   {
-	   	e.printStackTrace();
+	   	log.error( e.getMessage(), e );
 	   }   	
    }   
 
@@ -95,7 +100,7 @@ public class ImportCC implements Observer
 		catch( Exception e )
 		{
 			iasu.showErrorMessage( "An error occured while importing the data! "+ e.getMessage() );
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 		}
 	}
 
@@ -105,7 +110,7 @@ public class ImportCC implements Observer
    		ies.setProgressValue( ((Integer)arg).intValue() );
    	else if( arg instanceof Exception )
    	{
-   		System.out.println( "\n"+ ((Exception)arg).getMessage() );
+   		log.error( ((Exception)arg).getMessage(), (Exception)arg );
    		ies.showErrorMessage( ((Exception)arg).getMessage() );
    		ies.dispose();
    	}

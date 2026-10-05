@@ -1,10 +1,15 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.control.*;
 import javax.swing.*;
 
 public class HyperLinkListener implements javax.swing.event.HyperlinkListener 
 {	
+	private static final Logger log = LogManager.getLogger( HyperLinkListener.class );
+
 	ConnectionWindowCC cwcc;
 
 	public HyperLinkListener( ConnectionWindowCC cwcc )
@@ -28,7 +33,7 @@ public class HyperLinkListener implements javax.swing.event.HyperlinkListener
 				}
 			}
 			catch (Throwable t) 
-			{	System.out.println(t.getMessage());
+			{	log.error( t.getMessage(), t );
 			}
 		}
 	}

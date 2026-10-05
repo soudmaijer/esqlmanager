@@ -2,6 +2,9 @@
 
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -15,6 +18,8 @@ import javax.swing.border.*;
 
 public class TableDataView extends JPanel implements ActionListener
 {
+	private static final Logger log = LogManager.getLogger( TableDataView.class );
+
    private int skip;
    private int show;
    private Table table;
@@ -154,6 +159,8 @@ public class TableDataView extends JPanel implements ActionListener
 			}
 		});
 		tbData.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
+		tbData.setShowGrid( true );
+		tbData.setGridColor( new java.awt.Color( 208, 208, 208 ) );
 		tbData.addFocusListener( new FocusAdapter()
 		{
 			public void focusLost( FocusEvent e )
@@ -454,7 +461,7 @@ public class TableDataView extends JPanel implements ActionListener
 		}
 		catch( Exception e )
 		{
-			e.printStackTrace();
+			log.error( e.getMessage(), e );
 			showErrorMessage(e.getMessage());
 		}
  	}
@@ -544,6 +551,7 @@ public class TableDataView extends JPanel implements ActionListener
    	stm.setDataVector( tda, columns );
    	tbData.setColumnModel( tcm );
    	tbData.setModel( stm );
+   	ColumnWidths.fitToContent( tbData );
 	  	jsp.getViewport().revalidate();
    }
    
@@ -674,7 +682,7 @@ public class TableDataView extends JPanel implements ActionListener
 			catch( Exception ex )
 			{
 				showErrorMessage( ex.getMessage() );
-				ex.printStackTrace();
+				log.error( ex.getMessage(), ex );
 	   	}
 	   }
    }
@@ -711,7 +719,7 @@ public class TableDataView extends JPanel implements ActionListener
 		catch( Exception ex )
 		{
 			showErrorMessage( ex.getMessage() );
-			ex.printStackTrace();
+			log.error( ex.getMessage(), ex );
    	}		
    }
 }

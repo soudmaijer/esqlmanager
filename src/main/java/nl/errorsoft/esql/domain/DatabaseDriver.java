@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 import java.util.List;
 import org.jdom.Document;
@@ -9,6 +12,8 @@ import org.jdom.output.XMLOutputter;
 
 public class DatabaseDriver
 {
+	private static final Logger log = LogManager.getLogger( DatabaseDriver.class );
+
 	private int id;
 	private String driverName;
 	private String driverURL;
@@ -35,7 +40,7 @@ public class DatabaseDriver
 		}
 		catch(Exception exception)
 		{
-		   System.out.println("Warning: driver.xml could not be loaded, no driver properties will be available!");
+		   log.warn( "Warning: driver.xml could not be loaded, no driver properties will be available!" );
 		}
 	}
 
@@ -75,7 +80,7 @@ public class DatabaseDriver
 		}
 		catch( Exception e )
 		{
-			System.out.println("Warning: driver data could not be loaded, no driver properties will be available!");
+			log.warn( "Warning: driver data could not be loaded, no driver properties will be available!" );
 		}
 
 		return drivers;
@@ -209,7 +214,7 @@ public class DatabaseDriver
 		DatabaseDriver [] drivers = dp.getDatabaseDrivers();
 
 		for( int i=0; i<drivers.length; i++ )
-			System.out.println( drivers[i].getDriverName() );
+			log.info( drivers[i].getDriverName() );
 
 		dp.saveProperties( drivers, 1, "MySQL", "jdbc:mysql://localhost", "com.mysql.cj.jdbc.Driver", "c:\\", "`", "`", "'", "'" );
 	}

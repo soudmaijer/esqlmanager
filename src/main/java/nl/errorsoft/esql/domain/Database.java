@@ -2,6 +2,9 @@
 
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
 import java.util.*;
@@ -9,6 +12,8 @@ import java.sql.*;
 
 public class Database
 {
+	private static final Logger log = LogManager.getLogger( Database.class );
+
    private String name = "";
    private DatabaseConnection dbc;
    private String [] requestDatabases;
@@ -59,6 +64,8 @@ public class Database
 			v.add( temp );
 		}
 		
+		log.info( "Found {} database(s) on the server", v.size() );
+		
 		if( requestDatabases.length > 0 )		
 		{
 			for( int i=0; i<v.size(); i++ )
@@ -74,6 +81,7 @@ public class Database
 					}
 				}
 			}
+			log.info( "Showing {} database(s) matching the profile filter: {}", results.size(), String.join( ", ", requestDatabases ) );
 			return results;
 		}
 		return v;
@@ -82,7 +90,9 @@ public class Database
 	public Vector getTables( Database db ) throws Exception
 	{
 		dbc.useDatabase( db.getName() );
-		return dbc.getConnectionProfile().getServerType().getDialect().listTables( dbc, db );
+		Vector tables = dbc.getConnectionProfile().getServerType().getDialect().listTables( dbc, db );
+		log.info( "Database {}: {} table(s)", db.getName(), tables.size() );
+		return tables;
 	}
 
 	public void setName( String name )

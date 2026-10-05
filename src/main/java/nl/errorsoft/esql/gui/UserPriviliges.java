@@ -1,5 +1,8 @@
 /*package esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import esql.control.*;
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +14,8 @@ import java.sql.*;
 
 public class UserPriviliges extends JDialog //implements MouseListener
 {	private ESQLManagerUI jm;	
+	private static final Logger log = LogManager.getLogger( UserPriviliges.class );
+
 	private ConnectionWindowCC cwcc;
 	
 	private boolean is_update = false;
@@ -369,7 +374,7 @@ public class UserPriviliges extends JDialog //implements MouseListener
 						}					
 					}
 					catch(Exception ex)
-					{	System.out.println(ex.getMessage());
+					{	log.error( ex.getMessage(), ex );
 					}									
 				}					
 				// Get database name.

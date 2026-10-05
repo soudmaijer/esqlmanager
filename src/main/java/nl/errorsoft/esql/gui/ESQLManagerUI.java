@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -9,6 +12,8 @@ import nl.errorsoft.esql.control.*;
 
 public class ESQLManagerUI extends JFrame implements ActionListener
 {
+	private static final Logger log = LogManager.getLogger( ESQLManagerUI.class );
+
 	// Control class for ESQLManager UI, manages all use-cases actions.
 	private ESQLManagerCC jmcc;
 	private JTabbedPane jtpQueryOutput;
@@ -36,7 +41,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	private JMenu mnuGroupHelp;
 	private JMenuItem mnuAbout;
 	private JMenuItem mnuUpdate;
-	private JMenuItem mnuRegister;
 
 	// Toolbar
 	private JToolBar toolbar;
@@ -151,12 +155,8 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		mnuGroupHelp = new JMenu("Help");
 		mnuAbout = new JMenuItem("About");
 		mnuUpdate = new JMenuItem("Check for updates");
-		mnuRegister = new JMenuItem("Enter registration details...");
 		mnuGroupHelp.add(mnuUpdate);
 		
-		if( jmcc.isPro() )
-			mnuGroupHelp.add(mnuRegister);
-			
 		mnuGroupHelp.addSeparator();
 		mnuGroupHelp.add(mnuAbout);
 		menubar.add( mnuGroupHelp );
@@ -215,7 +215,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 				}
 				catch( Exception ae )
 				{
-					System.out.println( ae.getMessage() );
+					log.error( ae.getMessage(), ae );
 				}
 			}
 		});
@@ -269,6 +269,10 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		
 		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jdp, jtpQueryOutput);
 		jsplit.setOneTouchExpandable(true);
+		jsplit.setContinuousLayout(true);
+		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
+		jsplit.setResizeWeight(1.0);
+		jtpQueryOutput.setMinimumSize( new Dimension( 0, 60 ) );
 		getContentPane().add(jsplit);
 
 		/*
@@ -294,19 +298,10 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 		mnuAbout.addActionListener(this);
 		mnuUpdate.addActionListener(this);
-		mnuRegister.addActionListener(this);
 
 		// Toolbar
 		btnConnect.addActionListener(this);
 		btnDisconnect.addActionListener(this);
-
-		// Window and component listener to listen to resize events.
-		addComponentListener( new ComponentAdapter()
-		{
-	    	public void componentResized( java.awt.event.ComponentEvent event )
-			{	jsplit.setDividerLocation( 0.85 );
-			}
-		});
 	}
 
 	public void closeUI()
@@ -394,10 +389,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		{
 			closeUI();
 		}
-		else if ( object == mnuRegister )
-		{
-			jmcc.startRegistrationUI();
-		}		
 		else if ( object == mnuConnect || object == btnConnect )
 		{
 			jmcc.dispatchConnectionProfileUI();

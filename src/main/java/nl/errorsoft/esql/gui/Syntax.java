@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.gui;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
@@ -14,6 +17,8 @@ import org.jdom.output.XMLOutputter;
 
 public class Syntax implements DocumentListener
 {	
+	private static final Logger log = LogManager.getLogger( Syntax.class );
+
 	private SyntaxObject syn = null;
 	private MutableAttributeSet keywords;
 	private MutableAttributeSet standard;
@@ -65,8 +70,8 @@ public class Syntax implements DocumentListener
 		}
 		catch(Exception exception)
 		{
-		   System.out.println("Warning: syntax.xml could not be loaded, no syntax highlighting will be available! " + exception.getMessage() );
-		   exception.printStackTrace();
+		   log.warn( "Warning: syntax.xml could not be loaded, no syntax highlighting will be available! {}", exception.getMessage() );
+		   log.error( exception.getMessage(), exception );
 		}	
 		/*
 		try

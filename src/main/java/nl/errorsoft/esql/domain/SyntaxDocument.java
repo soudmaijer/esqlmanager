@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.domain;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.text.*;
 import java.awt.*;
 import javax.swing.*;
@@ -14,6 +17,8 @@ import org.jdom.output.XMLOutputter;
 
 public class SyntaxDocument extends DefaultStyledDocument
 {	
+	private static final Logger log = LogManager.getLogger( SyntaxDocument.class );
+
 	Vector keywords = new Vector();
 	
 	public SyntaxDocument()
@@ -35,7 +40,7 @@ public class SyntaxDocument extends DefaultStyledDocument
 		}
 		catch(Exception exception)
 		{
-		   System.out.println("Warning: syntax.xml could not be loaded, no syntax highlighting will be available!");
+		   log.warn( "Warning: syntax.xml could not be loaded, no syntax highlighting will be available!" );
 		}		
 	}	
 	
