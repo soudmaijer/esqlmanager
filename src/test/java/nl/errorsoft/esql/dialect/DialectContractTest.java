@@ -23,6 +23,7 @@ import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.export.ExportOptions;
 import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.user.GrantTarget;
+import nl.errorsoft.esql.user.UserService;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
@@ -168,29 +169,29 @@ abstract class DialectContractTest {
 		String name = "usr_" + System.nanoTime();
 		String tableName = "grants_" + System.nanoTime();
 		createTable(tableName, "");
-		UserAdmin admin = dialect.getUserAdmin();
+		UserService admin = new ConnectionContext(connection).users();
 		DatabaseUser user = new DatabaseUser(name, admin.usesHost() ? "%" : null);
 
-		admin.createUser(connection, user, "pass'word");
-		assertTrue(admin.listUsers(connection).stream().anyMatch(u -> u.name().equals(name)));
-		admin.changePassword(connection, user, "other");
+		admin.createUser(user, "pass'word");
+		assertTrue(admin.listUsers().stream().anyMatch(u -> u.name().equals(name)));
+		admin.changePassword(user, "other");
 
 		GrantTarget onTable = GrantTarget.table(DATABASE, tableName);
-		admin.setGrants(connection, user, onTable, new LinkedHashSet<>(Arrays.asList("SELECT", "INSERT")));
-		assertEquals(new LinkedHashSet<String>(Arrays.asList("SELECT", "INSERT")), admin.getGrants(connection, user, onTable));
+		admin.setGrants(user, onTable, new LinkedHashSet<>(Arrays.asList("SELECT", "INSERT")));
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("SELECT", "INSERT")), admin.getGrants(user, onTable));
 
-		admin.setGrants(connection, user, onTable, new LinkedHashSet<>(Arrays.asList("SELECT")));
-		assertEquals(new LinkedHashSet<String>(Arrays.asList("SELECT")), admin.getGrants(connection, user, onTable));
+		admin.setGrants(user, onTable, new LinkedHashSet<>(Arrays.asList("SELECT")));
+		assertEquals(new LinkedHashSet<String>(Arrays.asList("SELECT")), admin.getGrants(user, onTable));
 
 		GrantTarget onDatabase = GrantTarget.database(DATABASE);
 		String databasePrivilege = admin.getPrivileges(GrantTarget.Scope.DATABASE).get(0);
-		admin.setGrants(connection, user, onDatabase, new LinkedHashSet<>(Arrays.asList(databasePrivilege)));
-		assertTrue(admin.getGrants(connection, user, onDatabase).contains(databasePrivilege));
+		admin.setGrants(user, onDatabase, new LinkedHashSet<>(Arrays.asList(databasePrivilege)));
+		assertTrue(admin.getGrants(user, onDatabase).contains(databasePrivilege));
 
-		admin.setGrants(connection, user, onTable, new LinkedHashSet<>());
-		admin.setGrants(connection, user, onDatabase, new LinkedHashSet<>());
-		admin.dropUser(connection, user);
-		assertFalse(admin.listUsers(connection).stream().anyMatch(u -> u.name().equals(name)));
+		admin.setGrants(user, onTable, new LinkedHashSet<>());
+		admin.setGrants(user, onDatabase, new LinkedHashSet<>());
+		admin.dropUser(user);
+		assertFalse(admin.listUsers().stream().anyMatch(u -> u.name().equals(name)));
 		service().dropTable(table(tableName));
 	}
 

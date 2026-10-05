@@ -10,6 +10,7 @@ eSQLManager changelog
 - Runtime files (conf, credits) are grouped in runtime/, passwords are no longer part of the committed profiles.
 - Dialect layer: everything that differs per database (quoting, literals, DDL, paging, switching database,
   maintenance, export, process list, status, users) is decided by a Dialect. Callers no longer check the server type.
+  The dialect only writes SQL and reads result rows, the repositories are the only code that runs statements.
 - PostgreSQL support with the right defaults (port 5432, user postgres). All features work on PostgreSQL and MySQL:
   create/modify/drop tables, columns and indexes, import and export as SQL, database designer, user manager
   (roles and privileges), process list, server status and variables, table maintenance (VACUUM, ANALYZE).

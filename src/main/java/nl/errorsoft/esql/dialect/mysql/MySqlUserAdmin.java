@@ -1,9 +1,9 @@
 package nl.errorsoft.esql.dialect.mysql;
 
 import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.dialect.GrantQuery;
 import nl.errorsoft.esql.dialect.UserAdmin;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.user.GrantTarget;
 
@@ -32,72 +31,63 @@ public class MySqlUserAdmin implements UserAdmin {
 		return true;
 	}
 
-	public List<DatabaseUser> listUsers(DatabaseConnection dbc) throws SQLException {
-		List<DatabaseUser> users = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery("SELECT User, Host FROM mysql.user ORDER BY User, Host")) {
-
-			while (rs.next()) {
-				users.add(new DatabaseUser(rs.getString(1), rs.getString(2)));
-			}
-
-		}
-		return users;
+	public String listUsersSql() {
+		return "SELECT User, Host FROM mysql.user ORDER BY User, Host";
 	}
 
-	public void createUser(DatabaseConnection dbc, DatabaseUser user, String password) throws SQLException {
-		dbc.executeUpdate("CREATE USER " + account(user) + identifiedBy(password));
+	public DatabaseUser readUser(ResultSet rs) throws SQLException {
+		return new DatabaseUser(rs.getString(1), rs.getString(2));
 	}
 
-	public void changePassword(DatabaseConnection dbc, DatabaseUser user, String password) throws SQLException {
-		dbc.executeUpdate("ALTER USER " + account(user) + identifiedBy(password));
+	public String createUserSql(DatabaseUser user, String password) {
+		return "CREATE USER " + account(user) + identifiedBy(password);
 	}
 
-	public void dropUser(DatabaseConnection dbc, DatabaseUser user) throws SQLException {
-		dbc.executeUpdate("DROP USER " + account(user));
+	public String changePasswordSql(DatabaseUser user, String password) {
+		return "ALTER USER " + account(user) + identifiedBy(password);
+	}
+
+	public String dropUserSql(DatabaseUser user) {
+		return "DROP USER " + account(user);
 	}
 
 	public List<String> getPrivileges(GrantTarget.Scope scope) {
 		return scope == GrantTarget.Scope.GLOBAL ? GLOBAL_PRIVILEGES : OBJECT_PRIVILEGES;
 	}
 
-	public Set<String> getGrants(DatabaseConnection dbc, DatabaseUser user, GrantTarget target) throws SQLException {
-		String sql = switch (target.scope()) {
-			case GLOBAL -> "SELECT PRIVILEGE_TYPE FROM information_schema.USER_PRIVILEGES WHERE GRANTEE = ?";
-			case DATABASE -> "SELECT PRIVILEGE_TYPE FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ?";
-			default -> "SELECT PRIVILEGE_TYPE FROM information_schema.TABLE_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ? AND TABLE_NAME = ?";
-		};
+	public GrantQuery grantsQuery(DatabaseUser user, GrantTarget target) {
+		String grantee = "'" + user.name() + "'@'" + user.host() + "'";
 
+		return switch (target.scope()) {
+			case GLOBAL -> new GrantQuery("SELECT PRIVILEGE_TYPE FROM information_schema.USER_PRIVILEGES WHERE GRANTEE = ?", List.of(grantee), null);
+			case DATABASE -> new GrantQuery("SELECT PRIVILEGE_TYPE FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ?",
+				List.of(grantee, target.database()), null);
+			default -> new GrantQuery(
+				"SELECT PRIVILEGE_TYPE FROM information_schema.TABLE_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+				List.of(grantee, target.database(), target.table()), null);
+		};
+	}
+
+	public Set<String> readGrants(GrantTarget.Scope scope, ResultSet rs) throws SQLException {
 		Set<String> granted = new LinkedHashSet<>();
 
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
-			ps.setString(1, "'" + user.name() + "'@'" + user.host() + "'");
-
-			if (target.scope() != GrantTarget.Scope.GLOBAL) {
-				ps.setString(2, target.database());
-			}
-			if (target.scope() == GrantTarget.Scope.TABLE) {
-				ps.setString(3, target.table());
-			}
-
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					granted.add(rs.getString(1));
-				}
-			}
+		while (rs.next()) {
+			granted.add(rs.getString(1));
 		}
 		return granted;
 	}
 
-	public void setGrants(DatabaseConnection dbc, DatabaseUser user, GrantTarget target, Set<String> privileges) throws SQLException {
-		Set<String> current = getGrants(dbc, user, target);
+	public List<String> setGrantsSql(DatabaseUser user, GrantTarget target, Set<String> current, Set<String> wanted) {
+		List<String> statements = new ArrayList<>();
 
 		for (String privilege : getPrivileges(target.scope())) {
-			if (privileges.contains(privilege) && !current.contains(privilege)) {
-				dbc.executeUpdate("GRANT " + privilege + " ON " + objectName(target) + " TO " + account(user));
-			} else if (!privileges.contains(privilege) && current.contains(privilege)) {
-				dbc.executeUpdate("REVOKE " + privilege + " ON " + objectName(target) + " FROM " + account(user));
+			if (wanted.contains(privilege) && !current.contains(privilege)) {
+				statements.add("GRANT " + privilege + " ON " + objectName(target) + " TO " + account(user));
+			} else if (!wanted.contains(privilege) && current.contains(privilege)) {
+				statements.add("REVOKE " + privilege + " ON " + objectName(target) + " FROM " + account(user));
 			}
 		}
+		return statements;
 	}
 
 	private String account(DatabaseUser user) {
