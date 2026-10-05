@@ -3,7 +3,7 @@ package nl.errorsoft.esql.table.ui;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
-import nl.errorsoft.esql.table.control.IndexesCC;
+import nl.errorsoft.esql.table.control.IndexesController;
 import nl.errorsoft.esql.ui.util.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
 
@@ -40,7 +40,7 @@ import javax.swing.border.TitledBorder;
  * change. Close closes it, asking first when the selected index has changes that are not saved.
  */
 public class IndexesTab extends JPanel implements EditorTab {
-	private final IndexesCC tcc;
+	private final IndexesController indexesController;
 	private final String title;
 
 	private final JList<TableIndex> indexList = new JList<>(new DefaultListModel<>());
@@ -68,9 +68,9 @@ public class IndexesTab extends JPanel implements EditorTab {
 	private boolean loading;
 
 	/** @param indexTypes the kinds of index the server offers (INDEX, UNIQUE, FULLTEXT), a kind that is not in it has no radio button. */
-	public IndexesTab(IndexesCC tcc, String title, List<String> indexTypes) {
+	public IndexesTab(IndexesController indexesController, String title, List<String> indexTypes) {
 		super(new BorderLayout(Forms.PADDING, 0));
-		this.tcc = tcc;
+		this.indexesController = indexesController;
 		this.title = title;
 		setBorder(BorderFactory.createEmptyBorder(Forms.PADDING, Forms.PADDING, Forms.PADDING, Forms.PADDING));
 
@@ -81,7 +81,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 		jbtnAdd.addActionListener(e -> addIndex());
 		jbtnPrimary.addActionListener(e -> {
 			if (!modified || confirmDiscard()) {
-				tcc.addPrimary();
+				indexesController.addPrimary();
 			}
 		});
 		jbtnAddToList.addActionListener(e -> moveSelected(jlstAvail, jlstUsed));
@@ -90,7 +90,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 		jbtnDown.addActionListener(e -> moveUsed(1));
 		jbtnSave.addActionListener(e -> save());
 		jbtnDrop.addActionListener(e -> dropIndex());
-		jbtnClose.addActionListener(e -> tcc.close());
+		jbtnClose.addActionListener(e -> indexesController.close());
 		for (JRadioButton radio : List.of(jrdNormal, jrdUnique, jrdFulltext)) {
 			radio.addActionListener(e -> modified = true);
 		}
@@ -238,14 +238,14 @@ public class IndexesTab extends JPanel implements EditorTab {
 		String input = Dialogs.input(this, "New index", "&Name:", "Create");
 
 		if (input != null) {
-			tcc.addNew(input);
+			indexesController.addNew(input);
 		}
 	}
 
 	private void dropIndex() {
 		if (indexList.getSelectedValue() instanceof TableIndex ti
 			&& Dialogs.confirmDestructive(this, "Drop index", "Drop index '" + ti + "' of " + title + "? This cannot be undone.", "Drop")) {
-			tcc.dropIndex(ti);
+			indexesController.dropIndex(ti);
 		}
 	}
 
@@ -271,7 +271,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 				type = "UNIQUE";
 			}
 
-			tcc.modifyIndex(ti, tc, type);
+			indexesController.modifyIndex(ti, tc, type);
 		}
 	}
 

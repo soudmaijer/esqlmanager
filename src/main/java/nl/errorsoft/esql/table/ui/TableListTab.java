@@ -2,7 +2,7 @@ package nl.errorsoft.esql.table.ui;
 
 import nl.errorsoft.esql.table.Table;
 
-import nl.errorsoft.esql.database.control.DatabaseCC;
+import nl.errorsoft.esql.database.control.DatabaseController;
 import nl.errorsoft.esql.ui.table.ColumnWidths;
 import nl.errorsoft.esql.ui.table.SortableTableModel;
 
@@ -10,12 +10,12 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 public class TableListTab extends JScrollPane {
-	DatabaseCC dbcc;
+	DatabaseController databaseController;
 	SortableTableModel dtm;
 	JTable table;
 
-	public TableListTab(DatabaseCC dbcc) {
-		this.dbcc = dbcc;
+	public TableListTab(DatabaseController databaseController) {
+		this.databaseController = databaseController;
 		dtm = new SortableTableModel();
 		table = new JTable(dtm) {
 			public boolean isCellEditable(int row, int col) {
@@ -58,7 +58,7 @@ public class TableListTab extends JScrollPane {
 	public void tableSelected() {
 		if (table.getSelectedRow() > -1) {
 			if (table.getValueAt(table.getSelectedRow(), 0) instanceof Table) {
-				dbcc.tableSelected((Table) table.getValueAt(table.getSelectedRow(), 0));
+				databaseController.tableSelected((Table) table.getValueAt(table.getSelectedRow(), 0));
 			}
 		}
 	}

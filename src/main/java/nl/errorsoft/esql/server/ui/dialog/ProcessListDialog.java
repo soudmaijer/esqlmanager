@@ -28,9 +28,9 @@ import javax.swing.table.DefaultTableModel;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.ui.util.Forms;
-import nl.errorsoft.esql.server.control.ProcesslistCC;
+import nl.errorsoft.esql.server.control.ProcessListController;
 
-/** The window of the process list. It shows what {@link ProcesslistCC} gives it. */
+/** The window of the process list. It shows what {@link ProcessListController} gives it. */
 public class ProcessListDialog extends JDialog {
 	private static final String[] COLUMNS = {"Id", "User", "Host", "Database", "Command", "Time", "Info"};
 	private static final int[] WIDTHS = {60, 90, 110, 90, 80, 50, 420};
@@ -47,7 +47,7 @@ public class ProcessListDialog extends JDialog {
 	/** The processes in the rows of the table. */
 	private List<ServerProcess> shown = List.of();
 
-	public ProcessListDialog(ProcesslistCC controller, JFrame parent, String title) {
+	public ProcessListDialog(ProcessListController controller, JFrame parent, String title) {
 		super(parent, title, false);
 		jtable = new JTable(new DefaultTableModel(COLUMNS, 0)) {
 			@Override
@@ -86,10 +86,10 @@ public class ProcessListDialog extends JDialog {
 			pause.setText(pause.isSelected() ? "Resume" : "Pause");
 		});
 		hideIdle.addActionListener(e -> showProcesses(processes));
-		for (int seconds : ProcesslistCC.INTERVALS) {
+		for (int seconds : ProcessListController.INTERVALS) {
 			interval.addItem(seconds);
 		}
-		interval.setSelectedItem(ProcesslistCC.DEFAULT_INTERVAL);
+		interval.setSelectedItem(ProcessListController.DEFAULT_INTERVAL);
 		interval.setRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selected, boolean focus) {
@@ -131,7 +131,7 @@ public class ProcessListDialog extends JDialog {
 		setLocationRelativeTo(parent);
 	}
 
-	private void killSelected(ProcesslistCC controller) {
+	private void killSelected(ProcessListController controller) {
 		int row = jtable.getSelectedRow();
 		if (row > -1) {
 			String id = jtable.getValueAt(row, 0).toString();

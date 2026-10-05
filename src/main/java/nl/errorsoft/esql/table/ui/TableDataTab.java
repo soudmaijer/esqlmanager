@@ -18,7 +18,7 @@ import nl.errorsoft.esql.ui.table.SortableTableModel;
 
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableData;
-import nl.errorsoft.esql.table.control.TableCC;
+import nl.errorsoft.esql.table.control.TableController;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +40,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private int skip;
 	private int show;
 	private Table table;
-	private TableCC tcc;
+	private TableController tableController;
 	private MultiLineCellEditor mlce;
 	private SortableTableModel stm;
 	private TableColumnModel tcm;
@@ -81,8 +81,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 	/**
 	* @roseuid 3E05A84602EC
 	*/
-	public TableDataTab(TableCC tcc) {
-		this.tcc = tcc;
+	public TableDataTab(TableController tableController) {
+		this.tableController = tableController;
 		this.imgLoader = ApplicationContext.get().imageLoader();
 		this.setLayout(new BorderLayout());
 
@@ -346,7 +346,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 	public boolean dataChanged(TableData[] rowData, TableData cellData, Object newValue) {
 		try {
-			tcc.dataChanged(cellData.getTableColumn().getTable(), rowData, cellData, newValue);
+			tableController.dataChanged(cellData.getTableColumn().getTable(), rowData, cellData, newValue);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(this, "Change cell", e);
 			return false;
@@ -396,7 +396,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		}
 		try {
 			if (tda[0].isNewRow()) {
-				tcc.insertRow(table, tda);
+				tableController.insertRow(table, tda);
 				refreshData();
 			}
 		} catch (Exception e) {
@@ -424,7 +424,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 				}
 				try {
 					if (!tda[0].isNewRow()) {
-						tcc.deleteRow(table, tda);
+						tableController.deleteRow(table, tda);
 					} else {
 						inserting = false;
 					}
@@ -517,7 +517,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 				rowData[i] = (TableData) tbData.getValueAt(row, i);
 			}
 
-			tcc.dispatchDownloadFileUI(this.table, rowData, (TableData) tbData.getValueAt(row, tbData.getSelectedColumn()));
+			tableController.showDownloadFileDialog(this.table, rowData, (TableData) tbData.getValueAt(row, tbData.getSelectedColumn()));
 		} else if (src == btnAddData) {
 			int row = tbData.getSelectedRow();
 			TableData[] rowData = new TableData[tbData.getColumnCount()];
@@ -526,7 +526,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 				rowData[i] = (TableData) tbData.getValueAt(row, i);
 			}
 
-			tcc.dispatchUploadFileUI(this.table, rowData, (TableData) tbData.getValueAt(row, tbData.getSelectedColumn()));
+			tableController.showUploadFileDialog(this.table, rowData, (TableData) tbData.getValueAt(row, tbData.getSelectedColumn()));
 		} else {
 			try {
 				skip = Integer.parseInt(this.jtfSkip.getText());
@@ -571,7 +571,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 				jtfSkip.setText(Integer.toString(skip));
 				jtfShow.setText(Integer.toString(show));
 
-				tcc.showTableData(table, skip, show);
+				tableController.showTableData(table, skip, show);
 				inserting = false;
 			} catch (Exception ex) {
 				ApplicationContext.get().errors().report(this, "Show data", ex);
@@ -599,7 +599,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 			this.disableCellDataEditor();
 			inserting = false;
-			tcc.showTableData(table, skip, show);
+			tableController.showTableData(table, skip, show);
 
 		} catch (Exception ex) {
 			ApplicationContext.get().errors().report(this, "Refresh data", ex);

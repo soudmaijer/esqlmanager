@@ -8,7 +8,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.app.control.ESQLManagerCC;
+import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.connection.ui.ServerIconRenderer;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
@@ -32,7 +32,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	private static final Logger log = LogManager.getLogger(MainWindow.class);
 
 	// Control class for ESQLManager UI, manages all use-cases actions.
-	private ESQLManagerCC jmcc;
+	private MainController mainController;
 	private static final int MAX_OUTPUT_CHARS = 200000;
 	private JPanel outputPanel;
 
@@ -82,8 +82,8 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JDesktopPane jdp;
 	private ImageLoader imgLoader;
 
-	public MainWindow(ESQLManagerCC jmcc) {
-		this.jmcc = jmcc;
+	public MainWindow(MainController mainController) {
+		this.mainController = mainController;
 
 		// Get Imageloader
 		imgLoader = ApplicationContext.get().imageLoader();
@@ -93,7 +93,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		// Set window properties
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		this.setTitle(jmcc.getTitle());
+		this.setTitle(mainController.getTitle());
 		java.util.List<Image> logo = ImageLoader.logoImages();
 		this.setIconImages(logo);
 		try {
@@ -105,7 +105,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 		this.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent w) {
-				closeUI();
+				closeWindow();
 			}
 		});
 		this.pack();
@@ -334,9 +334,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		btnDisconnect.addActionListener(this);
 	}
 
-	public void closeUI() {
+	public void closeWindow() {
 		if (Dialogs.confirmDestructive(this, "Exit eSQLManager", "Exit eSQLManager? Open connections will be closed.", "Exit")) {
-			jmcc.closeUI();
+			mainController.closeWindow();
 		}
 	}
 
@@ -409,23 +409,23 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 	}
 
-	public void addConnectionWindow(ConnectionWindow cw) {
+	public void addConnectionWindow(ConnectionWindow connectionWindow) {
 		btnConnect.setEnabled(true);
 		btnDisconnect.setEnabled(true);
 		btnCascade.setEnabled(true);
 		btnTileHorizontal.setEnabled(true);
 		btnTileVertical.setEnabled(true);
 
-		jdp.add(cw);
+		jdp.add(connectionWindow);
 
 		// A maximized frame follows the size of the desktop, so the content scales with the output panel.
 		try {
-			cw.setMaximum(true);
+			connectionWindow.setMaximum(true);
 		} catch (java.beans.PropertyVetoException e) {
 			log.warn("Could not maximize the connection window", e);
 		}
 
-		cmbWindows.addItem(cw);
+		cmbWindows.addItem(connectionWindow);
 		cmbWindows.setSelectedIndex(cmbWindows.getItemCount() - 1);
 		updateMenus();
 	}
@@ -452,9 +452,9 @@ public class MainWindow extends JFrame implements ActionListener {
 	 * Closes the designers opened from a connection window, each asking to save its model first.
 	 * @return false when the user cancelled one of them
 	 */
-	public boolean closeDesigners(ConnectionWindow cw) {
+	public boolean closeDesigners(ConnectionWindow connectionWindow) {
 		for (JInternalFrame frame : jdp.getAllFrames()) {
-			if (frame instanceof DesignerWindow designer && designer.getConnectionWindow() == cw && !designer.close()) {
+			if (frame instanceof DesignerWindow designer && designer.getConnectionWindow() == connectionWindow && !designer.close()) {
 				return false;
 			}
 		}
@@ -464,7 +464,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	/** The connection window in front, or the one the designer in front belongs to. */
 	public ConnectionWindow getConnectionWindow() {
 		return switch (cmbWindows.getSelectedItem()) {
-			case ConnectionWindow cw -> cw;
+			case ConnectionWindow connectionWindow -> connectionWindow;
 			case DesignerWindow designer -> designer.getConnectionWindow();
 			case null, default -> null;
 		};
@@ -480,9 +480,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		return count;
 	}
 
-	public void removeConnectionWindow(ConnectionWindow cw) {
-		cmbWindows.removeItem(cw);
-		jdp.getDesktopManager().closeFrame(cw);
+	public void removeConnectionWindow(ConnectionWindow connectionWindow) {
+		cmbWindows.removeItem(connectionWindow);
+		jdp.getDesktopManager().closeFrame(connectionWindow);
 
 		if (getConnectionWindowCount() == 0) {
 			btnConnect.setEnabled(true);
@@ -490,7 +490,7 @@ public class MainWindow extends JFrame implements ActionListener {
 			btnCascade.setEnabled(false);
 			btnTileHorizontal.setEnabled(false);
 			btnTileVertical.setEnabled(false);
-			jmcc.dispatchConnectionProfileUI();
+			mainController.showConnectionProfileDialog();
 		}
 
 		showConnectionState();
@@ -501,15 +501,15 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		// Check for menu or Toolbar events.
 		if (object == mnuExit) {
-			closeUI();
+			closeWindow();
 		} else if (object == mnuConnect || object == btnConnect) {
-			jmcc.dispatchConnectionProfileUI();
+			mainController.showConnectionProfileDialog();
 		} else if (object == mnuSettings) {
-			jmcc.dispatchSettingsUI();
+			mainController.showSettingsDialog();
 		} else if (object == mnuDisconnect || object == btnDisconnect) {
-			ConnectionWindow cw = getConnectionWindow();
-			if (cw != null) {
-				cw.closeUI(true);
+			ConnectionWindow connectionWindow = getConnectionWindow();
+			if (connectionWindow != null) {
+				connectionWindow.closeWindow(true);
 			}
 		} else if (object == mnuTileVertical || object == btnTileVertical) {
 			DesktopUtils.tileVertical(jdp);
@@ -518,26 +518,27 @@ public class MainWindow extends JFrame implements ActionListener {
 		} else if (object == mnuTileCascade || object == btnCascade) {
 			DesktopUtils.cascadeAll(jdp);
 		} else if (object == mnuAbout) {
-			new AboutDialog(this, jmcc.getAppName(), jmcc.getAppVersion(), jmcc.getAppCommit(), () -> jmcc.showSplashScreen(0)).showDialog();
+			new AboutDialog(this, mainController.getAppName(), mainController.getAppVersion(), mainController.getAppCommit(),
+				() -> mainController.showSplashScreen(0)).showDialog();
 		} else if (object == mnuJDBC) {
-			jmcc.dispatchDriverUI();
+			mainController.showDriverDialog();
 		}
 		// Import sql file.
 		else if (object == mnuImportFromFile) {
 			if (getConnectionWindowCount() > 0) {
-				jmcc.dispatchImportUI();
+				mainController.showImportDialog();
 			}
 		}
 		// Export sql file.
 		else if (object == mnuExportToFile) {
 			if (getConnectionWindowCount() > 0) {
-				jmcc.dispatchExportUI();
+				mainController.showExportDialog();
 			}
 		}
 		// Start designer
 		else if (object == mnuDesigner) {
 			if (getConnectionWindowCount() > 0) {
-				jmcc.dispatchDesigner();
+				mainController.openDesigner();
 			}
 		}
 	}

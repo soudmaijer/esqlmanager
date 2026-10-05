@@ -28,7 +28,7 @@ import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.export.ExportOptions;
-import nl.errorsoft.esql.export.control.ExportCC;
+import nl.errorsoft.esql.export.control.ExportController;
 import nl.errorsoft.esql.table.TableName;
 import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.table.Table;
@@ -39,7 +39,7 @@ import nl.errorsoft.esql.ui.util.Validation;
 
 /** Exports databases, schemas or tables as SQL statements to a file: the tree to choose from on the left, the options and the file on the right. */
 public class ExportSqlDialog extends FormDialog {
-	private final ExportCC ecc;
+	private final ExportController exportController;
 	private final JScrollPane treeScroll = new JScrollPane();
 	private final JTextField file = new JTextField(24);
 
@@ -58,11 +58,11 @@ public class ExportSqlDialog extends FormDialog {
 
 	private final JLabel schemaFilterNote = new JLabel(
 		"<html>The profile hides some schemas in this tree. Exporting a whole database still includes them.</html>");
-	private DatabaseTree dtv;
+	private DatabaseTree databaseTree;
 
-	public ExportSqlDialog(MainWindow jm, ExportCC ecc) {
-		super(jm, "Export data", false);
-		this.ecc = ecc;
+	public ExportSqlDialog(MainWindow mainWindow, ExportController exportController) {
+		super(mainWindow, "Export data", false);
+		this.exportController = exportController;
 		initComponents();
 		setResizable(true);
 		showDialog();
@@ -76,27 +76,27 @@ public class ExportSqlDialog extends FormDialog {
 	}
 
 	public DatabaseTree getDatabaseTree() {
-		return dtv;
+		return databaseTree;
 	}
 
 	// Shows the database tree.
-	public void showDatabaseTree(final DatabaseTree tv) {
-		dtv = tv;
-		treeScroll.getViewport().add(dtv);
-		dtv.addTreeSelectionListener(e -> {
+	public void showDatabaseTree(final DatabaseTree tree) {
+		databaseTree = tree;
+		treeScroll.getViewport().add(databaseTree);
+		databaseTree.addTreeSelectionListener(e -> {
 			if (e.isAddedPath()) {
 				final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
 				Object selected = selectedNode.getUserObject();
 
 				if ((selected instanceof Database || selected instanceof Schema) && selectedNode.getChildCount() <= 0) {
-					ecc.showChildren(this, selected);
+					exportController.showChildren(this, selected);
 				}
 				if (selected instanceof Table || selected instanceof Schema) {
 					// A selected database or schema exports everything in it already, so a table or schema below it is not selected twice.
 					for (DefaultMutableTreeNode parent = (DefaultMutableTreeNode) selectedNode
 						.getParent(); parent != null; parent = (DefaultMutableTreeNode) parent
 							.getParent()) {
-						tv.removeSelectionPath(new TreePath(parent.getPath()));
+						tree.removeSelectionPath(new TreePath(parent.getPath()));
 					}
 				}
 			}
@@ -104,7 +104,7 @@ public class ExportSqlDialog extends FormDialog {
 	}
 
 	private void initComponents() {
-		Dialect dialect = ecc.dialect();
+		Dialect dialect = exportController.dialect();
 		views.setEnabled(dialect.showCreateViewSql(TableName.of("v")) != null);
 		views.setToolTipText("Writes CREATE VIEW for the views of the selected databases or schemas, after their tables. Needs Structure.");
 		transaction.setEnabled(dialect.beginTransactionSql() != null);
@@ -138,8 +138,8 @@ public class ExportSqlDialog extends FormDialog {
 		JButton clear = Forms.button("Clea&r");
 		selectAll.addActionListener(e -> selectAll());
 		clear.addActionListener(e -> {
-			if (dtv != null) {
-				dtv.clearSelection();
+			if (databaseTree != null) {
+				databaseTree.clearSelection();
 			}
 		});
 		JPanel treeButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
@@ -174,15 +174,15 @@ public class ExportSqlDialog extends FormDialog {
 
 	/** Selects every database of the server, which takes everything in them. */
 	private void selectAll() {
-		if (dtv == null) {
+		if (databaseTree == null) {
 			return;
 		}
-		DefaultMutableTreeNode root = (DefaultMutableTreeNode) dtv.getModel().getRoot();
+		DefaultMutableTreeNode root = (DefaultMutableTreeNode) databaseTree.getModel().getRoot();
 		List<TreePath> paths = new ArrayList<>();
 		for (int i = 0; i < root.getChildCount(); i++) {
 			paths.add(new TreePath(((DefaultMutableTreeNode) root.getChildAt(i)).getPath()));
 		}
-		dtv.setSelectionPaths(paths.toArray(new TreePath[0]));
+		databaseTree.setSelectionPaths(paths.toArray(new TreePath[0]));
 	}
 
 	private void chooseFile() {
@@ -207,7 +207,7 @@ public class ExportSqlDialog extends FormDialog {
 				useDatabase.isSelected(), dropIfExists.isSelected(), createIfNotExists.isSelected(), (Charset) encoding.getSelectedItem(),
 				(Integer) rowsPerInsert.getValue(), views.isEnabled() && views.isSelected(), transaction.isEnabled() && transaction.isSelected(),
 				foreignKeys.isEnabled() && foreignKeys.isSelected());
-			ecc.exportNodesAsSQL(this, dtv.getSelectionPaths(), file.getText().trim(), options);
+			exportController.exportNodesAsSQL(this, databaseTree.getSelectionPaths(), file.getText().trim(), options);
 		}
 	}
 }

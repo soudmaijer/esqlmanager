@@ -33,7 +33,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.query.SqlScript;
-import nl.errorsoft.esql.query.control.QueryCC;
+import nl.errorsoft.esql.query.control.QueryController;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
@@ -46,7 +46,7 @@ public class QueryTab extends JPanel {
 	private static final int MENU = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 	private static final String MENU_KEY = MENU == InputEvent.META_DOWN_MASK ? "Cmd" : "Ctrl";
 
-	private final QueryCC controller;
+	private final QueryController controller;
 	private final RSyntaxTextArea editor;
 	private final JComboBox<Database> databases;
 	/** The schema picker, only on servers with schemas. */
@@ -61,7 +61,7 @@ public class QueryTab extends JPanel {
 	private final JLabel noResult = new JLabel("Run a statement to see its result here", JLabel.CENTER);
 	private final JTabbedPane results = new JTabbedPane();
 
-	public QueryTab(QueryCC controller, List<Database> databaseList, Database selected) {
+	public QueryTab(QueryController controller, List<Database> databaseList, Database selected) {
 		super(new BorderLayout());
 		this.controller = controller;
 		ImageLoader images = ApplicationContext.get().imageLoader();
@@ -208,15 +208,15 @@ public class QueryTab extends JPanel {
 			return;
 		}
 
-		QueryCC.RunResult result = controller.run(statements.stream().map(SqlScript.Statement::sql).toList(), this);
+		QueryController.RunResult result = controller.run(statements.stream().map(SqlScript.Statement::sql).toList(), this);
 
-		for (QueryCC.StatementResult statement : result.results()) {
+		for (QueryController.StatementResult statement : result.results()) {
 			showResult(statement);
 		}
 		SwingUtilities.invokeLater(editor::requestFocusInWindow);
 	}
 
-	private void showResult(QueryCC.StatementResult statement) {
+	private void showResult(QueryController.StatementResult statement) {
 		JLabel details = new JLabel("Ran at " + TIME.format(statement.ranAt()) + (statement.database().isEmpty() ? "" : " on " + statement.database()) + ", "
 			+ statement.view().getRowCount() + " row(s) in " + statement.millis() + " ms");
 		details.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 6));

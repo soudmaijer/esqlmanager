@@ -14,7 +14,7 @@ import nl.errorsoft.esql.dialect.Dialect;
 
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.TreeMenu;
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.query.ui.QueryTab;
 import nl.errorsoft.esql.help.ui.HelpPanel;
@@ -44,9 +44,9 @@ import javax.swing.tree.TreePath;
 
 public class ConnectionWindow extends JInternalFrame implements ActionListener, MouseListener {
 	// Components.
-	private nl.errorsoft.esql.connection.control.ConnectionWindowCC cwcc;
+	private nl.errorsoft.esql.connection.control.ConnectionWindowController connectionWindowController;
 	private ImageLoader imgLoader;
-	private DatabaseTree dtv;
+	private DatabaseTree databaseTree;
 	private DefaultMutableTreeNode selectedNode;
 	private JScrollPane jsp; // ScrolPane for JTree
 	private JSplitPane jsplp; // Tree and jsplData
@@ -75,11 +75,11 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	private JButton btnAddField;
 	private JButton btnDeleteField;
 
-	public ConnectionWindow(nl.errorsoft.esql.connection.control.ConnectionWindowCC cwcc, MainWindow jmui) {
+	public ConnectionWindow(nl.errorsoft.esql.connection.control.ConnectionWindowController connectionWindowController, MainWindow mainWindow) {
 		// Windowconstructor
-		this.cwcc = cwcc;
-		this.setTitle(cwcc.getTitle());
-		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon(cwcc.getConnectionProfile().getServerType().iconName()));
+		this.connectionWindowController = connectionWindowController;
+		this.setTitle(connectionWindowController.getTitle());
+		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon(connectionWindowController.getConnectionProfile().getServerType().iconName()));
 		this.setResizable(true);
 		this.setMaximizable(true);
 		this.setClosable(true);
@@ -89,11 +89,11 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		this.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
 		this.addInternalFrameListener(new InternalFrameAdapter() {
 			public void internalFrameClosing(InternalFrameEvent e) {
-				closeUI(true);
+				closeWindow(true);
 			}
 
 			public void internalFrameActivated(InternalFrameEvent e) {
-				cwcc.showStatusInfo();
+				connectionWindowController.showStatusInfo();
 			}
 		});
 
@@ -248,8 +248,8 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	/*
 	 *@description: returns the class controlling this UI.
 	 */
-	public nl.errorsoft.esql.connection.control.ConnectionWindowCC getControlClass() {
-		return this.cwcc;
+	public nl.errorsoft.esql.connection.control.ConnectionWindowController getController() {
+		return this.connectionWindowController;
 	}
 
 	// Disable buttons if root selected.
@@ -315,49 +315,49 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	}
 
 	// Close frame.
-	public void closeUI(boolean confirmation) {
+	public void closeWindow(boolean confirmation) {
 		if (confirmation) {
-			if (Dialogs.confirm(this, "Disconnect", "Disconnect from " + getTitle() + "?", "Disconnect") && cwcc.closeDesigners()) {
-				cwcc.closeUI();
+			if (Dialogs.confirm(this, "Disconnect", "Disconnect from " + getTitle() + "?", "Disconnect") && connectionWindowController.closeDesigners()) {
+				connectionWindowController.closeWindow();
 			}
 		} else {
-			cwcc.closeUI();
+			connectionWindowController.closeWindow();
 		}
 	}
 
 	// Shows the database tree.
-	public void showDatabaseTree(DatabaseTree tv) {
-		dtv = tv;
-		jsp.getViewport().add(dtv);
+	public void showDatabaseTree(DatabaseTree tree) {
+		databaseTree = tree;
+		jsp.getViewport().add(databaseTree);
 
-		dtv.addMouseListener(this);
-		dtv.addTreeSelectionListener(e -> {
-			TreePath tp = e.getPath();
+		databaseTree.addMouseListener(this);
+		databaseTree.addTreeSelectionListener(e -> {
+			TreePath treePath = e.getPath();
 			selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
 
 			if (selectedNode.getUserObject() instanceof Database) {
 				if (e.isAddedPath()) {
-					cwcc.databaseSelected((Database) selectedNode.getUserObject());
+					connectionWindowController.databaseSelected((Database) selectedNode.getUserObject());
 
 				}
 			} else if (selectedNode.getUserObject() instanceof Schema schema) {
 				if (e.isAddedPath()) {
-					cwcc.schemaSelected(schema);
+					connectionWindowController.schemaSelected(schema);
 				}
 			} else if (selectedNode.getUserObject() instanceof Table) {
 				if (e.isAddedPath()) {
 					if (((DefaultMutableTreeNode) e.getPath().getLastPathComponent()).getChildCount() > 0) {
-						cwcc.tableSelected((Table) selectedNode.getUserObject(), false);
+						connectionWindowController.tableSelected((Table) selectedNode.getUserObject(), false);
 					} else {
-						cwcc.tableSelected((Table) selectedNode.getUserObject(), true);
+						connectionWindowController.tableSelected((Table) selectedNode.getUserObject(), true);
 					}
 				}
 			} else if (selectedNode.getUserObject() instanceof nl.errorsoft.esql.table.TableColumn) {
-				cwcc.fieldSelected();
+				connectionWindowController.fieldSelected();
 			}
 			// Root?!
 			else {
-				cwcc.rootSelected();
+				connectionWindowController.rootSelected();
 			}
 		});
 	}
@@ -370,19 +370,19 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		return selectedNode;
 	}
 
-	public void showTableDataTab(String tabTitle, TableDataTab tdv) {
-		showView(tabTitle, tdv);
+	public void showTableDataTab(String tabTitle, TableDataTab tableDataTab) {
+		showView(tabTitle, tableDataTab);
 		navigation.removeAll();
-		navigation.add(tdv.getNavigationBar(), BorderLayout.CENTER);
-		this.tabbedPane.setSelectedComponent(tdv);
+		navigation.add(tableDataTab.getNavigationBar(), BorderLayout.CENTER);
+		this.tabbedPane.setSelectedComponent(tableDataTab);
 		showNavigation();
-		SwingUtilities.invokeLater(tdv::requestFocusInWindow);
+		SwingUtilities.invokeLater(tableDataTab::requestFocusInWindow);
 	}
 
-	public void showTableListTab(String tabTitle, TableListTab tlv) {
-		showView(tabTitle, tlv);
-		this.tabbedPane.setSelectedComponent(tlv);
-		SwingUtilities.invokeLater(tlv::requestFocusInWindow);
+	public void showTableListTab(String tabTitle, TableListTab tableListTab) {
+		showView(tabTitle, tableListTab);
+		this.tabbedPane.setSelectedComponent(tableListTab);
+		SwingUtilities.invokeLater(tableListTab::requestFocusInWindow);
 	}
 
 	/** The table data or table list takes the first tab, the help stays available behind it. */
@@ -534,27 +534,27 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 		// Insert new row
 		if (eventSource == btnNewRow) {
-			cwcc.insertNewRow();
+			connectionWindowController.insertNewRow();
 		}
 		// Delete row
 		else if (eventSource == btnDeleteRow) {
-			cwcc.deleteSelectedRows();
+			connectionWindowController.deleteSelectedRows();
 		}
 		// Update or insert row
 		else if (eventSource == btnUpdateRow) {
-			cwcc.saveSelectedRow();
+			connectionWindowController.saveSelectedRow();
 		}
 		// Refresh database tree.
 		else if (eventSource == btnRefreshTree) {
-			cwcc.showDatabaseTree();
+			connectionWindowController.showDatabaseTree();
 		}
 		// Run SQL query window.
 		else if (eventSource == btnRunQuery) {
-			cwcc.startQueryTab();
+			connectionWindowController.startQueryTab();
 		}
 		// Read the database into the designer.
 		else if (eventSource == btnDesigner) {
-			cwcc.openDatabaseInDesigner();
+			connectionWindowController.openDatabaseInDesigner();
 		}
 		// Drop table.
 		else if (eventSource == btnDropTable) {
@@ -562,72 +562,72 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		}
 		// Add field.
 		else if (eventSource == btnAddField) {
-			cwcc.startFieldUI(true, false);
+			connectionWindowController.showFieldPropertiesDialog(true, false);
 		}
 		// Drop field.
 		else if (eventSource == btnDeleteField) {
 			dropField();
 		} else if (eventSource == btnUserManager) {
-			cwcc.dispatchUserManagerUI();
+			connectionWindowController.showUserManagerDialog();
 		} else if (eventSource == btnCreateTable) {
-			cwcc.dispatchCreateTableUI();
+			connectionWindowController.showCreateTableTab();
 		}
 	}
 
 	/** Runs an item of the context menu of the tree, on the node that was right clicked (it is selected first). */
 	private void perform(TreeMenu.Item item) {
 		switch (item) {
-			case CREATE_DATABASE -> cwcc.startCreateDatabase();
-			case NEW_QUERY -> cwcc.startQueryTab();
-			case USERS -> cwcc.dispatchUserManagerUI();
-			case PROCESS_LIST -> cwcc.dispatchProcessUI();
-			case SERVER_STATUS -> cwcc.showServerStatus();
-			case SERVER_VARIABLES -> cwcc.showServerVariables();
-			case EXPORT -> cwcc.dispatchExportUI();
-			case IMPORT -> cwcc.dispatchImportUI();
-			case RELOAD_DATABASES -> cwcc.showDatabaseTree();
-			case OPEN_DATABASE -> cwcc.openDatabase(getDatabase());
-			case CREATE_TABLE -> cwcc.dispatchCreateTableUI();
-			case OPEN_IN_DESIGNER -> cwcc.openDatabaseInDesigner();
+			case CREATE_DATABASE -> connectionWindowController.startCreateDatabase();
+			case NEW_QUERY -> connectionWindowController.startQueryTab();
+			case USERS -> connectionWindowController.showUserManagerDialog();
+			case PROCESS_LIST -> connectionWindowController.showProcessListDialog();
+			case SERVER_STATUS -> connectionWindowController.showServerStatus();
+			case SERVER_VARIABLES -> connectionWindowController.showServerVariables();
+			case EXPORT -> connectionWindowController.showExportDialog();
+			case IMPORT -> connectionWindowController.showImportDialog();
+			case RELOAD_DATABASES -> connectionWindowController.showDatabaseTree();
+			case OPEN_DATABASE -> connectionWindowController.openDatabase(getDatabase());
+			case CREATE_TABLE -> connectionWindowController.showCreateTableTab();
+			case OPEN_IN_DESIGNER -> connectionWindowController.openDatabaseInDesigner();
 			case DROP_DATABASE -> {
 				Database database = getDatabase();
 				String name = database != null ? "'" + database.getName() + "'" : "the selected database";
 
 				if (Dialogs.confirmDestructive(this, "Drop database", "Drop database " + name + " and all its tables? This cannot be undone.", "Drop")) {
-					cwcc.dropDatabase();
+					connectionWindowController.dropDatabase();
 				}
 			}
-			case RELOAD_TABLES, RELOAD_SCHEMAS -> cwcc.reloadSelectedDatabase();
-			case CREATE_SCHEMA -> cwcc.startCreateSchema();
-			case RENAME_SCHEMA -> cwcc.renameSchema();
+			case RELOAD_TABLES, RELOAD_SCHEMAS -> connectionWindowController.reloadSelectedDatabase();
+			case CREATE_SCHEMA -> connectionWindowController.startCreateSchema();
+			case RENAME_SCHEMA -> connectionWindowController.renameSchema();
 			case DROP_SCHEMA -> {
 				Schema schema = getSchema();
 				String term = dialect().schemaTerm();
 
 				if (Dialogs.confirmDestructive(this, "Drop " + term, "Drop " + term + " '" + (schema == null ? "" : schema.getName())
 					+ "' and everything in it? This cannot be undone.", "Drop")) {
-					cwcc.dropSchema();
+					connectionWindowController.dropSchema();
 				}
 			}
-			case RENAME_TABLE -> cwcc.renameSelectedTable();
-			case DUPLICATE_TABLE -> cwcc.duplicateSelectedTable();
-			case PROPERTIES -> cwcc.showProperties();
-			case OPEN_TABLE -> cwcc.openTable(getTable());
-			case EDIT_TABLE -> cwcc.dispatchModifyTableUI();
-			case INDEXES -> cwcc.dispatchTableIndexesUI();
-			case ADD_FIELD -> cwcc.startFieldUI(true, false);
+			case RENAME_TABLE -> connectionWindowController.renameSelectedTable();
+			case DUPLICATE_TABLE -> connectionWindowController.duplicateSelectedTable();
+			case PROPERTIES -> connectionWindowController.showProperties();
+			case OPEN_TABLE -> connectionWindowController.openTable(getTable());
+			case EDIT_TABLE -> connectionWindowController.showEditTableTab();
+			case INDEXES -> connectionWindowController.showIndexesTab();
+			case ADD_FIELD -> connectionWindowController.showFieldPropertiesDialog(true, false);
 			case EMPTY_TABLE -> {
 				if (Dialogs.confirmDestructive(this, "Empty table", "Delete all rows from " + tableName(getTable()) + "? This cannot be undone.", "Empty")) {
-					cwcc.flushSelectedTable();
+					connectionWindowController.flushSelectedTable();
 				}
 			}
 			case DROP_TABLE -> dropTable();
-			case OPTIMIZE -> cwcc.optimizeTable();
-			case ANALYZE -> cwcc.analyseTable();
-			case CHECK -> cwcc.checkTable();
-			case REPAIR -> cwcc.repairTable();
-			case RELOAD_COLUMNS -> cwcc.reloadSelectedTable();
-			case EDIT_FIELD -> cwcc.startFieldUI(false, true);
+			case OPTIMIZE -> connectionWindowController.optimizeTable();
+			case ANALYZE -> connectionWindowController.analyseTable();
+			case CHECK -> connectionWindowController.checkTable();
+			case REPAIR -> connectionWindowController.repairTable();
+			case RELOAD_COLUMNS -> connectionWindowController.reloadSelectedTable();
+			case EDIT_FIELD -> connectionWindowController.showFieldPropertiesDialog(false, true);
 			case DROP_FIELD -> dropField();
 			case SEPARATOR -> {
 			}
@@ -636,7 +636,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 	private void dropTable() {
 		if (Dialogs.confirmDestructive(this, "Drop table", "Drop table " + tableName(getTable()) + "? All its data will be lost.", "Drop")) {
-			cwcc.dropTable();
+			connectionWindowController.dropTable();
 		}
 	}
 
@@ -645,7 +645,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		String name = column != null ? "column '" + column.getName() + "' from table " + tableName(column.getTable()) : "the selected column";
 
 		if (Dialogs.confirmDestructive(this, "Drop column", "Drop " + name + "? This cannot be undone.", "Drop")) {
-			cwcc.dropTableColumn();
+			connectionWindowController.dropTableColumn();
 		}
 	}
 
@@ -731,7 +731,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	}
 
 	private Dialect dialect() {
-		return cwcc.getConnectionProfile().getServerType().getDialect();
+		return connectionWindowController.getConnectionProfile().getServerType().getDialect();
 	}
 	/******************************************************************
 	 *
@@ -749,18 +749,18 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 	/** Selects the node under the cursor and shows its context menu. */
 	private void showContextMenu(MouseEvent e) {
-		if (e.getSource() != dtv || !e.isPopupTrigger()) {
+		if (e.getSource() != databaseTree || !e.isPopupTrigger()) {
 			return;
 		}
 
-		TreePath path = dtv.getPathForLocation(e.getX(), e.getY());
+		TreePath path = databaseTree.getPathForLocation(e.getX(), e.getY());
 
 		if (path == null) {
 			return;
 		}
-		dtv.setSelectionPath(path);
+		databaseTree.setSelectionPath(path);
 		selectedNode = (DefaultMutableTreeNode) path.getLastPathComponent();
-		contextMenu(selectedNode.getUserObject()).show(dtv, e.getX(), e.getY());
+		contextMenu(selectedNode.getUserObject()).show(databaseTree, e.getX(), e.getY());
 	}
 
 	public Table getTable() {
@@ -825,27 +825,27 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 	/** A double click on a database or table opens its tab, a single click only selects. */
 	public void mouseClicked(MouseEvent e) {
-		if (e.getSource() != dtv || e.getClickCount() != 2 || e.isMetaDown()) {
+		if (e.getSource() != databaseTree || e.getClickCount() != 2 || e.isMetaDown()) {
 			return;
 		}
 
-		TreePath path = dtv.getPathForLocation(e.getX(), e.getY());
+		TreePath path = databaseTree.getPathForLocation(e.getX(), e.getY());
 
 		if (path != null && path.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
 			if (node.getUserObject() instanceof Database database) {
-				cwcc.openDatabase(database);
+				connectionWindowController.openDatabase(database);
 			} else if (node.getUserObject() instanceof Table table) {
-				cwcc.openTable(table);
+				connectionWindowController.openTable(table);
 			}
 		}
 	}
 	public void mouseEntered(MouseEvent e) {
-		if (e.getSource() == dtv) {
+		if (e.getSource() == databaseTree) {
 			this.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 		}
 	}
 	public void mouseExited(MouseEvent e) {
-		if (e.getSource() == dtv) {
+		if (e.getSource() == databaseTree) {
 			this.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 		}
 	}

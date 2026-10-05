@@ -12,8 +12,8 @@ import nl.errorsoft.esql.server.ServerService;
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.MainWindow;
-import nl.errorsoft.esql.blob.control.UDDataCC;
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.blob.control.BlobTransferController;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import nl.errorsoft.esql.dialect.Dialect;
@@ -21,29 +21,29 @@ import nl.errorsoft.esql.table.QueryResult;
 import nl.errorsoft.esql.table.TableService;
 import java.util.Vector;
 
-public class TableCC {
-	private TableDataTab tdv;
-	private ConnectionWindowCC cwcc;
+public class TableController {
+	private TableDataTab tableDataTab;
+	private ConnectionWindowController connectionWindowController;
 
-	public TableCC(ConnectionWindowCC cwcc) {
-		this.cwcc = cwcc;
+	public TableController(ConnectionWindowController connectionWindowController) {
+		this.connectionWindowController = connectionWindowController;
 	}
 
-	public void dispatchDownloadFileUI(Table table, TableData[] rowData, TableData cellData) {
-		UDDataCC udcc = new UDDataCC(cwcc);
-		udcc.startDownloadUI(cwcc.getUI(), table, rowData, cellData);
+	public void showDownloadFileDialog(Table table, TableData[] rowData, TableData cellData) {
+		BlobTransferController blobTransferController = new BlobTransferController(connectionWindowController);
+		blobTransferController.showDownloadDialog(connectionWindowController.getMainWindow(), table, rowData, cellData);
 	}
 
-	public void dispatchUploadFileUI(Table table, TableData[] rowData, TableData cellData) {
-		UDDataCC udcc = new UDDataCC(cwcc);
-		udcc.startUploadUI(cwcc.getUI(), table, rowData, cellData);
+	public void showUploadFileDialog(Table table, TableData[] rowData, TableData cellData) {
+		BlobTransferController blobTransferController = new BlobTransferController(connectionWindowController);
+		blobTransferController.showUploadDialog(connectionWindowController.getMainWindow(), table, rowData, cellData);
 	}
 
 	public TableDataTab getTableDataTab(Table table, int skip, int show) throws Exception {
 		TableData[][] tdata = service().loadPage(table, skip, show);
-		tdv = new TableDataTab(this);
-		tdv.loadData(table, table.getColumns(), tdata);
-		return tdv;
+		tableDataTab = new TableDataTab(this);
+		tableDataTab.loadData(table, table.getColumns(), tdata);
+		return tableDataTab;
 	}
 
 	public TableColumn[] getColumns(Table table) throws Exception {
@@ -52,7 +52,7 @@ public class TableCC {
 
 	public void showTableData(Table table, int skip, int show) throws Exception {
 		TableData[][] tdata = service().loadPage(table, skip, show);
-		tdv.loadData(table, table.getColumns(), tdata);
+		tableDataTab.loadData(table, table.getColumns(), tdata);
 	}
 
 	public TableDataTab executeQuery(String query) throws Exception {
@@ -84,15 +84,15 @@ public class TableCC {
 	}
 
 	public void insertNewRow() {
-		tdv.insertNewRow();
+		tableDataTab.insertNewRow();
 	}
 
 	public void deleteSelectedRows() {
-		tdv.deleteSelectedRows();
+		tableDataTab.deleteSelectedRows();
 	}
 
 	public void saveSelectedRow() {
-		tdv.saveSelectedRow();
+		tableDataTab.saveSelectedRow();
 	}
 
 	public void insertRow(Table table, TableData[] rowData) throws Exception {
@@ -111,11 +111,11 @@ public class TableCC {
 	 * Server options, the query behind them depends on the database.
 	 */
 	public TableDataTab showServerStatus() throws Exception {
-		return show(cwcc.getContext().servers().getStatus());
+		return show(connectionWindowController.getContext().servers().getStatus());
 	}
 
 	public TableDataTab showServerVariables() throws Exception {
-		return show(cwcc.getContext().servers().getVariables());
+		return show(connectionWindowController.getContext().servers().getVariables());
 	}
 
 	public String optimizeTable(Table table) throws Exception {
@@ -141,6 +141,6 @@ public class TableCC {
 	}
 
 	private TableService service() throws Exception {
-		return cwcc.getContext().tables();
+		return connectionWindowController.getContext().tables();
 	}
 }

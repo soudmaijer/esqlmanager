@@ -17,7 +17,7 @@ public class ServerIconRenderer extends DefaultListCellRenderer {
 		ServerType type = switch (value) {
 			case ConnectionProfile profile -> profile.getServerType();
 			case ServerType serverType -> serverType;
-			case ConnectionWindow window -> window.getControlClass().getConnectionProfile().getServerType();
+			case ConnectionWindow window -> window.getController().getConnectionProfile().getServerType();
 			case null, default -> null;
 		};
 		if (type == null && value instanceof javax.swing.JInternalFrame frame) {

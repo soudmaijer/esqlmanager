@@ -2,15 +2,15 @@ package nl.errorsoft.esql.connection;
 
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
 public class ConnectionSession {
-	private ConnectionWindowCC cwcc;
+	private ConnectionWindowController connectionWindowController;
 	private ConnectionProfile cp;
 	private DatabaseConnection db;
 
-	public ConnectionSession(ConnectionWindowCC cwcc, ConnectionProfile cp) {
-		this.cwcc = cwcc;
+	public ConnectionSession(ConnectionWindowController connectionWindowController, ConnectionProfile cp) {
+		this.connectionWindowController = connectionWindowController;
 		this.cp = cp;
 	}
 

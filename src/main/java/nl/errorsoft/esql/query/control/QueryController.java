@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Schema;
@@ -23,17 +23,17 @@ import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.control.TableCC;
+import nl.errorsoft.esql.table.control.TableController;
 import nl.errorsoft.esql.table.ui.TableDataTab;
 
 /**
  * The controller of one query tab: runs the statements of the editor and gives the completion the names of the current database (of all its schemas). The names are loaded
  * once per tab, the tables in the background when the database is chosen, the columns of a table the first time they are asked for.
  */
-public class QueryCC implements SchemaNames {
-	private static final Logger log = LogManager.getLogger(QueryCC.class);
+public class QueryController implements SchemaNames {
+	private static final Logger log = LogManager.getLogger(QueryController.class);
 
-	private final ConnectionWindowCC cwcc;
+	private final ConnectionWindowController connectionWindowController;
 	/** The tables per schema (lower case schema, "" on servers without schemas, to lower case table name). */
 	private volatile Map<String, Map<String, Table>> tables = Map.of();
 	private volatile List<String> schemaNames = List.of();
@@ -54,8 +54,8 @@ public class QueryCC implements SchemaNames {
 	public record StatementResult(String sql, TableDataTab view, LocalTime ranAt, String database, long millis) {
 	}
 
-	public QueryCC(ConnectionWindowCC cwcc) {
-		this.cwcc = cwcc;
+	public QueryController(ConnectionWindowController connectionWindowController) {
+		this.connectionWindowController = connectionWindowController;
 	}
 
 	/** Whether the server has schemas, so the tab offers a schema next to the database. */
@@ -74,15 +74,15 @@ public class QueryCC implements SchemaNames {
 	}
 
 	public List<Database> databases() throws Exception {
-		return cwcc.getContext().databases().getDatabases();
+		return connectionWindowController.getContext().databases().getDatabases();
 	}
 
 	/** Makes the database the current one and loads its table names for the completion, off the event thread. */
 	public void use(Database database) {
 		try {
-			cwcc.getContext().databases().use(database);
+			connectionWindowController.getContext().databases().use(database);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwcc.getUI(), "Change database", e);
+			ApplicationContext.get().errors().report(connectionWindowController.getMainWindow(), "Change database", e);
 			return;
 		}
 
@@ -93,7 +93,7 @@ public class QueryCC implements SchemaNames {
 		columns.clear();
 		Thread.ofVirtual().name("completion-tables").start(() -> {
 			try {
-				DatabaseService service = cwcc.getContext().databases();
+				DatabaseService service = connectionWindowController.getContext().databases();
 				Map<String, Map<String, Table>> loaded = new ConcurrentHashMap<>();
 				List<Schema> schemas = service.getSchemas(database);
 
@@ -120,9 +120,9 @@ public class QueryCC implements SchemaNames {
 	/** Makes unqualified names resolve to the schema, for the statements and the completion. */
 	public void useSchema(String schema) {
 		try {
-			cwcc.getContext().queries().useSchema(database, schema);
+			connectionWindowController.getContext().queries().useSchema(database, schema);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwcc.getUI(), "Change " + schemaTerm(), e);
+			ApplicationContext.get().errors().report(connectionWindowController.getMainWindow(), "Change " + schemaTerm(), e);
 			return;
 		}
 		chosenSchema = schema;
@@ -137,7 +137,7 @@ public class QueryCC implements SchemaNames {
 		QueryService queries;
 
 		try {
-			queries = cwcc.getContext().queries();
+			queries = connectionWindowController.getContext().queries();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(parent, "Run query", e);
 			return new RunResult(List.of(), false);
@@ -166,7 +166,7 @@ public class QueryCC implements SchemaNames {
 				LocalTime ranAt = LocalTime.now().withNano(0);
 
 				if (queries.returnsRows(sql)) {
-					view = new TableCC(cwcc).executeQuery(sql);
+					view = new TableController(connectionWindowController).executeQuery(sql);
 					long millis = millisSince(started);
 					results.add(new StatementResult(sql.strip(), view, ranAt, currentDatabase(), millis));
 					log.info("{}: {} row(s) in {} ms", which, view.getRowCount(), millis);
@@ -178,7 +178,7 @@ public class QueryCC implements SchemaNames {
 					log.info("{}: {} row(s) affected in {} ms", which, rows, millisSince(started));
 				}
 			} catch (Exception e) {
-				cwcc.setStatusDetail(parent, which + " failed: " + firstLine(sql));
+				connectionWindowController.setStatusDetail(parent, which + " failed: " + firstLine(sql));
 				ApplicationContext.get().errors().report(parent, which + " (" + firstLine(sql) + ")", e);
 				return new RunResult(results, false);
 			}
@@ -187,7 +187,7 @@ public class QueryCC implements SchemaNames {
 		String summary = statements.size() == 1 && view != null
 			? "Query returned " + view.getRowCount() + " row(s) in " + millisSince(start) + " ms"
 			: statements.size() + " statement(s) executed in " + millisSince(start) + " ms";
-		cwcc.setStatusDetail(parent, summary);
+		connectionWindowController.setStatusDetail(parent, summary);
 		return new RunResult(results, true);
 	}
 
@@ -242,7 +242,7 @@ public class QueryCC implements SchemaNames {
 			try {
 				List<String> names = new ArrayList<>();
 
-				for (TableColumn column : cwcc.getContext().tables().loadColumns(table)) {
+				for (TableColumn column : connectionWindowController.getContext().tables().loadColumns(table)) {
 					names.add(column.getName());
 				}
 				return names;
@@ -260,7 +260,7 @@ public class QueryCC implements SchemaNames {
 	}
 
 	private Dialect dialect() {
-		return cwcc.getConnectionProfile().getServerType().getDialect();
+		return connectionWindowController.getConnectionProfile().getServerType().getDialect();
 	}
 
 	private static String firstLine(String sql) {

@@ -6,7 +6,7 @@ import nl.errorsoft.esql.user.UserService;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
 import java.util.List;
 import java.util.Set;
@@ -16,25 +16,25 @@ import nl.errorsoft.esql.user.ui.dialog.UserManagerDialog;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class UserManagerCC {
-	private static final Logger log = LogManager.getLogger(UserManagerCC.class);
+public class UserManagerController {
+	private static final Logger log = LogManager.getLogger(UserManagerController.class);
 
-	private ConnectionWindowCC cwcc;
+	private ConnectionWindowController connectionWindowController;
 
-	public UserManagerCC(ConnectionWindowCC cwcc) {
-		this.cwcc = cwcc;
+	public UserManagerController(ConnectionWindowController connectionWindowController) {
+		this.connectionWindowController = connectionWindowController;
 	}
 
-	public void startUI(MainWindow emui) {
+	public void showDialog(MainWindow mainWindow) {
 		try {
-			if (!cwcc.requireFeature(Dialect.Feature.USER_MANAGER, "The user manager")) {
+			if (!connectionWindowController.requireFeature(Dialect.Feature.USER_MANAGER, "The user manager")) {
 				return;
 			}
 
-			emui.updateStatus("Starting usermanager...", true);
-			UserManagerDialog ui = new UserManagerDialog(emui, this);
-			emui.showConnectionState();
-			ui.setVisible(true);
+			mainWindow.updateStatus("Starting usermanager...", true);
+			UserManagerDialog dialog = new UserManagerDialog(mainWindow, this);
+			mainWindow.showConnectionState();
+			dialog.setVisible(true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Open user manager", e);
 		}
@@ -82,13 +82,13 @@ public class UserManagerCC {
 
 	private UserService service() {
 		try {
-			return cwcc.getContext().users();
+			return connectionWindowController.getContext().users();
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage(), e);
 		}
 	}
 
 	private Dialect getDialect() {
-		return cwcc.getConnectionProfile().getServerType().getDialect();
+		return connectionWindowController.getConnectionProfile().getServerType().getDialect();
 	}
 }

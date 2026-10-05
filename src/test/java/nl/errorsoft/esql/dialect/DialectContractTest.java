@@ -205,8 +205,8 @@ abstract class DialectContractTest {
 
 	@Test
 	void testsAConnectionWithoutKeepingIt() throws Exception {
-		var profiles = new nl.errorsoft.esql.connection.control.ConnectionProfileCC(null);
-		AtomicReference<nl.errorsoft.esql.connection.control.ConnectionProfileCC.TestResult> result = new AtomicReference<>();
+		var profiles = new nl.errorsoft.esql.connection.control.ConnectionProfileController(null);
+		AtomicReference<nl.errorsoft.esql.connection.control.ConnectionProfileController.TestResult> result = new AtomicReference<>();
 		java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
 		profiles.testConnection(profile(), outcome -> {
 			result.set(outcome);

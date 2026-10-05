@@ -24,7 +24,7 @@ import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.importer.ImportOptions;
-import nl.errorsoft.esql.importer.control.ImportCC;
+import nl.errorsoft.esql.importer.control.ImportController;
 import nl.errorsoft.esql.ui.util.Encodings;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
 import nl.errorsoft.esql.ui.util.FileChoosers;
@@ -36,7 +36,7 @@ import nl.errorsoft.esql.ui.util.Validation;
 public class ImportSqlDialog extends FormDialog {
 	private static final String CURRENT = "the current database";
 
-	private final ImportCC ecc;
+	private final ImportController importController;
 	private final JScrollPane treeScroll = new JScrollPane();
 	private final JTextField file = new JTextField(24);
 	private final JLabel target = new JLabel(CURRENT);
@@ -45,11 +45,11 @@ public class ImportSqlDialog extends FormDialog {
 	private final JCheckBox singleTransaction = Forms.mnemonic(new JCheckBox(), "Run in a single &transaction");
 	private final JComboBox<Charset> encoding = Encodings.combo(ApplicationContext.get().settings().getDefaultEncoding());
 
-	private DatabaseTree dtv;
+	private DatabaseTree databaseTree;
 
-	public ImportSqlDialog(MainWindow jm, ImportCC ecc) {
-		super(jm, "Import data", false);
-		this.ecc = ecc;
+	public ImportSqlDialog(MainWindow mainWindow, ImportController importController) {
+		super(mainWindow, "Import data", false);
+		this.importController = importController;
 		initComponents();
 		setResizable(true);
 		showDialog();
@@ -102,11 +102,11 @@ public class ImportSqlDialog extends FormDialog {
 	}
 
 	// Shows the database tree.
-	public void showDatabaseTree(DatabaseTree tv) {
-		dtv = tv;
-		treeScroll.getViewport().add(dtv);
-		dtv.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-		dtv.addTreeSelectionListener(e -> {
+	public void showDatabaseTree(DatabaseTree tree) {
+		databaseTree = tree;
+		treeScroll.getViewport().add(databaseTree);
+		databaseTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+		databaseTree.addTreeSelectionListener(e -> {
 			target.setText(e.getPath() != null && e.isAddedPath()
 				? String.valueOf(((DefaultMutableTreeNode) e.getPath().getLastPathComponent()).getUserObject())
 				: CURRENT);
@@ -116,18 +116,18 @@ public class ImportSqlDialog extends FormDialog {
 
 				// A database opens to its schemas, so the script can be run in one of them.
 				if (node.getUserObject() instanceof Database && node.getChildCount() <= 0) {
-					ecc.showChildren(this, node.getUserObject());
+					importController.showChildren(this, node.getUserObject());
 				}
 			}
 		});
-		TreePath selected = dtv.getSelectionPath();
+		TreePath selected = databaseTree.getSelectionPath();
 		if (selected != null) {
 			target.setText(String.valueOf(((DefaultMutableTreeNode) selected.getLastPathComponent()).getUserObject()));
 		}
 	}
 
 	public DatabaseTree getDatabaseTree() {
-		return dtv;
+		return databaseTree;
 	}
 
 	private void chooseFile() {
@@ -151,7 +151,7 @@ public class ImportSqlDialog extends FormDialog {
 		String problem = Validation.required("the file to import", file.getText());
 		showError(problem);
 		if (problem == null) {
-			ecc.importNodesAsSQL(this, dtv.getSelectionPath(), file.getText().trim(),
+			importController.importNodesAsSQL(this, databaseTree.getSelectionPath(), file.getText().trim(),
 				new ImportOptions(!continueOnError.isSelected(), singleTransaction.isSelected(), (Charset) encoding.getSelectedItem()));
 		}
 	}

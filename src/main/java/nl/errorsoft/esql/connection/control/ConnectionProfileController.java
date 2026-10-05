@@ -2,7 +2,7 @@ package nl.errorsoft.esql.connection.control;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.app.control.ESQLManagerCC;
+import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
@@ -22,15 +22,15 @@ import javax.swing.SwingUtilities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ConnectionProfileCC {
-	private static final Logger log = LogManager.getLogger(ConnectionProfileCC.class);
+public class ConnectionProfileController {
+	private static final Logger log = LogManager.getLogger(ConnectionProfileController.class);
 
-	private ESQLManagerCC jmcc;
-	private ConnectionProfileDialog cpui;
+	private MainController mainController;
+	private ConnectionProfileDialog profileDialog;
 	private ConnectionProfile cp;
 
-	public ConnectionProfileCC(ESQLManagerCC jmcc) {
-		this.jmcc = jmcc;
+	public ConnectionProfileController(MainController mainController) {
+		this.mainController = mainController;
 
 		try {
 			cp = new ConnectionProfile();
@@ -39,9 +39,9 @@ public class ConnectionProfileCC {
 		}
 	}
 
-	public void startUI(MainWindow jmui, boolean autoConnect) {
+	public void showDialog(MainWindow mainWindow, boolean autoConnect) {
 		// Create Frame.
-		jmui.updateStatus("Starting profile manager...", true);
+		mainWindow.updateStatus("Starting profile manager...", true);
 		ConnectionProfile[] cpa = cp.getProfiles();
 		log.info("Loaded {} connection profile(s) from conf/profiles.xml", cpa.length);
 		boolean conLastUsed = false;
@@ -55,10 +55,10 @@ public class ConnectionProfileCC {
 			}
 		}
 		if (!conLastUsed) {
-			cpui = new ConnectionProfileDialog(jmui, this);
-			cpui.loadProfiles(cp.getProfiles());
-			jmcc.showConnectionState();
-			cpui.setVisible(true);
+			profileDialog = new ConnectionProfileDialog(mainWindow, this);
+			profileDialog.loadProfiles(cp.getProfiles());
+			mainController.showConnectionState();
+			profileDialog.setVisible(true);
 		}
 	}
 
@@ -72,14 +72,14 @@ public class ConnectionProfileCC {
 				selcp.setPassword(password);
 			}
 			cp.setLastUsed(selcp);
-			jmcc.dispatchConnectionWindowUI(selcp);
+			mainController.openConnectionWindow(selcp);
 
 			// An auto-connect at startup happens before the profile dialog exists.
-			if (cpui != null) {
-				cpui.dispose();
+			if (profileDialog != null) {
+				profileDialog.dispose();
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cpui, "Connect", e);
+			ApplicationContext.get().errors().report(profileDialog, "Connect", e);
 		}
 	}
 
@@ -87,30 +87,30 @@ public class ConnectionProfileCC {
 	private String askPassword(ConnectionProfile profile) {
 		JPasswordField field = new JPasswordField(20);
 		JPanel form = new Forms.Grid().row("&Password:", field).panel();
-		Component parent = cpui != null ? cpui : jmcc.getUI();
+		Component parent = profileDialog != null ? profileDialog : mainController.getMainWindow();
 		boolean accepted = Dialogs.form(parent, "Password for " + profile.getName(), form, "Connect", field, () -> null);
 		return accepted ? new String(field.getPassword()) : null;
 	}
 
 	public void addProfile(ConnectionProfile typed) {
 		try {
-			jmcc.updateStatus("Adding profile...", true);
+			mainController.updateStatus("Adding profile...", true);
 
 			if (!cp.profileExists(typed.getName())) {
 				cp.addProfile(typed);
-				cpui.loadProfiles(cp.getProfiles());
-				cpui.setSelectedProfile(typed);
-				jmcc.showConnectionState();
+				profileDialog.loadProfiles(cp.getProfiles());
+				profileDialog.setSelectedProfile(typed);
+				mainController.showConnectionState();
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cpui, "Add profile", e);
+			ApplicationContext.get().errors().report(profileDialog, "Add profile", e);
 		}
 	}
 
 	/** Saves what is typed in the form over a saved profile. */
 	public void editProfile(ConnectionProfile saved, ConnectionProfile typed) {
 		try {
-			jmcc.updateStatus("Saving profile...", true);
+			mainController.updateStatus("Saving profile...", true);
 			saved.setName(typed.getName());
 			saved.setHost(typed.getHost());
 			saved.setPort(typed.getPort());
@@ -121,9 +121,9 @@ public class ConnectionProfileCC {
 			saved.setServerType(typed.getServerType());
 			saved.setAutoConnect(typed.isAutoConnect());
 			cp.editProfile(saved);
-			jmcc.showConnectionState();
+			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cpui, "Edit profile", e);
+			ApplicationContext.get().errors().report(profileDialog, "Edit profile", e);
 		}
 	}
 
@@ -132,11 +132,11 @@ public class ConnectionProfileCC {
 		try {
 			ConnectionProfile copy = saved.copyAs(cp.uniqueCopyName(saved.getName()));
 			cp.addProfile(copy);
-			cpui.loadProfiles(cp.getProfiles());
-			cpui.setSelectedProfile(copy);
+			profileDialog.loadProfiles(cp.getProfiles());
+			profileDialog.setSelectedProfile(copy);
 			log.info("Profile '{}' duplicated as '{}'", saved.getName(), copy.getName());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cpui, "Duplicate profile", e);
+			ApplicationContext.get().errors().report(profileDialog, "Duplicate profile", e);
 		}
 	}
 
@@ -207,7 +207,7 @@ public class ConnectionProfileCC {
 			} catch (Exception e) {
 				SwingUtilities.invokeLater(() -> {
 					if (started == generation) {
-						ApplicationContext.get().errors().report(cpui, "Reload databases", e);
+						ApplicationContext.get().errors().report(profileDialog, "Reload databases", e);
 					}
 				});
 			}
@@ -232,7 +232,7 @@ public class ConnectionProfileCC {
 			} catch (Exception e) {
 				SwingUtilities.invokeLater(() -> {
 					if (started == generation) {
-						ApplicationContext.get().errors().report(cpui, "Load schemas", e);
+						ApplicationContext.get().errors().report(profileDialog, "Load schemas", e);
 						failed.run();
 					}
 				});
@@ -255,12 +255,12 @@ public class ConnectionProfileCC {
 
 	public void deleteProfile(ConnectionProfile cp) {
 		try {
-			jmcc.updateStatus("Deleting profile...", true);
+			mainController.updateStatus("Deleting profile...", true);
 			this.cp.deleteProfile(cp);
-			cpui.loadProfiles(this.cp.getProfiles());
-			jmcc.showConnectionState();
+			profileDialog.loadProfiles(this.cp.getProfiles());
+			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cpui, "Delete profile", e);
+			ApplicationContext.get().errors().report(profileDialog, "Delete profile", e);
 		}
 	}
 }

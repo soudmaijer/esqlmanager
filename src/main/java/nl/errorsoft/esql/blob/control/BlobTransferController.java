@@ -9,7 +9,7 @@ import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.blob.ui.dialog.DownloadFileDialog;
 import nl.errorsoft.esql.blob.ui.TransferProgress;
 import nl.errorsoft.esql.blob.ui.dialog.UploadFileDialog;
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,34 +17,34 @@ import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.blob.BlobService;
 import javax.swing.SwingUtilities;
 
-public class UDDataCC {
-	private static final Logger log = LogManager.getLogger(UDDataCC.class);
+public class BlobTransferController {
+	private static final Logger log = LogManager.getLogger(BlobTransferController.class);
 
-	private ConnectionWindowCC cwcc;
-	private TransferProgress udif;
+	private ConnectionWindowController connectionWindowController;
+	private TransferProgress progress;
 	private Table table;
 	private TableData[] row;
 	private TableData cell;
 	private volatile BlobService running;
 
-	public UDDataCC(ConnectionWindowCC cwcc) {
-		this.cwcc = cwcc;
+	public BlobTransferController(ConnectionWindowController connectionWindowController) {
+		this.connectionWindowController = connectionWindowController;
 	}
 
-	public void startDownloadUI(MainWindow parent, Table table, TableData[] row, TableData cell) {
+	public void showDownloadDialog(MainWindow parent, Table table, TableData[] row, TableData cell) {
 		this.table = table;
 		this.row = row;
 		this.cell = cell;
-		udif = new DownloadFileDialog(this, parent);
-		udif.open();
+		progress = new DownloadFileDialog(this, parent);
+		progress.open();
 	}
 
-	public void startUploadUI(MainWindow parent, Table table, TableData[] row, TableData cell) {
+	public void showUploadDialog(MainWindow parent, Table table, TableData[] row, TableData cell) {
 		this.table = table;
 		this.row = row;
 		this.cell = cell;
-		udif = new UploadFileDialog(this, parent);
-		udif.open();
+		progress = new UploadFileDialog(this, parent);
+		progress.open();
 	}
 
 	public void downloadFile(String fileLocation) {
@@ -84,29 +84,29 @@ public class UDDataCC {
 	private void transfer(String action, Transfer transfer, String outcome, Runnable discardPartialFile) {
 		BlobService service;
 		try {
-			service = cwcc.getContext().newBlobTransfer();
+			service = connectionWindowController.getContext().newBlobTransfer();
 		} catch (Exception e) {
-			udif.transferEnded();
-			ApplicationContext.get().errors().report((java.awt.Component) udif, action, e);
+			progress.transferEnded();
+			ApplicationContext.get().errors().report((java.awt.Component) progress, action, e);
 			return;
 		}
 		running = service;
-		service.setProgress(percent -> SwingUtilities.invokeLater(() -> udif.setProgressValue(percent)));
+		service.setProgress(percent -> SwingUtilities.invokeLater(() -> progress.setProgressValue(percent)));
 		Thread.ofVirtual().name("blob-transfer").start(() -> {
 			try {
 				transfer.run(service);
 				log.info(outcome);
-				SwingUtilities.invokeLater(() -> cwcc.setViewStatus(outcome));
+				SwingUtilities.invokeLater(() -> connectionWindowController.setViewStatus(outcome));
 			} catch (Exception e) {
 				SwingUtilities.invokeLater(() -> {
 					if (service.isCancelled()) {
 						// Whatever the driver made of the interrupted transfer, the user asked for it.
 						log.info("{} cancelled", action);
 						discardPartialFile.run();
-						udif.transferCancelled();
+						progress.transferCancelled();
 					} else {
-						udif.transferEnded();
-						ApplicationContext.get().errors().report((java.awt.Component) udif, action, e);
+						progress.transferEnded();
+						ApplicationContext.get().errors().report((java.awt.Component) progress, action, e);
 					}
 				});
 			} finally {

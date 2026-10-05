@@ -19,15 +19,15 @@ import nl.errorsoft.esql.server.ui.dialog.ProcessListDialog;
  * Shows the process list of a server and refreshes it every few seconds. The list runs on a connection of its own, so a long query in the connection window
  * does not hold it up.
  */
-public class ProcesslistCC {
-	private static final Logger log = LogManager.getLogger(ProcesslistCC.class);
+public class ProcessListController {
+	private static final Logger log = LogManager.getLogger(ProcessListController.class);
 	/** The intervals offered in the window, in seconds. */
 	public static final int[] INTERVALS = {1, 2, 5, 10};
 	public static final int DEFAULT_INTERVAL = 5;
 	private static final int TICK_MILLIS = 250;
 
 	private final ConnectionProfile profile;
-	private final ProcessListDialog ui;
+	private final ProcessListDialog dialog;
 	private volatile boolean running = true;
 	private volatile boolean paused;
 	private volatile int intervalSeconds = DEFAULT_INTERVAL;
@@ -35,13 +35,13 @@ public class ProcesslistCC {
 	private volatile boolean refreshNow;
 	private volatile ServerService servers;
 
-	public ProcesslistCC(ConnectionProfile profile, JFrame parent) {
+	public ProcessListController(ConnectionProfile profile, JFrame parent) {
 		this.profile = profile;
-		this.ui = new ProcessListDialog(this, parent, profile.getUsername() + "@" + profile.getHost() + " - active processes");
+		this.dialog = new ProcessListDialog(this, parent, profile.getUsername() + "@" + profile.getHost() + " - active processes");
 	}
 
 	public void start() {
-		ui.setVisible(true);
+		dialog.setVisible(true);
 		Thread.ofVirtual().name("process-list").start(this::refreshLoop);
 	}
 
@@ -73,7 +73,7 @@ public class ProcesslistCC {
 			try {
 				service.killProcess(id);
 			} catch (Exception e) {
-				SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(ui, "Kill process", e));
+				SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(dialog, "Kill process", e));
 			}
 		});
 	}
@@ -87,16 +87,16 @@ public class ProcesslistCC {
 
 			while (running && !connection.getConnection().isClosed()) {
 				if (paused) {
-					SwingUtilities.invokeLater(ui::showPaused);
+					SwingUtilities.invokeLater(dialog::showPaused);
 				} else {
 					if (remainingMillis <= 0 || refreshNow) {
 						refreshNow = false;
 						List<ServerProcess> processes = servers.getProcesses();
-						SwingUtilities.invokeLater(() -> ui.showProcesses(processes));
+						SwingUtilities.invokeLater(() -> dialog.showProcesses(processes));
 						remainingMillis = intervalSeconds * 1000L;
 					}
 					int seconds = (int) Math.ceil(remainingMillis / 1000.0);
-					SwingUtilities.invokeLater(() -> ui.showCountdown(seconds));
+					SwingUtilities.invokeLater(() -> dialog.showCountdown(seconds));
 					remainingMillis -= TICK_MILLIS;
 				}
 				Thread.sleep(TICK_MILLIS);
@@ -104,7 +104,7 @@ public class ProcesslistCC {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		} catch (Exception e) {
-			SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(ui, "Load processes", e));
+			SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(dialog, "Load processes", e));
 		} finally {
 			servers = null;
 			ApplicationContext.get().release(connection);

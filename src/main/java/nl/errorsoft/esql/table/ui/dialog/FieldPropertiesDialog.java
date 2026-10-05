@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.table.ui.dialog;
 
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.TableService;
@@ -25,7 +25,7 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 	/** A length is a number, or two numbers for the precision and scale of a decimal ("10,2"). */
 	private static final Pattern LENGTH = Pattern.compile("\\d+(\\s*,\\s*\\d+)?");
 
-	private final ConnectionWindowCC cwcc;
+	private final ConnectionWindowController connectionWindowController;
 	private final TableColumn column;
 	private final boolean add;
 	private final boolean edit;
@@ -43,16 +43,16 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 	private final JButton btnCancel = Forms.button("Cancel");
 	private final JButton btnSave = Forms.button("&Save");
 
-	public FieldPropertiesDialog(JFrame parent, ConnectionWindowCC cwcc, TableColumn column, boolean add, boolean edit) {
+	public FieldPropertiesDialog(JFrame parent, ConnectionWindowController connectionWindowController, TableColumn column, boolean add, boolean edit) {
 		super(parent, add ? "Add field" : "Edit field", true);
-		this.cwcc = cwcc;
+		this.connectionWindowController = connectionWindowController;
 		this.add = add;
 		this.edit = edit;
 		this.column = column;
 
 		fieldtypes.addActionListener(this);
-		DataType[] types = cwcc.getConnectionProfile().getServerType().getDataTypes();
-		String currentType = edit ? cwcc.dialect().datatypeName(column.getNativeTypeName()) : null;
+		DataType[] types = connectionWindowController.getConnectionProfile().getServerType().getDataTypes();
+		String currentType = edit ? connectionWindowController.dialect().datatypeName(column.getNativeTypeName()) : null;
 		for (int i = 0; i < types.length; i++) {
 			fieldtypes.addItem(types[i]);
 
@@ -62,7 +62,7 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 		}
 
 		Forms.Grid fields = new Forms.Grid().row("&Name:", name).row("&Type:", fieldtypes).row("&Length:", length).row("&Default:", dfault);
-		if (cwcc.dialect().supportsColumnComments()) {
+		if (connectionWindowController.dialect().supportsColumnComments()) {
 			fields.row("Co&mment:", comment);
 		}
 		JPanel top = Forms.titled(fields.panel(), "Field properties");
@@ -129,9 +129,9 @@ public class FieldPropertiesDialog extends FormDialog implements ActionListener 
 		definition.primary = primary.isSelected();
 		definition.comment = comment.getText().trim();
 		if (add) {
-			cwcc.addTableColumn(this, definition);
+			connectionWindowController.addTableColumn(this, definition);
 		} else if (edit) {
-			cwcc.editTableColumn(this, column, definition);
+			connectionWindowController.editTableColumn(this, column, definition);
 		}
 	}
 }

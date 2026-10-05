@@ -2,28 +2,28 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.app.control.ESQLManagerCC;
+import nl.errorsoft.esql.app.control.MainController;
 
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.JFrame;
 
 public class SplashWindow extends javax.swing.JWindow implements MouseListener, Runnable {
-	private MainWindow jmui;
-	private ESQLManagerCC jmcc;
+	private MainWindow mainWindow;
+	private MainController mainController;
 	private int time = 0;
 	private CreditsPanel c;
 	private Image splash;
 
-	public SplashWindow(ESQLManagerCC jmcc, MainWindow jmui, int time) {
-		super((JFrame) jmui);
+	public SplashWindow(MainController mainController, MainWindow mainWindow, int time) {
+		super((JFrame) mainWindow);
 
-		this.jmui = jmui;
-		this.jmcc = jmcc;
+		this.mainWindow = mainWindow;
+		this.mainController = mainController;
 
 		this.setSize(400, 240);
-		this.setLocation(jmui.getLocation().x + (int) ((jmui.getSize().width - this.getSize().width) / 2),
-			jmui.getLocation().y + (int) ((jmui.getSize().height - this.getSize().height) / 2));
+		this.setLocation(mainWindow.getLocation().x + (int) ((mainWindow.getSize().width - this.getSize().width) / 2),
+			mainWindow.getLocation().y + (int) ((mainWindow.getSize().height - this.getSize().height) / 2));
 		this.time = time;
 		this.addMouseListener(this);
 
@@ -46,7 +46,7 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener, 
 			if (time > 0) {
 				Thread.sleep(time);
 				cleanUp();
-				jmcc.splashReady();
+				mainController.splashReady();
 			}
 		} catch (Exception e) {
 		}
@@ -82,10 +82,10 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener, 
 		g1.drawImage(splash, 0, 0, this);
 		g1.setColor(Color.black);
 		g1.setFont(new Font("Arial", Font.BOLD, 12));
-		g1.drawString(jmcc.getAppName(), 17, 196);
+		g1.drawString(mainController.getAppName(), 17, 196);
 		g1.setFont(new Font("Arial", Font.PLAIN, 11));
-		g1.drawString("Version " + jmcc.getAppVersion(), 17, 212);
-		g1.drawString("Commit " + jmcc.getAppCommit(), 17, 227);
+		g1.drawString("Version " + mainController.getAppVersion(), 17, 212);
+		g1.drawString("Commit " + mainController.getAppCommit(), 17, 227);
 		g1.drawString("http://www.errorsoft.nl", 274, 212);
 		g1.drawString("© Copyright Errorsoft 2002-" + cal.get(java.util.Calendar.YEAR), 230, 227);
 	}

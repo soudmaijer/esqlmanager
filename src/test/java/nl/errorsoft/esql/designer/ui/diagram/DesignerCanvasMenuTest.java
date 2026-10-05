@@ -12,12 +12,12 @@ import javax.swing.JSeparator;
 
 import org.junit.jupiter.api.Test;
 
-import nl.errorsoft.esql.designer.control.ModelViewerControl;
+import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.model.Model;
 
 /** The context menus of the designer only offer what applies to the object. */
 class DesignerCanvasMenuTest {
-	private final DesignerCanvas viewer = new DesignerCanvas(new ModelViewerControl(null));
+	private final DesignerCanvas viewer = new DesignerCanvas(new DesignerCanvasController(null));
 
 	@Test
 	void emptyCanvasOffersOnlyAddingAndTheModel() {

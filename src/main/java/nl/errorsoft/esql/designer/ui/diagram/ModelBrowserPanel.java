@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
-import nl.errorsoft.esql.designer.control.ModelViewerControl;
+import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 
 import java.awt.*;
 import javax.swing.*;
@@ -12,11 +12,11 @@ import javax.swing.event.*;
 public class ModelBrowserPanel extends JTabbedPane implements ChangeListener { // List with DesignerCanvas objects
 	private final List<DesignerCanvas> v = new ArrayList<>();
 
-	private ModelViewerControl mvc;
+	private DesignerCanvasController canvasController;
 
-	public ModelBrowserPanel(String name, ModelViewerControl mvc) {
+	public ModelBrowserPanel(String name, DesignerCanvasController canvasController) {
 		super();
-		this.mvc = mvc;
+		this.canvasController = canvasController;
 		this.addModelViewer(name);
 		this.addChangeListener(this);
 	}
@@ -26,15 +26,15 @@ public class ModelBrowserPanel extends JTabbedPane implements ChangeListener { /
 	}
 
 	public void addModelViewer(String name) {
-		DesignerCanvas mv = new DesignerCanvas(mvc);
-		JScrollPane jsp = new JScrollPane(mv, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		DesignerCanvas canvas = new DesignerCanvas(canvasController);
+		JScrollPane jsp = new JScrollPane(canvas, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		jsp.getViewport().setBackground(UIManager.getColor("Panel.background"));
 		this.addTab(name, jsp);
 		this.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-		v.add(mv);
+		v.add(canvas);
 	}
 
 	public void stateChanged(ChangeEvent e) {
-		mvc.buildMenu();
+		canvasController.buildMenu();
 	}
 }

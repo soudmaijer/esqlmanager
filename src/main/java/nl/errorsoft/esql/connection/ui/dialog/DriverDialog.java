@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.connection.ui.dialog;
 
 import nl.errorsoft.esql.connection.DatabaseDriver;
-import nl.errorsoft.esql.connection.control.DatabaseDriverCC;
+import nl.errorsoft.esql.connection.control.DatabaseDriverController;
 import nl.errorsoft.esql.ui.dialog.FormDialog;
 import nl.errorsoft.esql.ui.util.Validation;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -20,7 +20,7 @@ import javax.swing.JTextField;
 
 /** Edits the connection URL, the driver class and the quote characters of a database driver. */
 public class DriverDialog extends FormDialog {
-	private final DatabaseDriverCC dbcc;
+	private final DatabaseDriverController driverController;
 
 	private final JComboBox<DatabaseDriver> type = new JComboBox<>();
 	private final JTextField className = new JTextField();
@@ -30,9 +30,9 @@ public class DriverDialog extends FormDialog {
 	private final JTextField stringOpen = new JTextField(3);
 	private final JTextField stringClose = new JTextField(3);
 
-	public DriverDialog(DatabaseDriverCC dbcc, Window parent) {
+	public DriverDialog(DatabaseDriverController driverController, Window parent) {
 		super(parent, "Driver properties", false);
-		this.dbcc = dbcc;
+		this.driverController = driverController;
 		initComponents();
 		showDialog();
 	}
@@ -90,7 +90,7 @@ public class DriverDialog extends FormDialog {
 			return;
 		}
 		DatabaseDriver driver = (DatabaseDriver) type.getSelectedItem();
-		dbcc.saveProperties(driver.getId(), driver.getDriverName(), url.getText().trim(), className.getText().trim(), identifierOpen.getText(),
+		driverController.saveProperties(driver.getId(), driver.getDriverName(), url.getText().trim(), className.getText().trim(), identifierOpen.getText(),
 			identifierClose.getText(), stringOpen.getText(), stringClose.getText());
 	}
 }

@@ -7,7 +7,7 @@ import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.control.CreateTableCC;
+import nl.errorsoft.esql.table.control.CreateTableController;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.util.EditorTab;
 import nl.errorsoft.esql.ui.util.Forms;
@@ -60,7 +60,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private static final int AUTO_INCREMENT = 5;
 	private static final int DEFAULT = 6;
 
-	private final CreateTableCC ctcc;
+	private final CreateTableController createTableController;
 	private final String title;
 	private final Table table;
 
@@ -114,15 +114,15 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final String initialType;
 	private boolean columnsChanged;
 
-	public TableEditorTab(CreateTableCC ctcc, String title, Database database, Table table) {
+	public TableEditorTab(CreateTableController createTableController, String title, Database database, Table table) {
 		super(new BorderLayout(0, Forms.PADDING));
-		this.ctcc = ctcc;
+		this.createTableController = createTableController;
 		this.title = title;
 		this.table = table;
 		setBorder(BorderFactory.createEmptyBorder(Forms.PADDING, Forms.PADDING, Forms.PADDING, Forms.PADDING));
 
 		DefaultComboBoxModel<Database> dcm = new DefaultComboBoxModel<>();
-		List<Database> db = ctcc.getDatabases();
+		List<Database> db = createTableController.getDatabases();
 		for (Database candidate : db) {
 			dcm.addElement(candidate);
 			if (database != null && candidate.toString().equals(database.toString())) {
@@ -133,7 +133,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		dbs = new JComboBox<>(dcm);
 
 		DefaultComboBoxModel<String> ttmodel = new DefaultComboBoxModel<>();
-		String[] tbt = ctcc.getTableTypes();
+		String[] tbt = createTableController.getTableTypes();
 		for (String type : tbt) {
 			ttmodel.addElement(type);
 			if (table != null && type.equalsIgnoreCase(table.getType())) {
@@ -183,14 +183,14 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private JPanel tableProperties(boolean hasTableTypes, Table existing) {
 		Forms.Grid grid = new Forms.Grid();
 		grid.row("&Database:", dbs);
-		if (ctcc.supportsSchemas()) {
+		if (createTableController.supportsSchemas()) {
 			JTextField schema = new JTextField(24);
 			schema.setEditable(false);
 			schema.setFocusable(false);
 			if (existing != null && existing.getSchema() != null) {
 				schema.setText(existing.getSchema().getName());
 			} else {
-				String name = ctcc.targetSchemaName();
+				String name = createTableController.targetSchemaName();
 				schema.setText(name == null ? "(current schema)" : name);
 			}
 			grid.row("S&chema:", schema);
@@ -205,11 +205,11 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	}
 
 	private JPanel columnsPanel() {
-		for (DataType type : ctcc.getDatatypes()) {
+		for (DataType type : createTableController.getDatatypes()) {
 			columnType.addItem(type);
 		}
 		JComboBox<DataType> typeEditor = new JComboBox<>();
-		for (DataType type : ctcc.getDatatypes()) {
+		for (DataType type : createTableController.getDatatypes()) {
 			typeEditor.addItem(type);
 		}
 		columnTable.setDefaultEditor(DataType.class, new DefaultCellEditor(typeEditor));
@@ -243,7 +243,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		checks.add(unsigned);
 		Forms.Grid grid = new Forms.Grid();
 		grid.row("Col&umn name:", columnName).row("Typ&e:", columnType).row("&Length:", length).row("De&fault:", defaultval);
-		if (ctcc.supportsColumnComments()) {
+		if (createTableController.supportsColumnComments()) {
 			grid.row("Comment:", columnComment);
 		}
 		grid.full(checks);
@@ -281,7 +281,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		Color red = UIManager.getColor("Actions.Red");
 		problem.setForeground(red != null ? red : Color.RED);
 		save.addActionListener(e -> save());
-		cancel.addActionListener(e -> ctcc.cancel(this));
+		cancel.addActionListener(e -> createTableController.cancel(this));
 
 		sqlPreview.setEditable(false);
 		sqlPreview.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
@@ -372,7 +372,8 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			sqlPreview.setText("-- Add a column to see the statements.");
 			return;
 		}
-		List<String> statements = ctcc.previewStatements(table, Objects.toString(dbs.getSelectedItem(), ""), name.isEmpty() ? "table_name" : name,
+		List<String> statements = createTableController.previewStatements(table, Objects.toString(dbs.getSelectedItem(), ""),
+			name.isEmpty() ? "table_name" : name,
 			comment.getText(), selectedTableType(), created);
 		sqlPreview.setText(statements.isEmpty()
 			? "-- No changes."
@@ -407,9 +408,9 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			for (Object column : columns) {
 				cols.add((CreateColumn) column);
 			}
-			ctcc.createTable(tablename.getText(), dbs.getSelectedItem().toString(), comment.getText(), selectedTableType(), this, cols);
+			createTableController.createTable(tablename.getText(), dbs.getSelectedItem().toString(), comment.getText(), selectedTableType(), this, cols);
 		} else {
-			ctcc.modifyTable(this, table, tablename.getText(), selectedTableType(), comment.getText());
+			createTableController.modifyTable(this, table, tablename.getText(), selectedTableType(), comment.getText());
 		}
 	}
 

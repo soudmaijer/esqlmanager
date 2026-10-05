@@ -6,15 +6,15 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 public class TableListMouseListener extends MouseAdapter {
-	private TableListTab tlv;
+	private TableListTab tableListTab;
 
-	public TableListMouseListener(TableListTab tlv) {
-		this.tlv = tlv;
+	public TableListMouseListener(TableListTab tableListTab) {
+		this.tableListTab = tableListTab;
 	}
 
 	public void mouseClicked(MouseEvent e) {
 		if (e.getClickCount() == 2) {
-			tlv.tableSelected();
+			tableListTab.tableSelected();
 		}
 	}
 }

@@ -8,7 +8,7 @@ import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.DatabaseSelection;
 import nl.errorsoft.esql.connection.ServerType;
-import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
+import nl.errorsoft.esql.connection.control.ConnectionProfileController;
 
 import javax.swing.*;
 
@@ -35,8 +35,8 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 	private JTextField ip;
 	private JTextField pt;
 
-	private MainWindow jm;
-	private ConnectionProfileCC cpcc;
+	private MainWindow mainWindow;
+	private ConnectionProfileController connectionProfileController;
 	private JComboBox<Object> jc;
 	private JComboBox<ServerType> jcServer;
 	private JCheckBox chkAutoConnect;
@@ -51,11 +51,11 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 	private static final String CHANGED_HINT = "Connection settings changed, test the connection again";
 	private static final String TEST_FIRST_HINT = "Test the connection to choose databases and schemas";
 
-	public ConnectionProfileDialog(MainWindow jm, ConnectionProfileCC cpcc) {
-		super(jm, "Connect to server", false);
+	public ConnectionProfileDialog(MainWindow mainWindow, ConnectionProfileController connectionProfileController) {
+		super(mainWindow, "Connect to server", false);
 
-		this.jm = jm;
-		this.cpcc = cpcc;
+		this.mainWindow = mainWindow;
+		this.connectionProfileController = connectionProfileController;
 		sta = ServerType.getServerTypes();
 
 		jc = new JComboBox<>(new DefaultComboBoxModel<>());
@@ -111,7 +111,7 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 		previousServerType = (ServerType) jcServer.getSelectedItem();
 
 		pack();
-		setLocationRelativeTo(jm);
+		setLocationRelativeTo(mainWindow);
 
 		jc.addItemListener(this);
 		jcServer.addItemListener(this);
@@ -136,7 +136,7 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
-				cpcc.invalidate();
+				connectionProfileController.invalidate();
 			}
 		});
 	}
@@ -146,7 +146,7 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 	 * the tab is disabled until the connection is tested again.
 	 */
 	private void settingsChanged() {
-		cpcc.invalidate();
+		connectionProfileController.invalidate();
 		boolean wasAvailable = tabs.isEnabledAt(PICKER_TAB);
 		if (testing) {
 			testing = false;
@@ -171,11 +171,11 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 	}
 
 	private void loadSchemas(String database) {
-		cpcc.loadSchemas(database, schemas -> picker.showSchemas(database, schemas), () -> picker.showSchemaFailure(database));
+		connectionProfileController.loadSchemas(database, schemas -> picker.showSchemas(database, schemas), () -> picker.showSchemaFailure(database));
 	}
 
 	private void reloadDatabases() {
-		cpcc.reloadDatabases(databases -> picker.showDatabases(serverType().getDialect(), databases));
+		connectionProfileController.reloadDatabases(databases -> picker.showDatabases(serverType().getDialect(), databases));
 	}
 
 	/** The Test connection button with its outcome on the line below. */
@@ -188,7 +188,7 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 		return row;
 	}
 
-	private void showTestResult(ConnectionProfileCC.TestResult result) {
+	private void showTestResult(ConnectionProfileController.TestResult result) {
 		testing = false;
 		Color color = UIManager.getColor(result.success() ? "Actions.Green" : "Actions.Red");
 		if (color == null) {
@@ -395,7 +395,7 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 				if (typed.getName().isBlank()) {
 					typed.setName(typed.getHost());
 				}
-				cpcc.connect(typed);
+				connectionProfileController.connect(typed);
 			}
 		} else if (object == btnSave) {
 			ConnectionProfile typed = profileFromForm();
@@ -405,9 +405,9 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 			if (typed.getName().isBlank()) {
 				Dialogs.warn(this, getTitle(), "Enter a name for the profile.");
 			} else if (jc.getSelectedItem() instanceof ConnectionProfile saved) {
-				cpcc.editProfile(saved, typed);
+				connectionProfileController.editProfile(saved, typed);
 			} else {
-				cpcc.addProfile(typed);
+				connectionProfileController.addProfile(typed);
 			}
 		} else if (object == btnTest) {
 			ConnectionProfile typed = profileFromForm();
@@ -417,11 +417,11 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 				testing = true;
 				testResult.setForeground(UIManager.getColor("Label.foreground"));
 				testResult.setText("Connecting...");
-				cpcc.testConnection(typed, this::showTestResult);
+				connectionProfileController.testConnection(typed, this::showTestResult);
 			}
 		} else if (object == btnDuplicate) {
 			if (jc.getSelectedItem() instanceof ConnectionProfile saved) {
-				cpcc.duplicateProfile(saved);
+				connectionProfileController.duplicateProfile(saved);
 			} else {
 				Dialogs.info(this, "Duplicate profile", "Save the profile first, then duplicate it.");
 			}
@@ -430,7 +430,7 @@ public class ConnectionProfileDialog extends FormDialog implements ItemListener,
 		} else if (object == btnDelete) {
 			if (jc.getSelectedIndex() > -1
 				&& Dialogs.confirmDestructive(this, "Delete profile", "Delete profile '" + jc.getSelectedItem() + "'?", "Delete")) {
-				cpcc.deleteProfile((ConnectionProfile) jc.getSelectedItem());
+				connectionProfileController.deleteProfile((ConnectionProfile) jc.getSelectedItem());
 			}
 		}
 	}

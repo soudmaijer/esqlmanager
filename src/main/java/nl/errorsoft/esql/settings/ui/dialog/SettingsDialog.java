@@ -13,7 +13,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.app.control.ESQLManagerCC;
+import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
@@ -28,7 +28,7 @@ public class SettingsDialog extends FormDialog {
 	private final JTextField folder = new JTextField(24);
 	private final JComboBox<Charset> encoding;
 
-	public SettingsDialog(ESQLManagerCC jmcc, JFrame parent) {
+	public SettingsDialog(MainController mainController, JFrame parent) {
 		super(parent, "Preferences", true);
 		Settings settings = ApplicationContext.get().settings();
 		appearance.setSelectedItem(settings.getAppearance());

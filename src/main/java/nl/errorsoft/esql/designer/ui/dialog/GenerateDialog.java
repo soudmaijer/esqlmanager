@@ -222,7 +222,7 @@ public class GenerateDialog extends JDialog {
 		Thread.ofVirtual().name("generate-model").start(() -> {
 			Exception failure = null;
 			try {
-				connectionWindow.getControlClass().getContext().designer().generate(model,
+				connectionWindow.getController().getContext().designer().generate(model,
 					() -> SwingUtilities.invokeLater(() -> progress.setValue(progress.getValue() + 1)));
 			} catch (Exception e) {
 				log.debug("Model generation failed", e);
@@ -231,7 +231,7 @@ public class GenerateDialog extends JDialog {
 			Exception error = failure;
 			SwingUtilities.invokeLater(() -> {
 				setBusy(false);
-				connectionWindow.getControlClass().showDatabaseTree();
+				connectionWindow.getController().showDatabaseTree();
 				if (error == null) {
 					dispose();
 				} else {

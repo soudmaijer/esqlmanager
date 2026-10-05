@@ -6,7 +6,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.blob.control.UDDataCC;
+import nl.errorsoft.esql.blob.control.BlobTransferController;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,14 +30,14 @@ import nl.errorsoft.esql.ui.util.Forms;
  */
 public class UploadFileDialog extends FormDialog implements TransferProgress, ActionListener {
 
-	private UDDataCC udcc;
+	private BlobTransferController blobTransferController;
 	/** True while a transfer runs, the window cannot be closed then. */
 	private boolean busy;
 
 	/** Creates new form JDialog */
-	public UploadFileDialog(UDDataCC udcc, JFrame parent) {
+	public UploadFileDialog(BlobTransferController blobTransferController, JFrame parent) {
 		super(parent, "Upload data", true);
-		this.udcc = udcc;
+		this.blobTransferController = blobTransferController;
 		initComponents();
 	}
 
@@ -111,7 +111,7 @@ public class UploadFileDialog extends FormDialog implements TransferProgress, Ac
 	/** Closes the dialog; while a transfer runs, closing (also with Esc) cancels the transfer. */
 	private void closeDialog(java.awt.event.WindowEvent evt) {
 		if (busy) {
-			udcc.cancelTransfer();
+			blobTransferController.cancelTransfer();
 		} else {
 			dispose();
 		}
@@ -132,7 +132,7 @@ public class UploadFileDialog extends FormDialog implements TransferProgress, Ac
 			}
 		} else if (e.getSource() == jButton2) {
 			if (busy) {
-				udcc.cancelTransfer();
+				blobTransferController.cancelTransfer();
 			} else {
 				this.dispose();
 			}
@@ -145,7 +145,7 @@ public class UploadFileDialog extends FormDialog implements TransferProgress, Ac
 				showError("The file '" + file + "' does not exist.");
 			} else {
 				setBusy(true);
-				udcc.uploadFile(file);
+				blobTransferController.uploadFile(file);
 			}
 		}
 	}

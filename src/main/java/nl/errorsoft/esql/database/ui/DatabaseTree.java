@@ -15,7 +15,7 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 
 /**
- * The tree of databases, tables and columns of a connection; on servers with schemas a database holds schemas, which hold the tables. It only shows what the controller loads: {@code DatabaseCC} and {@code ConnectionWindowCC}
+ * The tree of databases, tables and columns of a connection; on servers with schemas a database holds schemas, which hold the tables. It only shows what the controller loads: {@code DatabaseController} and {@code ConnectionWindowController}
  * fetch the data through the services and call these methods.
  */
 public class DatabaseTree extends JTree {

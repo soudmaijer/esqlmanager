@@ -1,4 +1,4 @@
-//Source file: d:\\roseoutput\\esql\\esql\\database\\DatabaseCC.java
+//Source file: d:\\roseoutput\\esql\\esql\\database\\DatabaseController.java
 
 package nl.errorsoft.esql.database.control;
 
@@ -8,19 +8,19 @@ import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.ui.TableListTab;
 
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
-public class DatabaseCC {
-	private ConnectionWindowCC cwcc;
+public class DatabaseController {
+	private ConnectionWindowController connectionWindowController;
 
 	/**
 	* @roseuid 3E05A70C031D
 	*/
-	public DatabaseCC(ConnectionWindowCC cwcc) {
-		this.cwcc = cwcc;
+	public DatabaseController(ConnectionWindowController connectionWindowController) {
+		this.connectionWindowController = connectionWindowController;
 	}
 
 	public java.util.List<Database> getDatabases() throws Exception {
@@ -60,13 +60,14 @@ public class DatabaseCC {
 	}
 
 	private DatabaseService service() throws Exception {
-		return cwcc.getContext().databases();
+		return connectionWindowController.getContext().databases();
 	}
 
 	public DatabaseTree getDatabaseTree() throws Exception {
-		DatabaseTree dbtv = new DatabaseTree(cwcc.getTitle(), cwcc.getConnectionProfile().getServerType().iconName());
-		dbtv.loadDatabases(getDatabases());
-		return dbtv;
+		DatabaseTree databaseTree = new DatabaseTree(connectionWindowController.getTitle(),
+			connectionWindowController.getConnectionProfile().getServerType().iconName());
+		databaseTree.loadDatabases(getDatabases());
+		return databaseTree;
 	}
 
 	/**
@@ -75,7 +76,7 @@ public class DatabaseCC {
 	 */
 	public void loadChildren(DatabaseTree tree, Object node) throws Exception {
 		if (node instanceof Database database) {
-			if (cwcc.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS)) {
+			if (connectionWindowController.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS)) {
 				tree.loadSchemas(database, getSchemas(database));
 			} else {
 				tree.loadTables(database, getTables(database));
@@ -108,13 +109,13 @@ public class DatabaseCC {
 	}
 
 	public TableListTab getTableListTab(java.util.List<Table> tables) throws Exception {
-		TableListTab tlv = new TableListTab(this);
-		tlv.loadDatabases(tables);
-		return tlv;
+		TableListTab tableListTab = new TableListTab(this);
+		tableListTab.loadDatabases(tables);
+		return tableListTab;
 	}
 
 	public void tableSelected(Table table) {
-		cwcc.selectTableInTree(table);
+		connectionWindowController.selectTableInTree(table);
 	}
 
 }

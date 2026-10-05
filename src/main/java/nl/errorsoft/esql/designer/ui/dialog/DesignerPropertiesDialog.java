@@ -17,8 +17,8 @@ public class DesignerPropertiesDialog extends FormDialog {
 
 	private nl.errorsoft.esql.connection.ServerType serverType;
 
-	public DesignerPropertiesDialog(JFrame jm, nl.errorsoft.esql.connection.ServerType serverType) {
-		super(jm, "Properties", true);
+	public DesignerPropertiesDialog(JFrame parent, nl.errorsoft.esql.connection.ServerType serverType) {
+		super(parent, "Properties", true);
 		this.serverType = serverType;
 		setResizable(true);
 
@@ -34,22 +34,22 @@ public class DesignerPropertiesDialog extends FormDialog {
 			cont.remove(cur);
 		}
 		if (obj instanceof TableObject object) {
-			TablePropertiesPanel tp = new TablePropertiesPanel(object, serverType, model);
+			TablePropertiesPanel properties = new TablePropertiesPanel(object, serverType, model);
 			this.setTitle("Properties of '" + object.getName() + "'");
-			this.cont.add(tp);
-			cur = tp;
+			this.cont.add(properties);
+			cur = properties;
 		}
 		if (obj instanceof DatabaseObject object1) {
-			DatabasePropertiesPanel tp = new DatabasePropertiesPanel(object1, model);
+			DatabasePropertiesPanel properties = new DatabasePropertiesPanel(object1, model);
 			this.setTitle("Properties of '" + object1.getName() + "'");
-			this.cont.add(tp);
-			cur = tp;
+			this.cont.add(properties);
+			cur = properties;
 		}
 		if (obj instanceof nl.errorsoft.esql.designer.model.Model shown) {
-			ModelPropertiesPanel mp = new ModelPropertiesPanel(shown);
+			ModelPropertiesPanel modelProperties = new ModelPropertiesPanel(shown);
 			this.setTitle("Properties of '" + shown.getName() + "'");
-			this.cont.add(mp);
-			cur = mp;
+			this.cont.add(modelProperties);
+			cur = modelProperties;
 		}
 		cont.revalidate();
 		pack();

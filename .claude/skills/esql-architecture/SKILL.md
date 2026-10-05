@@ -67,7 +67,7 @@ String sql = "DELETE FROM " + table.getName() + " WHERE id = '" + id + "'";
 ## Rule A4: Context and injection
 
 **Flag:**
-- A controller that creates a service or repository (`new TableService(...)`). Controllers use `cwcc.getContext().tables()` and the like.
+- A controller that creates a service or repository (`new TableService(...)`). Controllers use `connectionWindowController.getContext().tables()` and the like.
 - A new service or repository that is not created and wired in `ConnectionContext`.
 - An application wide singleton service (services are per connection).
 - `ImageLoader` or `Settings` passed through constructors or controllers instead of `ApplicationContext.get()`.
@@ -191,5 +191,5 @@ class TableController { }
 
 // Bad (rename debt if it already exists, a finding if it is new)
 class ForeignKeyUI { }
-class TableCC { }
+class TableController { }
 ```

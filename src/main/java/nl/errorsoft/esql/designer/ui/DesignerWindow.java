@@ -8,7 +8,7 @@ import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
-import nl.errorsoft.esql.designer.control.ModelViewerControl;
+import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.model.Model;
@@ -53,8 +53,8 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show Grid", true);
 	private JMenuItem view_arrange = new JMenuItem("Arrange Automatically");
 
-	private ModelBrowserPanel mb;
-	private DesignerCanvas mv;
+	private ModelBrowserPanel modelBrowser;
+	private DesignerCanvas canvas;
 
 	private DesignerPropertiesDialog properties;
 
@@ -84,9 +84,9 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 
 		this.setSize(640, 480);
 
-		mv = new DesignerCanvas(new ModelViewerControl(this));
+		canvas = new DesignerCanvas(new DesignerCanvasController(this));
 
-		JScrollPane jsp = new JScrollPane(mv);
+		JScrollPane jsp = new JScrollPane(canvas);
 
 		this.getContentPane().add(jsp);
 		jsp.getViewport().setBackground(UIManager.getColor("Panel.background"));
@@ -142,22 +142,22 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 
 		view.add(view_grid);
 		view.setMnemonic('V');
-		view_grid.addActionListener(e -> mv.setShowGrid(view_grid.isSelected()));
+		view_grid.addActionListener(e -> canvas.setShowGrid(view_grid.isSelected()));
 		// The context menu of the canvas can switch the grid too.
-		mv.addPropertyChangeListener("showGrid", e -> view_grid.setSelected(mv.showsGrid()));
+		canvas.addPropertyChangeListener("showGrid", e -> view_grid.setSelected(canvas.showsGrid()));
 		view.addSeparator();
 		view.add(view_arrange);
 		view_arrange.addActionListener(e -> arrangeAutomatically());
 
 		buildMenu();
 
-		mv.setShowTableTypes(connectionWindow.getControlClass().getConnectionProfile().getServerType().getDialect().getTableTypes().length > 0);
+		canvas.setShowTableTypes(connectionWindow.getController().getConnectionProfile().getServerType().getDialect().getTableTypes().length > 0);
 
-		properties = new DesignerPropertiesDialog(mainWindow, connectionWindow.getControlClass().getConnectionProfile().getServerType());
+		properties = new DesignerPropertiesDialog(mainWindow, connectionWindow.getController().getConnectionProfile().getServerType());
 
 		if (model != null) {
 			this.setSize(1024, 720);
-			mv.setModel(model);
+			canvas.setModel(model);
 			arrangeAutomatically();
 		}
 
@@ -176,7 +176,7 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 	 * @return false when the user cancelled
 	 */
 	public boolean close() {
-		Dialogs.SaveChoice choice = Dialogs.askSave(this, "Close designer", "Save model '" + mv.getModel().getName() + "' first?");
+		Dialogs.SaveChoice choice = Dialogs.askSave(this, "Close designer", "Save model '" + canvas.getModel().getName() + "' first?");
 		if (choice == Dialogs.SaveChoice.CANCEL) {
 			return false;
 		}
@@ -194,11 +194,11 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 
 	/** Places the tables with the automatic layout, referenced tables left of the tables that refer to them. */
 	private void arrangeAutomatically() {
-		mv.arrangeAutomatically();
+		canvas.arrangeAutomatically();
 	}
 
 	public void updateTitle() {
-		this.setTitle("eSQLDesigner - '" + mv.getModel().getName() + "'");
+		this.setTitle("eSQLDesigner - '" + canvas.getModel().getName() + "'");
 	}
 
 	public void buildMenu() {
@@ -206,23 +206,23 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 		menu.add(file);
 		menu.add(edit);
 		menu.add(view);
-		menu.add(mv.getModelMenu());
+		menu.add(canvas.getModelMenu());
 
-		this.getContentPane().add(mv.getToolbar(), BorderLayout.NORTH);
+		this.getContentPane().add(canvas.getToolbar(), BorderLayout.NORTH);
 	}
 
 	public void generate() {
-		GenerateDialog g = new GenerateDialog(mainWindow, connectionWindow, mv.getModel());
+		GenerateDialog g = new GenerateDialog(mainWindow, connectionWindow, canvas.getModel());
 	}
 
 	public void showProperties(Object src) {
-		properties.showProperties(src, mv.getModel());
+		properties.showProperties(src, canvas.getModel());
 		properties.setVisible(true);
 	}
 
 	public void openModel() {
-		if (mv.isInPlaceMode()) {
-			mv.exitPlaceMode();
+		if (canvas.isInPlaceMode()) {
+			canvas.exitPlaceMode();
 		}
 
 		JFileChooser jfc = new JFileChooser();
@@ -236,9 +236,9 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 		File f = jfc.getSelectedFile();
 		if (f != null && f.exists()) {
 			try {
-				Model m = mv.getModel().loadModel(f);
+				Model m = canvas.getModel().loadModel(f);
 				if (m != null) {
-					mv.setModel(m);
+					canvas.setModel(m);
 					m.setFile(f);
 				}
 			} catch (Exception ex) {
@@ -246,14 +246,14 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 			}
 		}
 
-		mv.resize();
+		canvas.resize();
 	}
 
 	public void saveCurrentModel(boolean auto) {
-		if (auto && mv.getModel().getFile() != null) {
-			String xml = mv.getModel().getModelXML();
+		if (auto && canvas.getModel().getFile() != null) {
+			String xml = canvas.getModel().getModelXML();
 			try {
-				try (PrintWriter out = new PrintWriter(new FileWriter(mv.getModel().getFile()))) {
+				try (PrintWriter out = new PrintWriter(new FileWriter(canvas.getModel().getFile()))) {
 					out.println(xml);
 				}
 			} catch (Exception ex) {
@@ -266,23 +266,23 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 			ModelFileFilter mf = new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)");
 			jfc.addChoosableFileFilter(mf);
 
-			if (mv.getModel().getFile() != null) {
-				jfc.setSelectedFile(mv.getModel().getFile());
+			if (canvas.getModel().getFile() != null) {
+				jfc.setSelectedFile(canvas.getModel().getFile());
 			} else {
-				jfc.setSelectedFile(new File(mv.getModel().getName() + ".edm"));
+				jfc.setSelectedFile(new File(canvas.getModel().getName() + ".edm"));
 			}
 
 			jfc.showSaveDialog(this);
 
 			File f = jfc.getSelectedFile();
 			if (f != null) {
-				String xml = mv.getModel().getModelXML();
+				String xml = canvas.getModel().getModelXML();
 				try {
 					try (PrintWriter out = new PrintWriter(new FileWriter(f))) {
 						out.println(xml);
 					}
 
-					mv.getModel().setFile(f);
+					canvas.getModel().setFile(f);
 				} catch (Exception ex) {
 					ApplicationContext.get().errors().report(this, "Save current model", ex);
 				}
@@ -294,11 +294,11 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 	private void exportDiagram(String format, String extension, java.util.function.Function<DiagramModel, String> exporter) {
 		JFileChooser jfc = new JFileChooser();
 		jfc.setDialogTitle("Export model as " + format);
-		jfc.setSelectedFile(new File(mv.getModel().getName() + "." + extension));
+		jfc.setSelectedFile(new File(canvas.getModel().getName() + "." + extension));
 
 		if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 			try {
-				java.nio.file.Files.writeString(jfc.getSelectedFile().toPath(), exporter.apply(DiagramModel.of(mv.getModel())),
+				java.nio.file.Files.writeString(jfc.getSelectedFile().toPath(), exporter.apply(DiagramModel.of(canvas.getModel())),
 					java.nio.charset.StandardCharsets.UTF_8);
 				log.info("Model exported as {} to {}", format, jfc.getSelectedFile());
 			} catch (Exception ex) {
@@ -308,12 +308,12 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 	}
 
 	public void newModel() {
-		Dialogs.SaveChoice choice = Dialogs.askSave(this, "New model", "Save model '" + mv.getModel().getName() + "' first?");
+		Dialogs.SaveChoice choice = Dialogs.askSave(this, "New model", "Save model '" + canvas.getModel().getName() + "' first?");
 		if (choice == Dialogs.SaveChoice.SAVE) {
 			saveCurrentModel(true);
-			mv.resetModel();
+			canvas.resetModel();
 		} else if (choice == Dialogs.SaveChoice.DISCARD) {
-			mv.resetModel();
+			canvas.resetModel();
 		}
 	}
 
@@ -338,7 +338,7 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 			newModel();
 		}
 		if (e.getSource() == file_opn) {
-			Dialogs.SaveChoice choice = Dialogs.askSave(this, "Open model", "Save model '" + mv.getModel().getName() + "' first?");
+			Dialogs.SaveChoice choice = Dialogs.askSave(this, "Open model", "Save model '" + canvas.getModel().getName() + "' first?");
 			if (choice == Dialogs.SaveChoice.SAVE) {
 				saveCurrentModel(true);
 				openModel();
@@ -347,13 +347,13 @@ public class DesignerWindow extends JInternalFrame implements MouseListener {
 			}
 		}
 		if (e.getSource() == edit_sla) {
-			mv.getModel().selectAll();
+			canvas.getModel().selectAll();
 		}
 		if (e.getSource() == edit_dsa) {
-			mv.getModel().deselectAll();
+			canvas.getModel().deselectAll();
 		}
 		if (e.getSource() == edit_del) {
-			mv.removeSelectedObjects();
+			canvas.removeSelectedObjects();
 		}
 		if (e.getSource() == file_sav) {
 			saveCurrentModel(true);

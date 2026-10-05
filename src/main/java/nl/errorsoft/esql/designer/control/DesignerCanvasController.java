@@ -7,41 +7,41 @@ import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import java.util.List;
 
-public class ModelViewerControl {
-	private DesignerWindow db;
+public class DesignerCanvasController {
+	private DesignerWindow designerWindow;
 
-	public ModelViewerControl(DesignerWindow db) {
-		this.db = db;
+	public DesignerCanvasController(DesignerWindow designerWindow) {
+		this.designerWindow = designerWindow;
 	}
 
 	public void showPropertiesDialog(List<ModelObject> sel) {
 		if (sel.size() == 1) {
-			db.showProperties(sel.get(0));
+			designerWindow.showProperties(sel.get(0));
 		}
 	}
 
 	public void showModelPropertiesDialog(Object model) {
-		db.showProperties(model);
+		designerWindow.showProperties(model);
 	}
 
 	public void buildMenu() {
-		db.buildMenu();
+		designerWindow.buildMenu();
 	}
 
 	public void saveModel(boolean direct) {
-		db.saveCurrentModel(direct);
+		designerWindow.saveCurrentModel(direct);
 	}
 
 	public void newModel() {
-		db.newModel();
+		designerWindow.newModel();
 	}
 
 	public void openModel() {
-		db.openModel();
+		designerWindow.openModel();
 	}
 
 	public void updateTitle() {
-		db.updateTitle();
+		designerWindow.updateTitle();
 	}
 
 	public ImageLoader getImageList() {
@@ -49,10 +49,10 @@ public class ModelViewerControl {
 	}
 
 	public void saveModel() {
-		this.db.saveCurrentModel(true);
+		this.designerWindow.saveCurrentModel(true);
 	}
 
 	public void generate() {
-		this.db.generate();
+		this.designerWindow.generate();
 	}
 }

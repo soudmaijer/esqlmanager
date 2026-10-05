@@ -1,11 +1,11 @@
 package nl.errorsoft.esql.table.control;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
-import nl.errorsoft.esql.database.control.DatabaseCC;
+import nl.errorsoft.esql.database.control.DatabaseController;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.CreateColumn;
@@ -18,21 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Opens the table editor as a tab of the connection window ("New table", "Edit orders") and saves what it holds. */
-public class CreateTableCC {
+public class CreateTableController {
 	private static final String NEW_TABLE = "New table";
 
-	private ConnectionWindowCC cwcc;
+	private ConnectionWindowController connectionWindowController;
 	/** The schema a new table goes in, null for the current schema of the chosen database. */
 	private Schema schema;
 
-	public CreateTableCC(ConnectionWindowCC cwcc) {
-		this.cwcc = cwcc;
+	public CreateTableController(ConnectionWindowController connectionWindowController) {
+		this.connectionWindowController = connectionWindowController;
 	}
 
 	/** @param schema the schema to create the table in, null for the current one. */
 	public void startCreateTable(Database database, Schema schema) {
 		this.schema = schema;
-		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(NEW_TABLE)) {
+		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(NEW_TABLE)) {
 			return;
 		}
 
@@ -42,12 +42,12 @@ public class CreateTableCC {
 	public void startEditTable(Database database, Table table) throws Exception {
 		String key = "edit:" + table.getDatabase().getName() + "." + table.getName();
 
-		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(key)) {
+		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(key)) {
 			return;
 		}
 
 		if (table.getColumns() == null) {
-			cwcc.getContext().tables().loadColumns(table);
+			connectionWindowController.getContext().tables().loadColumns(table);
 		}
 		String title = "Edit " + table.getName();
 		window().showEditorTab(key, title, new TableEditorTab(this, title, database, table));
@@ -58,8 +58,8 @@ public class CreateTableCC {
 	*/
 	public List<Database> getDatabases() {
 		try {
-			DatabaseCC dbc = new DatabaseCC(cwcc);
-			return dbc.getDatabases();
+			DatabaseController databaseController = new DatabaseController(connectionWindowController);
+			return databaseController.getDatabases();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(window(), "Load databases", e);
 			return List.of();
@@ -68,7 +68,7 @@ public class CreateTableCC {
 
 	/** True when the server has schemas between databases and tables. */
 	public boolean supportsSchemas() {
-		return cwcc.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS);
+		return connectionWindowController.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS);
 	}
 
 	/** The name of the schema a new table goes in, null for the current schema of the database. */
@@ -78,7 +78,7 @@ public class CreateTableCC {
 
 	/** Whether the server keeps a comment per column, so the editor offers the field. */
 	public boolean supportsColumnComments() {
-		return cwcc.dialect().supportsColumnComments();
+		return connectionWindowController.dialect().supportsColumnComments();
 	}
 
 	/**
@@ -87,7 +87,7 @@ public class CreateTableCC {
 	 */
 	public List<String> previewStatements(Table existing, String database, String name, String comment, String type, List<CreateColumn> columns) {
 		try {
-			TableService tables = cwcc.getContext().tables();
+			TableService tables = connectionWindowController.getContext().tables();
 
 			if (existing != null) {
 				return tables.modifyStatements(existing, name, type, comment);
@@ -103,14 +103,14 @@ public class CreateTableCC {
 	 	List all tabletypes, empty when the server has no such choice
 	*/
 	public String[] getTableTypes() {
-		return cwcc.getConnectionProfile().getServerType().getDialect().getTableTypes();
+		return connectionWindowController.getConnectionProfile().getServerType().getDialect().getTableTypes();
 	}
 
 	/*
 	 	List all datatypes
 	*/
 	public DataType[] getDatatypes() {
-		return cwcc.getConnectionProfile().getServerType().getDataTypes();
+		return connectionWindowController.getConnectionProfile().getServerType().getDataTypes();
 	}
 
 	public void createTable(String name, String database, String comment, String type, TableEditorTab editor, List<CreateColumn> columns) {
@@ -124,12 +124,12 @@ public class CreateTableCC {
 		}
 		try {
 			if (schema != null && schema.getDatabase().getName().equals(database)) {
-				cwcc.getContext().tables().createTable(schema, name, new ArrayList<>(columns), type, comment);
+				connectionWindowController.getContext().tables().createTable(schema, name, new ArrayList<>(columns), type, comment);
 			} else {
-				cwcc.getContext().tables().createTable(new Database(database), name, new ArrayList<>(columns), type, comment);
+				connectionWindowController.getContext().tables().createTable(new Database(database), name, new ArrayList<>(columns), type, comment);
 			}
 			window().removeTab(editor);
-			cwcc.reloadSelectedDatabase();
+			connectionWindowController.reloadSelectedDatabase();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(window(), "Create table", e);
 		}
@@ -137,7 +137,7 @@ public class CreateTableCC {
 
 	public void modifyTable(TableEditorTab editor, Table t, String tableName, String tableType, String tableComment) {
 		try {
-			cwcc.getContext().tables().modifyTable(t, tableName, tableType, tableComment);
+			connectionWindowController.getContext().tables().modifyTable(t, tableName, tableType, tableComment);
 			window().removeTab(editor);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(window(), "Modify table", e);
@@ -150,6 +150,6 @@ public class CreateTableCC {
 	}
 
 	private ConnectionWindow window() {
-		return cwcc.getWindow();
+		return connectionWindowController.getWindow();
 	}
 }

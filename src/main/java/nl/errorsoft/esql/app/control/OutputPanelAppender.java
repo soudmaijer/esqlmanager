@@ -16,23 +16,23 @@ import nl.errorsoft.esql.app.ui.MainWindow;
  * Shows the application log in the output panel at the bottom of the main window.
  */
 public class OutputPanelAppender extends AbstractAppender {
-	private final MainWindow ui;
+	private final MainWindow mainWindow;
 
-	private OutputPanelAppender(Layout<? extends Serializable> layout, MainWindow ui) {
+	private OutputPanelAppender(Layout<? extends Serializable> layout, MainWindow mainWindow) {
 		super("OutputPanel", null, layout, true, Property.EMPTY_ARRAY);
-		this.ui = ui;
+		this.mainWindow = mainWindow;
 	}
 
 	public void append(LogEvent event) {
-		ui.print(new String(getLayout().toByteArray(event)));
+		mainWindow.print(new String(getLayout().toByteArray(event)));
 	}
 
 	/** Attaches the output panel to the root logger. */
-	public static void install(MainWindow ui) {
+	public static void install(MainWindow mainWindow) {
 		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
 		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n").setConfiguration(config).build();
-		Appender appender = new OutputPanelAppender(layout, ui);
+		Appender appender = new OutputPanelAppender(layout, mainWindow);
 
 		appender.start();
 		config.addAppender(appender);

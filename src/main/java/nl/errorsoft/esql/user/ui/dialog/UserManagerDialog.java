@@ -27,7 +27,7 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import nl.errorsoft.esql.user.control.UserManagerCC;
+import nl.errorsoft.esql.user.control.UserManagerController;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.user.GrantTarget;
 import nl.errorsoft.esql.user.PrivilegeGroup;
@@ -36,7 +36,7 @@ import nl.errorsoft.esql.user.PrivilegeGroup;
 public class UserManagerDialog extends JDialog {
 	private static final String LOADING = "Loading...";
 
-	private final UserManagerCC cc;
+	private final UserManagerController userManagerController;
 	private final DefaultListModel<DatabaseUser> userModel = new DefaultListModel<>();
 	private final JList<DatabaseUser> users = new JList<>(userModel);
 	private final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(GrantTarget.global()));
@@ -61,9 +61,9 @@ public class UserManagerDialog extends JDialog {
 	/** True while the code changes the selection back, so that the listeners ignore it. */
 	private boolean reverting;
 
-	public UserManagerDialog(MainWindow owner, UserManagerCC cc) throws Exception {
+	public UserManagerDialog(MainWindow owner, UserManagerController userManagerController) throws Exception {
 		super(owner, "User manager", false);
-		this.cc = cc;
+		this.userManagerController = userManagerController;
 
 		JPanel userPanel = new JPanel(new BorderLayout(0, 6));
 		Forms.titled(userPanel, "Users");
@@ -167,7 +167,7 @@ public class UserManagerDialog extends JDialog {
 	private void initTree() throws Exception {
 		DefaultMutableTreeNode root = (DefaultMutableTreeNode) treeModel.getRoot();
 
-		for (String database : cc.getDatabaseNames()) {
+		for (String database : userManagerController.getDatabaseNames()) {
 			DefaultMutableTreeNode node = new DefaultMutableTreeNode(GrantTarget.database(database));
 			node.add(new DefaultMutableTreeNode(LOADING));
 			root.add(node);
@@ -195,7 +195,7 @@ public class UserManagerDialog extends JDialog {
 			String database = ((GrantTarget) databaseNode.getUserObject()).database();
 			databaseNode.removeAllChildren();
 
-			for (String table : cc.getTableNames(database)) {
+			for (String table : userManagerController.getTableNames(database)) {
 				databaseNode.add(new DefaultMutableTreeNode(GrantTarget.table(database, table)));
 			}
 
@@ -210,7 +210,7 @@ public class UserManagerDialog extends JDialog {
 		allUsers.clear();
 
 		try {
-			allUsers.addAll(cc.listUsers());
+			allUsers.addAll(userManagerController.listUsers());
 		} catch (Exception e) {
 			showError("Load users", e);
 		}
@@ -275,10 +275,10 @@ public class UserManagerDialog extends JDialog {
 
 		if (user != null && target != null) {
 			try {
-				shownGrants = cc.getGrants(user, target);
+				shownGrants = userManagerController.getGrants(user, target);
 
 				Map<PrivilegeGroup, JPanel> groups = new EnumMap<>(PrivilegeGroup.class);
-				for (String privilege : cc.getPrivileges(target.scope())) {
+				for (String privilege : userManagerController.getPrivileges(target.scope())) {
 					JCheckBox box = new JCheckBox(privilege, shownGrants.contains(privilege));
 					box.addActionListener(e -> updateChanged());
 					privilegeBoxes.add(box);
@@ -346,14 +346,14 @@ public class UserManagerDialog extends JDialog {
 
 		try {
 			DatabaseUser user = users.getSelectedValue();
-			Set<String> revoked = new LinkedHashSet<>(cc.getGrants(user, selectedTarget()));
+			Set<String> revoked = new LinkedHashSet<>(userManagerController.getGrants(user, selectedTarget()));
 			revoked.removeAll(selected);
 
 			if (!revoked.isEmpty() && !Dialogs.confirmDestructive(this, "Revoke privileges",
 				"Revoke " + String.join(", ", revoked) + " from '" + user + "' on " + describe(selectedTarget()) + "?", "Revoke")) {
 				return;
 			}
-			cc.setGrants(user, selectedTarget(), selected);
+			userManagerController.setGrants(user, selectedTarget(), selected);
 			showGrants();
 			message.setText("Privileges saved for " + users.getSelectedValue() + " on " + describe(selectedTarget()));
 		} catch (Exception e) {
@@ -368,21 +368,21 @@ public class UserManagerDialog extends JDialog {
 		JPasswordField repeat = new JPasswordField(16);
 		Forms.Grid grid = new Forms.Grid().row("&Name:", name);
 
-		if (cc.usesHost()) {
+		if (userManagerController.usesHost()) {
 			grid.row("&Host:", host);
 		}
 		grid.row("&Password:", password).row("&Repeat password:", repeat);
 
 		boolean created = Dialogs.form(this, "Add user", grid.panel(), "Create", name, () -> Validation.first(Validation.required("a name", name.getText()),
-			cc.usesHost() ? Validation.required("a host", host.getText()) : null,
+			userManagerController.usesHost() ? Validation.required("a host", host.getText()) : null,
 			Validation.same(password.getPassword(), repeat.getPassword(), "The passwords are not the same.")));
 		if (!created) {
 			return;
 		}
 
 		try {
-			DatabaseUser user = new DatabaseUser(name.getText().trim(), cc.usesHost() ? host.getText().trim() : null);
-			cc.createUser(user, new String(password.getPassword()));
+			DatabaseUser user = new DatabaseUser(name.getText().trim(), userManagerController.usesHost() ? host.getText().trim() : null);
+			userManagerController.createUser(user, new String(password.getPassword()));
 			loadUsers();
 			message.setText("Created user " + user);
 		} catch (Exception e) {
@@ -401,7 +401,7 @@ public class UserManagerDialog extends JDialog {
 		}
 
 		try {
-			cc.changePassword(users.getSelectedValue(), new String(password.getPassword()));
+			userManagerController.changePassword(users.getSelectedValue(), new String(password.getPassword()));
 			message.setText("Changed the password of " + users.getSelectedValue());
 		} catch (Exception e) {
 			showError("Change password", e);
@@ -416,7 +416,7 @@ public class UserManagerDialog extends JDialog {
 		}
 
 		try {
-			cc.dropUser(user);
+			userManagerController.dropUser(user);
 			loadUsers();
 			message.setText("Dropped user " + user);
 		} catch (Exception e) {
