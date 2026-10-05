@@ -1,0 +1,41 @@
+package nl.errorsoft.esql.domain.dialect;
+
+import java.sql.CallableStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.domain.ServerType;
+
+public class SqlServerDialect extends AbstractDialect
+{
+	public int getType()
+	{
+		return ServerType.MS_SQL_SERVER;
+	}
+
+	public String getDefaultPort()
+	{
+		return "1433";
+	}
+
+	public String getDefaultUsername()
+	{
+		return "sa";
+	}
+
+	public List<String> listDatabases( DatabaseConnection dbc ) throws SQLException
+	{
+		List<String> names = new ArrayList<String>();
+		CallableStatement cs = dbc.getConnection().prepareCall( "{call sp_databases}" );
+		ResultSet rs = cs.executeQuery();
+
+		while( rs.next() )
+			names.add( rs.getString(1) );
+
+		rs.close();
+		cs.close();
+		return names;
+	}
+}
