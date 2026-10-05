@@ -25,6 +25,9 @@ import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.user.GrantTarget;
 import nl.errorsoft.esql.user.UserService;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableName;
+import nl.errorsoft.esql.database.Schema;
+import org.junit.jupiter.api.Assumptions;
 import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
@@ -375,6 +378,64 @@ abstract class DialectContractTest {
 		connection.useDatabase(DATABASE);
 	}
 
+	@Test
+	void tablesLiveInTheirOwnSchema(@TempDir Path dir) throws Exception {
+		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.SCHEMAS), "The server has no schemas");
+		String name = "sales_" + System.nanoTime();
+		var databases = new ConnectionContext(connection).databases();
+		Schema schema = databases.createSchema(database, name);
+		assertTrue(databases.getSchemas(database).stream().anyMatch(s -> s.getName().equals(name)));
+		assertTrue(databases.getSchemas(database).stream().noneMatch(s -> s.getName().startsWith("pg_") || s.getName().equals("information_schema")));
+
+		// A table with the same name as one in the current schema, so only a qualified statement reaches it.
+		createTable("orders", "");
+		service().createTable(schema, "orders", List.of(column("id", INTEGER, "", true), column("note", VARCHAR, "20", false)), null, "");
+		assertTrue(service().exists(schema, "orders"));
+		List<Table> tables = databases.getTables(schema);
+		assertEquals(List.of("orders"), tables.stream().map(Table::getName).toList());
+		Table orders = tables.get(0);
+		assertEquals(name, orders.getSchema().getName());
+
+		TableData[] row = new TableData[2];
+		TableColumn[] columns = service().loadColumns(orders);
+		assertEquals(List.of("id", "note"), Arrays.stream(columns).map(TableColumn::getName).toList());
+		for (int i = 0; i < 2; i++) {
+			row[i] = new TableData();
+			row[i].setTableColumn(columns[i]);
+			row[i].setData(i == 0 ? "7" : "in schema");
+		}
+		service().insertRow(orders, row);
+		TableData[][] rows = service().loadPage(orders, 0, 10);
+		assertEquals(1, rows.length);
+		assertEquals("in schema", rows[0][1].getData());
+		assertEquals(0, service().loadPage(table("orders"), 0, 10).length);
+		assertEquals(1, databases.getTables(schema).get(0).getRowCount());
+
+		// The script names the schema, so importing it replaces the table in that schema.
+		File file = dir.resolve("schema.sql").toFile();
+		ExportService export = new ConnectionContext(connection).newExport(new Object[]{schema}, file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, true));
+		runSynchronously(export::setListener, export);
+		ImportService imported = new ConnectionContext(connection).newImport(schema, file.getAbsolutePath());
+		runSynchronously(imported::setListener, imported);
+		assertEquals(1, service().loadPage(orders, 0, 10).length);
+
+		service().addColumn(orders, "extra", "", "", INTEGER, false, false, false, true);
+		TableIndex index = new TableIndex(orders);
+		index.setName("orders_note_idx");
+		service().addIndex(orders, index, new TableColumn[]{orders.getTableColumn("note")}, "INDEX");
+		service().dropIndex(orders, orders.getTableIndex("orders_note_idx"));
+		assertNotNull(service().analyseTable(orders));
+
+		var designed = new ConnectionContext(connection).designer().reverseEngineer(schema);
+		assertEquals(List.of("orders"), designed.tables().stream().map(DesignedTable::name).toList());
+		assertEquals(3, designed.tables().get(0).columns().size());
+
+		databases.dropSchema(schema);
+		assertTrue(databases.getSchemas(database).stream().noneMatch(s -> s.getName().equals(name)));
+		service().dropTable(table("orders"));
+	}
+
 	private static CreateColumn column(String name, DataType type, String length, boolean primary) {
 		CreateColumn column = new CreateColumn(name);
 		column.type = type;
@@ -390,8 +451,9 @@ abstract class DialectContractTest {
 
 	@Test
 	void refusesUnknownForeignKeyActions() {
-		assertThrows(EsqlException.class, () -> dialect.addForeignKeySql("a", "fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", ""));
-		assertFalse(dialect.addForeignKeySql("a", "fk", List.of("b"), "c", List.of("d"), "", null).get(0).contains("ON "));
+		assertThrows(EsqlException.class,
+			() -> dialect.addForeignKeySql(TableName.of("a"), "fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", ""));
+		assertFalse(dialect.addForeignKeySql(TableName.of("a"), "fk", List.of("b"), "c", List.of("d"), "", null).get(0).contains("ON "));
 	}
 
 	private void createTable(String name, String comment) throws Exception {
@@ -409,7 +471,7 @@ abstract class DialectContractTest {
 		note.type = new DataType("text", false, false, false, false, false, false, false, false);
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 
-		for (String statement : dialect.createTableSql(name, Arrays.asList(id, title, note), engine, comment)) {
+		for (String statement : dialect.createTableSql(TableName.of(name), Arrays.asList(id, title, note), engine, comment)) {
 			connection.executeUpdate(statement);
 		}
 	}

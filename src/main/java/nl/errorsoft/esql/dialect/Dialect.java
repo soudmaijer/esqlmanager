@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.dialect;
 
+import nl.errorsoft.esql.table.TableName;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -22,7 +24,9 @@ public interface Dialect {
 
 	/** Optional functionality that not every database has an implementation for. */
 	enum Feature {
-		DESIGNER, USER_MANAGER, CREATE_DATABASE, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS, FOREIGN_KEYS
+		DESIGNER, USER_MANAGER, CREATE_DATABASE, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS, FOREIGN_KEYS,
+		/** A database holds schemas, which hold the tables: the tree shows server, databases, schemas, tables. */
+		SCHEMAS
 	}
 
 	int getType();
@@ -54,6 +58,20 @@ public interface Dialect {
 
 	DatabaseSwitch databaseSwitch();
 
+	/** What the server calls a database, for menus and messages ("database"). */
+	String databaseTerm();
+
+	/** What the server calls a schema ("schema"), only meaningful when it {@link #supports} {@link Feature#SCHEMAS}. */
+	String schemaTerm();
+
+	/** A query listing the schemas of the connected database that hold user tables, null when the server has no schemas. */
+	String listSchemasSql();
+
+	String createSchemaSql(String schema);
+
+	/** Drops a schema with everything in it. */
+	String dropSchemaSql(String schema);
+
 	/** A query returning the schema that tables are looked up in, null when the server has no schema concept. */
 	String currentSchemaSql();
 
@@ -75,39 +93,42 @@ public interface Dialect {
 	/** Quotes a table, column or index name. */
 	String quote(String identifier);
 
+	/** Quotes a table name, prefixed with its quoted schema when it has one. */
+	String quote(TableName table);
+
 	/** Storage engines a table can be created with, empty when the server has no such choice. */
 	String[] getTableTypes();
 
 	/** The statements that create a table, including its indexes and comment. */
-	List<String> createTableSql(String table, List<CreateColumn> columns, String tableType, String comment);
+	List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment);
 
-	List<String> renameTableSql(String table, String newName);
+	List<String> renameTableSql(TableName table, String newName);
 
-	List<String> setTableTypeSql(String table, String tableType);
+	List<String> setTableTypeSql(TableName table, String tableType);
 
-	List<String> setTableCommentSql(String table, String comment);
+	List<String> setTableCommentSql(TableName table, String comment);
 
-	List<String> addColumnSql(String table, CreateColumn column);
+	List<String> addColumnSql(TableName table, CreateColumn column);
 
 	/** Changes an existing column to the given definition, renaming it when the name differs. */
-	List<String> modifyColumnSql(String table, String oldName, CreateColumn column);
+	List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column);
 
 	/**
 	 * Adds an index on the given columns.
 	 * @param name the index name, "PRIMARY" for the primary key.
 	 * @param type INDEX, UNIQUE or FULLTEXT.
 	 */
-	List<String> addIndexSql(String table, String name, String type, List<String> columns);
+	List<String> addIndexSql(TableName table, String name, String type, List<String> columns);
 
 	/**
 	 * Drops an index.
 	 * @param name the index name, "PRIMARY" for the primary key.
 	 * @param primaryKeyName the name the server gave the primary key constraint, used when name is PRIMARY.
 	 */
-	List<String> dropIndexSql(String table, String name, String primaryKeyName);
+	List<String> dropIndexSql(TableName table, String name, String primaryKeyName);
 
 	/** Replaces an index, see {@link #dropIndexSql} for the names. */
-	List<String> modifyIndexSql(String table, String name, String primaryKeyName, String type, List<String> columns);
+	List<String> modifyIndexSql(TableName table, String name, String primaryKeyName, String type, List<String> columns);
 
 	/** The referential actions a foreign key may have, anything else is refused so no text from a model ends up in a statement. */
 	List<String> REFERENTIAL_ACTIONS = List.of("NO ACTION", "CASCADE", "SET NULL", "RESTRICT", "SET DEFAULT");
@@ -118,12 +139,12 @@ public interface Dialect {
 	 * @param onUpdate as onDelete.
 	 * @throws nl.errorsoft.esql.error.EsqlException when an action is not one of the allowed ones.
 	 */
-	List<String> addForeignKeySql(String table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
+	List<String> addForeignKeySql(TableName table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
 		String onUpdate);
 
-	List<String> dropForeignKeySql(String table, String name);
+	List<String> dropForeignKeySql(TableName table, String name);
 
-	/** A query with the table name as its one parameter, returning the storage engine of the table; null when the server has no table types. */
+	/** A query with the schema (null for the current one) and the table name as parameters, returning the storage engine of the table; null when the server has no table types. */
 	String tableTypeSql();
 
 	/**
@@ -131,13 +152,13 @@ public interface Dialect {
 	 * @param tableType the storage engine read with {@link #tableTypeSql}, null when there is none.
 	 * @throws nl.errorsoft.esql.error.EsqlException when it can't, such as a MySQL table that is not InnoDB.
 	 */
-	void checkForeignKeyTable(String table, String tableType);
+	void checkForeignKeyTable(TableName table, String tableType);
 
 	/**
 	 * The statement of a maintenance command on a table.
 	 * @throws UnsupportedOperationException when the server has no such command.
 	 */
-	MaintenanceStatement maintenanceSql(Maintenance command, String table);
+	MaintenanceStatement maintenanceSql(Maintenance command, TableName table);
 
 	/** The maintenance commands that {@link #maintenanceSql} has a statement for on this server, empty when it has none. */
 	java.util.Set<Maintenance> maintenanceCommands();
@@ -155,14 +176,14 @@ public interface Dialect {
 	/** The statement that makes a database the active one in a script, understood by {@link #useDatabaseSql} consumers such as Import. */
 	String useDatabaseSql(String database);
 
-	/** A query with the table name as its one parameter, returning the auto numbered columns that need {@link #afterDataLoadSql}; null when none do. */
+	/** A query with the schema (null for the current one) and the table name as parameters, returning the auto numbered columns that need {@link #afterDataLoadSql}; null when none do. */
 	String autoNumberedColumnsSql();
 
 	/**
 	 * Statements to run after the rows of a table have been loaded, such as moving auto numbering past the highest value.
 	 * @param autoNumberedColumns the columns found with {@link #autoNumberedColumnsSql}.
 	 */
-	List<String> afterDataLoadSql(String table, List<String> autoNumberedColumns);
+	List<String> afterDataLoadSql(TableName table, List<String> autoNumberedColumns);
 
 	/**
 	 * A column of an existing table as the designer models it, read from the current row of {@link java.sql.DatabaseMetaData#getColumns}:
@@ -171,7 +192,7 @@ public interface Dialect {
 	CreateColumn readColumn(ResultSet columns) throws SQLException;
 
 	/** A query whose second column is the CREATE TABLE statement of an existing table, null when it is built from the metadata with {@link #createTableDdl}. */
-	String showCreateTableSql(String table);
+	String showCreateTableSql(TableName table);
 
 	/** A column definition for CREATE TABLE, from the current row of {@link java.sql.DatabaseMetaData#getColumns}. */
 	String columnDdl(ResultSet columns) throws SQLException;
@@ -181,7 +202,7 @@ public interface Dialect {
 	 * @param columnDefinitions made with {@link #columnDdl}.
 	 * @param primaryKey the primary key columns in key order.
 	 */
-	String createTableDdl(String table, List<String> columnDefinitions, List<String> primaryKey);
+	String createTableDdl(TableName table, List<String> columnDefinitions, List<String> primaryKey);
 
 	/** The account and privilege management of this server. */
 	UserAdmin getUserAdmin();

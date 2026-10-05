@@ -5,6 +5,7 @@ import java.util.List;
 
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.table.DataType;
@@ -38,12 +39,22 @@ public class TableService {
 		return table.getIndexes();
 	}
 
+	/** Whether the table is in the current schema of the database. */
 	public boolean exists(Database database, String name) throws Exception {
-		return repository.exists(database, name);
+		return repository.exists(database, null, name);
 	}
 
+	public boolean exists(Schema schema, String name) throws Exception {
+		return repository.exists(schema.getDatabase(), schema, name);
+	}
+
+	/** Creates the table in the current schema of the database. */
 	public void createTable(Database database, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
-		repository.create(database, name, columns, type, comment);
+		repository.create(database, null, name, columns, type, comment);
+	}
+
+	public void createTable(Schema schema, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
+		repository.create(schema.getDatabase(), schema, name, columns, type, comment);
 	}
 
 	public void dropTable(Table table) throws Exception {

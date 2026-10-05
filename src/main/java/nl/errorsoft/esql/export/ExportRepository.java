@@ -13,7 +13,9 @@ import java.util.function.Consumer;
 import nl.errorsoft.esql.jdbc.AbstractRepository;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableName;
 import nl.errorsoft.esql.table.TableColumn;
 
 /** Reads what an export script is made of: table names, table definitions and rows as statements. */
@@ -23,12 +25,21 @@ public class ExportRepository extends AbstractRepository {
 	}
 
 	/** The tables of a database that have structure and data of their own, so no views. */
-	public List<String> tableNames(Database database) throws SQLException {
-		List<String> names = new ArrayList<>();
+	public List<TableName> tableNames(Database database) throws SQLException {
+		return withoutViews(listTables(database));
+	}
 
-		for (Table table : listTables(database)) {
+	/** The tables of one schema, no views. */
+	public List<TableName> tableNames(Schema schema) throws SQLException {
+		return withoutViews(listTables(schema));
+	}
+
+	private static List<TableName> withoutViews(List<Table> tables) {
+		List<TableName> names = new ArrayList<>();
+
+		for (Table table : tables) {
 			if (!"VIEW".equalsIgnoreCase(table.getType())) {
-				names.add(table.getName());
+				names.add(table.qualifiedName());
 			}
 		}
 
@@ -43,11 +54,11 @@ public class ExportRepository extends AbstractRepository {
 		return dialect().useDatabaseSql(database);
 	}
 
-	public String dropTableSql(String table) {
+	public String dropTableSql(TableName table) {
 		return "DROP TABLE IF EXISTS " + quote(table);
 	}
 
-	public String structureSql(String table) throws SQLException {
+	public String structureSql(TableName table) throws SQLException {
 		String show = dialect().showCreateTableSql(table);
 
 		if (show != null) {
@@ -58,17 +69,18 @@ public class ExportRepository extends AbstractRepository {
 		}
 
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
+		String schema = table.schema() == null ? dbc.getSchema() : table.schema();
 		String catalog = dbc.getConnection().getCatalog();
 		List<String> columns = new ArrayList<>();
 
-		try (ResultSet rs = dmd.getColumns(catalog, dbc.getSchema(), table, "%")) {
+		try (ResultSet rs = dmd.getColumns(catalog, schema, table.name(), "%")) {
 			while (rs.next()) {
 				columns.add(dialect().columnDdl(rs));
 			}
 		}
 
 		Map<Integer, String> primary = new TreeMap<>();
-		try (ResultSet keys = dmd.getPrimaryKeys(catalog, dbc.getSchema(), table)) {
+		try (ResultSet keys = dmd.getPrimaryKeys(catalog, schema, table.name())) {
 			while (keys.next()) {
 				primary.put(keys.getInt("KEY_SEQ"), keys.getString("COLUMN_NAME"));
 			}
@@ -78,7 +90,7 @@ public class ExportRepository extends AbstractRepository {
 	}
 
 	/** Passes every row of the table to the sink as an INSERT statement, binary columns are left empty. */
-	public void insertStatements(String table, Consumer<String> sink) throws SQLException {
+	public void insertStatements(TableName table, Consumer<String> sink) throws SQLException {
 		try (ResultSet rs = dbc.executeQuery("SELECT * FROM " + quote(table))) {
 			ResultSetMetaData rsm = rs.getMetaData();
 
@@ -104,9 +116,9 @@ public class ExportRepository extends AbstractRepository {
 	}
 
 	/** Statements that must follow the data, such as moving a sequence past the imported rows. */
-	public List<String> afterDataStatements(String table) throws SQLException {
+	public List<String> afterDataStatements(TableName table) throws SQLException {
 		String sql = dialect().autoNumberedColumnsSql();
-		List<String> columns = sql == null ? List.of() : queryStrings(sql, table);
+		List<String> columns = sql == null ? List.of() : queryStrings(sql, table.schema(), table.name());
 
 		return dialect().afterDataLoadSql(table, columns);
 	}

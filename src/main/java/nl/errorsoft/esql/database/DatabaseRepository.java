@@ -9,7 +9,7 @@ import nl.errorsoft.esql.jdbc.AbstractRepository;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 
-/** Runs the SQL for databases (schemas) and lists their tables. */
+/** Runs the SQL for databases and their schemas, and lists their tables. */
 public class DatabaseRepository extends AbstractRepository {
 	public DatabaseRepository(DatabaseConnection dbc) {
 		super(dbc);
@@ -34,6 +34,39 @@ public class DatabaseRepository extends AbstractRepository {
 	@Override
 	public List<Table> listTables(Database database) throws SQLException {
 		return super.listTables(database);
+	}
+
+	/** The schemas of the database, empty on servers without schemas. */
+	public List<String> listSchemaNames(Database database) throws SQLException {
+		String sql = dialect().listSchemasSql();
+
+		if (sql == null) {
+			return List.of();
+		}
+
+		useDatabase(database.getName());
+		List<String> names = new ArrayList<>();
+		try (ResultSet rs = dbc.executeQuery(sql)) {
+			while (rs.next()) {
+				names.add(rs.getString(1));
+			}
+		}
+		return names;
+	}
+
+	@Override
+	public List<Table> listTables(Schema schema) throws SQLException {
+		return super.listTables(schema);
+	}
+
+	public void createSchema(Database database, String name) throws SQLException {
+		useDatabase(database.getName());
+		executeUpdate(dialect().createSchemaSql(name));
+	}
+
+	public void dropSchema(Schema schema) throws SQLException {
+		useDatabase(schema.getDatabase().getName());
+		executeUpdate(dialect().dropSchemaSql(schema.getName()));
 	}
 
 	public boolean exists(String name) throws SQLException {

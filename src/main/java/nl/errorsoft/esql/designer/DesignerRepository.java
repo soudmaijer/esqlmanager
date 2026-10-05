@@ -21,12 +21,16 @@ public class DesignerRepository extends AbstractRepository {
 		super(dbc);
 	}
 
-	/** The names of the tables of the database, views are left out. */
-	public List<String> loadTableNames(Database database) throws SQLException {
+	/**
+	 * The names of the tables of the database, views are left out.
+	 * @param schema the schema to read, null for the current one.
+	 */
+	public List<String> loadTableNames(Database database, String schema) throws SQLException {
 		useDatabase(database.getName());
 		List<String> names = new ArrayList<>();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), dbc.getSchema(), "%", new String[]{"TABLE"})) {
+		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), "%",
+			new String[]{"TABLE"})) {
 			while (rs.next()) {
 				names.add(rs.getString("TABLE_NAME"));
 			}
@@ -40,17 +44,17 @@ public class DesignerRepository extends AbstractRepository {
 	}
 
 	/** The columns of a table of the active database in their order, with the primary key columns marked. */
-	public List<CreateColumn> loadColumns(String table) throws SQLException {
+	public List<CreateColumn> loadColumns(String schema, String table) throws SQLException {
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
 		List<CreateColumn> columns = new ArrayList<>();
 
-		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), dbc.getSchema(), table, "%")) {
+		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table, "%")) {
 			while (rs.next()) {
 				columns.add(dialect().readColumn(rs));
 			}
 		}
 
-		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table)) {
+		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table)) {
 			while (rs.next()) {
 				for (CreateColumn column : columns) {
 					column.primary |= column.name.equals(rs.getString("COLUMN_NAME"));
@@ -61,11 +65,11 @@ public class DesignerRepository extends AbstractRepository {
 	}
 
 	/** The foreign keys a table of the active database has on other tables, the columns of a composite key in key order. */
-	public List<DesignedForeignKey> loadForeignKeys(String table) throws SQLException {
+	public List<DesignedForeignKey> loadForeignKeys(String schema, String table) throws SQLException {
 		Map<String, TreeMap<Integer, String[]>> pairs = new LinkedHashMap<>();
 		Map<String, String[]> details = new LinkedHashMap<>();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table)) {
+		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table)) {
 			while (rs.next()) {
 				String name = rs.getString("FK_NAME");
 				pairs.computeIfAbsent(name, key -> new TreeMap<>()).put(rs.getInt("KEY_SEQ"),
@@ -86,6 +90,10 @@ public class DesignerRepository extends AbstractRepository {
 			keys.add(new DesignedForeignKey(key.getKey(), columns, detail[0], referenced, detail[1], detail[2]));
 		}
 		return keys;
+	}
+
+	private String schemaOrCurrent(String schema) throws SQLException {
+		return schema == null ? dbc.getSchema() : schema;
 	}
 
 	/** NO ACTION is what a key does when nothing is said, so it is left empty like a key drawn in the designer. */

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.dialect.mysql;
 
+import nl.errorsoft.esql.table.TableName;
+
 import nl.errorsoft.esql.dialect.AbstractDialect;
 import nl.errorsoft.esql.dialect.MaintenanceStatement;
 import nl.errorsoft.esql.dialect.UserAdmin;
@@ -58,15 +60,16 @@ public class MySqlDialect extends AbstractDialect {
 		return new MySqlUserAdmin(this);
 	}
 
+	/** Everything but schemas: a MySQL schema is a database. */
 	public boolean supports(Feature feature) {
-		return true;
+		return feature != Feature.SCHEMAS;
 	}
 
 	public java.util.Set<Maintenance> maintenanceCommands() {
 		return java.util.EnumSet.allOf(Maintenance.class);
 	}
 
-	public MaintenanceStatement maintenanceSql(Maintenance command, String table) {
+	public MaintenanceStatement maintenanceSql(Maintenance command, TableName table) {
 		return new MaintenanceStatement(command + " TABLE " + quote(table), "Msg_Text", "");
 	}
 
@@ -78,7 +81,7 @@ public class MySqlDialect extends AbstractDialect {
 		return "USE " + quote(database);
 	}
 
-	public String showCreateTableSql(String table) {
+	public String showCreateTableSql(TableName table) {
 		return "SHOW CREATE TABLE " + quote(table);
 	}
 
@@ -90,7 +93,7 @@ public class MySqlDialect extends AbstractDialect {
 		return new String[]{"InnoDB", "MyISAM", "MEMORY", "ARCHIVE", "CSV"};
 	}
 
-	public List<String> createTableSql(String table, List<CreateColumn> columns, String tableType, String comment) {
+	public List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment) {
 		List<String> definitions = new ArrayList<>();
 		List<String> primary = new ArrayList<>();
 
@@ -124,19 +127,19 @@ public class MySqlDialect extends AbstractDialect {
 		return Arrays.asList(statement);
 	}
 
-	public List<String> setTableTypeSql(String table, String tableType) {
+	public List<String> setTableTypeSql(TableName table, String tableType) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " ENGINE=" + tableType);
 	}
 
-	public List<String> setTableCommentSql(String table, String comment) {
+	public List<String> setTableCommentSql(TableName table, String comment) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " COMMENT=" + literal(comment));
 	}
 
-	public List<String> modifyColumnSql(String table, String oldName, CreateColumn column) {
+	public List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " CHANGE " + quote(oldName) + " " + quote(column.name) + " " + columnDefinition(column));
 	}
 
-	public List<String> addIndexSql(String table, String name, String type, List<String> columns) {
+	public List<String> addIndexSql(TableName table, String name, String type, List<String> columns) {
 		List<String> quoted = new ArrayList<>();
 
 		for (String column : columns) {
@@ -152,7 +155,7 @@ public class MySqlDialect extends AbstractDialect {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " ADD " + type + " " + quote(name) + " " + cols);
 	}
 
-	public List<String> dropIndexSql(String table, String name, String primaryKeyName) {
+	public List<String> dropIndexSql(TableName table, String name, String primaryKeyName) {
 		if (name.equals("PRIMARY")) {
 			return Arrays.asList("ALTER TABLE " + quote(table) + " DROP PRIMARY KEY");
 		}
@@ -161,26 +164,26 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	/** Dropping and adding in one statement keeps an AUTO_INCREMENT primary key valid in between. */
-	public List<String> modifyIndexSql(String table, String name, String primaryKeyName, String type, List<String> columns) {
+	public List<String> modifyIndexSql(TableName table, String name, String primaryKeyName, String type, List<String> columns) {
 		String drop = name.equals("PRIMARY") ? "DROP PRIMARY KEY" : "DROP INDEX " + quote(name);
 		String add = addIndexSql(table, name, type, columns).get(0).substring(("ALTER TABLE " + quote(table) + " ").length());
 
 		return Arrays.asList("ALTER TABLE " + quote(table) + " " + drop + ", " + add);
 	}
 
-	public List<String> dropForeignKeySql(String table, String name) {
+	public List<String> dropForeignKeySql(TableName table, String name) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " DROP FOREIGN KEY " + quote(name));
 	}
 
 	/** Only InnoDB enforces foreign keys, other engines accept the statement and silently ignore the key. */
-	public void checkForeignKeyTable(String table, String tableType) {
+	public void checkForeignKeyTable(TableName table, String tableType) {
 		if (tableType != null && !"InnoDB".equalsIgnoreCase(tableType)) {
 			throw new EsqlException("Table " + table + " uses the " + tableType + " engine, foreign keys need InnoDB.");
 		}
 	}
 
 	public String tableTypeSql() {
-		return "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
+		return "SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = coalesce(?, DATABASE()) AND TABLE_NAME = ?";
 	}
 
 	/** The driver reports types in upper case with the sign attached (INT UNSIGNED) and defaults as plain text. */

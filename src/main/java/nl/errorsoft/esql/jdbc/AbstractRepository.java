@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableName;
 
 import nl.errorsoft.esql.dialect.Dialect;
 
@@ -30,6 +32,20 @@ public abstract class AbstractRepository {
 
 	protected String quote(String identifier) {
 		return dialect().quote(identifier);
+	}
+
+	/** The schema qualified, quoted name of a table. */
+	protected String quote(TableName table) {
+		return dialect().quote(table);
+	}
+
+	protected String quote(Table table) {
+		return dialect().quote(table.qualifiedName());
+	}
+
+	/** The schema to look a table up in the metadata: its own, or the connection's current schema (null on servers without schemas). */
+	protected String schemaOf(Table table) throws SQLException {
+		return table.getSchema() != null ? table.getSchema().getName() : dbc.getSchema();
 	}
 
 	protected String literal(String value) {
@@ -68,13 +84,13 @@ public abstract class AbstractRepository {
 		return values;
 	}
 
-	/** The tables and views of a database, with their row counts. */
+	/** The tables and views of a database (in the current schema on servers with schemas), with their row counts. */
 	protected List<Table> listTables(Database database) throws SQLException {
 		useDatabase(database.getName());
-		List<Table> tables = new ArrayList<>();
 		String sql = dialect().listTablesSql();
 
 		if (sql != null) {
+			List<Table> tables = new ArrayList<>();
 			try (ResultSet rs = dbc.executeQuery(sql)) {
 				while (rs.next()) {
 					tables.add(dialect().readTable(rs, database));
@@ -83,10 +99,23 @@ public abstract class AbstractRepository {
 			return tables;
 		}
 
+		String schema = dbc.getSchema();
+		return listMetadataTables(database, schema == null ? null : new Schema(database, schema));
+	}
+
+	/** The tables and views of one schema, with their row counts. */
+	protected List<Table> listTables(Schema schema) throws SQLException {
+		useDatabase(schema.getDatabase().getName());
+		return listMetadataTables(schema.getDatabase(), schema);
+	}
+
+	private List<Table> listMetadataTables(Database database, Schema schema) throws SQLException {
+		List<Table> tables = new ArrayList<>();
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-		try (ResultSet rs = dmd.getTables(dbc.getConnection().getCatalog(), dbc.getSchema(), "%", dialect().metadataTableTypes())) {
+
+		try (ResultSet rs = dmd.getTables(dbc.getConnection().getCatalog(), schema == null ? null : schema.getName(), "%", dialect().metadataTableTypes())) {
 			while (rs.next()) {
-				Table table = new Table(database);
+				Table table = schema == null ? new Table(database) : new Table(schema);
 				table.setName(rs.getString("TABLE_NAME"));
 				table.setType(rs.getString("TABLE_TYPE"));
 				table.setComment(rs.getString("REMARKS"));
@@ -95,7 +124,7 @@ public abstract class AbstractRepository {
 		}
 
 		for (Table table : tables) {
-			try (ResultSet counted = dbc.executeQuery("SELECT count(*) FROM " + quote(table.getName()))) {
+			try (ResultSet counted = dbc.executeQuery("SELECT count(*) FROM " + quote(table))) {
 				if (counted.next()) {
 					table.setRowCount(counted.getInt(1));
 				}

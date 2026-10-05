@@ -14,6 +14,7 @@ import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
@@ -37,7 +38,7 @@ public class TableRepository extends AbstractRepository {
 		List<TableColumn> columns = new ArrayList<>();
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
 
-		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName(), "%")) {
+		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), schemaOf(table), table.getName(), "%")) {
 			while (rs.next()) {
 				TableColumn column = new TableColumn(table);
 				column.setNativeTypeName(rs.getString("TYPE_NAME"));
@@ -49,7 +50,7 @@ public class TableRepository extends AbstractRepository {
 			}
 		}
 
-		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName())) {
+		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOf(table), table.getName())) {
 			while (rs.next()) {
 				for (TableColumn column : columns) {
 					if (column.getName().equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
@@ -70,7 +71,7 @@ public class TableRepository extends AbstractRepository {
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
 		String primaryKeyName = primaryKeyName(table);
 
-		try (ResultSet rs = dmd.getIndexInfo(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName(), false, false)) {
+		try (ResultSet rs = dmd.getIndexInfo(dbc.getConnection().getCatalog(), schemaOf(table), table.getName(), false, false)) {
 			while (rs.next()) {
 				// Some drivers add a statistics row without an index name.
 				String indexName = rs.getString("INDEX_NAME");
@@ -118,47 +119,50 @@ public class TableRepository extends AbstractRepository {
 
 	/** The name the server gave the primary key of the table, null when it has none. */
 	private String primaryKeyName(Table table) throws SQLException {
-		try (ResultSet rs = dbc.getConnection().getMetaData().getPrimaryKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName())) {
+		try (ResultSet rs = dbc.getConnection().getMetaData().getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOf(table), table.getName())) {
 			return rs.next() ? rs.getString("PK_NAME") : null;
 		}
 	}
 
-	public boolean exists(Database database, String name) throws SQLException {
+	/** @param schema the schema to look in, null for the current one. */
+	public boolean exists(Database database, Schema schema, String name) throws SQLException {
 		useDatabase(database.getName());
+		String schemaName = schema == null ? dbc.getSchema() : schema.getName();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), dbc.getSchema(), name,
+		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), schemaName, name,
 			new String[]{"TABLE"})) {
 			return rs.next();
 		}
 	}
 
-	public void create(Database database, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
+	/** @param schema the schema to create the table in, null for the current one. */
+	public void create(Database database, Schema schema, String name, List<CreateColumn> columns, String type, String comment) throws Exception {
 		useDatabase(database.getName());
-		executeAll(dialect().createTableSql(name, columns, type, comment));
+		executeAll(dialect().createTableSql(new TableName(schema == null ? null : schema.getName(), name), columns, type, comment));
 	}
 
 	public void dropTable(Table table) throws Exception {
-		executeUpdate("DROP TABLE " + quote(table.getName()));
+		executeUpdate("DROP TABLE " + quote(table));
 	}
 
 	public void flushTable(Table table) throws Exception {
-		executeUpdate("DELETE FROM " + quote(table.getName()));
+		executeUpdate("DELETE FROM " + quote(table));
 	}
 
 	public void renameTable(Table table, String newName) throws Exception {
-		executeAll(dialect().renameTableSql(table.getName(), newName));
+		executeAll(dialect().renameTableSql(table.qualifiedName(), newName));
 	}
 
 	public void setTableType(Table table, String type) throws Exception {
-		executeAll(dialect().setTableTypeSql(table.getName(), type));
+		executeAll(dialect().setTableTypeSql(table.qualifiedName(), type));
 	}
 
 	public void setTableComment(Table table, String comment) throws Exception {
-		executeAll(dialect().setTableCommentSql(table.getName(), comment));
+		executeAll(dialect().setTableCommentSql(table.qualifiedName(), comment));
 	}
 
 	public String maintain(Table table, Dialect.Maintenance maintenance) throws Exception {
-		MaintenanceStatement statement = dialect().maintenanceSql(maintenance, table.getName());
+		MaintenanceStatement statement = dialect().maintenanceSql(maintenance, table.qualifiedName());
 
 		if (statement.resultColumn() == null) {
 			executeUpdate(statement.sql());
@@ -173,32 +177,32 @@ public class TableRepository extends AbstractRepository {
 	// Columns
 
 	public void addColumn(Table table, CreateColumn column) throws Exception {
-		executeAll(dialect().addColumnSql(table.getName(), column));
+		executeAll(dialect().addColumnSql(table.qualifiedName(), column));
 	}
 
 	public void modifyColumn(TableColumn old, CreateColumn column) throws Exception {
-		executeAll(dialect().modifyColumnSql(old.getTable().getName(), old.getName(), column));
+		executeAll(dialect().modifyColumnSql(old.getTable().qualifiedName(), old.getName(), column));
 	}
 
 	public void dropColumn(TableColumn column) throws Exception {
-		executeUpdate("ALTER TABLE " + quote(column.getTable().getName()) + " DROP " + quote(column.getName()));
+		executeUpdate("ALTER TABLE " + quote(column.getTable()) + " DROP " + quote(column.getName()));
 	}
 
 	// Indexes
 
 	public void addIndex(Table table, String name, String type, List<String> columns) throws Exception {
 		useDatabaseOf(table);
-		executeAll(dialect().addIndexSql(table.getName(), name, type, columns));
+		executeAll(dialect().addIndexSql(table.qualifiedName(), name, type, columns));
 	}
 
 	public void modifyIndex(Table table, String name, String type, List<String> columns) throws Exception {
 		useDatabaseOf(table);
-		executeAll(dialect().modifyIndexSql(table.getName(), name, primaryKeyName(table), type, columns));
+		executeAll(dialect().modifyIndexSql(table.qualifiedName(), name, primaryKeyName(table), type, columns));
 	}
 
 	public void dropIndex(Table table, String name) throws Exception {
 		useDatabaseOf(table);
-		executeAll(dialect().dropIndexSql(table.getName(), name, primaryKeyName(table)));
+		executeAll(dialect().dropIndexSql(table.qualifiedName(), name, primaryKeyName(table)));
 	}
 
 	// Foreign keys
@@ -206,15 +210,17 @@ public class TableRepository extends AbstractRepository {
 	public void addForeignKey(Table table, TableForeignKey key) throws Exception {
 		useDatabaseOf(table);
 		String typeSql = dialect().tableTypeSql();
-		String tableType = typeSql == null ? null : queryStrings(typeSql, table.getName()).stream().findFirst().orElse(null);
-		dialect().checkForeignKeyTable(table.getName(), tableType);
-		executeAll(dialect().addForeignKeySql(table.getName(), key.name(), key.columns(), key.referencedTable(), key.referencedColumns(), key.onDelete(),
+		String tableType = typeSql == null
+			? null
+			: queryStrings(typeSql, table.getSchema() == null ? null : table.getSchema().getName(), table.getName()).stream().findFirst().orElse(null);
+		dialect().checkForeignKeyTable(table.qualifiedName(), tableType);
+		executeAll(dialect().addForeignKeySql(table.qualifiedName(), key.name(), key.columns(), key.referencedTable(), key.referencedColumns(), key.onDelete(),
 			key.onUpdate()));
 	}
 
 	public void dropForeignKey(Table table, String name) throws Exception {
 		useDatabaseOf(table);
-		executeAll(dialect().dropForeignKeySql(table.getName(), name));
+		executeAll(dialect().dropForeignKeySql(table.qualifiedName(), name));
 	}
 
 	/** The names of the foreign keys the table has on other tables. */
@@ -222,7 +228,7 @@ public class TableRepository extends AbstractRepository {
 		useDatabaseOf(table);
 		List<String> names = new ArrayList<>();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName())) {
+		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), schemaOf(table), table.getName())) {
 			while (rs.next()) {
 				String name = rs.getString("FK_NAME");
 				if (name != null && !names.contains(name)) {
@@ -239,7 +245,7 @@ public class TableRepository extends AbstractRepository {
 	public TableData[][] readPage(Table table, int skip, int show) throws Exception {
 		useDatabaseOf(table);
 		TableColumn[] columns = table.getColumns();
-		String quotedTable = quote(table.getName());
+		String quotedTable = quote(table);
 
 		try (ResultSet rs = dbc.executeQuery("SELECT count(*) FROM " + quotedTable)) {
 			if (rs.first()) {
@@ -307,7 +313,7 @@ public class TableRepository extends AbstractRepository {
 		}
 
 		useDatabaseOf(table);
-		executeUpdate("INSERT INTO " + quote(table.getName())
+		executeUpdate("INSERT INTO " + quote(table)
 			+ " (" + String.join(",", names) + ") VALUES (" + String.join(",", values) + ")");
 	}
 
@@ -315,7 +321,7 @@ public class TableRepository extends AbstractRepository {
 		String where = rowFilter(row);
 
 		useDatabaseOf(table);
-		return executeUpdate("UPDATE " + quote(table.getName())
+		return executeUpdate("UPDATE " + quote(table)
 			+ " SET " + quote(cell.getTableColumn().getName()) + "=" + literal(newValue)
 			+ " WHERE " + where);
 	}
@@ -324,7 +330,7 @@ public class TableRepository extends AbstractRepository {
 		String where = rowFilter(row);
 
 		useDatabaseOf(table);
-		executeUpdate("DELETE FROM " + quote(table.getName()) + " WHERE " + where);
+		executeUpdate("DELETE FROM " + quote(table) + " WHERE " + where);
 	}
 
 	/**

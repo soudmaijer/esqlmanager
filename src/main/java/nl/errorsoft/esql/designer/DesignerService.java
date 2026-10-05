@@ -5,6 +5,7 @@ import java.util.List;
 
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.Table;
@@ -30,19 +31,28 @@ public class DesignerService {
 	 * between the tables of the database. Generating the result again leaves the existing tables and keys alone.
 	 */
 	public DesignedDatabase reverseEngineer(Database database) throws Exception {
-		List<String> names = repository.loadTableNames(database);
+		return reverseEngineer(database, null, databases.getTables(database));
+	}
+
+	/** As {@link #reverseEngineer(Database)}, for the tables of one schema. */
+	public DesignedDatabase reverseEngineer(Schema schema) throws Exception {
+		return reverseEngineer(schema.getDatabase(), schema.getName(), databases.getTables(schema));
+	}
+
+	private DesignedDatabase reverseEngineer(Database database, String schema, List<Table> listed) throws Exception {
+		List<String> names = repository.loadTableNames(database, schema);
 		List<String> engines = repository.tableTypes();
 		List<DesignedTable> designed = new ArrayList<>();
 
-		for (Table table : databases.getTables(database)) {
+		for (Table table : listed) {
 			if (!names.contains(table.getName())) {
 				continue;
 			}
 
-			List<CreateColumn> columns = repository.loadColumns(table.getName());
+			List<CreateColumn> columns = repository.loadColumns(schema, table.getName());
 			markIndexes(table, columns);
 			List<DesignedForeignKey> keys = new ArrayList<>();
-			for (DesignedForeignKey key : repository.loadForeignKeys(table.getName())) {
+			for (DesignedForeignKey key : repository.loadForeignKeys(schema, table.getName())) {
 				// A key on a table in another schema or database can't be drawn in this model.
 				if (names.contains(key.referencedTable())) {
 					keys.add(key);

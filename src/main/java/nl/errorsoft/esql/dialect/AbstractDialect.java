@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.dialect;
 
+import nl.errorsoft.esql.table.TableName;
+
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -35,6 +37,26 @@ public abstract class AbstractDialect implements Dialect {
 		return DatabaseSwitch.CATALOG;
 	}
 
+	public String databaseTerm() {
+		return "database";
+	}
+
+	public String schemaTerm() {
+		return "schema";
+	}
+
+	public String listSchemasSql() {
+		return null;
+	}
+
+	public String createSchemaSql(String schema) {
+		return "CREATE SCHEMA " + quote(schema);
+	}
+
+	public String dropSchemaSql(String schema) {
+		return "DROP SCHEMA " + quote(schema) + " CASCADE";
+	}
+
 	public String currentSchemaSql() {
 		return null;
 	}
@@ -59,11 +81,15 @@ public abstract class AbstractDialect implements Dialect {
 		return "\"" + identifier.replace("\"", "\"\"") + "\"";
 	}
 
+	public String quote(TableName table) {
+		return table.schema() == null ? quote(table.name()) : quote(table.schema()) + "." + quote(table.name());
+	}
+
 	public String[] getTableTypes() {
 		return new String[0];
 	}
 
-	public List<String> createTableSql(String table, List<CreateColumn> columns, String tableType, String comment) {
+	public List<String> createTableSql(TableName table, List<CreateColumn> columns, String tableType, String comment) {
 		List<String> definitions = new ArrayList<>();
 		List<String> primary = new ArrayList<>();
 
@@ -87,7 +113,7 @@ public abstract class AbstractDialect implements Dialect {
 
 		for (CreateColumn column : columns) {
 			if (column.index) {
-				statements.addAll(addIndexSql(table, table + "_" + column.name + "_idx", "INDEX", Arrays.asList(column.name)));
+				statements.addAll(addIndexSql(table, table.name() + "_" + column.name + "_idx", "INDEX", Arrays.asList(column.name)));
 			}
 		}
 
@@ -98,19 +124,19 @@ public abstract class AbstractDialect implements Dialect {
 		return statements;
 	}
 
-	public List<String> renameTableSql(String table, String newName) {
+	public List<String> renameTableSql(TableName table, String newName) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " RENAME TO " + quote(newName));
 	}
 
-	public List<String> setTableTypeSql(String table, String tableType) {
+	public List<String> setTableTypeSql(TableName table, String tableType) {
 		return new ArrayList<>();
 	}
 
-	public List<String> setTableCommentSql(String table, String comment) {
+	public List<String> setTableCommentSql(TableName table, String comment) {
 		return Arrays.asList("COMMENT ON TABLE " + quote(table) + " IS " + literal(comment));
 	}
 
-	public List<String> addColumnSql(String table, CreateColumn column) {
+	public List<String> addColumnSql(TableName table, CreateColumn column) {
 		String statement = "ALTER TABLE " + quote(table) + " ADD COLUMN " + quote(column.name) + " " + columnDefinition(column);
 
 		if (column.primary) {
@@ -120,7 +146,7 @@ public abstract class AbstractDialect implements Dialect {
 		return Arrays.asList(statement);
 	}
 
-	public List<String> modifyColumnSql(String table, String oldName, CreateColumn column) {
+	public List<String> modifyColumnSql(TableName table, String oldName, CreateColumn column) {
 		String alter = "ALTER TABLE " + quote(table);
 		String name = quote(column.name);
 		List<String> statements = new ArrayList<>();
@@ -141,7 +167,7 @@ public abstract class AbstractDialect implements Dialect {
 		return statements;
 	}
 
-	public List<String> addIndexSql(String table, String name, String type, List<String> columns) {
+	public List<String> addIndexSql(TableName table, String name, String type, List<String> columns) {
 		List<String> quoted = new ArrayList<>();
 
 		for (String column : columns) {
@@ -161,7 +187,7 @@ public abstract class AbstractDialect implements Dialect {
 		return Arrays.asList("CREATE " + unique + "INDEX " + quote(name) + " ON " + quote(table) + " (" + String.join(", ", quoted) + ")");
 	}
 
-	public List<String> dropIndexSql(String table, String name, String primaryKeyName) {
+	public List<String> dropIndexSql(TableName table, String name, String primaryKeyName) {
 		if (name.equals("PRIMARY")) {
 			if (primaryKeyName == null) {
 				throw new EsqlException("Table " + table + " has no primary key");
@@ -169,24 +195,25 @@ public abstract class AbstractDialect implements Dialect {
 			return Arrays.asList("ALTER TABLE " + quote(table) + " DROP CONSTRAINT " + quote(primaryKeyName));
 		}
 
-		return Arrays.asList("DROP INDEX " + quote(name));
+		return Arrays.asList("DROP INDEX " + quote(table.sibling(name)));
 	}
 
-	public List<String> modifyIndexSql(String table, String name, String primaryKeyName, String type, List<String> columns) {
+	public List<String> modifyIndexSql(TableName table, String name, String primaryKeyName, String type, List<String> columns) {
 		List<String> statements = new ArrayList<>(dropIndexSql(table, name, primaryKeyName));
 		statements.addAll(addIndexSql(table, name, type, columns));
 		return statements;
 	}
 
-	public List<String> addForeignKeySql(String table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
+	public List<String> addForeignKeySql(TableName table, String name, List<String> columns, String refTable, List<String> refColumns, String onDelete,
 		String onUpdate) {
 		String statement = "ALTER TABLE " + quote(table) + " ADD CONSTRAINT " + quote(name) + " FOREIGN KEY (" + quoteAll(columns) + ") REFERENCES "
-			+ quote(refTable) + " (" + quoteAll(refColumns) + ")" + referentialAction("ON DELETE", onDelete) + referentialAction("ON UPDATE", onUpdate);
+			+ quote(table.sibling(refTable)) + " (" + quoteAll(refColumns) + ")" + referentialAction("ON DELETE", onDelete)
+			+ referentialAction("ON UPDATE", onUpdate);
 
 		return Arrays.asList(statement);
 	}
 
-	public List<String> dropForeignKeySql(String table, String name) {
+	public List<String> dropForeignKeySql(TableName table, String name) {
 		return Arrays.asList("ALTER TABLE " + quote(table) + " DROP CONSTRAINT " + quote(name));
 	}
 
@@ -194,7 +221,7 @@ public abstract class AbstractDialect implements Dialect {
 		return null;
 	}
 
-	public void checkForeignKeyTable(String table, String tableType) {
+	public void checkForeignKeyTable(TableName table, String tableType) {
 	}
 
 	private String referentialAction(String clause, String action) {
@@ -222,7 +249,7 @@ public abstract class AbstractDialect implements Dialect {
 		return null;
 	}
 
-	public List<String> afterDataLoadSql(String table, List<String> autoNumberedColumns) {
+	public List<String> afterDataLoadSql(TableName table, List<String> autoNumberedColumns) {
 		return new ArrayList<>();
 	}
 
@@ -244,7 +271,7 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/** Servers that cannot show the statement themselves get one built from the JDBC metadata. */
-	public String showCreateTableSql(String table) {
+	public String showCreateTableSql(TableName table) {
 		return null;
 	}
 
@@ -267,7 +294,7 @@ public abstract class AbstractDialect implements Dialect {
 		return definition;
 	}
 
-	public String createTableDdl(String table, List<String> columnDefinitions, List<String> primaryKey) {
+	public String createTableDdl(TableName table, List<String> columnDefinitions, List<String> primaryKey) {
 		List<String> definitions = new ArrayList<>(columnDefinitions);
 
 		if (!primaryKey.isEmpty()) {
@@ -372,7 +399,7 @@ public abstract class AbstractDialect implements Dialect {
 	}
 
 	/** Without a command of its own the server does nothing, PostgreSQL overrides this with VACUUM and ANALYZE. */
-	public MaintenanceStatement maintenanceSql(Maintenance command, String table) {
+	public MaintenanceStatement maintenanceSql(Maintenance command, TableName table) {
 		throw new UnsupportedOperationException(command + " is not available on this server");
 	}
 

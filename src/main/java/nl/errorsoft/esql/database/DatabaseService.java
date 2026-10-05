@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.table.Table;
 
-/** Application logic for databases: which ones are shown, creating and dropping them. */
+/** Application logic for databases and their schemas: which ones are shown, creating and dropping them. */
 public class DatabaseService {
 	private static final Logger log = LogManager.getLogger(DatabaseService.class);
 
@@ -54,6 +54,32 @@ public class DatabaseService {
 		List<Table> tables = repository.listTables(database);
 		log.info("Database {}: {} table(s)", database.getName(), tables.size());
 		return tables;
+	}
+
+	/** The schemas of the database, empty on servers without schemas. */
+	public List<Schema> getSchemas(Database database) throws Exception {
+		List<Schema> schemas = new ArrayList<>();
+
+		for (String name : repository.listSchemaNames(database)) {
+			schemas.add(new Schema(database, name));
+		}
+		log.info("Database {}: {} schema(s)", database.getName(), schemas.size());
+		return schemas;
+	}
+
+	public List<Table> getTables(Schema schema) throws Exception {
+		List<Table> tables = repository.listTables(schema);
+		log.info("Schema {}.{}: {} table(s)", schema.getDatabase().getName(), schema.getName(), tables.size());
+		return tables;
+	}
+
+	public Schema createSchema(Database database, String name) throws Exception {
+		repository.createSchema(database, name);
+		return new Schema(database, name);
+	}
+
+	public void dropSchema(Schema schema) throws Exception {
+		repository.dropSchema(schema);
 	}
 
 	public boolean exists(Database database) throws Exception {

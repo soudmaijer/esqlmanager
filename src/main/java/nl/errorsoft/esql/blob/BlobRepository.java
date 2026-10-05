@@ -20,7 +20,7 @@ public class BlobRepository extends AbstractRepository {
 		useDatabase(table.getDatabase().getName());
 
 		try (PreparedStatement statement = dbc.getConnection().prepareStatement(
-			"UPDATE " + quote(table.getName()) + " SET " + quote(column) + " = ? WHERE " + rowCondition)) {
+			"UPDATE " + quote(table) + " SET " + quote(column) + " = ? WHERE " + rowCondition)) {
 			statement.setBinaryStream(1, content, length);
 			statement.execute();
 		}
@@ -30,7 +30,7 @@ public class BlobRepository extends AbstractRepository {
 	public boolean read(Table table, String column, String rowCondition, OutputStream target) throws Exception {
 		useDatabase(table.getDatabase().getName());
 
-		try (ResultSet rs = dbc.executeQuery("SELECT * FROM " + quote(table.getName()) + " WHERE " + rowCondition)) {
+		try (ResultSet rs = dbc.executeQuery("SELECT * FROM " + quote(table) + " WHERE " + rowCondition)) {
 			if (!rs.first()) {
 				return false;
 			}

@@ -7,8 +7,10 @@ import java.util.List;
 
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.job.ProgressListener;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableName;
 
 /** Writes databases and tables to an SQL script on its own thread and reports progress (0 to 100) or an Exception to its listener. */
 public class ExportService implements Runnable {
@@ -35,14 +37,17 @@ public class ExportService implements Runnable {
 
 			for (int i = 0; i < exportObject.length; i++) {
 				String database;
-				List<String> tables = new ArrayList<>();
+				List<TableName> tables = new ArrayList<>();
 
 				if (exportObject[i] instanceof Database source) {
 					database = source.getName();
 					tables = repository.tableNames(source);
+				} else if (exportObject[i] instanceof Schema source) {
+					database = source.getDatabase().getName();
+					tables = repository.tableNames(source);
 				} else if (exportObject[i] instanceof Table source) {
 					database = source.getDatabase().getName();
-					tables.add(source.getName());
+					tables.add(source.qualifiedName());
 				} else {
 					continue;
 				}
@@ -55,7 +60,7 @@ public class ExportService implements Runnable {
 					pw.println(repository.useDatabaseSql(database) + ";\n");
 				}
 
-				for (String table : tables) {
+				for (TableName table : tables) {
 					dumpTable(pw, database, table);
 				}
 
@@ -67,7 +72,7 @@ public class ExportService implements Runnable {
 		}
 	}
 
-	private void dumpTable(PrintWriter pw, String database, String table) throws Exception {
+	private void dumpTable(PrintWriter pw, String database, TableName table) throws Exception {
 		if (options.dropTable()) {
 			pw.println(repository.dropTableSql(table) + ";\n");
 		}

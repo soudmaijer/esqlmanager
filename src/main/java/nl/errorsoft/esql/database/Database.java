@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.database;
 
-/** A database (schema) on a server: plain data, loaded through the database service. */
+/** A database on a server (on PostgreSQL it holds {@link Schema}s): plain data, loaded through the database service. */
 public class Database {
 	private String name = "";
 

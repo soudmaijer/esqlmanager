@@ -8,6 +8,7 @@ import java.nio.file.Path;
 
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.job.ProgressListener;
 
 /** Runs an SQL script on its own thread and reports progress (0 to 100) or an Exception to its listener. */
@@ -35,6 +36,8 @@ public class ImportService implements Runnable {
 
 			if (importToDatabase instanceof Database database) {
 				repository.switchDatabase(database.getName());
+			} else if (importToDatabase instanceof Schema schema) {
+				repository.switchDatabase(schema.getDatabase().getName());
 			}
 
 			runScript(Path.of(file));

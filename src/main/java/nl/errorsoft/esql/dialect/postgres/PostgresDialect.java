@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.dialect.postgres;
 
+import nl.errorsoft.esql.table.TableName;
+
 import nl.errorsoft.esql.dialect.AbstractDialect;
 import nl.errorsoft.esql.dialect.MaintenanceStatement;
 import nl.errorsoft.esql.dialect.UserAdmin;
@@ -14,7 +16,7 @@ import nl.errorsoft.esql.connection.ServerType;
 
 /**
  * PostgreSQL has one database per connection, so switching database means connecting again.
- * Tables are looked up in the connection's current schema (normally "public").
+ * A database holds schemas (public and others), which hold the tables; unqualified names resolve through the search_path.
  */
 public class PostgresDialect extends AbstractDialect {
 	private static final String DEFAULT_DATABASE = "postgres";
@@ -33,10 +35,10 @@ public class PostgresDialect extends AbstractDialect {
 
 	/** Rows loaded with explicit ids leave the sequence behind, so the next insert would reuse an id. */
 	public String autoNumberedColumnsSql() {
-		return "SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND ( is_identity = 'YES' OR column_default LIKE 'nextval%' )";
+		return "SELECT column_name FROM information_schema.columns WHERE table_schema = coalesce(?::text, current_schema()::text) AND table_name = ? AND ( is_identity = 'YES' OR column_default LIKE 'nextval%' )";
 	}
 
-	public List<String> afterDataLoadSql(String table, List<String> autoNumberedColumns) {
+	public List<String> afterDataLoadSql(TableName table, List<String> autoNumberedColumns) {
 		List<String> statements = new ArrayList<>();
 
 		for (String column : autoNumberedColumns) {
@@ -50,7 +52,7 @@ public class PostgresDialect extends AbstractDialect {
 		return java.util.EnumSet.of(Maintenance.OPTIMIZE, Maintenance.ANALYZE);
 	}
 
-	public MaintenanceStatement maintenanceSql(Maintenance command, String table) {
+	public MaintenanceStatement maintenanceSql(Maintenance command, TableName table) {
 		return switch (command) {
 			case OPTIMIZE -> new MaintenanceStatement("VACUUM " + quote(table), null, "Vacuumed " + table);
 			case ANALYZE -> new MaintenanceStatement("ANALYZE " + quote(table), null, "Analyzed " + table);
@@ -92,7 +94,7 @@ public class PostgresDialect extends AbstractDialect {
 		return feature == Feature.DESIGNER || feature == Feature.PROCESS_LIST || feature == Feature.SERVER_STATUS || feature == Feature.USER_MANAGER
 			|| feature == Feature.CREATE_DATABASE || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT
 			|| feature == Feature.EXPORT
-			|| feature == Feature.FOREIGN_KEYS;
+			|| feature == Feature.FOREIGN_KEYS || feature == Feature.SCHEMAS;
 	}
 
 	/** The profile's database list is a filter, so the first entry is where we connect to. */
@@ -111,6 +113,14 @@ public class PostgresDialect extends AbstractDialect {
 
 	public DatabaseSwitch databaseSwitch() {
 		return DatabaseSwitch.RECONNECT;
+	}
+
+	/** The system schemas (catalog, information schema, TOAST and temporary ones) hold no user tables. */
+	public String listSchemasSql() {
+		return """
+			SELECT nspname FROM pg_namespace
+			WHERE nspname NOT IN ('pg_catalog', 'information_schema') AND nspname NOT LIKE 'pg\\_toast%' AND nspname NOT LIKE 'pg\\_temp%'
+			ORDER BY nspname""";
 	}
 
 	public String currentSchemaSql() {
