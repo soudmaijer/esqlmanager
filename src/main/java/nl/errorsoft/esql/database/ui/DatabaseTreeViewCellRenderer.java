@@ -47,7 +47,7 @@ class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer {
 				setIcon(imgldr.getIcon("fldimg"));
 			}
 		} else {
-			setIcon(imgldr.getIcon(serverIcon));
+			setIcon(imgldr.getIcon(hasFocus ? serverIcon + "sel" : serverIcon));
 		}
 
 		return this;

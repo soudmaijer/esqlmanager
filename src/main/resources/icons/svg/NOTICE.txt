@@ -1,3 +1,5 @@
 Icons from Lucide (https://lucide.dev), ISC license, version 0.468.0. Combined icons (database-add, table-drop, ...) place a Lucide mark on a base icon. The title bar buttons (window-minimize, window-maximize, window-restore, window-close) are Lucide minus, square, copy and x.
 
 The server brand icons (brand-postgresql, brand-mysql, brand-oracle, brand-microsoftsqlserver) are from Devicon (https://devicon.dev, MIT license; postgresql, mysql and microsoftsqlserver "original" and "plain") and Simple Icons (https://simpleicons.org, CC0 1.0; oracle), in their brand colours. The logos themselves remain trademarks of their owners (PostgreSQL Global Development Group, Oracle Corporation for MySQL and Oracle, Microsoft Corporation for SQL Server) and are used only to identify the server type.
+
+The application logo (icons/logo.svg) is own artwork for eSQLManager. The brand-mysql and brand-microsoftsqlserver files have an added outline in the brand colour so that they stay readable at 18 px.

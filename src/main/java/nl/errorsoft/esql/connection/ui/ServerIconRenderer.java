@@ -20,7 +20,7 @@ public class ServerIconRenderer extends DefaultListCellRenderer {
 			case ConnectionWindowUI window -> window.getControlClass().getConnectionProfile().getServerType();
 			case null, default -> null;
 		};
-		setIcon(type == null ? null : ApplicationContext.get().imageLoader().getIcon(type.iconName()));
+		setIcon(type == null ? null : ApplicationContext.get().imageLoader().getIcon(isSelected ? type.iconName() + "sel" : type.iconName()));
 		return this;
 	}
 }

@@ -34,7 +34,6 @@ public final class ApplicationContext {
 			images = new ImageLoader("icons/");
 			images.addIcon("greenLight", "check-good", 16, false);
 			images.addIcon("redLight", "check-error", 16, false);
-			images.addImage("ico16x16.gif", "windowIcon");
 			images.addImage("../images/splash.gif", "esql");
 			images.addIcon("imgConnect", "connect", 20, false);
 			images.addIcon("imgDisconnect", "disconnect", 20, false);

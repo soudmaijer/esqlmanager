@@ -90,7 +90,15 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		// Set window properties
 		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.setTitle(jmcc.getTitle());
-		this.setIconImage(imgLoader.getImage("windowIcon"));
+		java.util.List<Image> logo = ImageLoader.logoImages();
+		this.setIconImages(logo);
+		try {
+			if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
+				Taskbar.getTaskbar().setIconImage(logo.get(logo.size() - 1));
+			}
+		} catch (UnsupportedOperationException | SecurityException e) {
+			// The Dock icon is cosmetic: without it the platform's default icon stays.
+		}
 		this.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent w) {
 				closeUI();

@@ -4,6 +4,9 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Logo: a new vector logo (database with an "e", icons/logo.svg) is the window icon at 16 to 512px and the
+  Dock icon on macOS, replacing the 16x16 GIF. The MySQL and SQL Server icons are heavier, brand icons are
+  lighter on a dark theme and white on a selected row.
 - Server icons: the profile lists, the connection window and the server node of the tree show the logo of the
   server (PostgreSQL, MySQL, Oracle, SQL Server; Devicon and Simple Icons, 18px), lighter on a dark theme;
   the window selector in the toolbar shows it too.

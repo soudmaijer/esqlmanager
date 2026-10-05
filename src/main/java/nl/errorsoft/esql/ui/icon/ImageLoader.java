@@ -46,18 +46,37 @@ public class ImageLoader {
 	}
 
 	/**
-	 * Registers a brand logo (a file in icons/svg filled with its brand colour). It keeps its colour when selected; on a dark theme the colour is made
-	 * lighter so that it stays readable.
+	 * Registers a brand logo (a file in icons/svg filled with its brand colour). On a dark theme the colour is made lighter so that it stays readable.
+	 * The variant {@code name + "sel"} is drawn white for selected rows, with white details in the selection colour.
 	 */
 	public void addBrandIcon(String name, String svg, int size) {
 		FlatSVGIcon icon = new FlatSVGIcon("icons/svg/" + svg + ".svg", size, size, getClass().getClassLoader());
 		icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> com.formdev.flatlaf.FlatLaf.isLafDark() ? lighter(color) : color));
 		icons.put(name, icon);
+		FlatSVGIcon selected = new FlatSVGIcon("icons/svg/" + svg + ".svg", size, size, getClass().getClassLoader());
+		selected.setColorFilter(new FlatSVGIcon.ColorFilter(ImageLoader::onSelection));
+		icons.put(name + "sel", selected);
+	}
+
+	private static Color onSelection(Color color) {
+		boolean white = color.getRed() > 240 && color.getGreen() > 240 && color.getBlue() > 240;
+		Color selection = UIManager.getColor("Tree.selectionBackground");
+		Color target = white ? (selection != null ? selection : Color.DARK_GRAY) : Color.WHITE;
+		return new Color(target.getRed(), target.getGreen(), target.getBlue(), color.getAlpha());
+	}
+
+	/** The application logo (icons/logo.svg) rendered at the sizes a window and the Dock ask for. */
+	public static java.util.List<Image> logoImages() {
+		java.util.List<Image> images = new java.util.ArrayList<>();
+		for (int size : new int[]{16, 32, 64, 128, 256, 512}) {
+			images.add(new FlatSVGIcon("icons/logo.svg", size, size, ImageLoader.class.getClassLoader()).getImage());
+		}
+		return images;
 	}
 
 	private static Color lighter(Color color) {
 		float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-		return Color.getHSBColor(hsb[0], hsb[1] * 0.75f, Math.min(1f, hsb[2] + 0.25f));
+		return Color.getHSBColor(hsb[0], hsb[1] * 0.6f, Math.min(1f, Math.max(0.9f, hsb[2] + 0.25f)));
 	}
 
 	/** Icons are created once per image, renderers ask for them on every repaint. */
