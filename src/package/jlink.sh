@@ -11,11 +11,16 @@ DETECTED=$("$JAVA_BIN/jdeps" --multi-release 25 --ignore-missing-deps --print-mo
 
 # Loaded by name or through ServiceLoader, jdeps cannot see them: JDBC drivers (java.sql, java.naming for Oracle and
 # SQL Server, java.xml.crypto and java.security.jgss for Kerberos), TLS (jdk.crypto.ec), all character sets and locales.
+# The remaining modules are the closure of what the drivers need (checked with jdeps on the MySQL and Oracle drivers:
+# java.management, java.naming, java.security.sasl, java.sql, jdk.net, jdk.security.jgss), so none can be dropped.
+# jdk.localedata is by far the largest, so only the locales the user interface is likely to be used in are kept.
+LOCALES=en,nl,de,fr,es
 EXTRA=java.logging,java.management,java.naming,java.security.jgss,java.sql,java.xml,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported
 
 rm -rf target/runtime-image
 "$JAVA_BIN/jlink" \
 	--add-modules "$DETECTED,$EXTRA" \
+	--include-locales="$LOCALES" \
 	--strip-debug \
 	--compress zip-9 \
 	--no-header-files \

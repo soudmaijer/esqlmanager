@@ -1,6 +1,10 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Smaller runtime image (60 MB to 51 MB)
+
+- The bundled Java runtime keeps the locale data of English, Dutch, German, French and Spanish only.
+
 05-10-2026: MySQL and Oracle JDBC drivers are downloaded on first use instead of bundled
 
 - The MySQL (GPLv2 with the Universal FOSS Exception) and Oracle (FUTC) drivers are no longer part of the application,
