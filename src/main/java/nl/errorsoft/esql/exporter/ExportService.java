@@ -21,6 +21,7 @@ import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.job.Cancellation;
 import nl.errorsoft.esql.job.JobCancelledException;
 import nl.errorsoft.esql.job.ProgressListener;
+import nl.errorsoft.esql.job.ScriptTarget;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableName;
 
@@ -34,7 +35,7 @@ public class ExportService implements Runnable {
 	private ProgressListener listener = ProgressListener.NONE;
 	private final Cancellation cancellation = new Cancellation();
 	private final ExportRepository repository;
-	private final Object[] exportObject;
+	private final List<ScriptTarget> targets;
 	private final String file;
 	private final ExportOptions options;
 	private int tablesDone;
@@ -44,9 +45,9 @@ public class ExportService implements Runnable {
 	private record Part(String database, List<TableName> tables, List<TableName> views) {
 	}
 
-	public ExportService(ExportRepository repository, Object[] exportObject, String file, ExportOptions options) {
+	public ExportService(ExportRepository repository, List<ScriptTarget> targets, String file, ExportOptions options) {
 		this.repository = repository;
-		this.exportObject = exportObject;
+		this.targets = List.copyOf(targets);
 		this.file = file;
 		this.options = options;
 	}
@@ -93,16 +94,16 @@ public class ExportService implements Runnable {
 		List<Part> parts = new ArrayList<>();
 		boolean views = options.includeViews() && options.dumpStructure();
 
-		for (Object object : exportObject) {
+		for (ScriptTarget target : targets) {
 			cancellation.check();
 
-			if (object instanceof Database source) {
-				parts.add(new Part(source.getName(), repository.tableNames(source), views ? repository.viewNames(source) : List.of()));
-			} else if (object instanceof Schema source) {
-				parts.add(new Part(source.getDatabase().getName(), repository.tableNames(source), views ? repository.viewNames(source) : List.of()));
-			} else if (object instanceof Table source) {
-				parts.add(new Part(source.getDatabase().getName(), List.of(source.qualifiedName()), List.of()));
-			}
+			parts.add(switch (target) {
+				case ScriptTarget.OfDatabase(Database source) -> new Part(source.getName(), repository.tableNames(source),
+					views ? repository.viewNames(source) : List.of());
+				case ScriptTarget.OfSchema(Schema source) -> new Part(source.getDatabase().getName(), repository.tableNames(source),
+					views ? repository.viewNames(source) : List.of());
+				case ScriptTarget.OfTable(Table source) -> new Part(source.getDatabase().getName(), List.of(source.qualifiedName()), List.of());
+			});
 		}
 		return parts;
 	}

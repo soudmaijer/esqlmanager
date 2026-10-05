@@ -64,13 +64,21 @@ public class DesignerRepository extends AbstractRepository {
 		return columns;
 	}
 
-	/** The foreign keys a table of the active database has on other tables, the columns of a composite key in key order. */
+	/**
+	 * The foreign keys a table of the active database has on other tables of the same schema (and database), the columns of a composite key in key
+	 * order. A key on a table elsewhere is left out, even when a table of this schema has the same name.
+	 */
 	public List<DesignedForeignKey> loadForeignKeys(String schema, String table) throws SQLException {
 		Map<String, TreeMap<Integer, String[]>> pairs = new LinkedHashMap<>();
 		Map<String, String[]> details = new LinkedHashMap<>();
+		String catalog = dbc.getConnection().getCatalog();
+		String readSchema = schemaOrCurrent(schema);
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table)) {
+		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(catalog, readSchema, table)) {
 			while (rs.next()) {
+				if (!sameName(rs.getString("PKTABLE_CAT"), catalog) || !sameName(rs.getString("PKTABLE_SCHEM"), readSchema)) {
+					continue;
+				}
 				String name = rs.getString("FK_NAME");
 				pairs.computeIfAbsent(name, key -> new TreeMap<>()).put(rs.getInt("KEY_SEQ"),
 					new String[]{rs.getString("FKCOLUMN_NAME"), rs.getString("PKCOLUMN_NAME")});
@@ -90,6 +98,11 @@ public class DesignerRepository extends AbstractRepository {
 			keys.add(new DesignedForeignKey(key.getKey(), columns, detail[0], referenced, detail[1], detail[2]));
 		}
 		return keys;
+	}
+
+	/** Whether the referenced catalog or schema is the one read; a server without catalogs or schemas reports null. */
+	private static boolean sameName(String referenced, String read) {
+		return referenced == null || read == null || referenced.equals(read);
 	}
 
 	private String schemaOrCurrent(String schema) throws SQLException {

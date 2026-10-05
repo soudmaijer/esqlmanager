@@ -122,6 +122,10 @@ public class MySqlDialect extends AbstractDialect {
 		return "USE " + quote(database);
 	}
 
+	public String databaseSwitchTarget(String statement) {
+		return switchTarget(statement, "USE");
+	}
+
 	public String showCreateTableSql(TableName table) {
 		return "SHOW CREATE TABLE " + quote(table);
 	}

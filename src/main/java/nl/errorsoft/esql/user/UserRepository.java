@@ -67,10 +67,20 @@ public class UserRepository extends AbstractRepository {
 		}
 	}
 
-	/** Reads what the user has now (in the target's database where the server needs that), then grants and revokes the difference. */
-	public void setGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws SQLException {
+	/** Reads what the user has now (in the target's database where the server needs that) and plans the grants and revokes of the difference. */
+	public GrantChange planGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws SQLException {
 		Set<String> current = grants(user, target);
-		executeAll(admin().setGrantsSql(user, target, current, privileges));
+		return new GrantChange(user, target, current, privileges, admin().setGrantsSql(user, target, current, privileges));
+	}
+
+	/** Runs the statements of a plan, in the target's database where the server needs that. */
+	public void applyGrants(GrantChange change) throws SQLException {
+		GrantQuery query = admin().grantsQuery(change.user(), change.target());
+
+		if (query.database() != null) {
+			useDatabase(query.database());
+		}
+		executeAll(change.statements());
 	}
 
 	private UserAdmin admin() {

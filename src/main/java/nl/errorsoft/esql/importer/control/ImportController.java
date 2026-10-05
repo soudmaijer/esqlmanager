@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.importer.control;
 
+import nl.errorsoft.esql.job.ScriptTarget;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.job.ProgressListener;
@@ -76,11 +77,10 @@ public class ImportController implements ProgressListener {
 		}
 
 		try {
-			Object node = null;
-
-			if (tpa != null) {
-				node = ((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject();
-			}
+			// Nothing or the server selected: the script runs in the database the connection uses.
+			ScriptTarget node = tpa == null || tpa.getPathCount() == 1
+				? null
+				: ScriptTarget.of(((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject());
 
 			ImportService ie = connectionWindowController.getContext().newImport(node, file, options);
 			progressDialog = new ImportExportProgressDialog(importDialog, "Import data", file + " into " + target, ie::cancel);

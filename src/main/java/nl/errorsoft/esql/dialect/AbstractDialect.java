@@ -342,6 +342,38 @@ public abstract class AbstractDialect implements Dialect {
 		return "\\connect " + quote(database);
 	}
 
+	public String databaseSwitchTarget(String statement) {
+		return switchTarget(statement, "\\connect", "\\c");
+	}
+
+	/** The (unquoted) name after one of the commands, when the statement is that command followed by a name; null otherwise. */
+	protected static String switchTarget(String statement, String... commands) {
+		String text = statement.strip();
+
+		for (String command : commands) {
+			int length = command.length();
+			if (text.length() > length && text.regionMatches(true, 0, command, 0, length) && Character.isWhitespace(text.charAt(length))) {
+				String name = text.substring(length).strip();
+				if (name.endsWith(";")) {
+					name = name.substring(0, name.length() - 1).strip();
+				}
+				return unquoted(name);
+			}
+		}
+		return null;
+	}
+
+	/** A name without its quotes ("shop" or `shop`), with doubled quote characters inside made single again. */
+	private static String unquoted(String name) {
+		if (name.length() >= 2) {
+			char quote = name.charAt(0);
+			if ((quote == '"' || quote == '`') && name.charAt(name.length() - 1) == quote) {
+				return name.substring(1, name.length() - 1).replace(String.valueOf(quote) + quote, String.valueOf(quote));
+			}
+		}
+		return name;
+	}
+
 	/** Servers that cannot show the statement themselves get one built from the JDBC metadata. */
 	public String showCreateTableSql(TableName table) {
 		return null;

@@ -20,6 +20,7 @@ import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.job.Cancellation;
 import nl.errorsoft.esql.job.JobCancelledException;
 import nl.errorsoft.esql.job.ProgressListener;
+import nl.errorsoft.esql.job.ScriptTarget;
 import nl.errorsoft.esql.table.Table;
 
 /**
@@ -35,7 +36,8 @@ public class ImportService implements Runnable {
 	private ProgressListener listener = ProgressListener.NONE;
 	private final Cancellation cancellation = new Cancellation();
 	private final ImportRepository repository;
-	private final Object importToDatabase;
+	/** Where the script runs; null for the database the connection uses. */
+	private final ScriptTarget target;
 	private final String file;
 	private final ImportOptions options;
 	private final List<String> failures = new ArrayList<>();
@@ -43,15 +45,15 @@ public class ImportService implements Runnable {
 	private long lastStatus;
 	private boolean rolledBack;
 
-	public ImportService(ImportRepository repository, Object importToDatabase, String file, ImportOptions options) {
+	public ImportService(ImportRepository repository, ScriptTarget target, String file, ImportOptions options) {
 		this.repository = repository;
-		this.importToDatabase = importToDatabase;
+		this.target = target;
 		this.file = file;
 		this.options = options;
 	}
 
-	public ImportService(ImportRepository repository, Object importToDatabase, String file) {
-		this(repository, importToDatabase, file, ImportOptions.DEFAULT);
+	public ImportService(ImportRepository repository, ScriptTarget target, String file) {
+		this(repository, target, file, ImportOptions.DEFAULT);
 	}
 
 	public void setListener(ProgressListener listener) {
@@ -72,22 +74,23 @@ public class ImportService implements Runnable {
 		try {
 			progress(10);
 
-			Schema schema = switch (importToDatabase) {
-				case Schema target -> target;
-				case Table table -> table.getSchema();
-				case null, default -> null;
-			};
+			Path script = Path.of(file);
 
-			if (importToDatabase instanceof Database database) {
-				repository.switchDatabase(database.getName());
-			} else if (importToDatabase instanceof Table table) {
-				repository.switchDatabase(table.getDatabase().getName());
-			}
-
-			if (schema == null) {
-				runScript(Path.of(file));
-			} else {
-				runInSchema(schema);
+			switch (target) {
+				case null -> runScript(script);
+				case ScriptTarget.OfDatabase(Database database) -> {
+					repository.switchDatabase(database.getName());
+					runScript(script);
+				}
+				case ScriptTarget.OfSchema(Schema schema) -> runInSchema(schema);
+				case ScriptTarget.OfTable(Table table) -> {
+					repository.switchDatabase(table.getDatabase().getName());
+					if (table.getSchema() == null) {
+						runScript(script);
+					} else {
+						runInSchema(table.getSchema());
+					}
+				}
 			}
 			progress(100);
 			finish();

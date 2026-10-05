@@ -1,9 +1,5 @@
 package nl.errorsoft.esql.query;
 
-import java.util.StringTokenizer;
-
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
-
 /** Application logic for the statements typed in the query window. */
 public class QueryService {
 	private final QueryRepository repository;
@@ -12,23 +8,18 @@ public class QueryService {
 		this.repository = repository;
 	}
 
-	/** True for a statement that returns rows to show. */
-	public boolean returnsRows(String sql) {
-		String lower = sql.toLowerCase();
-		return lower.startsWith("select") || lower.startsWith("show");
-	}
+	/**
+	 * Runs one statement. A switch of database written the way of the server ({@code USE shop} on MySQL, {@code \connect shop} elsewhere) goes through
+	 * the connection, so the application knows the database in use; every other statement goes to the server as it is.
+	 */
+	public ExecutionResult execute(String sql) throws Exception {
+		String database = repository.databaseSwitchTarget(sql);
 
-	/** True for a USE statement, which changes the active database instead of running as SQL. */
-	public boolean isUse(String sql) {
-		return sql.toLowerCase().startsWith("use");
-	}
-
-	public void use(String sql) throws Exception {
-		StringTokenizer names = new StringTokenizer(sql.substring(3), "; `", false);
-
-		if (names.hasMoreTokens()) {
-			repository.switchDatabase(names.nextToken());
+		if (database != null) {
+			repository.switchDatabase(database);
+			return new ExecutionResult.DatabaseChanged(database);
 		}
+		return repository.execute(sql);
 	}
 
 	/** Makes unqualified names of the statements resolve to the schema of the database, on servers with schemas. */

@@ -16,4 +16,10 @@ public final class FileChoosers {
 		File directory = folder.isEmpty() ? null : new File(folder);
 		return new JFileChooser(directory != null && directory.isDirectory() ? directory : null);
 	}
+
+	/** The file with the extension (".txt") added, only when its name has no extension of its own: notes becomes notes.txt, notes.md stays notes.md. */
+	public static File withExtension(File file, String extension) {
+		String name = file.getName();
+		return name.lastIndexOf('.') > 0 ? file : new File(file.getParentFile(), name + extension);
+	}
 }

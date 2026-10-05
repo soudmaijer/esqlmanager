@@ -165,14 +165,17 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	public void dropTable(Table table) throws Exception {
+		useDatabaseOf(table);
 		executeUpdate("DROP TABLE " + quote(table));
 	}
 
 	public void flushTable(Table table) throws Exception {
+		useDatabaseOf(table);
 		executeUpdate("DELETE FROM " + quote(table));
 	}
 
 	public void renameTable(Table table, String newName) throws Exception {
+		useDatabaseOf(table);
 		executeAll(dialect().renameTableSql(table.qualifiedName(), newName));
 	}
 
@@ -215,14 +218,17 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	public void setTableType(Table table, String type) throws Exception {
+		useDatabaseOf(table);
 		executeAll(dialect().setTableTypeSql(table.qualifiedName(), type));
 	}
 
 	public void setTableComment(Table table, String comment) throws Exception {
+		useDatabaseOf(table);
 		executeAll(dialect().setTableCommentSql(table.qualifiedName(), comment));
 	}
 
 	public String maintain(Table table, Dialect.Maintenance maintenance) throws Exception {
+		useDatabaseOf(table);
 		MaintenanceStatement statement = dialect().maintenanceSql(maintenance, table.qualifiedName());
 
 		if (statement.resultColumn() == null) {
@@ -238,14 +244,17 @@ public class TableRepository extends AbstractRepository {
 	// Columns
 
 	public void addColumn(Table table, CreateColumn column) throws Exception {
+		useDatabaseOf(table);
 		executeAll(dialect().addColumnSql(table.qualifiedName(), column));
 	}
 
 	public void modifyColumn(TableColumn old, CreateColumn column) throws Exception {
+		useDatabaseOf(old.getTable());
 		executeAll(dialect().modifyColumnSql(old.getTable().qualifiedName(), old.getName(), column));
 	}
 
 	public void dropColumn(TableColumn column) throws Exception {
+		useDatabaseOf(column.getTable());
 		executeUpdate("ALTER TABLE " + quote(column.getTable()) + " DROP " + quote(column.getName()));
 	}
 
@@ -432,46 +441,13 @@ public class TableRepository extends AbstractRepository {
 	/** Runs a query and returns its result with one column object per result column. */
 	public QueryResult query(String sql, boolean readOnly) throws Exception {
 		try (ResultSet rs = dbc.executeQuery(sql)) {
-			ResultSetMetaData rsmd = rs.getMetaData();
-			Database database = new Database(dbc.getConnection().getCatalog());
-
-			Table result = new Table(database);
-			TableColumn[] columns = new TableColumn[rsmd.getColumnCount()];
-
-			for (int i = 0; i < columns.length; i++) {
-				Table source = new Table(database);
-				source.setName(rsmd.getTableName(i + 1));
-				columns[i] = new TableColumn(source);
-				columns[i].setName(rsmd.getColumnName(i + 1));
-
-				if (readOnly) {
-					columns[i].setWritable(false);
-				}
-			}
-
-			result.setColumns(columns);
-			rs.beforeFirst();
-			List<TableData[]> rows = new ArrayList<>();
-
-			while (rs.next()) {
-				TableData[] row = new TableData[columns.length];
-
-				for (int i = 0; i < row.length; i++) {
-					row[i] = new TableData();
-					row[i].setData(rs.getObject(i + 1));
-					row[i].setTableColumn(columns[i]);
-				}
-
-				rows.add(row);
-			}
-
-			result.setRowCount(rows.size());
-			return new QueryResult(result, rows.toArray(new TableData[rows.size()][]));
+			return readResult(rs, readOnly);
 		}
 	}
 
 	// Plumbing
 
+	/** Every statement on a table starts here: the connection is shared with the query tabs, which may have switched to another database. */
 	private void useDatabaseOf(Table table) throws SQLException {
 		useDatabase(table.getDatabase().getName());
 	}

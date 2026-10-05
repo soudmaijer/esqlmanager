@@ -214,6 +214,13 @@ public interface Dialect {
 	/** The statement that makes a database the active one in a script, understood by {@link #useDatabaseSql} consumers such as Import. */
 	String useDatabaseSql(String database);
 
+	/**
+	 * The database a statement typed in the query tab switches to, when it is the way {@link #useDatabaseSql} writes a switch on this server
+	 * ({@code USE shop} on MySQL, {@code \connect shop} or {@code \c shop} elsewhere); null for any other statement. Such a statement is not sent as it
+	 * is but goes through {@code DatabaseConnection.useDatabase}, so the application knows the database in use.
+	 */
+	String databaseSwitchTarget(String statement);
+
 	/** A query with the schema (null for the current one) and the table name as parameters, returning the auto numbered columns that need {@link #afterDataLoadSql}; null when none do. */
 	String autoNumberedColumnsSql();
 

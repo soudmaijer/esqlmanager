@@ -47,8 +47,19 @@ public class UserService {
 		return repository.grants(user, target);
 	}
 
+	/** What changes when the user gets exactly these privileges on the target, read from the server now. */
+	public GrantChange planGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws Exception {
+		return repository.planGrants(user, target, privileges);
+	}
+
+	/** Runs a plan made by {@link #planGrants}, so that what the user confirmed is what happens. */
+	public void applyGrants(GrantChange change) throws Exception {
+		repository.applyGrants(change);
+	}
+
+	/** Gives the user exactly these privileges on the target. */
 	public void setGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws Exception {
-		repository.setGrants(user, target, privileges);
+		applyGrants(planGrants(user, target, privileges));
 	}
 
 	public List<String> getDatabaseNames() throws Exception {

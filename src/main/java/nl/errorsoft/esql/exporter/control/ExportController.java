@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.exporter.control;
 
+import java.util.ArrayList;
+import java.util.List;
+import nl.errorsoft.esql.job.ScriptTarget;
 import nl.errorsoft.esql.job.ProgressListener;
 
 import nl.errorsoft.esql.exporter.ExportOptions;
@@ -78,10 +81,10 @@ public class ExportController implements ProgressListener {
 		}
 
 		try {
-			Object[] export = new Object[tpa.length];
+			List<ScriptTarget> export = new ArrayList<>();
 
-			for (int i = 0; i < tpa.length; i++) {
-				export[i] = ((DefaultMutableTreeNode) tpa[i].getLastPathComponent()).getUserObject();
+			for (TreePath path : tpa) {
+				export.add(ScriptTarget.of(((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject()));
 			}
 
 			ExportService exp = connectionWindowController.getContext().newExport(export, file, options);
@@ -99,8 +102,8 @@ public class ExportController implements ProgressListener {
 	}
 
 	/** The objects that are exported, for the progress window: the name of one, or the count. */
-	private static String describe(Object[] export) {
-		return export.length == 1 ? String.valueOf(export[0]) : export.length + " objects";
+	private static String describe(List<ScriptTarget> export) {
+		return export.size() == 1 ? String.valueOf(export.getFirst()) : export.size() + " objects";
 	}
 
 	@Override

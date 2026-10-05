@@ -521,7 +521,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 			try {
 				if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-					java.nio.file.Files.writeString(java.nio.file.Path.of(chooser.getSelectedFile().getAbsolutePath() + ".txt"),
+					java.nio.file.Files.writeString(nl.errorsoft.esql.ui.util.FileChoosers.withExtension(chooser.getSelectedFile(), ".txt").toPath(),
 						cellData.getText() + System.lineSeparator());
 				}
 			} catch (Exception err) {

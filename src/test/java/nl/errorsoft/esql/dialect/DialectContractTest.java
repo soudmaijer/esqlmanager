@@ -49,6 +49,7 @@ import java.sql.SQLException;
 import java.util.function.Consumer;
 import java.util.concurrent.atomic.AtomicReference;
 import nl.errorsoft.esql.job.ProgressListener;
+import nl.errorsoft.esql.job.ScriptTarget;
 import nl.errorsoft.esql.exporter.ExportService;
 import nl.errorsoft.esql.importer.ImportOptions;
 import nl.errorsoft.esql.importer.ImportService;
@@ -141,10 +142,10 @@ abstract class DialectContractTest {
 		insert(table, "third", null);
 
 		File file = dir.resolve("dump.sql").toFile();
-		ExportService export = new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(),
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfTable(table)), file.getAbsolutePath(),
 			new ExportOptions(true, true, false, true, true));
 		runSynchronously(export::setListener, export);
-		ImportService imported = new ConnectionContext(connection).newImport(database, file.getAbsolutePath());
+		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), file.getAbsolutePath());
 		runSynchronously(imported::setListener, imported);
 
 		TableData[][] rows = service().loadPage(table, 0, 100);
@@ -280,7 +281,7 @@ abstract class DialectContractTest {
 		File file = dir.resolve("dump.sql.gz").toFile();
 		ExportOptions options = new ExportOptions(true, true, false, true, false, false, true, java.nio.charset.StandardCharsets.ISO_8859_1, 2, false, true,
 			dialect.disableForeignKeyChecksSql() != null);
-		ExportService export = new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(), options);
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfTable(table)), file.getAbsolutePath(), options);
 		runSynchronously(export::setListener, export);
 
 		String script;
@@ -297,7 +298,7 @@ abstract class DialectContractTest {
 		assertEquals(dialect.disableForeignKeyChecksSql() != null, script.contains("FOREIGN_KEY_CHECKS=0"), script);
 
 		// The script drops the table (without IF EXISTS) and creates it again.
-		ImportService imported = new ConnectionContext(connection).newImport(database, file.getAbsolutePath(),
+		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), file.getAbsolutePath(),
 			new ImportOptions(true, false, java.nio.charset.StandardCharsets.ISO_8859_1));
 		runSynchronously(imported::setListener, imported);
 		TableData[][] rows = service().loadPage(table, 0, 100);
@@ -317,7 +318,7 @@ abstract class DialectContractTest {
 
 		File file = dir.resolve("views.sql").toFile();
 		ExportOptions options = new ExportOptions(true, false, false, true, false, true, false, null, 1, true, false, false);
-		ExportService export = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(), options);
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfDatabase(other)), file.getAbsolutePath(), options);
 		runSynchronously(export::setListener, export);
 		String script = java.nio.file.Files.readString(file.toPath());
 		assertTrue(script.contains("DROP VIEW IF EXISTS"), script);
@@ -325,16 +326,16 @@ abstract class DialectContractTest {
 		assertTrue(script.indexOf("base_names") > script.indexOf("CREATE TABLE"), script);
 
 		// Without the option the view is not in the script.
-		ExportService without = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(),
+		ExportService without = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfDatabase(other)), file.getAbsolutePath(),
 			new ExportOptions(true, false, false, true, false));
 		runSynchronously(without::setListener, without);
 		assertFalse(java.nio.file.Files.readString(file.toPath()).contains("base_names"));
 
 		// The script brings the view back.
-		export = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(), options);
+		export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfDatabase(other)), file.getAbsolutePath(), options);
 		runSynchronously(export::setListener, export);
 		connection.executeUpdate("DROP VIEW " + dialect.quote("base_names"));
-		ImportService imported = new ConnectionContext(connection).newImport(other, file.getAbsolutePath());
+		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(other), file.getAbsolutePath());
 		runSynchronously(imported::setListener, imported);
 		try (ResultSet rs = connection.executeQuery("SELECT count(*) FROM " + dialect.quote("base_names"))) {
 			assertTrue(rs.next());
@@ -352,7 +353,7 @@ abstract class DialectContractTest {
 		insert(table, "first", "a");
 
 		File file = dir.resolve("cancelled.sql").toFile();
-		ExportService export = new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(),
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfTable(table)), file.getAbsolutePath(),
 			new ExportOptions(true, true, false, true, true));
 		Recording recording = new Recording();
 		recording.onStatus = status -> export.cancel();
@@ -376,7 +377,7 @@ abstract class DialectContractTest {
 				+ "INSERT INTO " + q + " (" + dialect.quote("name") + ") VALUES('two');\n");
 
 		Recording stopped = new Recording();
-		ImportService stopping = new ConnectionContext(connection).newImport(database, script.toString());
+		ImportService stopping = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), script.toString());
 		stopping.setListener(stopped);
 		stopping.run();
 		assertNotNull(stopped.failure);
@@ -384,7 +385,7 @@ abstract class DialectContractTest {
 		assertEquals(1, service().loadPage(table, 0, 100).length);
 
 		Recording continued = new Recording();
-		ImportService continuing = new ConnectionContext(connection).newImport(database, script.toString(),
+		ImportService continuing = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), script.toString(),
 			new ImportOptions(false, false, java.nio.charset.StandardCharsets.UTF_8));
 		continuing.setListener(continued);
 		continuing.run();
@@ -406,7 +407,7 @@ abstract class DialectContractTest {
 		ImportOptions transaction = new ImportOptions(true, true, java.nio.charset.StandardCharsets.UTF_8);
 
 		Recording failed = new Recording();
-		ImportService failing1 = new ConnectionContext(connection).newImport(database, failing.toString(), transaction);
+		ImportService failing1 = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), failing.toString(), transaction);
 		failing1.setListener(failed);
 		failing1.run();
 		assertNotNull(failed.failure);
@@ -415,7 +416,7 @@ abstract class DialectContractTest {
 		// Cancelled after the first statement: the one that ran is rolled back.
 		Path three = dir.resolve("three.sql");
 		java.nio.file.Files.writeString(three, insert + insert + insert);
-		ImportService cancelling = new ConnectionContext(connection).newImport(database, three.toString(), transaction);
+		ImportService cancelling = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), three.toString(), transaction);
 		Recording cancelled = new Recording();
 		cancelled.onStatus = status -> cancelling.cancel();
 		cancelling.setListener(cancelled);
@@ -424,7 +425,7 @@ abstract class DialectContractTest {
 		assertEquals(0, service().loadPage(table, 0, 100).length);
 
 		// Without a transaction the statement that ran stays.
-		ImportService plain = new ConnectionContext(connection).newImport(database, three.toString());
+		ImportService plain = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(database), three.toString());
 		Recording plainCancelled = new Recording();
 		plainCancelled.onStatus = status -> plain.cancel();
 		plain.setListener(plainCancelled);
@@ -766,10 +767,10 @@ abstract class DialectContractTest {
 
 		// The script names the schema, so importing it replaces the table in that schema.
 		File file = dir.resolve("schema.sql").toFile();
-		ExportService export = new ConnectionContext(connection).newExport(new Object[]{schema}, file.getAbsolutePath(),
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfSchema(schema)), file.getAbsolutePath(),
 			new ExportOptions(true, true, false, true, true));
 		runSynchronously(export::setListener, export);
-		ImportService imported = new ConnectionContext(connection).newImport(schema, file.getAbsolutePath());
+		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfSchema(schema), file.getAbsolutePath());
 		runSynchronously(imported::setListener, imported);
 		assertEquals(1, service().loadPage(orders, 0, 10).length);
 
@@ -872,13 +873,13 @@ abstract class DialectContractTest {
 		connection.executeUpdate("INSERT INTO " + dialect.quote(new TableName("archive", "items")) + " VALUES (1, 'kept')");
 
 		File file = dir.resolve("database.sql").toFile();
-		ExportService export = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(),
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfDatabase(other)), file.getAbsolutePath(),
 			new ExportOptions(true, true, false, true, true));
 		runSynchronously(export::setListener, export);
 		databases.dropSchema(schema);
 
 		// The script creates the schema again and puts the table back into it, not into the current schema.
-		ImportService imported = new ConnectionContext(connection).newImport(other, file.getAbsolutePath());
+		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfDatabase(other), file.getAbsolutePath());
 		runSynchronously(imported::setListener, imported);
 		List<Table> tables = databases.getTables(schema);
 		assertEquals(List.of("items"), tables.stream().map(Table::getName).toList());
@@ -897,7 +898,7 @@ abstract class DialectContractTest {
 		Path script = dir.resolve("plain.sql");
 		java.nio.file.Files.writeString(script, "CREATE TABLE plain_rows (id integer);\nINSERT INTO plain_rows VALUES(1);\n");
 
-		ImportService imported = new ConnectionContext(connection).newImport(schema, script.toString());
+		ImportService imported = new ConnectionContext(connection).newImport(new ScriptTarget.OfSchema(schema), script.toString());
 		runSynchronously(imported::setListener, imported);
 		assertTrue(service().exists(schema, "plain_rows"));
 		assertFalse(service().exists(new Schema(database, current), "plain_rows"));
@@ -910,6 +911,126 @@ abstract class DialectContractTest {
 		connection.useSchema(current);
 
 		databases.dropSchema(schema);
+	}
+
+	@Test
+	void tableStatementsRunInTheTablesDatabaseWhateverTheConnectionUses() throws Exception {
+		String name = "shared_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		insert(table, "first", "a");
+		var databases = new ConnectionContext(connection).databases();
+		Database elsewhere = databases.createDatabase("elsewhere_" + System.nanoTime());
+		// A query tab moved the shared connection to another database before each statement.
+		Runnable queryTabSwitches = () -> {
+			try {
+				connection.useDatabase(elsewhere.getName());
+			} catch (SQLException e) {
+				throw new IllegalStateException(e);
+			}
+		};
+
+		queryTabSwitches.run();
+		service().addColumn(table, TableService.newColumn("age", "", "0", INTEGER, false, false, true));
+		table.setColumns(service().loadColumns(table));
+		queryTabSwitches.run();
+		service().editColumn(table.getTableColumn("age"), TableService.newColumn("years", "", "5", BIGINT, false, false, false));
+		table.setColumns(service().loadColumns(table));
+		queryTabSwitches.run();
+		service().dropColumn(table.getTableColumn("years"));
+		for (Dialect.Maintenance command : dialect.maintenanceCommands()) {
+			queryTabSwitches.run();
+			assertNotNull(switch (command) {
+				case OPTIMIZE -> service().optimizeTable(table);
+				case ANALYZE -> service().analyseTable(table);
+				case CHECK -> service().checkTable(table);
+				case REPAIR -> service().repairTable(table);
+			});
+		}
+		queryTabSwitches.run();
+		service().flushTable(table);
+		queryTabSwitches.run();
+		service().renameTable(table, name + "_r");
+		queryTabSwitches.run();
+		service().modifyTable(table, name + "_r", null, "a comment");
+		queryTabSwitches.run();
+		service().dropTable(table);
+
+		connection.useDatabase(DATABASE);
+		assertFalse(service().exists(database, name + "_r"));
+		databases.dropDatabase(elsewhere);
+	}
+
+	@Test
+	void everyStatementThatReturnsRowsShowsThem() throws Exception {
+		String name = "rows_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		insert(table, "first", "a");
+		var queries = new ConnectionContext(connection).queries();
+		String quoted = dialect.quote(name);
+
+		for (String sql : List.of("SELECT 1", "WITH t AS (SELECT 1 AS n) SELECT n FROM t", "-- a comment first\nSELECT 1", "(SELECT 1)",
+			"EXPLAIN SELECT 1", "TABLE " + quoted)) {
+			assertTrue(queries.execute(sql) instanceof nl.errorsoft.esql.query.ExecutionResult.Rows rows && rows.result().rows().length >= 1, sql);
+		}
+		assertEquals(new nl.errorsoft.esql.query.ExecutionResult.Updated(1),
+			queries.execute("UPDATE " + quoted + " SET " + dialect.quote("note") + " = 'b'"));
+
+		// The server's own way of switching database goes through the connection.
+		assertEquals(new nl.errorsoft.esql.query.ExecutionResult.DatabaseChanged(DATABASE), queries.execute(dialect.useDatabaseSql(DATABASE)));
+		assertEquals(null, dialect.databaseSwitchTarget("SELECT 1"));
+		service().dropTable(table);
+	}
+
+	@Test
+	void designerLeavesOutKeysOnATableOfAnotherSchema() throws Exception {
+		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.SCHEMAS), "The server has no schemas");
+		var databases = new ConnectionContext(connection).databases();
+		Database other = databases.createDatabase("fkschema_" + System.nanoTime());
+		connection.useDatabase(other.getName());
+		Schema audit = databases.createSchema(other, "audit");
+		Schema current = new Schema(other, connection.getSchema());
+		service().createTable(new TableDefinition(other, audit, "customers", null, "", List.of(column("id", INTEGER, "", true))));
+		service().createTable(new TableDefinition(other, current, "customers", null, "", List.of(column("id", INTEGER, "", true))));
+		service().createTable(new TableDefinition(other, current, "orders", null, "",
+			List.of(column("id", INTEGER, "", true), column("customer_id", INTEGER, "", false))));
+		connection.executeUpdate("ALTER TABLE " + dialect.quote(new TableName(current.getName(), "orders")) + " ADD CONSTRAINT fk_audit FOREIGN KEY ("
+			+ dialect.quote("customer_id") + ") REFERENCES " + dialect.quote(new TableName("audit", "customers")) + " (" + dialect.quote("id") + ")");
+
+		DesignedDatabase read = new ConnectionContext(connection).designer().reverseEngineer(current);
+		assertTrue(designed(read, "orders").foreignKeys().isEmpty(), designed(read, "orders").foreignKeys().toString());
+
+		connection.useDatabase(DATABASE);
+		databases.dropDatabase(other);
+	}
+
+	@Test
+	void grantsWorkForAUserWithAQuoteInTheName() throws Exception {
+		String name = "o'brien_" + System.nanoTime() % 100000;
+		String tableName = "quoted_grants_" + System.nanoTime();
+		createTable(tableName, "");
+		UserService admin = new ConnectionContext(connection).users();
+		DatabaseUser user = new DatabaseUser(name, admin.usesHost() ? "%" : null);
+		admin.createUser(user, "secret");
+
+		try {
+			GrantTarget onTable = GrantTarget.table(DATABASE, tableName);
+			var plan = admin.planGrants(user, onTable, new LinkedHashSet<>(List.of("SELECT", "INSERT")));
+			assertTrue(plan.revoked().isEmpty());
+			admin.applyGrants(plan);
+			assertEquals(new LinkedHashSet<>(List.of("SELECT", "INSERT")), admin.getGrants(user, onTable));
+
+			// The plan read from the server is what the confirmation shows and what runs.
+			var revoke = admin.planGrants(user, onTable, new LinkedHashSet<>(List.of("SELECT")));
+			assertEquals(java.util.Set.of("INSERT"), revoke.revoked());
+			admin.applyGrants(revoke);
+			assertEquals(java.util.Set.of("SELECT"), admin.getGrants(user, onTable));
+			admin.setGrants(user, onTable, new LinkedHashSet<>());
+		} finally {
+			admin.dropUser(user);
+			service().dropTable(table(tableName));
+		}
 	}
 
 	private static CreateColumn column(String name, DataType type, String length, boolean primary) {

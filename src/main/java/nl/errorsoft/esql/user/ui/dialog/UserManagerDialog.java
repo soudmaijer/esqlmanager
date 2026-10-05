@@ -29,6 +29,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import nl.errorsoft.esql.user.control.UserManagerController;
 import nl.errorsoft.esql.user.DatabaseUser;
+import nl.errorsoft.esql.user.GrantChange;
 import nl.errorsoft.esql.user.GrantTarget;
 import nl.errorsoft.esql.user.PrivilegeGroup;
 
@@ -346,14 +347,15 @@ public class UserManagerDialog extends JDialog {
 
 		try {
 			DatabaseUser user = users.getSelectedValue();
-			Set<String> revoked = new LinkedHashSet<>(userManagerController.getGrants(user, selectedTarget()));
-			revoked.removeAll(selected);
+			// The confirmation shows the plan that runs, read from the server once.
+			GrantChange change = userManagerController.planGrants(user, selectedTarget(), selected);
+			Set<String> revoked = change.revoked();
 
 			if (!revoked.isEmpty() && !Dialogs.confirmDestructive(this, "Revoke privileges",
 				"Revoke " + String.join(", ", revoked) + " from '" + user + "' on " + describe(selectedTarget()) + "?", "Revoke")) {
 				return;
 			}
-			userManagerController.setGrants(user, selectedTarget(), selected);
+			userManagerController.applyGrants(change);
 			showGrants();
 			message.setText("Privileges saved for " + users.getSelectedValue() + " on " + describe(selectedTarget()));
 		} catch (Exception e) {

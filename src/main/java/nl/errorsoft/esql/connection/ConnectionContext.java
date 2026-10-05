@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.connection;
 
+import nl.errorsoft.esql.job.ScriptTarget;
 import nl.errorsoft.esql.server.ServerRepository;
 import nl.errorsoft.esql.server.ServerService;
 
@@ -71,15 +72,16 @@ public class ConnectionContext {
 		return designer;
 	}
 
-	public ExportService newExport(Object[] objects, String file, ExportOptions options) {
-		return new ExportService(new ExportRepository(connection), objects, file, options);
+	public ExportService newExport(java.util.List<ScriptTarget> targets, String file, ExportOptions options) {
+		return new ExportService(new ExportRepository(connection), targets, file, options);
 	}
 
-	public ImportService newImport(Object target, String file) {
+	/** An import into the target, null for the database the connection uses. */
+	public ImportService newImport(ScriptTarget target, String file) {
 		return newImport(target, file, ImportOptions.DEFAULT);
 	}
 
-	public ImportService newImport(Object target, String file, ImportOptions options) {
+	public ImportService newImport(ScriptTarget target, String file, ImportOptions options) {
 		return new ImportService(new ImportRepository(connection), target, file, options);
 	}
 

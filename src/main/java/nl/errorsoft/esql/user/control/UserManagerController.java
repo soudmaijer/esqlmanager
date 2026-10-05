@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.user.control;
 
 import nl.errorsoft.esql.user.DatabaseUser;
+import nl.errorsoft.esql.user.GrantChange;
 import nl.errorsoft.esql.user.GrantTarget;
 import nl.errorsoft.esql.user.UserService;
 
@@ -68,8 +69,12 @@ public class UserManagerController {
 		return service().getGrants(user, target);
 	}
 
-	public void setGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws Exception {
-		service().setGrants(user, target, privileges);
+	public GrantChange planGrants(DatabaseUser user, GrantTarget target, Set<String> privileges) throws Exception {
+		return service().planGrants(user, target, privileges);
+	}
+
+	public void applyGrants(GrantChange change) throws Exception {
+		service().applyGrants(change);
 	}
 
 	public List<String> getDatabaseNames() throws Exception {

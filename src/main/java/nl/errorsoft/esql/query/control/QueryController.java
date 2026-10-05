@@ -20,6 +20,7 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.query.ExecutionResult;
 import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
@@ -211,18 +212,15 @@ public class QueryController implements SchemaNames {
 				long started = System.nanoTime();
 				LocalTime ranAt = LocalTime.now().withNano(0);
 
-				if (queries.returnsRows(sql)) {
-					QueryResult rows = connectionWindowController.getContext().tables().executeQuery(sql);
-					long millis = millisSince(started);
-					last = new StatementResult(sql.strip(), rows, ranAt, currentDatabase(), millis);
-					results.add(last);
-					log.info("{}: {} row(s) in {} ms", which, last.rowCount(), millis);
-				} else if (queries.isUse(sql)) {
-					queries.use(sql);
-					log.info("{}: database changed", which);
-				} else {
-					int rows = queries.update(sql);
-					log.info("{}: {} row(s) affected in {} ms", which, rows, millisSince(started));
+				switch (queries.execute(sql)) {
+					case ExecutionResult.Rows rows -> {
+						long millis = millisSince(started);
+						last = new StatementResult(sql.strip(), rows.result(), ranAt, currentDatabase(), millis);
+						results.add(last);
+						log.info("{}: {} row(s) in {} ms", which, last.rowCount(), millis);
+					}
+					case ExecutionResult.DatabaseChanged changed -> log.info("{}: database changed to {}", which, changed.database());
+					case ExecutionResult.Updated updated -> log.info("{}: {} row(s) affected in {} ms", which, updated.count(), millisSince(started));
 				}
 			} catch (Exception e) {
 				String status = which + " failed: " + firstLine(sql);

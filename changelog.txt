@@ -2,6 +2,21 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Wrong database, schema and statement handling
+
+- Dropping, emptying, renaming and changing a table, its columns or its comment, and table maintenance, run in the
+  table's own database, also after a query tab moved the shared connection to another database.
+- The query tab shows the rows of every statement that returns them (WITH ... SELECT, EXPLAIN, VALUES, TABLE t, a
+  query after a comment or in parentheses), not only SELECT and SHOW. Switching database in the query tab is written
+  the server's way: USE db on MySQL, \connect db or \c db on PostgreSQL.
+- A query that fails no longer leaves its statement open on the server.
+- Open in designer leaves out a foreign key on a table of another schema, also when the schema read has a table with
+  the same name.
+- The user manager asks to revoke exactly the privileges that Apply then revokes (the privileges are read once).
+- Export and import refuse a node that is not a database, schema or table instead of exporting nothing.
+- Saving cell data to a file adds ".txt" only when the name has no extension (notes.txt no longer becomes
+  notes.txt.txt).
+
 05-10-2026: Actions without a selection in the tree
 
 - Run SQL query no longer fails with "selectedNode is null" when nothing is selected in the tree: the query tab opens

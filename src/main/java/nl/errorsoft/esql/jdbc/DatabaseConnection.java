@@ -128,9 +128,14 @@ public class DatabaseConnection implements AutoCloseable {
 		log.debug("Query: {}", query);
 		Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
-		// The statement lives as long as its result: closing the result set closes it.
-		statement.closeOnCompletion();
-		return statement.executeQuery(query);
+		// The statement lives as long as its result: closing the result set closes it. Without a result it is closed here.
+		try {
+			statement.closeOnCompletion();
+			return statement.executeQuery(query);
+		} catch (SQLException e) {
+			statement.close();
+			throw e;
+		}
 	}
 
 	public int executeUpdate(String query) throws java.sql.SQLException {

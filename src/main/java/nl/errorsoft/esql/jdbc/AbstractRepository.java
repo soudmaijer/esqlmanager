@@ -3,13 +3,17 @@ package nl.errorsoft.esql.jdbc;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
+import nl.errorsoft.esql.table.QueryResult;
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableName;
 
 import nl.errorsoft.esql.dialect.Dialect;
@@ -86,6 +90,43 @@ public abstract class AbstractRepository {
 			}
 		}
 		return values;
+	}
+
+	/** Reads every row of a result, with one column object per result column; read-only columns cannot be edited in the grid. */
+	protected QueryResult readResult(ResultSet rs, boolean readOnly) throws SQLException {
+		ResultSetMetaData rsmd = rs.getMetaData();
+		Database database = new Database(dbc.getConnection().getCatalog());
+		Table result = new Table(database);
+		TableColumn[] columns = new TableColumn[rsmd.getColumnCount()];
+
+		for (int i = 0; i < columns.length; i++) {
+			Table source = new Table(database);
+			source.setName(rsmd.getTableName(i + 1));
+			columns[i] = new TableColumn(source);
+			columns[i].setName(rsmd.getColumnName(i + 1));
+
+			if (readOnly) {
+				columns[i].setWritable(false);
+			}
+		}
+
+		result.setColumns(columns);
+		List<TableData[]> rows = new ArrayList<>();
+
+		while (rs.next()) {
+			TableData[] row = new TableData[columns.length];
+
+			for (int i = 0; i < row.length; i++) {
+				row[i] = new TableData();
+				row[i].setData(rs.getObject(i + 1));
+				row[i].setTableColumn(columns[i]);
+			}
+
+			rows.add(row);
+		}
+
+		result.setRowCount(rows.size());
+		return new QueryResult(result, rows.toArray(new TableData[rows.size()][]));
 	}
 
 	/** The tables and views of a database (in the current schema on servers with schemas), with their row counts. */

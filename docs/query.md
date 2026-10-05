@@ -15,7 +15,7 @@ The editor highlights SQL, shows line numbers and has undo; its font size is set
 | Cmd+Enter (Ctrl+Enter on Windows and Linux) | Run the selection, or the statement at the caret |
 | Cmd+Shift+Enter (Ctrl+Shift+Enter) | Run all statements of the script in order |
 
-Statements are separated by `;`. A semicolon inside quotes, dollar quotes or comments does not end a statement. Running stops at the first statement that fails and names it in the error message. A query shows its rows in the result below the editor, other statements report how many rows they changed.
+Statements are separated by `;`. A semicolon inside quotes, dollar quotes or comments does not end a statement. Running stops at the first statement that fails and names it in the error message. Every statement that returns rows (SELECT, WITH, EXPLAIN, SHOW, VALUES, ...) shows them in the result below the editor, other statements report how many rows they changed. `USE shop` (MySQL) or `\connect shop` / `\c shop` (PostgreSQL) switches the database the statements run against.
 
 ## Completion
 
