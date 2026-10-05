@@ -42,7 +42,7 @@ public class DatabaseCC {
 	}
 
 	public DatabaseTreeView getDatabaseTreeView() throws Exception {
-		DatabaseTreeView dbtv = new DatabaseTreeView(this, cwcc.getTitle());
+		DatabaseTreeView dbtv = new DatabaseTreeView(cwcc.getTitle());
 		dbtv.loadDatabases(getDatabases());
 		return dbtv;
 	}

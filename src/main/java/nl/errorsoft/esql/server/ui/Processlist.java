@@ -1,149 +1,84 @@
 package nl.errorsoft.esql.server.ui;
 
-import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.server.ServerService;
-
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
-import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.server.ServerProcess;
-import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.FlowLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javax.swing.*;
+import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
 
-public class Processlist extends JDialog implements Runnable, ActionListener {
-	private static final Logger log = LogManager.getLogger(Processlist.class);
+import nl.errorsoft.esql.server.ServerProcess;
+import nl.errorsoft.esql.server.control.ProcesslistCC;
 
-	private ESQLManagerUI jm;
-	private nl.errorsoft.esql.connection.ConnectionProfile cp;
-	private JScrollPane jsp;
-	private JTable jtable;
-	private JButton btnKillProcess;
-	private JLabel lblInterval;
-	private boolean refresh = true;
-	private DefaultTableModel dtm;
-	ConnectionWindowCC cwcc;
-	DatabaseConnection m;
-	private ServerService servers;
+/** The window of the process list. It shows what {@link ProcesslistCC} gives it. */
+public class Processlist extends JDialog {
+	private static final String[] COLUMNS = {"Id", "User", "Host", "Database", "Command", "Time", "Info"};
 
-	public Processlist(ConnectionWindowCC cwcc, JFrame parent) {
-		super(parent, false);
-		this.cwcc = cwcc;
-		initComponents();
+	private final JTable jtable;
+	private final JLabel lblInterval = new JLabel();
 
-		this.cp = cwcc.getConnectionProfile();
-		this.jm = jm;
-		this.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent we) {
-				refresh = false;
-			}
-
-		});
-		this.setTitle(cp.getUsername() + "@" + cp.getHost() + " - active processes");
-		this.setSize(400, 200);
-		this.setLocation(parent.getLocation().x + (int) ((parent.getSize().width - this.getSize().width) / 2),
-			parent.getLocation().y + (int) ((parent.getSize().height - this.getSize().height) / 2));
-		this.setVisible(true);
-
-		Thread.ofVirtual().name("process-list").start(this);
-	}
-
-	public void run() {
-		try (DatabaseConnection connection = new DatabaseConnection()) {
-			m = connection;
-			m.connect(cp, "");
-			servers = ApplicationContext.get().connection(m).servers();
-			int selRow = 0;
-			DefaultTableModel dtm = null;
-
-			while (refresh) {
-				if (!m.getConnection().isClosed()) {
-					if (jtable.getSelectedRow() > 0) {
-						selRow = jtable.getSelectedRow();
-					}
-
-					dtm = new DefaultTableModel();
-					dtm.addColumn("Id");
-					dtm.addColumn("User");
-					dtm.addColumn("Host");
-					dtm.addColumn("Database");
-					dtm.addColumn("Command");
-					dtm.addColumn("Time");
-					dtm.addColumn("Info");
-
-					// Get processes and add all.
-					for (ServerProcess process : servers.getProcesses()) {
-						dtm.addRow(new Object[]{process.id(), process.user(), process.host(), process.database(), process.command(),
-							process.time(), process.info()});
-					}
-					jtable.setModel(dtm);
-					jtable.setRowSelectionInterval(selRow, selRow);
-
-					Runnable doAppend = () -> jtable.updateUI();
-					SwingUtilities.invokeLater(doAppend);
-
-					for (int i = 5; i > 0; i--) {
-						this.lblInterval.setText(Integer.toString(i));
-						Thread.sleep(1000);
-
-					}
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-		} finally {
-			ApplicationContext.get().release(m);
-		}
-	}
-
-	public void initComponents() {
-		jtable = new JTable() {
+	public Processlist(ProcesslistCC controller, JFrame parent, String title) {
+		super(parent, title, false);
+		jtable = new JTable(new DefaultTableModel(COLUMNS, 0)) {
+			@Override
 			public boolean isCellEditable(int row, int col) {
 				return false;
 			}
 		};
 		jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		jtable.setAutoResizeMode(jtable.AUTO_RESIZE_OFF);
+		jtable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-		jsp = new JScrollPane(jtable);
+		JScrollPane jsp = new JScrollPane(jtable);
 		jsp.getViewport().setBackground(UIManager.getColor("Table.background"));
-		this.getContentPane().add(jsp, BorderLayout.CENTER);
+		getContentPane().add(jsp, BorderLayout.CENTER);
 
-		JPanel p = new JPanel();
-		btnKillProcess = new JButton("Kill process");
-		btnKillProcess.addActionListener(this);
-		p.add(btnKillProcess);
-		this.getContentPane().add(p, BorderLayout.SOUTH);
+		JButton btnKillProcess = new JButton("Kill process");
+		btnKillProcess.addActionListener(e -> {
+			int row = jtable.getSelectedRow();
+			if (row > -1) {
+				controller.killProcess(jtable.getValueAt(row, 0).toString());
+			}
+		});
+		JPanel buttons = new JPanel(new FlowLayout());
+		buttons.add(btnKillProcess);
+		buttons.add(new JLabel("Refreshing in:"));
+		buttons.add(lblInterval);
+		getContentPane().add(buttons, BorderLayout.SOUTH);
 
-		JPanel p1 = new JPanel();
-		JLabel lblIntervalMsg = new JLabel("Refreshing in:");
-		p.add(lblIntervalMsg);
-		lblInterval = new JLabel();
-		p.add(lblInterval);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent we) {
+				controller.stop();
+			}
+		});
+		setSize(400, 200);
+		setLocationRelativeTo(parent);
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		Object source = e.getSource();
-
-		if (source == btnKillProcess) {
-			DefaultTableModel d = (DefaultTableModel) jtable.getModel();
-
-			if (jtable.getSelectedRow() > -1) {
-				try {
-					servers.killProcess(jtable.getValueAt(jtable.getSelectedRow(), 0).toString());
-				} catch (Exception ae) {
-					ApplicationContext.get().errors().report(this, "Kill process", ae);
-				}
-			}
+	/** Replaces the rows, keeping the selected row. */
+	public void showProcesses(List<ServerProcess> processes) {
+		int selected = jtable.getSelectedRow();
+		DefaultTableModel model = new DefaultTableModel(COLUMNS, 0);
+		for (ServerProcess p : processes) {
+			model.addRow(new Object[]{p.id(), p.user(), p.host(), p.database(), p.command(), p.time(), p.info()});
 		}
+		jtable.setModel(model);
+		if (selected > -1 && selected < model.getRowCount()) {
+			jtable.setRowSelectionInterval(selected, selected);
+		}
+	}
+
+	public void showCountdown(int seconds) {
+		lblInterval.setText(Integer.toString(seconds));
 	}
 }

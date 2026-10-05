@@ -26,7 +26,7 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.ConnectionWindow;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
-import nl.errorsoft.esql.server.ui.Processlist;
+import nl.errorsoft.esql.server.control.ProcesslistCC;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.model.Model;
@@ -392,7 +392,7 @@ public class ConnectionWindowCC extends Thread {
 
 	public void dispatchProcessUI() {
 		if (requireFeature(Dialect.Feature.PROCESS_LIST, "The process list")) {
-			new Processlist(this, jmcc.getUI());
+			new ProcesslistCC(getConnectionProfile(), jmcc.getUI()).start();
 		}
 	}
 

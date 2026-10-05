@@ -1,172 +1,101 @@
-//Source file: d:\\roseoutput\\esql\\esql\\database\\DatabaseDataView.java
-
 package nl.errorsoft.esql.database.ui;
 
-import nl.errorsoft.esql.app.ApplicationContext;
-
-import nl.errorsoft.esql.database.Database;
-
-import nl.errorsoft.esql.database.control.DatabaseCC;
-
-import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.TableColumn;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import javax.swing.JTree;
-import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-public class DatabaseTreeView extends JTree {
-	private DatabaseCC dcc;
-	private DefaultTreeModel dtm;
-	private DefaultMutableTreeNode rootNode;
+import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
 
-	/**
-	* @roseuid 3E05A70C029B
-	*/
-	public DatabaseTreeView(DatabaseCC dcc, String title) {
-		this.dcc = dcc;
+/**
+ * The tree of databases, tables and columns of a connection. It only shows what the controller loads: {@code DatabaseCC} and {@code ConnectionWindowCC}
+ * fetch the data through the services and call these methods.
+ */
+public class DatabaseTreeView extends JTree {
+	private final DefaultMutableTreeNode rootNode;
+	private final DefaultTreeModel dtm;
+
+	public DatabaseTreeView(String title) {
 		this.rootNode = new DefaultMutableTreeNode(title);
-		this.setCellRenderer(new DatabaseTreeViewCellRenderer(ApplicationContext.get().imageLoader()));
+		this.dtm = new DefaultTreeModel(rootNode, false);
+		setModel(dtm);
+		setCellRenderer(new DatabaseTreeViewCellRenderer(ApplicationContext.get().imageLoader()));
+	}
+
+	public void loadDatabases(List<Database> databases) {
+		rootNode.removeAllChildren();
+		databases.forEach(db -> rootNode.add(new DefaultMutableTreeNode(db)));
+		dtm.reload();
 	}
 
 	public void addDatabase(Database db) {
 		rootNode.add(new DefaultMutableTreeNode(db));
-		SwingUtilities.invokeLater(this::updateUI);
+		dtm.reload(rootNode);
 	}
 
 	public void deleteDatabase(Database database) {
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-
-			if (((Database) node.getUserObject()).getName().equalsIgnoreCase(database.getName())) {
-				rootNode.remove(node);
-				dtm.reload(rootNode);
-				break;
-			}
-		}
-		SwingUtilities.invokeLater(this::updateUI);
+		databaseNode(database.getName()).ifPresent(node -> remove(rootNode, node));
 	}
 
 	public void deleteTable(Table table) {
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-
-			if (((Database) node.getUserObject()).getName().equalsIgnoreCase(table.getDatabase().getName())) {
-				for (int j = 0; j < node.getChildCount(); j++) {
-					DefaultMutableTreeNode node1 = (DefaultMutableTreeNode) node.getChildAt(j);
-
-					if (((Table) node1.getUserObject()).getName().equalsIgnoreCase(table.getName())) {
-						node.remove(node1);
-						dtm.reload(node);
-						return;
-					}
-				}
-
-			}
-		}
+		tableNode(table).ifPresent(node -> remove((DefaultMutableTreeNode) node.getParent(), node));
 	}
 
-	public void deleteTableColumn(nl.errorsoft.esql.table.TableColumn tc) {
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-
-			if (((Database) node.getUserObject()).getName().equalsIgnoreCase(tc.getTable().getDatabase().getName())) {
-				for (int j = 0; j < node.getChildCount(); j++) {
-					DefaultMutableTreeNode node1 = (DefaultMutableTreeNode) node.getChildAt(j);
-
-					if (((Table) node1.getUserObject()).getName().equalsIgnoreCase(tc.getTable().getName())) {
-						for (int k = 0; k < node1.getChildCount(); k++) {
-							DefaultMutableTreeNode node2 = (DefaultMutableTreeNode) node1.getChildAt(k);
-
-							if (((TableColumn) node2.getUserObject()).getName().equalsIgnoreCase(tc.getName())) {
-								node1.remove(node2);
-								dtm.reload(node1);
-								return;
-							}
-						}
-					}
-				}
-
-			}
-		}
+	public void deleteTableColumn(TableColumn column) {
+		tableNode(column.getTable()).flatMap(tableNode -> child(tableNode, column.getName(), o -> ((TableColumn) o).getName()))
+			.ifPresent(node -> remove((DefaultMutableTreeNode) node.getParent(), node));
 	}
 
-	public void loadDatabases(java.util.List<Database> v) {
-		dtm = new DefaultTreeModel(rootNode, false);
-
-		for (int i = 0; i < v.size(); i++) {
-			rootNode.add(new DefaultMutableTreeNode(v.get(i)));
-		}
-
-		setModel(dtm);
-		SwingUtilities.invokeLater(this::updateUI);
+	public void loadTables(Database database, List<Table> tables) {
+		databaseNode(database.getName()).ifPresent(node -> replaceChildren(node, tables));
 	}
 
-	public void loadTables(Database database, java.util.List<Table> tables) {
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-
-			if (((Database) node.getUserObject()).getName().equalsIgnoreCase(database.getName())) {
-				node.removeAllChildren();
-
-				for (int j = 0; j < tables.size(); j++) {
-					node.add(new DefaultMutableTreeNode(tables.get(j)));
-				}
-
-				TreePath tempPath = new TreePath(node.getPath());
-				this.scrollPathToVisible(tempPath);
-				this.expandPath(tempPath);
-				this.setSelectionPath(tempPath);
-				break;
-			}
-		}
-		SwingUtilities.invokeLater(this::updateUI);
-	}
-
-	public void loadTableColumns(Table table, nl.errorsoft.esql.table.TableColumn[] columns) {
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
-
-			if (((Database) node.getUserObject()).getName().equalsIgnoreCase(table.getDatabase().getName())) {
-				for (int a = 0; a < node.getChildCount(); a++) {
-					DefaultMutableTreeNode tableNode = (DefaultMutableTreeNode) node.getChildAt(a);
-
-					if (((Table) tableNode.getUserObject()).getName().equalsIgnoreCase(table.getName())) {
-						tableNode.removeAllChildren();
-
-						for (int j = 0; j < columns.length; j++) {
-							tableNode.add(new DefaultMutableTreeNode(columns[j]));
-						}
-
-						TreePath tempPath = new TreePath(tableNode.getPath());
-						this.scrollPathToVisible(tempPath);
-						this.expandPath(tempPath);
-						this.setSelectionPath(tempPath);
-						break;
-					}
-				}
-			}
-		}
-		SwingUtilities.invokeLater(this::updateUI);
+	public void loadTableColumns(Table table, TableColumn[] columns) {
+		tableNode(table).ifPresent(node -> replaceChildren(node, List.of(columns)));
 	}
 
 	public void selectTableInTree(Table table) {
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) rootNode.getChildAt(i);
+		tableNode(table).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
+	}
 
-			if (((Database) node.getUserObject()).getName().equalsIgnoreCase(table.getDatabase().getName())) {
-				for (int a = 0; a < node.getChildCount(); a++) {
-					DefaultMutableTreeNode tableNode = (DefaultMutableTreeNode) node.getChildAt(a);
+	private void replaceChildren(DefaultMutableTreeNode node, List<?> children) {
+		node.removeAllChildren();
+		children.forEach(child -> node.add(new DefaultMutableTreeNode(child)));
+		dtm.reload(node);
+		TreePath path = new TreePath(node.getPath());
+		scrollPathToVisible(path);
+		expandPath(path);
+		setSelectionPath(path);
+	}
 
-					if (((Table) tableNode.getUserObject()).getName().equalsIgnoreCase(table.getName())) {
-						TreePath tempPath = new TreePath(tableNode.getPath());
-						this.setSelectionPath(tempPath);
-						break;
-					}
-				}
+	private void remove(DefaultMutableTreeNode parent, DefaultMutableTreeNode node) {
+		parent.remove(node);
+		dtm.reload(parent);
+	}
+
+	private Optional<DefaultMutableTreeNode> databaseNode(String name) {
+		return child(rootNode, name, o -> ((Database) o).getName());
+	}
+
+	private Optional<DefaultMutableTreeNode> tableNode(Table table) {
+		return databaseNode(table.getDatabase().getName()).flatMap(db -> child(db, table.getName(), o -> ((Table) o).getName()));
+	}
+
+	/** The child of {@code parent} whose user object has {@code name}, ignoring case. */
+	private static Optional<DefaultMutableTreeNode> child(DefaultMutableTreeNode parent, String name, Function<Object, String> nameOf) {
+		for (int i = 0; i < parent.getChildCount(); i++) {
+			DefaultMutableTreeNode node = (DefaultMutableTreeNode) parent.getChildAt(i);
+			if (nameOf.apply(node.getUserObject()).equalsIgnoreCase(name)) {
+				return Optional.of(node);
 			}
 		}
+		return Optional.empty();
 	}
 }
