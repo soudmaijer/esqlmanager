@@ -25,6 +25,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -176,16 +178,27 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		jsp.getViewport().setBackground(Color.white);
 
 		// SplitPane properties.
-		// One bar below the tabs: the paging of the table data on the left, what this connection did last on the right.
-		status = new JLabel(READY, SwingConstants.RIGHT);
+		// One bar below the tabs: what this connection did last on the left, the paging of the table data in the centre.
+		// The message gets the left share of the width and is cut with an ellipsis, so it never pushes the paging away.
+		status = new JLabel(READY, SwingConstants.LEFT);
+		status.setPreferredSize(new Dimension(0, status.getPreferredSize().height));
+		status.setMinimumSize(new Dimension(0, 0));
 		status.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
 		status.setForeground(UIManager.getColor("Label.disabledForeground"));
 		navigation = new JPanel(new BorderLayout());
 		navigation.setVisible(false);
-		JPanel statusBar = new JPanel(new BorderLayout());
+		JPanel statusBar = new JPanel(new GridBagLayout());
 		statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, UIManager.getColor("Component.borderColor")));
-		statusBar.add(navigation, BorderLayout.WEST);
-		statusBar.add(status, BorderLayout.CENTER);
+		GridBagConstraints cell = new GridBagConstraints();
+		cell.fill = GridBagConstraints.HORIZONTAL;
+		cell.weightx = 1;
+		statusBar.add(status, cell);
+		cell.gridx = 1;
+		cell.weightx = 0;
+		statusBar.add(navigation, cell);
+		cell.gridx = 2;
+		cell.weightx = 1;
+		statusBar.add(Box.createHorizontalGlue(), cell);
 		tabbedPane.addChangeListener(e -> showNavigation());
 		JPanel tabsWithStatus = new JPanel(new BorderLayout());
 		tabsWithStatus.add(tabbedPane, BorderLayout.CENTER);
@@ -412,7 +425,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			return;
 		}
 
-		status.setText(text == null || text.isEmpty() ? READY : text);
+		String shown = text == null || text.isEmpty() ? READY : text;
+
+		status.setText(shown);
+		status.setToolTipText(shown);
 	}
 
 	public String toString() {
