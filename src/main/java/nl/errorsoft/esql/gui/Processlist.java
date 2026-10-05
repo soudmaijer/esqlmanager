@@ -78,22 +78,10 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 					dtm.addColumn("Info");					
 					
 					// Get processes and add all.
-					ResultSet rs = m.executeQuery("SHOW PROCESSLIST");
-					Object [] data = new Object [7];
-					
-					while( rs.next() )
+					for( ServerProcess process : cp.getServerType().getDialect().listProcesses( m ) )
 					{
-						data[0] = rs.getString("Id");
-						data[1] = rs.getString("User");
-						data[2] = rs.getString("Host");
-						data[3] = rs.getString("db");
-						data[4] = rs.getString("Command");
-						data[5] = rs.getString("Time");
-						data[6] = rs.getString("Info");
-						
-						dtm.addRow( data );
+						dtm.addRow( new Object [] { process.getId(), process.getUser(), process.getHost(), process.getDatabase(), process.getCommand(), process.getTime(), process.getInfo() } );
 					}
-					rs.close();
 					jtable.setModel( dtm );
 					jtable.setRowSelectionInterval( selRow, selRow );
 										
@@ -135,7 +123,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 		jtable.setAutoResizeMode( jtable.AUTO_RESIZE_OFF );
 		
 		jsp = new JScrollPane( jtable );
-		jsp.getViewport().setBackground( java.awt.Color.white );
+		jsp.getViewport().setBackground( UIManager.getColor( "Table.background" ) );
 		this.getContentPane().add( jsp, BorderLayout.CENTER );
 		
 		JPanel p = new JPanel();
@@ -163,7 +151,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener
 			{
 				try
 				{
-					m.executeUpdate("KILL "+ jtable.getValueAt( jtable.getSelectedRow(), 0 ) ); 
+					cp.getServerType().getDialect().killProcess( m, jtable.getValueAt( jtable.getSelectedRow(), 0 ).toString() );
 				}
 				catch( Exception ae )
 				{

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.domain.*;
+import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.gui.*;
 import java.util.*;
 
@@ -501,8 +502,19 @@ public class ConnectionWindowCC extends Thread
 	
 	public void dispatchProcessUI()
 	{
-		Processlist pl = new Processlist( this, jmcc.getUI() );
+		if( requireFeature( Dialect.Feature.PROCESS_LIST, "The process list" ) )
+			new Processlist( this, jmcc.getUI() );
 	}	
+
+	/** Tells the user when the database of this connection can't do what they asked. */
+	private boolean requireFeature( Dialect.Feature feature, String description )
+	{
+		if( cw.getConnectionProfile().getServerType().getDialect().supports( feature ) )
+			return true;
+
+		cwui.showErrorMessage( description +" is not available for "+ cw.getConnectionProfile().getServerType().getDescription() );
+		return false;
+	}
 
 	public void dispatchCreateTableUI()
 	{
@@ -563,26 +575,32 @@ public class ConnectionWindowCC extends Thread
 	}
 
 	/*
-	 * MySQL specific options.
+	 * Server options, not every database has them.
 	 */
-	public void showMySQLStatus()
+	public void showServerStatus()
 	{
 		try
 		{
+			if( !requireFeature( Dialect.Feature.SERVER_STATUS, "Server status" ) )
+				return;
+
 			TableCC tcc = new TableCC( this );
-			cwui.showTableDataView( "MySQL Status", tcc.showMySQLStatus() );
+			cwui.showTableDataView( "Server status", tcc.showServerStatus() );
 		}
 		catch( Exception e )
 		{
 			log.error( e.getMessage(), e );
 		}
 	}
-	public void showMySQLVariables()
+	public void showServerVariables()
 	{
 		try
 		{
+			if( !requireFeature( Dialect.Feature.SERVER_STATUS, "Server variables" ) )
+				return;
+
 			TableCC tcc = new TableCC( this );
-			cwui.showTableDataView( "MySQL Variables", tcc.showMySQLVariables() );
+			cwui.showTableDataView( "Server variables", tcc.showServerVariables() );
 		}
 		catch( Exception e )
 		{

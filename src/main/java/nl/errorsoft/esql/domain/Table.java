@@ -550,7 +550,7 @@ public class Table
 			dbc.executeUpdate( statement );
 	}
 
-	public TableData [][] runMySQLCommand( String query ) throws Exception
+	public TableData [][] runCommand( String query ) throws Exception
 	{
 		ResultSet rs = dbc.executeQuery( query );
 		ResultSetMetaData rsm = rs.getMetaData();

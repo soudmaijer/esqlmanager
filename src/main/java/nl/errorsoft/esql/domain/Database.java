@@ -49,7 +49,7 @@ public class Database
 
 	public void dropDatabase( Database db ) throws Exception
 	{
-		dbc.executeUpdate( "DROP DATABASE "+ quote( db.getName() ) );
+		dbc.getConnectionProfile().getServerType().getDialect().dropDatabase( dbc, db.getName() );
 	}	
 	
 	public Vector getDatabases() throws Exception

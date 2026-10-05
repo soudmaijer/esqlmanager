@@ -7,6 +7,7 @@ import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
+import nl.errorsoft.esql.domain.ServerProcess;
 import nl.errorsoft.esql.domain.Table;
 
 /**
@@ -24,7 +25,7 @@ public interface Dialect
 	/** Optional functionality that not every database has an implementation for. */
 	enum Feature
 	{
-		DESIGNER, USER_MANAGER, CREATE_TABLE, INDEXES, IMPORT, EXPORT
+		DESIGNER, USER_MANAGER, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS
 	}
 
 	int getType();
@@ -102,6 +103,9 @@ public interface Dialect
 
 	String createDatabaseSql( String database );
 
+	/** Removes a database, also when the connection is using it. */
+	void dropDatabase( DatabaseConnection dbc, String database ) throws SQLException;
+
 	/** The statement that makes a database the active one in a script, understood by {@link #useDatabaseSql} consumers such as Import. */
 	String useDatabaseSql( String database );
 
@@ -113,4 +117,16 @@ public interface Dialect
 
 	/** The account and privilege management of this server. */
 	UserAdmin getUserAdmin();
+
+	/** A query returning the statistics of the server, null when there are none. */
+	String getStatusQuery();
+
+	/** A query returning the configuration settings of the server, null when there are none. */
+	String getVariablesQuery();
+
+	/** The connections that are active on the server. */
+	List<ServerProcess> listProcesses( DatabaseConnection dbc ) throws SQLException;
+
+	/** Ends a process on the server. */
+	void killProcess( DatabaseConnection dbc, String processId ) throws SQLException;
 }

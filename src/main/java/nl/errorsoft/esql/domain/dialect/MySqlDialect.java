@@ -9,6 +9,7 @@ import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
+import nl.errorsoft.esql.domain.ServerProcess;
 import nl.errorsoft.esql.domain.ServerType;
 import nl.errorsoft.esql.domain.Table;
 
@@ -30,6 +31,34 @@ public class MySqlDialect extends AbstractDialect
 	}
 
 	/** The MySQL specific tools were written for MySQL, so it is the only server that supports all of them. */
+	public String getStatusQuery()
+	{
+		return "SHOW STATUS";
+	}
+
+	public String getVariablesQuery()
+	{
+		return "SHOW VARIABLES";
+	}
+
+	public List<ServerProcess> listProcesses( DatabaseConnection dbc ) throws SQLException
+	{
+		List<ServerProcess> processes = new ArrayList<ServerProcess>();
+		ResultSet rs = dbc.executeQuery( "SHOW PROCESSLIST" );
+
+		while( rs.next() )
+			processes.add( new ServerProcess( rs.getString( "Id" ), rs.getString( "User" ), rs.getString( "Host" ), rs.getString( "db" ), rs.getString( "Command" ), rs.getString( "Time" ), rs.getString( "Info" ) ) );
+
+		rs.close();
+		return processes;
+	}
+
+	public void killProcess( DatabaseConnection dbc, String processId ) throws SQLException
+	{
+		// The id is a number, parsing it keeps anything else out of the statement.
+		dbc.executeUpdate( "KILL " + Long.parseLong( processId ) );
+	}
+
 	public UserAdmin getUserAdmin()
 	{
 		return new MySqlUserAdmin( this );

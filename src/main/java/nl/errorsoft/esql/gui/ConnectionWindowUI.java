@@ -711,15 +711,13 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 				cwcc.dropTableColumn();
 			}				
 		}
-		// MySQL: SHOW STATUS
 		else if( eventSource == rtStatus )
 		{
-			cwcc.showMySQLStatus();
+			cwcc.showServerStatus();
 		}
-		// MySQL: SHOW VARIABLES
 		else if( eventSource == rtVariables )
 		{
-			cwcc.showMySQLVariables();
+			cwcc.showServerVariables();
 		}			
 		// MySQL: OPTIMIZE TABLE.
 		else if( eventSource == tbmOptimize )

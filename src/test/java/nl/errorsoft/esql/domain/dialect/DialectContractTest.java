@@ -2,6 +2,7 @@ package nl.errorsoft.esql.domain.dialect;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -187,12 +188,41 @@ abstract class DialectContractTest
 		String name = "db_" + System.nanoTime();
 		assertFalse( dialect.listDatabases( connection ).contains( name ) );
 
-		connection.executeUpdate( dialect.createDatabaseSql( name ) );
+		new Database( connection ).createDatabase( name );
 		assertTrue( dialect.listDatabases( connection ).contains( name ) );
 
+		// The connection is using the database that is dropped.
 		connection.useDatabase( name );
+		Database created = new Database( connection );
+		created.setName( name );
+		created.dropDatabase( created );
+		assertFalse( dialect.listDatabases( connection ).contains( name ) );
 		connection.useDatabase( DATABASE );
-		connection.executeUpdate( "DROP DATABASE " + dialect.quote( name ) );
+	}
+
+	@Test
+	void showsServerStatusVariablesProcessesAndRunsMaintenance() throws Exception
+	{
+		for( String query : Arrays.asList( dialect.getStatusQuery(), dialect.getVariablesQuery() ) )
+		{
+			java.sql.ResultSet rs = connection.executeQuery( query );
+			assertTrue( rs.next(), query );
+			rs.close();
+		}
+
+		// Another connection is active, and can be ended.
+		DatabaseConnection other = new DatabaseConnection();
+		other.connect( profile(), "" );
+		List<nl.errorsoft.esql.domain.ServerProcess> processes = dialect.listProcesses( connection );
+		assertFalse( processes.isEmpty() );
+		other.close();
+
+		String name = "maint_" + System.nanoTime();
+		createTable( name, "" );
+		Table table = table( name );
+		assertNotNull( table.optimizeTable( table ) );
+		assertNotNull( table.analyseTable( table ) );
+		table.dropTable( table );
 	}
 
 	private void createTable( String name, String comment ) throws Exception

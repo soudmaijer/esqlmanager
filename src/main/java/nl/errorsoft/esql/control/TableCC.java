@@ -172,16 +172,16 @@ public class TableCC
 	}
 	
 	/*
-	 * MySQL specific options.
+	 * Server options, the query behind them depends on the database.
 	 */	
-	public TableDataView showMySQLStatus() throws Exception
+	public TableDataView showServerStatus() throws Exception
 	{
-	  	return runMySQLCommand( "SHOW STATUS;" );				
+	  	return runCommand( cwcc.getConnectionProfile().getServerType().getDialect().getStatusQuery() );				
 	} 
 	
-	public TableDataView showMySQLVariables() throws Exception
+	public TableDataView showServerVariables() throws Exception
 	{
-	  	return runMySQLCommand( "SHOW VARIABLES;" );				
+	  	return runCommand( cwcc.getConnectionProfile().getServerType().getDialect().getVariablesQuery() );				
 	} 
 	
 	public String optimizeTable( Table table ) throws Exception
@@ -208,11 +208,11 @@ public class TableCC
 		return tempTable.repairTable( table );
 	}	
 	
-	public TableDataView runMySQLCommand( String query ) throws Exception
+	public TableDataView runCommand( String query ) throws Exception
 	{
   		TableDataView tdvq = new TableDataView( this );
    	Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-   	TableData [][] tdaq = tempTable.runMySQLCommand( query );
+   	TableData [][] tdaq = tempTable.runCommand( query );
    	tdvq.loadData( tempTable, tempTable.getColumns(), tdaq );
    	return tdvq;				
 	} 

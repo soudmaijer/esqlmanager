@@ -13,6 +13,7 @@ import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
+import nl.errorsoft.esql.domain.ServerProcess;
 import nl.errorsoft.esql.domain.Table;
 
 /**
@@ -178,6 +179,11 @@ public abstract class AbstractDialect implements Dialect
 		return "CREATE DATABASE " + quote( database );
 	}
 
+	public void dropDatabase( DatabaseConnection dbc, String database ) throws SQLException
+	{
+		dbc.executeUpdate( "DROP DATABASE " + quote( database ) );
+	}
+
 	/** Not every server can switch database with a statement, so scripts use the psql meta command that Import understands. */
 	public String useDatabaseSql( String database )
 	{
@@ -251,6 +257,26 @@ public abstract class AbstractDialect implements Dialect
 			return type + "(" + size + "," + rs.getInt( "DECIMAL_DIGITS" ) + ")";
 
 		return type;
+	}
+
+	public String getStatusQuery()
+	{
+		return null;
+	}
+
+	public String getVariablesQuery()
+	{
+		return null;
+	}
+
+	public List<ServerProcess> listProcesses( DatabaseConnection dbc ) throws SQLException
+	{
+		throw new UnsupportedOperationException( "The process list is not available on this server" );
+	}
+
+	public void killProcess( DatabaseConnection dbc, String processId ) throws SQLException
+	{
+		throw new UnsupportedOperationException( "Processes cannot be ended on this server" );
 	}
 
 	public UserAdmin getUserAdmin()

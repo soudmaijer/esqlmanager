@@ -9,6 +9,7 @@ import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.ConnectionProfile;
 import nl.errorsoft.esql.domain.Database;
+import nl.errorsoft.esql.domain.ServerProcess;
 import nl.errorsoft.esql.domain.ServerType;
 import nl.errorsoft.esql.domain.Table;
 
@@ -71,6 +72,46 @@ public class PostgresDialect extends AbstractDialect
 		}
 	}
 
+	/** PostgreSQL does not drop the database the connection is using, so move to another one first. */
+	public void dropDatabase( DatabaseConnection dbc, String database ) throws SQLException
+	{
+		if( database.equals( dbc.getDatabase() ) )
+			dbc.useDatabase( database.equals( DEFAULT_DATABASE ) ? "template1" : DEFAULT_DATABASE );
+
+		super.dropDatabase( dbc, database );
+	}
+
+	public String getStatusQuery()
+	{
+		return "SELECT datname, numbackends, xact_commit, xact_rollback, blks_read, blks_hit, tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted FROM pg_stat_database WHERE datname IS NOT NULL ORDER BY datname";
+	}
+
+	public String getVariablesQuery()
+	{
+		return "SELECT name, setting, unit, short_desc FROM pg_settings ORDER BY name";
+	}
+
+	public List<ServerProcess> listProcesses( DatabaseConnection dbc ) throws SQLException
+	{
+		List<ServerProcess> processes = new ArrayList<ServerProcess>();
+		ResultSet rs = dbc.executeQuery( "SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' AND pid <> pg_backend_pid() ORDER BY pid" );
+
+		while( rs.next() )
+			processes.add( new ServerProcess( rs.getString( 1 ), rs.getString( 2 ), rs.getString( 3 ), rs.getString( 4 ), rs.getString( 5 ), rs.getString( 6 ), rs.getString( 7 ) ) );
+
+		rs.close();
+		return processes;
+	}
+
+	public void killProcess( DatabaseConnection dbc, String processId ) throws SQLException
+	{
+		try( PreparedStatement ps = dbc.getConnection().prepareStatement( "SELECT pg_terminate_backend(?)" ) )
+		{
+			ps.setInt( 1, Integer.parseInt( processId ) );
+			ps.execute();
+		}
+	}
+
 	public UserAdmin getUserAdmin()
 	{
 		return new PostgresUserAdmin( this );
@@ -78,7 +119,7 @@ public class PostgresDialect extends AbstractDialect
 
 	public boolean supports( Feature feature )
 	{
-		return feature == Feature.DESIGNER || feature == Feature.USER_MANAGER || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT;
+		return feature == Feature.DESIGNER || feature == Feature.PROCESS_LIST || feature == Feature.SERVER_STATUS || feature == Feature.USER_MANAGER || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT;
 	}
 
 	/** The profile's database list is a filter, so the first entry is where we connect to. */
