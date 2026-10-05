@@ -39,6 +39,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * Use Swing only, no AWT widgets (`Label`, `Button`, ...). New dialogs use layout managers, not null layouts with absolute bounds.
 * Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
 * Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.
+* The syntax highlighter (`query.SyntaxDocument`, used by the output panel and the query editor) must reproduce the text exactly as given, spaces included; plain text takes its colour from the theme.
 * The output panel does not wrap lines (re-wrapping a long log made resizing slow), keeps at most 200000 characters, and the split pane uses continuous layout with `resizeWeight` 1.0.
 * The status bar shows the action on the left and, next to it, the server, account and the last thing the active connection did (`ConnectionWindowCC.showStatusInfo`).
 
@@ -66,9 +67,10 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 ### Configuration and resources
 
 * `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings, syntax), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).
-* `runtime/conf/profiles.xml` must not contain passwords or local test profiles when committed.
+* `runtime/conf/profiles.xml` must not contain passwords or local test profiles when committed. Running the application rewrites it (`lastUsed`), so `git checkout runtime/conf/profiles.xml` before committing.
 * JDBC drivers come from Maven Central, no jars in the repository.
 * Images, HTML and `log4j2.xml` are in `src/main/resources`. Images are loaded through `ImageLoader` (cached, paths relative to the classpath root).
+* Icons are Lucide SVGs in `src/main/resources/icons/svg` (ISC license, `NOTICE.txt`), drawn with FlatLaf's `FlatSVGIcon` so they follow the theme. A new icon is a stroke `#6e6e6e` SVG plus an `images.addIcon(name, file, size, selected)` line in `ApplicationContext.imageLoader()`; callers use `imageLoader().getIcon(name)`, never `new ImageIcon(...)`. The tree uses a `...sel` variant (selection colour) for selected rows. GIFs remain only for the window icon and the splash.
 * There is no licensing, registration or auto-update any more; do not reintroduce them.
 
 ### Code style
@@ -76,6 +78,11 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * Formatting is done by Spotless with the Eclipse formatter profile in `.eclipse-formatter.xml` (Java conventions: braces at the end of the line, tabs, 160 columns, LF line endings; if, else, for and while always have braces). Run `./mvnw spotless:apply` before committing, `./mvnw verify` runs `spotless:check` and fails on unformatted code. `.editorconfig` holds the same basics for editors. IntelliJ's own formatter does not follow it.
 * Resources are closed with try-with-resources. No deprecated API in new code (`new Integer`, `Dialog.show()`, ...).
 * No em-dashes in prose or documentation.
+
+## Verifying UI changes
+
+* Retake `docs/screenshot.png` and `docs/designer.png` with a harness that paints the windows in-process against a Postgres container (use a free host port, 5432 is often taken), preferably in a subagent so the images stay out of the main context. Look at the result, check icons, alignment and the status bar.
+* Known designer limits: a relation between two tables cannot be created (`Model.addReference` only allows database-to-table), and the table label always says "(InnoDB)".
 
 ## Tests
 
@@ -89,7 +96,7 @@ The code is moving from layers by technical type (`gui`, `control`, `domain`, `d
 * Package by feature (functional packaging), for example `connection`, `database`, `table`, `data` (row editing), `index`, `importexport`, `designer`, `user`, `query`.
 * Inside each feature the layers are strictly UI -> Controller -> Service -> Repository. Dependencies point downwards only.
   * UI (Swing): no business logic, no JDBC. Swing classes only in UI packages.
-  * Controller: translates UI events into service calls and shows the outcome. It creates a service per call from the connection of the window.
+  * Controller: translates UI events into service calls and shows the outcome. It gets its service from `cwcc.getContext()`.
   * Service: application logic (order of steps, validation, updating the domain objects after a change). Calls repositories, never SQL.
   * Repository: the only place that runs SQL. It extends `data.AbstractRepository`, which holds the connection and gives `dialect()`, `quote()`, `literal()`, `useDatabase()`, `executeUpdate()` and `executeAll()`. A repository asks the `Dialect` for everything that differs per server and never branches on the server type.
 * Domain types (`Table`, `TableColumn`, `TableIndex`, `TableData`, `DatabaseUser`, ...) are plain data without a connection.
@@ -100,7 +107,7 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 * `table`: tables, columns, indexes, rows (`Table`, `TableColumn`, `TableIndex`, `TableData`, `TableService`, `TableRepository`, `QueryResult`).
 * `database`: databases and their table lists (`Database`, `DatabaseService`, `DatabaseRepository`), including the tree view.
-* `importexport`: SQL export and import (`ExportService`, `ImportService`, with an `ExportRepository` and `ImportRepository`). Services run on their own thread and report progress to `Observer`s.
+* `importexport`: SQL export and import (`ExportService`, `ImportService`, with an `ExportRepository` and `ImportRepository`). Services run on their own thread and report progress to a `ProgressListener`.
 * `blob`: uploading and saving binary cells (`BlobService`, `BlobRepository`).
 * `user`: accounts and privileges (`UserService`, `UserRepository`). The SQL itself is in the dialect's `UserAdmin`, which the repository wraps.
 * `designer`: the model designer. `DesignerService` creates the designed databases and tables from `DesignedDatabase` and `DesignedTable`.
@@ -113,8 +120,8 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 ## Known technical debt
 
-* Raw `Vector` and other raw types (about 100 lint warnings), `java.util.Observable`/`Observer` for progress reporting.
+* Raw `Vector` and other raw types (about 100 lint warnings).
 * Many dialogs still use null layouts (`ConnectionWindowUI`, `CreateTable`, `IndexesUI`, ...).
 * `Dialect` and `UserAdmin` methods such as `listTables`, `maintain`, `dropIndexSql` still take a `DatabaseConnection` and run SQL themselves, repositories only wrap them.
-* Controllers still create a service per call and some windows (`Processlist`, `DatabaseTreeView`) hold more logic than a UI should.
+* Some windows (`Processlist`, `DatabaseTreeView`) hold more logic than a UI should.
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.
