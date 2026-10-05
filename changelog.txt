@@ -4,6 +4,11 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Designer as an internal frame: the model designer (designer.ui.DBCreator) is a JInternalFrame on the desktop of
+  the main window instead of a separate modal window, with its own menu bar, toolbar and frame icon. The window
+  selector of the toolbar lists designers next to the connection windows. Closing it asks to save the model;
+  disconnecting closes the designers of that connection first (ESQLManagerUI.closeDesigners).
+- README and docs screenshots are light only, the dark screenshot is gone.
 - PostgreSQL schemas in export, import and the query tab: the export and import windows show the schemas of a
   database and open at the node selected in the tree; exporting a database takes every schema, the script names
   schema.table and creates missing schemas (Dialect.createSchemaIfMissingSql); importing into a schema (also in
