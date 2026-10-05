@@ -39,43 +39,26 @@ public class SyntaxDocument extends DefaultStyledDocument {
 		}
 	}
 
+	/** Appends the text as it is, quoted text in green and keywords in blue. */
 	public void append(String text) {
-		text = text.replaceAll("'", " ' ");
-		text = text.replaceAll("\"", " \" ");
-		text = text.replaceAll("`", " ` ");
-		StringTokenizer st = new StringTokenizer(text, " ");
-
-		boolean inquote = false;
-		String qstr = "";
+		StringTokenizer st = new StringTokenizer(text, " '\"`", true);
+		Color quoted = new Color(71, 134, 41);
+		String quote = null;
 
 		while (st.hasMoreTokens()) {
 			String t = st.nextToken();
 
-			if (t.indexOf("'") != -1 && !inquote) {
-				this.appendKeyword(t.substring(0, t.indexOf("'")));
-				this.append(t.substring(t.indexOf("'"), t.length()) + " ", new Color(71, 134, 41), false);
-				qstr = "'";
-				inquote = true;
-			} else if (t.indexOf("\"") != -1 && !inquote) {
-				this.appendKeyword(t.substring(0, t.indexOf("\"")));
-				this.append(t.substring(t.indexOf("\""), t.length()) + " ", new Color(71, 134, 41), false);
-				qstr = "\"";
-				inquote = true;
-			} else if (t.indexOf("`") != -1 && !inquote) {
-				this.appendKeyword(t.substring(0, t.indexOf("`")));
-				this.append(t.substring(t.indexOf("`"), t.length()) + " ", new Color(71, 134, 41), false);
-				qstr = "`";
-				inquote = true;
-			} else if (inquote) {
-				if (t.indexOf(qstr) == -1) {
-					this.append(t + " ", new Color(71, 134, 41), false);
-				} else {
-					this.append(t.substring(0, t.indexOf(qstr) + 1) + " ", new Color(71, 134, 41), false);
-					this.appendKeyword(t.substring(t.indexOf(qstr) + 1, t.length()) + " ");
-					inquote = false;
+			if (quote != null) {
+				this.append(t, quoted, false);
+
+				if (t.equals(quote)) {
+					quote = null;
 				}
+			} else if (t.equals("'") || t.equals("\"") || t.equals("`")) {
+				this.append(t, quoted, false);
+				quote = t;
 			} else {
-				this.appendKeyword(t + " ");
+				this.appendKeyword(t);
 			}
 		}
 	}
@@ -87,7 +70,7 @@ public class SyntaxDocument extends DefaultStyledDocument {
 				return;
 			}
 		}
-		this.append(text, Color.black, false);
+		this.append(text, UIManager.getColor("TextPane.foreground"), false);
 	}
 
 	private void append(String text, Color c, boolean bold) {
