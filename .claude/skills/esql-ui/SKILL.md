@@ -13,7 +13,7 @@ Eight rules derived from `CLAUDE.md`. Applied to every file in a `ui` or `ui.dia
 ## Rule U1: Dialogs
 
 **Flag:**
-- `new JOptionPane(...)` or `JOptionPane.show...` anywhere except `error.Dialogs`. Use `Dialogs.info/warn/error/confirm/confirmDestructive/input/form/askSave`.
+- `new JOptionPane(...)` or `JOptionPane.show...` anywhere except `ui.dialog.Dialogs`. Use `Dialogs.info/warn/error/confirm/confirmDestructive/input/form/askSave`.
 - A dialog with fields that does not use `FormDialog`.
 - A `showMessage` / `showErrorMessage` copy in a window.
 - A destructive confirmation using `confirm` instead of `confirmDestructive`.
@@ -30,7 +30,7 @@ JOptionPane.showConfirmDialog(window, "Are you sure?");
 ## Rule U2: Layout
 
 **Flag:**
-- A null layout with absolute bounds outside the allowed places: the designer canvas (`ModelViewer`, its cards, text inside a `CommentObject`), internal frames placed by `DesktopUtils`, and the splash.
+- A null layout with absolute bounds outside the allowed places: the designer canvas (`DesignerCanvas`, its cards, text inside a `CommentObject`), internal frames placed by `DesktopUtils`, and the splash.
 - A dialog or panel not built with `ui.util.Forms` (12px padding, button row bottom right, titled groups, label/field grid).
 - AWT widgets (`Label`, `Button`, `TextField`) instead of Swing.
 

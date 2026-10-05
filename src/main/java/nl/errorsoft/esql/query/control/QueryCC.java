@@ -24,7 +24,7 @@ import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.TableCC;
-import nl.errorsoft.esql.table.ui.TableDataView;
+import nl.errorsoft.esql.table.ui.TableDataTab;
 
 /**
  * The controller of one query tab: runs the statements of the editor and gives the completion the names of the current database (of all its schemas). The names are loaded
@@ -51,7 +51,7 @@ public class QueryCC implements SchemaNames {
 	}
 
 	/** The rows of one statement, with what is shown below them: when it ran, on which database, how many rows and how long it took. */
-	public record StatementResult(String sql, TableDataView view, LocalTime ranAt, String database, long millis) {
+	public record StatementResult(String sql, TableDataTab view, LocalTime ranAt, String database, long millis) {
 	}
 
 	public QueryCC(ConnectionWindowCC cwcc) {
@@ -154,7 +154,7 @@ public class QueryCC implements SchemaNames {
 		}
 
 		List<StatementResult> results = new ArrayList<>();
-		TableDataView view = null;
+		TableDataTab view = null;
 		long start = System.nanoTime();
 
 		for (int i = 0; i < statements.size(); i++) {

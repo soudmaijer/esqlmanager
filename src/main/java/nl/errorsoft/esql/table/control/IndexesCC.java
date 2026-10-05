@@ -2,12 +2,12 @@
 
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
-import nl.errorsoft.esql.table.ui.IndexesUI;
+import nl.errorsoft.esql.table.ui.IndexesTab;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
@@ -24,7 +24,7 @@ public class IndexesCC {
 
 	private ConnectionWindowCC cwcc;
 	private Table t;
-	private IndexesUI iu;
+	private IndexesTab iu;
 
 	public IndexesCC(ConnectionWindowCC cwcc, Table t) {
 		this.cwcc = cwcc;
@@ -40,7 +40,7 @@ public class IndexesCC {
 		}
 
 		String title = "Indexes " + t.getName();
-		iu = new IndexesUI(this, title, cwcc.getConnectionProfile().getServerType().getDialect().indexTypes());
+		iu = new IndexesTab(this, title, cwcc.getConnectionProfile().getServerType().getDialect().indexTypes());
 		service().loadColumns(t);
 		service().loadIndexes(t);
 		iu.loadIndexes(t.getIndexes());

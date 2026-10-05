@@ -10,15 +10,15 @@ import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.layout.PatternLayout;
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
 
 /**
  * Shows the application log in the output panel at the bottom of the main window.
  */
 public class OutputPanelAppender extends AbstractAppender {
-	private final ESQLManagerUI ui;
+	private final MainWindow ui;
 
-	private OutputPanelAppender(Layout<? extends Serializable> layout, ESQLManagerUI ui) {
+	private OutputPanelAppender(Layout<? extends Serializable> layout, MainWindow ui) {
 		super("OutputPanel", null, layout, true, Property.EMPTY_ARRAY);
 		this.ui = ui;
 	}
@@ -28,7 +28,7 @@ public class OutputPanelAppender extends AbstractAppender {
 	}
 
 	/** Attaches the output panel to the root logger. */
-	public static void install(ESQLManagerUI ui) {
+	public static void install(MainWindow ui) {
 		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
 		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n").setConfiguration(config).build();

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.error;
 
+import nl.errorsoft.esql.ui.dialog.Dialogs;
+
 import java.awt.Component;
 import java.util.function.Consumer;
 

@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.importer.control;
 
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.job.ProgressListener;
 
@@ -10,8 +10,8 @@ import nl.errorsoft.esql.importer.ImportService;
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.control.DatabaseCC;
-import nl.errorsoft.esql.importer.ui.ImportAsSQLUI;
-import nl.errorsoft.esql.job.ui.ImportExportProgressUI;
+import nl.errorsoft.esql.importer.ui.dialog.ImportSqlDialog;
+import nl.errorsoft.esql.job.ui.dialog.ImportExportProgressDialog;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import org.apache.logging.log4j.LogManager;
@@ -28,8 +28,8 @@ public class ImportCC implements ProgressListener {
 
 	private ESQLManagerCC ecc;
 	private ConnectionWindowCC cwcc;
-	private ImportExportProgressUI ies;
-	private ImportAsSQLUI iasu;
+	private ImportExportProgressDialog ies;
+	private ImportSqlDialog iasu;
 
 	public ImportCC(ESQLManagerCC ecc) {
 		this.ecc = ecc;
@@ -44,24 +44,24 @@ public class ImportCC implements ProgressListener {
 		this.cwcc = cwcc;
 		try {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
-			iasu = new ImportAsSQLUI(ecc.getUI(), this);
-			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
-			dbcc.selectInTree(iasu.getDatabaseTreeView(), cwcc.selectedObject());
+			iasu = new ImportSqlDialog(ecc.getUI(), this);
+			iasu.showDatabaseTree(dbcc.getDatabaseTree());
+			dbcc.selectInTree(iasu.getDatabaseTree(), cwcc.selectedObject());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Import data", e);
 		}
 	}
 
 	/** Loads the schemas or tables of a database, or the tables of a schema, the first time it is selected. */
-	public void showChildren(ImportAsSQLUI iasu, Object node) {
+	public void showChildren(ImportSqlDialog iasu, Object node) {
 		try {
-			new DatabaseCC(cwcc).loadChildren(iasu.getDatabaseTreeView(), node);
+			new DatabaseCC(cwcc).loadChildren(iasu.getDatabaseTree(), node);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(iasu, "Load tables", e);
 		}
 	}
 
-	public void importNodesAsSQL(ImportAsSQLUI iasu, TreePath tpa, String file, ImportOptions options) {
+	public void importNodesAsSQL(ImportSqlDialog iasu, TreePath tpa, String file, ImportOptions options) {
 		if (file.isBlank()) {
 			Dialogs.warn(iasu, iasu.getTitle(), "Select a file first.");
 			return;
@@ -83,7 +83,7 @@ public class ImportCC implements ProgressListener {
 			}
 
 			ImportService ie = cwcc.getContext().newImport(node, file, options);
-			ies = new ImportExportProgressUI(iasu, "Import data", file + " into " + target, ie::cancel);
+			ies = new ImportExportProgressDialog(iasu, "Import data", file + " into " + target, ie::cancel);
 			ie.setListener(this);
 			ie.start();
 		} catch (Exception e) {

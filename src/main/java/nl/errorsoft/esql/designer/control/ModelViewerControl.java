@@ -1,16 +1,16 @@
 package nl.errorsoft.esql.designer.control;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.designer.ui.DBCreator;
+import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import java.util.List;
 
 public class ModelViewerControl {
-	private DBCreator db;
+	private DesignerWindow db;
 
-	public ModelViewerControl(DBCreator db) {
+	public ModelViewerControl(DesignerWindow db) {
 		this.db = db;
 	}
 

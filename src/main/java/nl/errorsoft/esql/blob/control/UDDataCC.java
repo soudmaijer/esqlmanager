@@ -5,10 +5,10 @@ import nl.errorsoft.esql.table.TableData;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
-import nl.errorsoft.esql.blob.ui.DownloadFileUI;
-import nl.errorsoft.esql.blob.ui.UDDataIF;
-import nl.errorsoft.esql.blob.ui.UploadFileUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
+import nl.errorsoft.esql.blob.ui.dialog.DownloadFileDialog;
+import nl.errorsoft.esql.blob.ui.TransferProgress;
+import nl.errorsoft.esql.blob.ui.dialog.UploadFileDialog;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +21,7 @@ public class UDDataCC {
 	private static final Logger log = LogManager.getLogger(UDDataCC.class);
 
 	private ConnectionWindowCC cwcc;
-	private UDDataIF udif;
+	private TransferProgress udif;
 	private Table table;
 	private TableData[] row;
 	private TableData cell;
@@ -31,19 +31,19 @@ public class UDDataCC {
 		this.cwcc = cwcc;
 	}
 
-	public void startDownloadUI(ESQLManagerUI parent, Table table, TableData[] row, TableData cell) {
+	public void startDownloadUI(MainWindow parent, Table table, TableData[] row, TableData cell) {
 		this.table = table;
 		this.row = row;
 		this.cell = cell;
-		udif = new DownloadFileUI(this, parent);
+		udif = new DownloadFileDialog(this, parent);
 		udif.open();
 	}
 
-	public void startUploadUI(ESQLManagerUI parent, Table table, TableData[] row, TableData cell) {
+	public void startUploadUI(MainWindow parent, Table table, TableData[] row, TableData cell) {
 		this.table = table;
 		this.row = row;
 		this.cell = cell;
-		udif = new UploadFileUI(this, parent);
+		udif = new UploadFileDialog(this, parent);
 		udif.open();
 	}
 

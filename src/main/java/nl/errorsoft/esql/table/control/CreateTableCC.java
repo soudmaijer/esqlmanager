@@ -2,17 +2,17 @@ package nl.errorsoft.esql.table.control;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
+import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableService;
-import nl.errorsoft.esql.table.ui.TableEditor;
+import nl.errorsoft.esql.table.ui.TableEditorTab;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public class CreateTableCC {
 			return;
 		}
 
-		window().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditor(this, NEW_TABLE, database, null));
+		window().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditorTab(this, NEW_TABLE, database, null));
 	}
 
 	public void startEditTable(Database database, Table table) throws Exception {
@@ -50,7 +50,7 @@ public class CreateTableCC {
 			cwcc.getContext().tables().loadColumns(table);
 		}
 		String title = "Edit " + table.getName();
-		window().showEditorTab(key, title, new TableEditor(this, title, database, table));
+		window().showEditorTab(key, title, new TableEditorTab(this, title, database, table));
 	}
 
 	/*
@@ -113,7 +113,7 @@ public class CreateTableCC {
 		return cwcc.getConnectionProfile().getServerType().getDataTypes();
 	}
 
-	public void createTable(String name, String database, String comment, String type, TableEditor editor, List<CreateColumn> columns) {
+	public void createTable(String name, String database, String comment, String type, TableEditorTab editor, List<CreateColumn> columns) {
 		if (name.trim().length() == 0) {
 			Dialogs.error(window(), "Create table", "Enter a table name.");
 			return;
@@ -135,7 +135,7 @@ public class CreateTableCC {
 		}
 	}
 
-	public void modifyTable(TableEditor editor, Table t, String tableName, String tableType, String tableComment) {
+	public void modifyTable(TableEditorTab editor, Table t, String tableName, String tableType, String tableComment) {
 		try {
 			cwcc.getContext().tables().modifyTable(t, tableName, tableType, tableComment);
 			window().removeTab(editor);
@@ -145,11 +145,11 @@ public class CreateTableCC {
 	}
 
 	/** Cancel: closes the tab, asking first when something changed. */
-	public void cancel(TableEditor editor) {
+	public void cancel(TableEditorTab editor) {
 		window().closeTab(editor);
 	}
 
-	private ConnectionWindowUI window() {
+	private ConnectionWindow window() {
 		return cwcc.getWindow();
 	}
 }

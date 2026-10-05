@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.connection.control;
 
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.Table;
@@ -8,8 +8,8 @@ import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.control.CreateTableCC;
 import nl.errorsoft.esql.table.control.IndexesCC;
 import nl.errorsoft.esql.table.control.TableCC;
-import nl.errorsoft.esql.table.ui.FieldProperties;
-import nl.errorsoft.esql.table.ui.TableDataView;
+import nl.errorsoft.esql.table.ui.dialog.FieldPropertiesDialog;
+import nl.errorsoft.esql.table.ui.TableDataTab;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
@@ -21,26 +21,26 @@ import nl.errorsoft.esql.query.control.QueryCC;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
-import nl.errorsoft.esql.database.DatabaseProperties;
-import nl.errorsoft.esql.database.ui.CreateDatabaseForm;
+import nl.errorsoft.esql.database.DatabaseInfo;
+import nl.errorsoft.esql.database.ui.dialog.CreateDatabaseDialog;
 import nl.errorsoft.esql.table.TableInfo;
-import nl.errorsoft.esql.table.ui.DuplicateTableForm;
+import nl.errorsoft.esql.table.ui.dialog.DuplicateTableDialog;
 import nl.errorsoft.esql.ui.util.ByteSize;
-import nl.errorsoft.esql.ui.util.PropertiesDialog;
+import nl.errorsoft.esql.ui.dialog.PropertiesDialog;
 import nl.errorsoft.esql.ui.util.Validation;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.connection.ConnectionWindow;
-import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
+import nl.errorsoft.esql.connection.ConnectionSession;
+import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.server.control.ProcesslistCC;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.model.Model;
-import nl.errorsoft.esql.designer.ui.DBCreator;
+import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.designer.ui.diagram.ModelFactory;
-import nl.errorsoft.esql.query.ui.QueryUI;
+import nl.errorsoft.esql.query.ui.QueryTab;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.user.control.UserManagerCC;
 
@@ -55,13 +55,13 @@ public class ConnectionWindowCC extends Thread {
 	private static final Logger log = LogManager.getLogger(ConnectionWindowCC.class);
 
 	private ESQLManagerCC jmcc;
-	private ConnectionWindow cw;
-	private ConnectionWindowUI cwui;
+	private ConnectionSession cw;
+	private ConnectionWindow connectionWindow;
 	private TableCC tbcc;
 
 	public ConnectionWindowCC(ESQLManagerCC jmcc, nl.errorsoft.esql.connection.ConnectionProfile cp) {
 		this.jmcc = jmcc;
-		this.cw = new ConnectionWindow(this, cp);
+		this.cw = new ConnectionSession(this, cp);
 		this.start();
 	}
 
@@ -69,10 +69,10 @@ public class ConnectionWindowCC extends Thread {
 		// Create Frame.
 		log.info("Connecting to `" + cw.getConnectionProfile().getServerType().getDescription() + "` @ `" + cw.getConnectionProfile().getHost()
 			+ "` with username `" + cw.getConnectionProfile().getUsername() + "` on port `" + cw.getConnectionProfile().getPort() + "`");
-		cwui = new ConnectionWindowUI(this, jmcc.getUI());
+		connectionWindow = new ConnectionWindow(this, jmcc.getUI());
 
 		// Create database connection to Server.
-		jmcc.showConnectionWindow(cwui);
+		jmcc.showConnectionWindow(connectionWindow);
 		jmcc.updateStatus("Connecting...", true);
 
 		try {
@@ -82,7 +82,7 @@ public class ConnectionWindowCC extends Thread {
 			setStatusDetail("");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			cwui.closeUI(false);
+			connectionWindow.closeUI(false);
 			jmcc.updateStatus("Cannot connect to server...", true);
 			ApplicationContext.get().errors().report("Connect to " + cw.getConnectionProfile().getName(), e);
 		}
@@ -114,14 +114,14 @@ public class ConnectionWindowCC extends Thread {
 	/** A message about the table view tab (a table loaded, a table list shown), shown in the status bar while that tab is in front. */
 	public void setViewStatus(String detail) {
 		statusDetail = detail;
-		cwui.setStatus(detail);
+		connectionWindow.setStatus(detail);
 		showStatusInfo();
 	}
 
 	/** A message about one tab (a query tab), shown in the status bar while that tab is in front. */
 	public void setStatusDetail(java.awt.Component tab, String detail) {
 		statusDetail = detail;
-		cwui.setStatus(tab, detail);
+		connectionWindow.setStatus(tab, detail);
 		showStatusInfo();
 	}
 
@@ -131,7 +131,7 @@ public class ConnectionWindowCC extends Thread {
 
 	/** Closes the designers opened from this connection; false when the user keeps one open. */
 	public boolean closeDesigners() {
-		return jmcc.getUI().closeDesigners(cwui);
+		return jmcc.getUI().closeDesigners(connectionWindow);
 	}
 
 	public void closeUI() {
@@ -144,10 +144,10 @@ public class ConnectionWindowCC extends Thread {
 		}
 
 		// Remove references
-		jmcc.removeConnectionWindow(cwui);
+		jmcc.removeConnectionWindow(connectionWindow);
 
 		// Close Internalframe
-		cwui.dispose();
+		connectionWindow.dispose();
 	}
 
 	public void showDatabaseTree() {
@@ -155,25 +155,25 @@ public class ConnectionWindowCC extends Thread {
 			// Load databases into JTree.
 			jmcc.updateStatus("Loading databases...", true);
 			DatabaseCC dbcc = new DatabaseCC(this);
-			cwui.showDatabaseTreeView(dbcc.getDatabaseTreeView());
-			cwui.showHelp();
+			connectionWindow.showDatabaseTree(dbcc.getDatabaseTree());
+			connectionWindow.showHelp();
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load databases", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load databases", e);
 		}
 	}
 
 	/** Asks for the name and the options of the new database (character set, owner, ...) and creates it. */
 	public void startCreateDatabase() {
 		try {
-			CreateDatabaseForm.Request request = CreateDatabaseForm.ask(cwui, dialect().databaseTerm(), dialect().createDatabaseOptions(),
-				getContext().databases().createDatabaseChoices(), cwui.getDatabaseTreeView().databaseNames());
+			CreateDatabaseDialog.Request request = CreateDatabaseDialog.ask(connectionWindow, dialect().databaseTerm(), dialect().createDatabaseOptions(),
+				getContext().databases().createDatabaseChoices(), connectionWindow.getDatabaseTree().databaseNames());
 
 			if (request != null) {
 				createDatabase(request.name(), request.options());
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Create " + dialect().databaseTerm(), e);
+			ApplicationContext.get().errors().report(connectionWindow, "Create " + dialect().databaseTerm(), e);
 		}
 	}
 
@@ -181,36 +181,36 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Creating " + dialect().databaseTerm() + "...", true);
 			Database db = getContext().databases().createDatabase(name, options);
-			cwui.getDatabaseTreeView().addDatabase(db);
+			connectionWindow.getDatabaseTree().addDatabase(db);
 			setStatusDetail(dialect().databaseTerm() + " " + name + " created");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Create " + dialect().databaseTerm(), e);
+			ApplicationContext.get().errors().report(connectionWindow, "Create " + dialect().databaseTerm(), e);
 		}
 	}
 
 	public void dropDatabase() {
 		try {
 			jmcc.updateStatus("Deleting database...", true);
-			Database db = cwui.getDatabase();
+			Database db = connectionWindow.getDatabase();
 			DatabaseCC dbcc = new DatabaseCC(this);
 			dbcc.dropDatabase(db);
-			cwui.getDatabaseTreeView().deleteDatabase(db);
-			cwui.removeDataTab();
+			connectionWindow.getDatabaseTree().deleteDatabase(db);
+			connectionWindow.removeDataTab();
 			jmcc.showConnectionState();
 			this.showDatabaseTree();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Drop database", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Drop database", e);
 		}
 	}
 
 	public void dropTable() {
 		try {
 			jmcc.updateStatus("Deleting table...", true);
-			Table tb = cwui.getTable();
+			Table tb = connectionWindow.getTable();
 			TableCC dbcc = new TableCC(this);
 			dbcc.dropTable(tb);
-			cwui.getDatabaseTreeView().deleteTable(tb);
+			connectionWindow.getDatabaseTree().deleteTable(tb);
 			jmcc.showConnectionState();
 			if (tb.getSchema() != null && hasSchemas()) {
 				this.schemaSelected(tb.getSchema());
@@ -218,23 +218,23 @@ public class ConnectionWindowCC extends Thread {
 				this.databaseSelected(tb.getDatabase());
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Drop table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Drop table", e);
 		}
 	}
 
-	public void addTableColumn(FieldProperties fp, CreateColumn column) {
+	public void addTableColumn(FieldPropertiesDialog fp, CreateColumn column) {
 		try {
 			jmcc.updateStatus("Adding tablecolumn...", true);
 			TableCC dbcc = new TableCC(this);
-			dbcc.addTableColumn(cwui.getTable(), column);
+			dbcc.addTableColumn(connectionWindow.getTable(), column);
 			reloadSelectedTable();
 			fp.dispose();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Add table column", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Add table column", e);
 		}
 	}
 
-	public void editTableColumn(FieldProperties fp, TableColumn tbc, CreateColumn column) {
+	public void editTableColumn(FieldPropertiesDialog fp, TableColumn tbc, CreateColumn column) {
 		try {
 			jmcc.updateStatus("Updating tablecolumn...", true);
 			TableCC dbcc = new TableCC(this);
@@ -242,36 +242,36 @@ public class ConnectionWindowCC extends Thread {
 			reloadSelectedTable();
 			fp.dispose();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Edit table column", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Edit table column", e);
 		}
 	}
 
 	public void dropTableColumn() {
 		try {
 			jmcc.updateStatus("Deleting tablecolumn...", true);
-			TableColumn tb = cwui.getTableColumn();
+			TableColumn tb = connectionWindow.getTableColumn();
 			TableCC dbcc = new TableCC(this);
 			dbcc.dropTableColumn(tb);
-			cwui.getDatabaseTreeView().deleteTableColumn(tb);
+			connectionWindow.getDatabaseTree().deleteTableColumn(tb);
 			jmcc.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Drop column", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Drop column", e);
 		}
 	}
 
 	public void reloadSelectedTable() {
-		this.tableSelected(cwui.getTable(), true);
+		this.tableSelected(connectionWindow.getTable(), true);
 	}
 
 	/** Reloads the tables of the selected schema (or of the schema of the selected table), otherwise the content of the selected database. */
 	public void reloadSelectedDatabase() {
-		Schema schema = cwui.getSchema();
+		Schema schema = connectionWindow.getSchema();
 
 		if (schema != null && hasSchemas()) {
 			this.schemaSelected(schema);
 		} else {
-			this.databaseSelected(cwui.getDatabase());
+			this.databaseSelected(connectionWindow.getDatabase());
 		}
 	}
 
@@ -285,7 +285,7 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	public void startCreateSchema() {
-		String name = Dialogs.input(cwui, "Create " + dialect().schemaTerm(), "&Name:", "Create");
+		String name = Dialogs.input(connectionWindow, "Create " + dialect().schemaTerm(), "&Name:", "Create");
 
 		if (name != null) {
 			createSchema(name);
@@ -293,9 +293,9 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	public void renameSchema() {
-		Schema schema = cwui.getSchema();
+		Schema schema = connectionWindow.getSchema();
 		String term = dialect().schemaTerm();
-		String name = Dialogs.input(cwui, "Rename " + term, "&New name:", "Rename", schema.getName(),
+		String name = Dialogs.input(connectionWindow, "Rename " + term, "&New name:", "Rename", schema.getName(),
 			value -> Validation.first(Validation.required("a name", value), value.equals(schema.getName()) ? "Enter another name." : null));
 
 		if (name == null) {
@@ -308,33 +308,33 @@ public class ConnectionWindowCC extends Thread {
 			databaseSelected(schema.getDatabase());
 			setStatusDetail(schema.getDatabase().getName() + ": " + term + " " + schema.getName() + " renamed to " + name);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Rename " + term, e);
+			ApplicationContext.get().errors().report(connectionWindow, "Rename " + term, e);
 		}
 	}
 
 	public void createSchema(String name) {
 		try {
-			Database database = cwui.getDatabase();
+			Database database = connectionWindow.getDatabase();
 			jmcc.updateStatus("Creating " + dialect().schemaTerm() + "...", true);
 			Schema schema = new DatabaseCC(this).createSchema(database, name);
 			databaseSelected(database);
 			setStatusDetail(database.getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " created");
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Create " + dialect().schemaTerm(), e);
+			ApplicationContext.get().errors().report(connectionWindow, "Create " + dialect().schemaTerm(), e);
 		}
 	}
 
 	public void dropSchema() {
 		try {
-			Schema schema = cwui.getSchema();
+			Schema schema = connectionWindow.getSchema();
 			jmcc.updateStatus("Dropping " + dialect().schemaTerm() + "...", true);
 			new DatabaseCC(this).dropSchema(schema);
-			cwui.getDatabaseTreeView().deleteSchema(schema);
-			cwui.removeDataTab();
+			connectionWindow.getDatabaseTree().deleteSchema(schema);
+			connectionWindow.removeDataTab();
 			setStatusDetail(schema.getDatabase().getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " dropped");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Drop " + dialect().schemaTerm(), e);
+			ApplicationContext.get().errors().report(connectionWindow, "Drop " + dialect().schemaTerm(), e);
 		}
 	}
 
@@ -357,8 +357,8 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	public void renameSelectedTable() {
-		Table table = cwui.getTable();
-		String name = Dialogs.input(cwui, "Rename table", "&New name:", "Rename", table.getName(), value -> tableNameProblem(table, value));
+		Table table = connectionWindow.getTable();
+		String name = Dialogs.input(connectionWindow, "Rename table", "&New name:", "Rename", table.getName(), value -> tableNameProblem(table, value));
 
 		if (name == null) {
 			return;
@@ -372,13 +372,13 @@ public class ConnectionWindowCC extends Thread {
 			setStatusDetail("Table " + oldName + " renamed to " + name);
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Rename table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Rename table", e);
 		}
 	}
 
 	public void duplicateSelectedTable() {
-		Table table = cwui.getTable();
-		DuplicateTableForm.Request request = DuplicateTableForm.ask(cwui, table.getName() + "_copy", value -> tableNameProblem(table, value));
+		Table table = connectionWindow.getTable();
+		DuplicateTableDialog.Request request = DuplicateTableDialog.ask(connectionWindow, table.getName() + "_copy", value -> tableNameProblem(table, value));
 
 		if (request == null) {
 			return;
@@ -391,7 +391,7 @@ public class ConnectionWindowCC extends Thread {
 			setStatusDetail("Table " + table.getName() + " duplicated as " + copy.getName() + (request.withData() ? " with its data" : ""));
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Duplicate table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Duplicate table", e);
 		}
 	}
 
@@ -404,7 +404,7 @@ public class ConnectionWindowCC extends Thread {
 				showDatabaseProperties(database);
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Properties", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Properties", e);
 		}
 	}
 
@@ -423,16 +423,16 @@ public class ConnectionWindowCC extends Thread {
 		if (info.sizeBytes() != null) {
 			properties.put("Size", ByteSize.format(info.sizeBytes()));
 		}
-		PropertiesDialog.show(cwui, "Properties of " + info.name(), properties);
+		PropertiesDialog.show(connectionWindow, "Properties of " + info.name(), properties);
 	}
 
 	private void showDatabaseProperties(Database database) throws Exception {
-		DatabaseProperties info = getContext().databases().properties(database);
+		DatabaseInfo info = getContext().databases().properties(database);
 		Map<String, String> properties = new LinkedHashMap<>();
 		properties.put("Name", info.name());
 		properties.putAll(info.details());
 		properties.put("Tables", String.valueOf(info.tableCount()));
-		PropertiesDialog.show(cwui, "Properties of " + info.name(), properties);
+		PropertiesDialog.show(connectionWindow, "Properties of " + info.name(), properties);
 	}
 
 	private static String capitalized(String word) {
@@ -446,11 +446,11 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Flushing table data...", true);
 			TableCC tbcc = new TableCC(this);
-			tbcc.flushTable(cwui.getTable());
+			tbcc.flushTable(connectionWindow.getTable());
 			jmcc.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Empty table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Empty table", e);
 		}
 	}
 
@@ -468,12 +468,12 @@ public class ConnectionWindowCC extends Thread {
 
 			DatabaseCC dbcc = new DatabaseCC(this);
 			java.util.List<Table> tables = dbcc.getTables(database);
-			cwui.getDatabaseTreeView().loadTables(database, tables);
-			cwui.databaseSelected();
+			connectionWindow.getDatabaseTree().loadTables(database, tables);
+			connectionWindow.databaseSelected();
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load tables", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load tables", e);
 		}
 	}
 
@@ -484,12 +484,12 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Loading " + schemas + "...", true);
 			java.util.List<Schema> list = new DatabaseCC(this).getSchemas(database);
-			cwui.getDatabaseTreeView().loadSchemas(database, list);
-			cwui.databaseSelected();
+			connectionWindow.getDatabaseTree().loadSchemas(database, list);
+			connectionWindow.databaseSelected();
 			setStatusDetail(database.getName() + ": " + list.size() + " " + dialect().schemaTerm() + "(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load " + schemas, e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load " + schemas, e);
 		}
 	}
 
@@ -498,12 +498,12 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			jmcc.updateStatus("Loading tables...", true);
 			java.util.List<Table> tables = new DatabaseCC(this).getTables(schema);
-			cwui.getDatabaseTreeView().loadTables(schema, tables);
-			cwui.databaseSelected();
+			connectionWindow.getDatabaseTree().loadTables(schema, tables);
+			connectionWindow.databaseSelected();
 			setStatusDetail(schema.getDatabase().getName() + "." + schema.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load tables", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load tables", e);
 		}
 	}
 
@@ -514,11 +514,11 @@ public class ConnectionWindowCC extends Thread {
 
 			DatabaseCC dbcc = new DatabaseCC(this);
 			java.util.List<Table> tables = dbcc.getTables(database);
-			cwui.showTableListView(database.getName(), dbcc.getTableListView(tables));
+			connectionWindow.showTableListTab(database.getName(), dbcc.getTableListTab(tables));
 			setViewStatus(database.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Open database", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Open database", e);
 		}
 	}
 
@@ -530,13 +530,13 @@ public class ConnectionWindowCC extends Thread {
 			if (addTreeColumns) {
 				jmcc.updateStatus("Fetching table columns...", true);
 				TableColumn[] fields = new TableCC(this).getColumns(table);
-				cwui.getDatabaseTreeView().loadTableColumns(table, fields);
+				connectionWindow.getDatabaseTree().loadTableColumns(table, fields);
 			}
 
-			cwui.tableSelected();
+			connectionWindow.tableSelected();
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load table", e);
 		}
 	}
 
@@ -546,11 +546,11 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	public void fieldSelected() {
-		cwui.fieldSelected();
+		connectionWindow.fieldSelected();
 	}
 
 	public void rootSelected() {
-		cwui.rootSelected();
+		connectionWindow.rootSelected();
 	}
 
 	public void insertNewRow() {
@@ -566,23 +566,23 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	/** Opens a new query tab on the database selected in the tree. */
-	public void startQueryUI() {
+	public void startQueryTab() {
 		try {
 			QueryCC controller = new QueryCC(this);
-			cwui.showQueryTab(new QueryUI(controller, controller.databases(), cwui.getDatabase()));
+			connectionWindow.showQueryTab(new QueryTab(controller, controller.databases(), connectionWindow.getDatabase()));
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Run query", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Run query", e);
 		}
 	}
 
 	public void startFieldUI(boolean add, boolean edit) {
 		try {
 			jmcc.updateStatus("Starting field properties interface...", true);
-			FieldProperties fpu = new FieldProperties(jmcc.getUI(), this, cwui.getTableColumn(), add, edit);
+			FieldPropertiesDialog fpu = new FieldPropertiesDialog(jmcc.getUI(), this, connectionWindow.getTableColumn(), add, edit);
 			jmcc.showConnectionState();
 			fpu.setVisible(true);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load columns", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load columns", e);
 		}
 	}
 
@@ -590,7 +590,7 @@ public class ConnectionWindowCC extends Thread {
 	 * @description: Let the tree generate its own events.
 	 */
 	public void selectTableInTree(Table table) {
-		cwui.getDatabaseTreeView().selectTableInTree(table);
+		connectionWindow.getDatabaseTree().selectTableInTree(table);
 	}
 
 	public void showTableData(Table table) {
@@ -604,11 +604,11 @@ public class ConnectionWindowCC extends Thread {
 			String place = table.getSchema() != null && hasSchemas()
 				? table.getDatabase().getName() + "." + table.getSchema().getName()
 				: table.getDatabase().getName();
-			cwui.showTableDataView(place + " : " + table.getName(), tbcc.getTableDataView(table, 0, 50));
+			connectionWindow.showTableDataTab(place + " : " + table.getName(), tbcc.getTableDataTab(table, 0, 50));
 			setViewStatus(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load table data", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load table data", e);
 		}
 	}
 
@@ -618,10 +618,10 @@ public class ConnectionWindowCC extends Thread {
 	 */
 	public void dispatchTableIndexesUI() {
 		try {
-			IndexesCC tcc = new IndexesCC(this, (Table) cwui.getSelectedNode().getUserObject());
+			IndexesCC tcc = new IndexesCC(this, (Table) connectionWindow.getSelectedNode().getUserObject());
 			tcc.startUI();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Load indexes", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Load indexes", e);
 		}
 	}
 
@@ -655,15 +655,15 @@ public class ConnectionWindowCC extends Thread {
 			return true;
 		}
 
-		Dialogs.info(cwui, description, description + " is not available for " + cw.getConnectionProfile().getServerType().getDescription() + ".");
+		Dialogs.info(connectionWindow, description, description + " is not available for " + cw.getConnectionProfile().getServerType().getDescription() + ".");
 		return false;
 	}
 
 	public void dispatchCreateTableUI() {
 		try {
-			new CreateTableCC(this).startCreateTable(cwui.getDatabase(), hasSchemas() ? cwui.getSchema() : null);
+			new CreateTableCC(this).startCreateTable(connectionWindow.getDatabase(), hasSchemas() ? connectionWindow.getSchema() : null);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Create table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Create table", e);
 		}
 	}
 
@@ -674,26 +674,26 @@ public class ConnectionWindowCC extends Thread {
 		}
 
 		try {
-			Database database = cwui.getDatabase();
-			Schema schema = hasSchemas() && cwui.getSelectedNode().getUserObject() instanceof Schema selected ? selected : null;
+			Database database = connectionWindow.getDatabase();
+			Schema schema = hasSchemas() && connectionWindow.getSelectedNode().getUserObject() instanceof Schema selected ? selected : null;
 			jmcc.updateStatus("Reading database structure...", true);
 			DesignedDatabase designed = schema != null ? getContext().designer().reverseEngineer(schema) : getContext().designer().reverseEngineer(database);
 			Model model = ModelFactory.fromDatabase(designed, cw.getConnectionProfile().getServerType().getDataTypes());
 			setStatusDetail((schema != null ? database.getName() + "." + schema.getName() : database.getName()) + ": " + designed.tables().size()
 				+ " table(s) opened in the designer");
 			jmcc.showConnectionState();
-			new DBCreator(jmcc.getUI(), cwui, model);
+			new DesignerWindow(jmcc.getUI(), connectionWindow, model);
 		} catch (Exception e) {
 			jmcc.showConnectionState();
-			ApplicationContext.get().errors().report(cwui, "Open in designer", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Open in designer", e);
 		}
 	}
 
 	public void dispatchModifyTableUI() {
 		try {
-			new CreateTableCC(this).startEditTable(cwui.getDatabase(), cwui.getTable());
+			new CreateTableCC(this).startEditTable(connectionWindow.getDatabase(), connectionWindow.getTable());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Modify table", e);
+			ApplicationContext.get().errors().report(connectionWindow, "Modify table", e);
 		}
 	}
 
@@ -704,14 +704,14 @@ public class ConnectionWindowCC extends Thread {
 	/** The connection window, the parent of messages and the owner of the tabs. */
 	/** What is selected in the tree (a database, schema, table, ...), null when nothing is. */
 	public Object selectedObject() {
-		return cwui.getSelectedNode() == null ? null : cwui.getSelectedNode().getUserObject();
+		return connectionWindow.getSelectedNode() == null ? null : connectionWindow.getSelectedNode().getUserObject();
 	}
 
-	public ConnectionWindowUI getWindow() {
-		return cwui;
+	public ConnectionWindow getWindow() {
+		return connectionWindow;
 	}
 
-	public ESQLManagerUI getUI() {
+	public MainWindow getUI() {
 		return jmcc.getUI();
 	}
 
@@ -742,7 +742,7 @@ public class ConnectionWindowCC extends Thread {
 			}
 
 			TableCC tcc = new TableCC(this);
-			cwui.showTableDataView("Server status", tcc.showServerStatus());
+			connectionWindow.showTableDataTab("Server status", tcc.showServerStatus());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Show server status", e);
 		}
@@ -754,7 +754,7 @@ public class ConnectionWindowCC extends Thread {
 			}
 
 			TableCC tcc = new TableCC(this);
-			cwui.showTableDataView("Server variables", tcc.showServerVariables());
+			connectionWindow.showTableDataTab("Server variables", tcc.showServerVariables());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Show server variables", e);
 		}
@@ -763,7 +763,7 @@ public class ConnectionWindowCC extends Thread {
 	public void optimizeTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			Dialogs.info(cwui, "Optimize table: " + cwui.getTable().getName(), tcc.optimizeTable(cwui.getTable()));
+			Dialogs.info(connectionWindow, "Optimize table: " + connectionWindow.getTable().getName(), tcc.optimizeTable(connectionWindow.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Optimize table", e);
 		}
@@ -772,7 +772,7 @@ public class ConnectionWindowCC extends Thread {
 	public void analyseTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			Dialogs.info(cwui, "Analyze table: " + cwui.getTable().getName(), tcc.analyseTable(cwui.getTable()));
+			Dialogs.info(connectionWindow, "Analyze table: " + connectionWindow.getTable().getName(), tcc.analyseTable(connectionWindow.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Analyze table", e);
 		}
@@ -781,7 +781,7 @@ public class ConnectionWindowCC extends Thread {
 	public void checkTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			Dialogs.info(cwui, "Check table: " + cwui.getTable().getName(), tcc.checkTable(cwui.getTable()));
+			Dialogs.info(connectionWindow, "Check table: " + connectionWindow.getTable().getName(), tcc.checkTable(connectionWindow.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Check table", e);
 		}
@@ -790,7 +790,7 @@ public class ConnectionWindowCC extends Thread {
 	public void repairTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			Dialogs.info(cwui, "Repair table: " + cwui.getTable().getName(), tcc.repairTable(cwui.getTable()));
+			Dialogs.info(connectionWindow, "Repair table: " + connectionWindow.getTable().getName(), tcc.repairTable(connectionWindow.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Repair table", e);
 		}

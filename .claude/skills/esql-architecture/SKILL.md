@@ -79,7 +79,7 @@ String sql = "DELETE FROM " + table.getName() + " WHERE id = '" + id + "'";
 - A problem the user can fix thrown as something other than `EsqlException`.
 - A controller or window handling a user action without `ApplicationContext.get().errors().report(parent, "Drop table", e)`.
 - `log.error` plus a dialog for the same failure.
-- `JOptionPane` outside `error.Dialogs`.
+- `JOptionPane` outside `ui.dialog.Dialogs`.
 - An empty or silent `catch` without a comment saying why.
 - Long running jobs not reporting through `ProgressListener.failed`.
 
@@ -180,7 +180,7 @@ No `CC`, no `UI` as a suffix, no variable names such as `cwcc`, `cwui`, `eui`. S
 
 ### N6: Names say what, not how
 
-A dialog is not `Generate`, a window is not `Processlist`. Name the subject and the role: `GenerateDialog`, `ProcessListWindow`.
+A dialog is not `Generate`, a window is not `Processlist`. Name the subject and the role: `GenerateDialog`, `ProcessListDialog`.
 
 **Flag for N1-N6:** a new class or a renamed class that breaks the table above. Existing violations: list under "Rename debt" with the proposed name.
 

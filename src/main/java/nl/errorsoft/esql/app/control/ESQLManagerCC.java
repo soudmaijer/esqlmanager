@@ -1,6 +1,6 @@
 package nl.errorsoft.esql.app.control;
 
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
@@ -14,27 +14,27 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.designer.ui.DBCreator;
+import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.ESQLManager;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.settings.Settings;
-import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
-import nl.errorsoft.esql.settings.ui.SettingsUI;
-import nl.errorsoft.esql.app.ui.SplashUI;
+import nl.errorsoft.esql.settings.ui.dialog.SettingsDialog;
+import nl.errorsoft.esql.app.ui.SplashWindow;
 
 /**
- *		Controls all users-systems actions for the ESQLManagerUI.
+ *		Controls all users-systems actions for the MainWindow.
  */
 public class ESQLManagerCC {
 	private static final Logger log = LogManager.getLogger(ESQLManagerCC.class);
 
 	private ESQLManager jm;
-	private ESQLManagerUI jmui;
+	private MainWindow jmui;
 
 	public ESQLManagerCC() {
 		// Both must happen before the first window or icon exists: macOS reads its desktop properties only once.
@@ -46,7 +46,7 @@ public class ESQLManagerCC {
 		jm = new ESQLManager();
 
 		// Show ESQLManager Window.
-		jmui = new ESQLManagerUI(this);
+		jmui = new MainWindow(this);
 		OutputPanelAppender.install(jmui);
 		log.info("{} starting on Java {} ({}), {} {}", getTitle(), System.getProperty("java.version"), System.getProperty("java.vendor"),
 			System.getProperty("os.name"), System.getProperty("os.arch"));
@@ -72,14 +72,14 @@ public class ESQLManagerCC {
 	 */
 	public void showSplashScreen(int time) {
 		// Show a new Splash screen UI.
-		new SplashUI(this, jmui, time);
+		new SplashWindow(this, jmui, time);
 	}
 
-	public void showConnectionWindow(ConnectionWindowUI cwui) {
-		jmui.addConnectionWindow(cwui);
+	public void showConnectionWindow(ConnectionWindow connectionWindow) {
+		jmui.addConnectionWindow(connectionWindow);
 	}
 
-	public void removeConnectionWindow(ConnectionWindowUI cw) {
+	public void removeConnectionWindow(ConnectionWindow cw) {
 		jmui.removeConnectionWindow(cw);
 	}
 
@@ -99,7 +99,7 @@ public class ESQLManagerCC {
 	}
 
 	public void dispatchSettingsUI() {
-		SettingsUI cpcc = new SettingsUI(this, jmui);
+		SettingsDialog cpcc = new SettingsDialog(this, jmui);
 	}
 
 	public void dispatchImportUI() {
@@ -128,7 +128,7 @@ public class ESQLManagerCC {
 		}
 
 		if (jmui.getConnectionWindowCount() > 0) {
-			DBCreator db = new nl.errorsoft.esql.designer.ui.DBCreator(jmui, jmui.getConnectionWindow());
+			DesignerWindow db = new nl.errorsoft.esql.designer.ui.DesignerWindow(jmui, jmui.getConnectionWindow());
 		}
 	}
 
@@ -144,7 +144,7 @@ public class ESQLManagerCC {
 		jmui.setStatusInfo(info);
 	}
 
-	public ESQLManagerUI getUI() {
+	public MainWindow getUI() {
 		return jmui;
 	}
 

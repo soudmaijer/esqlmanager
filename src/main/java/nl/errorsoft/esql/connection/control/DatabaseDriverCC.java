@@ -1,25 +1,25 @@
 package nl.errorsoft.esql.connection.control;
 
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.DatabaseDriver;
-import nl.errorsoft.esql.connection.ui.DriverUI;
+import nl.errorsoft.esql.connection.ui.dialog.DriverDialog;
 
 public class DatabaseDriverCC {
 	private ESQLManagerCC cwcc;
 	private DatabaseDriver[] drivers;
-	private DriverUI du;
+	private DriverDialog du;
 
 	public DatabaseDriverCC(ESQLManagerCC cwcc) {
 		this.cwcc = cwcc;
 	}
 
-	public void startUI(ESQLManagerUI emui) {
-		du = new DriverUI(this, emui);
+	public void startUI(MainWindow emui) {
+		du = new DriverDialog(this, emui);
 		du.loadDrivers(getDatabaseDrivers());
 		du.setVisible(true);
 	}

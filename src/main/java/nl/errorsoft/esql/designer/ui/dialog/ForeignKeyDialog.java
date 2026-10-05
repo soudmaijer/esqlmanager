@@ -30,7 +30,7 @@ import javax.swing.table.DefaultTableModel;
 import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.ui.util.FormDialog;
+import nl.errorsoft.esql.ui.dialog.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 
 /** Edits a foreign key of the designer: the referenced table, the column pairs, the name and the actions. */

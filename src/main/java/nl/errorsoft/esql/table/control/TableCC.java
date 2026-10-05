@@ -4,14 +4,14 @@ import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
-import nl.errorsoft.esql.table.ui.TableDataView;
+import nl.errorsoft.esql.table.ui.TableDataTab;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.server.ServerService;
 
 import nl.errorsoft.esql.database.Database;
 
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.blob.control.UDDataCC;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
@@ -22,7 +22,7 @@ import nl.errorsoft.esql.table.TableService;
 import java.util.Vector;
 
 public class TableCC {
-	private TableDataView tdv;
+	private TableDataTab tdv;
 	private ConnectionWindowCC cwcc;
 
 	public TableCC(ConnectionWindowCC cwcc) {
@@ -39,9 +39,9 @@ public class TableCC {
 		udcc.startUploadUI(cwcc.getUI(), table, rowData, cellData);
 	}
 
-	public TableDataView getTableDataView(Table table, int skip, int show) throws Exception {
+	public TableDataTab getTableDataTab(Table table, int skip, int show) throws Exception {
 		TableData[][] tdata = service().loadPage(table, skip, show);
-		tdv = new TableDataView(this);
+		tdv = new TableDataTab(this);
 		tdv.loadData(table, table.getColumns(), tdata);
 		return tdv;
 	}
@@ -55,7 +55,7 @@ public class TableCC {
 		tdv.loadData(table, table.getColumns(), tdata);
 	}
 
-	public TableDataView executeQuery(String query) throws Exception {
+	public TableDataTab executeQuery(String query) throws Exception {
 		return show(service().executeQuery(query));
 	}
 
@@ -110,11 +110,11 @@ public class TableCC {
 	/*
 	 * Server options, the query behind them depends on the database.
 	 */
-	public TableDataView showServerStatus() throws Exception {
+	public TableDataTab showServerStatus() throws Exception {
 		return show(cwcc.getContext().servers().getStatus());
 	}
 
-	public TableDataView showServerVariables() throws Exception {
+	public TableDataTab showServerVariables() throws Exception {
 		return show(cwcc.getContext().servers().getVariables());
 	}
 
@@ -134,8 +134,8 @@ public class TableCC {
 		return service().repairTable(table);
 	}
 
-	private TableDataView show(QueryResult result) throws Exception {
-		TableDataView view = new TableDataView(this);
+	private TableDataTab show(QueryResult result) throws Exception {
+		TableDataTab view = new TableDataTab(this);
 		view.loadData(result.table(), result.table().getColumns(), result.rows());
 		return view;
 	}

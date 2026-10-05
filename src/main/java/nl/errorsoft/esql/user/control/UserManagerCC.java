@@ -11,8 +11,8 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import java.util.List;
 import java.util.Set;
 import nl.errorsoft.esql.dialect.Dialect;
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
-import nl.errorsoft.esql.user.ui.UserManagerUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
+import nl.errorsoft.esql.user.ui.dialog.UserManagerDialog;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,14 +25,14 @@ public class UserManagerCC {
 		this.cwcc = cwcc;
 	}
 
-	public void startUI(ESQLManagerUI emui) {
+	public void startUI(MainWindow emui) {
 		try {
 			if (!cwcc.requireFeature(Dialect.Feature.USER_MANAGER, "The user manager")) {
 				return;
 			}
 
 			emui.updateStatus("Starting usermanager...", true);
-			UserManagerUI ui = new UserManagerUI(emui, this);
+			UserManagerDialog ui = new UserManagerDialog(emui, this);
 			emui.showConnectionState();
 			ui.setVisible(true);
 		} catch (Exception e) {

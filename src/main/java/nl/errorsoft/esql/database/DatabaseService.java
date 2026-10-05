@@ -113,7 +113,7 @@ public class DatabaseService {
 	}
 
 	/** The properties of the database; the table count covers the schemas the profile shows. */
-	public DatabaseProperties properties(Database database) throws Exception {
+	public DatabaseInfo properties(Database database) throws Exception {
 		int tables = 0;
 		List<Schema> schemas = getSchemas(database);
 
@@ -123,7 +123,7 @@ public class DatabaseService {
 		for (Schema schema : schemas) {
 			tables += repository.listTables(schema).size();
 		}
-		return new DatabaseProperties(database.getName(), repository.describe(database), tables);
+		return new DatabaseInfo(database.getName(), repository.describe(database), tables);
 	}
 
 	/** Renames the schema, the returned schema has the new name. */

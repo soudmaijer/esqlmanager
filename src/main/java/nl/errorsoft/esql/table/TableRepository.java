@@ -10,15 +10,9 @@ import java.util.List;
 
 import nl.errorsoft.esql.jdbc.AbstractRepository;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
-import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.error.EsqlException;
-import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
-import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.TableColumn;
-import nl.errorsoft.esql.table.TableData;
-import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.dialect.MaintenanceStatement;
 

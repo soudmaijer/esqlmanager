@@ -6,10 +6,10 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.ui.TableListView;
+import nl.errorsoft.esql.table.ui.TableListTab;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-import nl.errorsoft.esql.database.ui.DatabaseTreeView;
+import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
@@ -63,8 +63,8 @@ public class DatabaseCC {
 		return cwcc.getContext().databases();
 	}
 
-	public DatabaseTreeView getDatabaseTreeView() throws Exception {
-		DatabaseTreeView dbtv = new DatabaseTreeView(cwcc.getTitle(), cwcc.getConnectionProfile().getServerType().iconName());
+	public DatabaseTree getDatabaseTree() throws Exception {
+		DatabaseTree dbtv = new DatabaseTree(cwcc.getTitle(), cwcc.getConnectionProfile().getServerType().iconName());
 		dbtv.loadDatabases(getDatabases());
 		return dbtv;
 	}
@@ -73,7 +73,7 @@ public class DatabaseCC {
 	 * Loads what a node of a dialog's tree holds when it is opened: the schemas of a database on servers with schemas, otherwise its tables, the tables of a
 	 * schema. Nothing for other nodes.
 	 */
-	public void loadChildren(DatabaseTreeView tree, Object node) throws Exception {
+	public void loadChildren(DatabaseTree tree, Object node) throws Exception {
 		if (node instanceof Database database) {
 			if (cwcc.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS)) {
 				tree.loadSchemas(database, getSchemas(database));
@@ -86,7 +86,7 @@ public class DatabaseCC {
 	}
 
 	/** Opens a dialog's tree at the node selected in the connection window (a database, schema or table), so that the dialog starts from it. */
-	public void selectInTree(DatabaseTreeView tree, Object node) throws Exception {
+	public void selectInTree(DatabaseTree tree, Object node) throws Exception {
 		switch (node) {
 			case Database database -> tree.selectDatabase(database);
 			case Schema schema -> {
@@ -107,8 +107,8 @@ public class DatabaseCC {
 		}
 	}
 
-	public TableListView getTableListView(java.util.List<Table> tables) throws Exception {
-		TableListView tlv = new TableListView(this);
+	public TableListTab getTableListTab(java.util.List<Table> tables) throws Exception {
+		TableListTab tlv = new TableListTab(this);
 		tlv.loadDatabases(tables);
 		return tlv;
 	}

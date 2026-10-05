@@ -155,7 +155,7 @@ public class TableObject extends ModelObject {
 
 	/** The storage engine, only on servers that have them (a PostgreSQL table has no engine). */
 	private String shownType() {
-		boolean typesShown = getParent() instanceof ModelViewer viewer && viewer.showsTableTypes();
+		boolean typesShown = getParent() instanceof DesignerCanvas viewer && viewer.showsTableTypes();
 		return typesShown && type != null ? type : "";
 	}
 

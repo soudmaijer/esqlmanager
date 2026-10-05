@@ -3,12 +3,12 @@ package nl.errorsoft.esql.connection.control;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
+import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.database.DatabaseCatalog;
 import nl.errorsoft.esql.ui.util.Forms;
-import nl.errorsoft.esql.connection.ui.ConnectionProfileUI;
+import nl.errorsoft.esql.connection.ui.dialog.ConnectionProfileDialog;
 
 import java.awt.Component;
 import java.util.List;
@@ -26,7 +26,7 @@ public class ConnectionProfileCC {
 	private static final Logger log = LogManager.getLogger(ConnectionProfileCC.class);
 
 	private ESQLManagerCC jmcc;
-	private ConnectionProfileUI cpui;
+	private ConnectionProfileDialog cpui;
 	private ConnectionProfile cp;
 
 	public ConnectionProfileCC(ESQLManagerCC jmcc) {
@@ -39,7 +39,7 @@ public class ConnectionProfileCC {
 		}
 	}
 
-	public void startUI(ESQLManagerUI jmui, boolean autoConnect) {
+	public void startUI(MainWindow jmui, boolean autoConnect) {
 		// Create Frame.
 		jmui.updateStatus("Starting profile manager...", true);
 		ConnectionProfile[] cpa = cp.getProfiles();
@@ -55,7 +55,7 @@ public class ConnectionProfileCC {
 			}
 		}
 		if (!conLastUsed) {
-			cpui = new ConnectionProfileUI(jmui, this);
+			cpui = new ConnectionProfileDialog(jmui, this);
 			cpui.loadProfiles(cp.getProfiles());
 			jmcc.showConnectionState();
 			cpui.setVisible(true);

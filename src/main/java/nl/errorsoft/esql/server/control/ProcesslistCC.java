@@ -13,7 +13,7 @@ import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.server.ServerProcess;
 import nl.errorsoft.esql.server.ServerService;
-import nl.errorsoft.esql.server.ui.Processlist;
+import nl.errorsoft.esql.server.ui.dialog.ProcessListDialog;
 
 /**
  * Shows the process list of a server and refreshes it every few seconds. The list runs on a connection of its own, so a long query in the connection window
@@ -27,7 +27,7 @@ public class ProcesslistCC {
 	private static final int TICK_MILLIS = 250;
 
 	private final ConnectionProfile profile;
-	private final Processlist ui;
+	private final ProcessListDialog ui;
 	private volatile boolean running = true;
 	private volatile boolean paused;
 	private volatile int intervalSeconds = DEFAULT_INTERVAL;
@@ -37,7 +37,7 @@ public class ProcesslistCC {
 
 	public ProcesslistCC(ConnectionProfile profile, JFrame parent) {
 		this.profile = profile;
-		this.ui = new Processlist(this, parent, profile.getUsername() + "@" + profile.getHost() + " - active processes");
+		this.ui = new ProcessListDialog(this, parent, profile.getUsername() + "@" + profile.getHost() + " - active processes");
 	}
 
 	public void start() {
