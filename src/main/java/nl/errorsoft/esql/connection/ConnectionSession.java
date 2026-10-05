@@ -6,18 +6,18 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
 public class ConnectionSession {
 	private ConnectionWindowController connectionWindowController;
-	private ConnectionProfile cp;
+	private ConnectionProfile profile;
 	private DatabaseConnection db;
 
-	public ConnectionSession(ConnectionWindowController connectionWindowController, ConnectionProfile cp) {
+	public ConnectionSession(ConnectionWindowController connectionWindowController, ConnectionProfile profile) {
 		this.connectionWindowController = connectionWindowController;
-		this.cp = cp;
+		this.profile = profile;
 	}
 
 	public void start() throws Exception {
 		db = new DatabaseConnection();
 
-		db.connect(cp, "");
+		db.connect(profile, "");
 	}
 
 	public void stop() throws Exception {
@@ -29,6 +29,6 @@ public class ConnectionSession {
 	}
 
 	public ConnectionProfile getConnectionProfile() {
-		return cp;
+		return profile;
 	}
 }

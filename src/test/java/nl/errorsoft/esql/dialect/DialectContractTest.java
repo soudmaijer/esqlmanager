@@ -183,7 +183,7 @@ abstract class DialectContractTest {
 		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
-		id.notnull = true;
+		id.notNull = true;
 		ColumnDefinition label = new ColumnDefinition("label");
 		label.type = VARCHAR;
 		label.length = "20";
@@ -617,7 +617,7 @@ abstract class DialectContractTest {
 		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
-		id.notnull = true;
+		id.notNull = true;
 		ColumnDefinition parentId = new ColumnDefinition("parent_id");
 		parentId.type = INTEGER;
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
@@ -652,7 +652,7 @@ abstract class DialectContractTest {
 		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
-		id.notnull = true;
+		id.notNull = true;
 		ColumnDefinition parentId = new ColumnDefinition("parent_id");
 		parentId.type = INTEGER;
 		DesignedForeignKey key = new DesignedForeignKey("fk_gen", List.of("parent_id"), parent, List.of("id"), "SET NULL", "");
@@ -684,10 +684,10 @@ abstract class DialectContractTest {
 		String name = "re_" + System.nanoTime();
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;
 		ColumnDefinition id = column("id", INTEGER, "", true);
-		id.autoincrement = true;
+		id.autoIncrement = true;
 		ColumnDefinition customerName = column("name", VARCHAR, "50", false);
-		customerName.notnull = true;
-		customerName.defaultval = "it's";
+		customerName.notNull = true;
+		customerName.defaultValue = "it's";
 		DesignedTable customers = new DesignedTable("customers", engine, "", List.of(id, customerName), List.of());
 		DesignedTable products = new DesignedTable("products", engine, "", List.of(column("code", VARCHAR, "20", true), column("version", INTEGER, "", true)),
 			List.of());
@@ -711,13 +711,13 @@ abstract class DialectContractTest {
 		DesignedTable readCustomers = designed(read, "customers");
 		assertEquals(List.of("id", "name"), readCustomers.columns().stream().map(c -> c.name).toList());
 		ColumnDefinition readId = readCustomers.columns().get(0);
-		assertTrue(readId.primary && readId.autoincrement && readId.notnull);
+		assertTrue(readId.primary && readId.autoIncrement && readId.notNull);
 		assertTrue(readId.type.getName().toLowerCase().startsWith("int"), readId.type.getName());
 		ColumnDefinition readName = readCustomers.columns().get(1);
 		assertEquals("varchar", readName.type.getName().toLowerCase());
 		assertEquals("50", readName.length);
-		assertEquals("it's", readName.defaultval);
-		assertTrue(readName.notnull && !readName.primary);
+		assertEquals("it's", readName.defaultValue);
+		assertTrue(readName.notNull && !readName.primary);
 
 		assertEquals(List.of("code", "version"), designed(read, "products").columns().stream().filter(c -> c.primary).map(c -> c.name).toList());
 		assertTrue(designed(read, "notes").foreignKeys().isEmpty());
@@ -1048,7 +1048,7 @@ abstract class DialectContractTest {
 		column.type = type;
 		column.length = length;
 		column.primary = primary;
-		column.notnull = primary;
+		column.notNull = primary;
 		return column;
 	}
 
@@ -1067,13 +1067,13 @@ abstract class DialectContractTest {
 		ColumnDefinition id = new ColumnDefinition("id");
 		id.type = INTEGER;
 		id.primary = true;
-		id.notnull = true;
-		id.autoincrement = true;
+		id.notNull = true;
+		id.autoIncrement = true;
 		ColumnDefinition title = new ColumnDefinition("name");
 		title.type = VARCHAR;
 		title.length = "50";
-		title.notnull = true;
-		title.defaultval = "it's";
+		title.notNull = true;
+		title.defaultValue = "it's";
 		ColumnDefinition note = new ColumnDefinition("note");
 		note.type = DataType.named("text");
 		String engine = dialect.getTableTypes().length > 0 ? dialect.getTableTypes()[0] : null;

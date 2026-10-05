@@ -31,16 +31,16 @@ public class ColumnPropertiesDialog extends FormDialog implements ActionListener
 
 	private final JTextField name = new JTextField(16);
 	private final JTextField length = new JTextField();
-	private final JTextField dfault = new JTextField();
+	private final JTextField defaultValue = new JTextField();
 	private final JTextField comment = new JTextField();
 	private final JComboBox<DataType> fieldtypes = new JComboBox<>();
 
 	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary key");
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "&Unsigned");
 	private final JCheckBox autoIncrement = Forms.mnemonic(new JCheckBox(), "Auto &increment");
-	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "N&ot null");
-	private final JButton btnCancel = Forms.button("&Cancel");
-	private final JButton btnSave = Forms.button("&Save");
+	private final JCheckBox notNull = Forms.mnemonic(new JCheckBox(), "N&ot null");
+	private final JButton cancelButton = Forms.button("&Cancel");
+	private final JButton saveButton = Forms.button("&Save");
 
 	public ColumnPropertiesDialog(JFrame parent, ConnectionWindowController connectionWindowController, TableColumn column, boolean add, boolean edit) {
 		super(parent, add ? "Add field" : "Edit field", true);
@@ -60,7 +60,7 @@ public class ColumnPropertiesDialog extends FormDialog implements ActionListener
 			}
 		}
 
-		Forms.Grid fields = new Forms.Grid().row("&Name:", name).row("&Type:", fieldtypes).row("&Length:", length).row("&Default:", dfault);
+		Forms.Grid fields = new Forms.Grid().row("&Name:", name).row("&Type:", fieldtypes).row("&Length:", length).row("&Default:", defaultValue);
 		if (connectionWindowController.dialect().supportsColumnComments()) {
 			fields.row("Co&mment:", comment);
 		}
@@ -70,12 +70,12 @@ public class ColumnPropertiesDialog extends FormDialog implements ActionListener
 		options.add(primary);
 		options.add(unsigned);
 		options.add(autoIncrement);
-		options.add(notnull);
+		options.add(notNull);
 		Forms.titled(options, "Options");
 
-		btnCancel.addActionListener(this);
-		btnSave.addActionListener(this);
-		layoutDialog(new Forms.Grid().full(top).full(options).done(), btnSave, btnCancel);
+		cancelButton.addActionListener(this);
+		saveButton.addActionListener(this);
+		layoutDialog(new Forms.Grid().full(top).full(options).done(), saveButton, cancelButton);
 		setInitialFocus(name);
 
 		if (edit) {
@@ -83,10 +83,10 @@ public class ColumnPropertiesDialog extends FormDialog implements ActionListener
 			primary.setSelected(column.isPrimary());
 			primary.setEnabled(false);
 			autoIncrement.setSelected(column.isAutoIncrement());
-			notnull.setSelected(!column.isNullable());
+			notNull.setSelected(!column.isNullable());
 			unsigned.setSelected(unsigned.isEnabled() && !column.isSigned());
 			length.setText(column.getLength());
-			dfault.setText(column.getDefault());
+			defaultValue.setText(column.getDefault());
 			comment.setText(column.getComment());
 		}
 
@@ -99,14 +99,14 @@ public class ColumnPropertiesDialog extends FormDialog implements ActionListener
 
 		// Click in fieldtypes window, set the GUI to match the selected item
 		if (source == fieldtypes) {
-			DataType f = (DataType) fieldtypes.getSelectedItem();
-			primary.setEnabled(f.allows(DataType.Option.PRIMARY));
-			notnull.setEnabled(f.allows(DataType.Option.NOT_NULL));
-			unsigned.setEnabled(f.allows(DataType.Option.UNSIGNED));
-			autoIncrement.setEnabled(f.allows(DataType.Option.AUTO_INCREMENT));
-		} else if (source == btnCancel) {
+			DataType selectedType = (DataType) fieldtypes.getSelectedItem();
+			primary.setEnabled(selectedType.allows(DataType.Option.PRIMARY));
+			notNull.setEnabled(selectedType.allows(DataType.Option.NOT_NULL));
+			unsigned.setEnabled(selectedType.allows(DataType.Option.UNSIGNED));
+			autoIncrement.setEnabled(selectedType.allows(DataType.Option.AUTO_INCREMENT));
+		} else if (source == cancelButton) {
 			dispose();
-		} else if (source == btnSave) {
+		} else if (source == saveButton) {
 			save();
 		}
 	}
@@ -122,8 +122,8 @@ public class ColumnPropertiesDialog extends FormDialog implements ActionListener
 			return;
 		}
 
-		ColumnOptions options = new ColumnOptions(name.getText().trim(), size, dfault.getText(), (DataType) fieldtypes.getSelectedItem(),
-			autoIncrement.isSelected(), unsigned.isSelected(), !notnull.isSelected(), primary.isSelected(), comment.getText().trim());
+		ColumnOptions options = new ColumnOptions(name.getText().trim(), size, defaultValue.getText(), (DataType) fieldtypes.getSelectedItem(),
+			autoIncrement.isSelected(), unsigned.isSelected(), !notNull.isSelected(), primary.isSelected(), comment.getText().trim());
 		if (add) {
 			connectionWindowController.addTableColumn(this, options);
 		} else if (edit) {

@@ -18,13 +18,13 @@ class PostgresDialectTest extends DialectContractTest {
 	}
 
 	protected ConnectionProfile profile() {
-		ConnectionProfile cp = new ConnectionProfile();
-		cp.setHost(postgres.getHost());
-		cp.setPort(String.valueOf(postgres.getMappedPort(5432)));
-		cp.setUsername(postgres.getUsername());
-		cp.setPassword(postgres.getPassword());
-		cp.setDatabases(DATABASE);
-		cp.setServerType(new ServerType(ServerType.POSTGRES));
-		return cp;
+		ConnectionProfile profile = new ConnectionProfile();
+		profile.setHost(postgres.getHost());
+		profile.setPort(String.valueOf(postgres.getMappedPort(5432)));
+		profile.setUsername(postgres.getUsername());
+		profile.setPassword(postgres.getPassword());
+		profile.setDatabases(DATABASE);
+		profile.setServerType(new ServerType(ServerType.POSTGRES));
+		return profile;
 	}
 }

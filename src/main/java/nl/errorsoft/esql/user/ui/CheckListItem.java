@@ -1,11 +1,11 @@
 package nl.errorsoft.esql.user.ui;
 
 public class CheckListItem {
-	private String str;
+	private String text;
 	private boolean isSelected;
 
-	public CheckListItem(String str) {
-		this.str = str;
+	public CheckListItem(String text) {
+		this.text = text;
 		isSelected = false;
 	}
 
@@ -18,6 +18,6 @@ public class CheckListItem {
 	}
 
 	public String toString() {
-		return str;
+		return text;
 	}
 }

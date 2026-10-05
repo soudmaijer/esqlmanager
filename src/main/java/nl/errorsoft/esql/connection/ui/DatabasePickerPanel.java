@@ -265,8 +265,8 @@ public class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckMod
 	/** The icon and text of a row. */
 	private static final class LabelRenderer extends DefaultTreeCellRenderer {
 		@Override
-		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-			super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+			super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 			Object item = ((DefaultMutableTreeNode) value).getUserObject();
 			Icon icon = null;
 			if (item instanceof DatabaseItem) {
@@ -276,7 +276,7 @@ public class DatabasePickerPanel extends JPanel implements CheckBoxTree.CheckMod
 			}
 			setIcon(icon);
 			setFont(tree.getFont());
-			if (item instanceof MessageItem && !sel) {
+			if (item instanceof MessageItem && !selected) {
 				setForeground(UIManager.getColor("Label.disabledForeground"));
 				setFont(getFont().deriveFont(Font.ITALIC));
 			}

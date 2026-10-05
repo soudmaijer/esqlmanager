@@ -94,8 +94,8 @@ public class TableCard extends ModelCard {
 		}
 
 		g2.setFont(DesignerTheme.bold());
-		FontMetrics fm = g2.getFontMetrics();
-		int baseline = card.y + (HEADER - fm.getHeight()) / 2 + fm.getAscent();
+		FontMetrics metrics = g2.getFontMetrics();
+		int baseline = card.y + (HEADER - metrics.getHeight()) / 2 + metrics.getAscent();
 		g2.setColor(DesignerTheme.onAccent());
 		g2.drawString(name, card.x + PAD + 22, baseline);
 
@@ -110,7 +110,7 @@ public class TableCard extends ModelCard {
 
 	private void paintRows(Graphics2D g2, Rectangle card, Shape shape) {
 		g2.setFont(DesignerTheme.font());
-		FontMetrics fm = g2.getFontMetrics();
+		FontMetrics metrics = g2.getFontMetrics();
 		Shape clip = g2.getClip();
 		g2.clip(shape);
 
@@ -128,13 +128,13 @@ public class TableCard extends ModelCard {
 				icon.paintIcon(this, g2, card.x + PAD, top + (ROW - 16) / 2);
 			}
 
-			int baseline = top + (ROW - fm.getHeight()) / 2 + fm.getAscent();
+			int baseline = top + (ROW - metrics.getHeight()) / 2 + metrics.getAscent();
 			g2.setColor(DesignerTheme.text());
 			g2.drawString(field.getName(), card.x + PAD + 22, baseline);
 
 			String typeText = typeText(field);
 			g2.setColor(DesignerTheme.muted());
-			g2.drawString(typeText, card.x + card.width - PAD - fm.stringWidth(typeText), baseline);
+			g2.drawString(typeText, card.x + card.width - PAD - metrics.stringWidth(typeText), baseline);
 		}
 		g2.setClip(clip);
 	}
@@ -159,8 +159,8 @@ public class TableCard extends ModelCard {
 		return typesShown && type != null ? type : "";
 	}
 
-	public void addField(DesignerColumn f) {
-		this.fields.add(f);
+	public void addField(DesignerColumn column) {
+		this.fields.add(column);
 		this.reviewSize();
 		this.repaint();
 	}
@@ -219,11 +219,11 @@ public class TableCard extends ModelCard {
 	}
 
 	public DesignerColumn[] getFields() {
-		DesignerColumn[] f = new DesignerColumn[fields.size()];
+		DesignerColumn[] result = new DesignerColumn[fields.size()];
 		for (int i = 0; i < fields.size(); i++) {
-			f[i] = (DesignerColumn) fields.get(i);
+			result[i] = (DesignerColumn) fields.get(i);
 		}
-		return f;
+		return result;
 	}
 
 	public DesignerColumn getField(String name) {

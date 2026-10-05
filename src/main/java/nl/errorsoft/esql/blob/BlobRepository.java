@@ -12,14 +12,14 @@ import nl.errorsoft.esql.table.Table;
 
 /** Reads and writes the binary content of one cell, the row is selected by a ready made condition. */
 public class BlobRepository extends AbstractRepository {
-	public BlobRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public BlobRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	public void write(Table table, String column, String rowCondition, InputStream content, long length) throws SQLException {
 		useDatabase(table.getDatabase().getName());
 
-		try (PreparedStatement statement = dbc.getConnection().prepareStatement(
+		try (PreparedStatement statement = connection.getConnection().prepareStatement(
 			"UPDATE " + quote(table) + " SET " + quote(column) + " = ? WHERE " + rowCondition)) {
 			statement.setBinaryStream(1, content, length);
 			statement.execute();
@@ -30,7 +30,7 @@ public class BlobRepository extends AbstractRepository {
 	public boolean read(Table table, String column, String rowCondition, OutputStream target) throws Exception {
 		useDatabase(table.getDatabase().getName());
 
-		try (ResultSet rs = dbc.executeQuery("SELECT * FROM " + quote(table) + " WHERE " + rowCondition)) {
+		try (ResultSet rs = connection.executeQuery("SELECT * FROM " + quote(table) + " WHERE " + rowCondition)) {
 			if (!rs.first()) {
 				return false;
 			}

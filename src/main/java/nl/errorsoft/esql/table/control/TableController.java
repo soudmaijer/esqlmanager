@@ -57,28 +57,28 @@ public class TableController {
 		return show(service().executeQuery(query));
 	}
 
-	public void dropTableColumn(TableColumn tb) throws Exception {
-		service().dropColumn(tb);
+	public void dropTableColumn(TableColumn tableColumn) throws Exception {
+		service().dropColumn(tableColumn);
 	}
 
-	public void dropTable(Table tb) throws Exception {
-		service().dropTable(tb);
+	public void dropTable(Table table) throws Exception {
+		service().dropTable(table);
 	}
 
-	public void flushTable(Table tb) throws Exception {
-		service().flushTable(tb);
+	public void flushTable(Table table) throws Exception {
+		service().flushTable(table);
 	}
 
 	public void executeUpdate(String query) throws Exception {
 		service().executeUpdate(query);
 	}
 
-	public void addTableColumn(Table tb, ColumnDefinition column) throws Exception {
-		service().addColumn(tb, column);
+	public void addTableColumn(Table table, ColumnDefinition column) throws Exception {
+		service().addColumn(table, column);
 	}
 
-	public void editTableColumn(TableColumn tbc, ColumnDefinition column) throws Exception {
-		service().editColumn(tbc, column);
+	public void editTableColumn(TableColumn tableColumn, ColumnDefinition column) throws Exception {
+		service().editColumn(tableColumn, column);
 	}
 
 	public void insertNewRow() {

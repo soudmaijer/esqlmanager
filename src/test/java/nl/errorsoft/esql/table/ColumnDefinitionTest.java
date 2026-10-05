@@ -19,16 +19,16 @@ class ColumnDefinitionTest {
 		ColumnDefinition column = new ColumnDefinition("id");
 		column.applyType(INTEGER);
 		column.primary = true;
-		column.notnull = true;
-		column.autoincrement = true;
+		column.notNull = true;
+		column.autoIncrement = true;
 		column.unsigned = true;
 
 		column.applyType(TEXT);
 
 		assertEquals(TEXT, column.type);
-		assertTrue(column.notnull);
+		assertTrue(column.notNull);
 		assertFalse(column.primary);
-		assertFalse(column.autoincrement);
+		assertFalse(column.autoIncrement);
 		assertFalse(column.unsigned);
 	}
 

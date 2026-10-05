@@ -6,41 +6,41 @@ import javax.swing.table.DefaultTableModel;
 
 public class SortableTableModel extends DefaultTableModel {
 	private int[] indexes;
-	private SortItem[] si;
+	private SortItem[] items;
 
 	public SortableTableModel() {
 
 	}
 
-	public Object getValueAt(int row, int col) {
+	public Object getValueAt(int row, int column) {
 		getIndexes();
 		int rowIndex = row;
 		if (indexes != null && row < indexes.length) {
 			rowIndex = indexes[row];
 		}
-		return super.getValueAt(rowIndex, col);
+		return super.getValueAt(rowIndex, column);
 	}
 
-	public void setValueAt(Object value, int row, int col) {
+	public void setValueAt(Object value, int row, int column) {
 		int rowIndex = row;
 		if (indexes != null && row < indexes.length) {
 			rowIndex = indexes[row];
 		}
-		super.setValueAt(value, rowIndex, col);
+		super.setValueAt(value, rowIndex, column);
 	}
 
 	public void sortByColumn(int column, boolean ascend) {
 		Sort.fastQuickSort(getSortItems(column));
 
-		int arraySz = si.length;
+		int itemCount = items.length;
 
 		if (ascend) {
-			for (int i = 0; i < arraySz; i++) {
-				indexes[i] = si[i].getIndex();
+			for (int i = 0; i < itemCount; i++) {
+				indexes[i] = items[i].getIndex();
 			}
 		} else {
-			for (int i = 0; i < arraySz; i++) {
-				indexes[i] = si[arraySz - i - 1].getIndex();
+			for (int i = 0; i < itemCount; i++) {
+				indexes[i] = items[itemCount - i - 1].getIndex();
 			}
 		}
 		this.fireTableDataChanged();
@@ -48,23 +48,23 @@ public class SortableTableModel extends DefaultTableModel {
 
 	public SortItem[] getSortItems(int column) {
 		getIndexes();
-		si = new SortItem[indexes.length];
+		items = new SortItem[indexes.length];
 
-		for (int i = 0; i < si.length; i++) {
-			si[i] = new SortItem(indexes[i], getValueAt(i, column));
+		for (int i = 0; i < items.length; i++) {
+			items[i] = new SortItem(indexes[i], getValueAt(i, column));
 		}
-		return si;
+		return items;
 	}
 
 	public int[] getIndexes() {
-		int n = getRowCount();
+		int rowCount = getRowCount();
 		if (indexes != null) {
-			if (indexes.length == n) {
+			if (indexes.length == rowCount) {
 				return indexes;
 			}
 		}
-		indexes = new int[n];
-		for (int i = 0; i < n; i++) {
+		indexes = new int[rowCount];
+		for (int i = 0; i < rowCount; i++) {
 			indexes[i] = i;
 		}
 		return indexes;
@@ -72,73 +72,73 @@ public class SortableTableModel extends DefaultTableModel {
 }
 
 class Sort {
-	public static void fastQuickSort(SortItem si[]) {
-		int array_size = si.length;
+	public static void fastQuickSort(SortItem items[]) {
+		int itemCount = items.length;
 
-		QuickSort(si, 0, array_size - 1);
-		InsertionSort(si, 0, array_size - 1);
+		QuickSort(items, 0, itemCount - 1);
+		InsertionSort(items, 0, itemCount - 1);
 	}
 
-	private static void QuickSort(SortItem si[], int l, int r) {
-		int M = 4;
+	private static void QuickSort(SortItem items[], int low, int high) {
+		int cutoff = 4;
 		int i;
 		int j;
-		SortItem v;
+		SortItem pivot;
 
-		if ((r - l) > M) {
-			i = (r + l) / 2;
+		if ((high - low) > cutoff) {
+			i = (high + low) / 2;
 
-			if (compare(si[l].getObject(), si[i].getObject()) > 0) {
-				swap(si, l, i); // Tri-Median Methode!
+			if (compare(items[low].getObject(), items[i].getObject()) > 0) {
+				swap(items, low, i); // Tri-Median Methode!
 			}
-			if (compare(si[l].getObject(), si[r].getObject()) > 0) {
-				swap(si, l, r);
+			if (compare(items[low].getObject(), items[high].getObject()) > 0) {
+				swap(items, low, high);
 			}
-			if (compare(si[i].getObject(), si[r].getObject()) > 0) {
-				swap(si, i, r);
+			if (compare(items[i].getObject(), items[high].getObject()) > 0) {
+				swap(items, i, high);
 			}
 
-			j = r - 1;
-			swap(si, i, j);
-			i = l;
-			v = si[j];
+			j = high - 1;
+			swap(items, i, j);
+			i = low;
+			pivot = items[j];
 			for (;;) {
-				while (compare(si[++i].getObject(), v.getObject()) < 0) {
+				while (compare(items[++i].getObject(), pivot.getObject()) < 0) {
 				}
-				while (compare(si[--j].getObject(), v.getObject()) > 0) {
+				while (compare(items[--j].getObject(), pivot.getObject()) > 0) {
 				}
 				if (j < i) {
 					break;
 				}
-				swap(si, i, j);
+				swap(items, i, j);
 			}
-			swap(si, i, r - 1);
-			QuickSort(si, l, j);
-			QuickSort(si, i + 1, r);
+			swap(items, i, high - 1);
+			QuickSort(items, low, j);
+			QuickSort(items, i + 1, high);
 		}
 	}
 
-	private static void swap(SortItem si[], int i, int j) {
-		SortItem T;
-		T = si[i];
-		si[i] = si[j];
-		si[j] = T;
+	private static void swap(SortItem items[], int i, int j) {
+		SortItem held;
+		held = items[i];
+		items[i] = items[j];
+		items[j] = held;
 	}
 
-	private static void InsertionSort(SortItem si[], int lo0, int hi0) {
+	private static void InsertionSort(SortItem items[], int low, int high) {
 		int i;
 		int j;
-		SortItem v;
+		SortItem pivot;
 
-		for (i = lo0 + 1; i <= hi0; i++) {
-			v = si[i];
+		for (i = low + 1; i <= high; i++) {
+			pivot = items[i];
 			j = i;
 
-			while ((j > lo0) && (compare(si[j - 1].getObject(), v.getObject()) > 0)) {
-				si[j] = si[j - 1];
+			while ((j > low) && (compare(items[j - 1].getObject(), pivot.getObject()) > 0)) {
+				items[j] = items[j - 1];
 				j--;
 			}
-			si[j] = v;
+			items[j] = pivot;
 		}
 	}
 
@@ -192,11 +192,11 @@ class Sort {
 
 class SortItem {
 	private int index;
-	private Object obj;
+	private Object value;
 
-	public SortItem(int index, Object obj) {
+	public SortItem(int index, Object value) {
 		this.index = index;
-		this.obj = obj;
+		this.value = value;
 	}
 
 	public int getIndex() {
@@ -204,6 +204,6 @@ class SortItem {
 	}
 
 	public Object getObject() {
-		return obj;
+		return value;
 	}
 }

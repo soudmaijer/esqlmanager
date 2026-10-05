@@ -65,9 +65,9 @@ public class ExportController implements ProgressListener {
 		}
 	}
 
-	public void exportNodesAsSQL(ExportSqlDialog exportDialog, TreePath[] tpa, String file, ExportOptions options) {
+	public void exportNodesAsSQL(ExportSqlDialog exportDialog, TreePath[] selectedPaths, String file, ExportOptions options) {
 		String title = exportDialog.getTitle();
-		if (tpa == null || tpa.length == 0) {
+		if (selectedPaths == null || selectedPaths.length == 0) {
 			Dialogs.warn(exportDialog, title, "Select the database(s), schema(s) or table(s) to export in the tree.");
 			return;
 		}
@@ -82,14 +82,14 @@ public class ExportController implements ProgressListener {
 		try {
 			List<ScriptTarget> export = new ArrayList<>();
 
-			for (TreePath path : tpa) {
+			for (TreePath path : selectedPaths) {
 				export.add(ScriptTarget.of(((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject()));
 			}
 
-			ExportService exp = connectionWindowController.getContext().newExport(export, file, options);
-			progressDialog = new ImportExportProgressDialog(exportDialog, "Export data", describe(export) + " to " + file, exp::cancel);
-			exp.setListener(this);
-			exp.start();
+			ExportService exportService = connectionWindowController.getContext().newExport(export, file, options);
+			progressDialog = new ImportExportProgressDialog(exportDialog, "Export data", describe(export) + " to " + file, exportService::cancel);
+			exportService.setListener(this);
+			exportService.start();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(exportDialog, "Export data", e);
 		}

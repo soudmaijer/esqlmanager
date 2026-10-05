@@ -35,8 +35,8 @@ public class ProcessListDialog extends JDialog {
 	private static final String[] COLUMNS = {"Id", "User", "Host", "Database", "Command", "Time", "Info"};
 	private static final int[] WIDTHS = {60, 90, 110, 90, 80, 50, 420};
 
-	private final JTable jtable;
-	private final JLabel lblInterval = new JLabel();
+	private final JTable processTable;
+	private final JLabel intervalLabel = new JLabel();
 	private final JButton kill = Forms.button("&Kill");
 	private final JButton showQuery = Forms.button("&Show query");
 	private final JToggleButton pause = new JToggleButton("Pause");
@@ -51,30 +51,30 @@ public class ProcessListDialog extends JDialog {
 
 	public ProcessListDialog(ProcessListController controller, JFrame parent, String title) {
 		super(parent, title, false);
-		jtable = new JTable(new DefaultTableModel(COLUMNS, 0)) {
+		processTable = new JTable(new DefaultTableModel(COLUMNS, 0)) {
 			@Override
-			public boolean isCellEditable(int row, int col) {
+			public boolean isCellEditable(int row, int column) {
 				return false;
 			}
 		};
-		jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		jtable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		processTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		processTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-		JScrollPane jsp = new JScrollPane(jtable);
-		jsp.getViewport().setBackground(UIManager.getColor("Table.background"));
+		JScrollPane scroll = new JScrollPane(processTable);
+		scroll.getViewport().setBackground(UIManager.getColor("Table.background"));
 
 		kill.setEnabled(false);
 		showQuery.setEnabled(false);
 		kill.addActionListener(e -> killSelected(controller));
 		showQuery.addActionListener(e -> showSelectedQuery());
-		jtable.getSelectionModel().addListSelectionListener(e -> {
-			kill.setEnabled(connected && jtable.getSelectedRow() > -1);
-			showQuery.setEnabled(jtable.getSelectedRow() > -1);
+		processTable.getSelectionModel().addListSelectionListener(e -> {
+			kill.setEnabled(connected && processTable.getSelectedRow() > -1);
+			showQuery.setEnabled(processTable.getSelectedRow() > -1);
 		});
-		jtable.addMouseListener(new MouseAdapter() {
+		processTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && jtable.getSelectedRow() > -1) {
+				if (e.getClickCount() == 2 && processTable.getSelectedRow() > -1) {
 					showSelectedQuery();
 				}
 			}
@@ -107,12 +107,12 @@ public class ProcessListDialog extends JDialog {
 		north.add(interval);
 
 		JPanel south = new JPanel(new BorderLayout());
-		south.add(lblInterval, BorderLayout.WEST);
+		south.add(intervalLabel, BorderLayout.WEST);
 		south.add(Forms.buttonRow(showQuery, kill, close), BorderLayout.EAST);
 
 		JPanel root = Forms.padded(new JPanel(new BorderLayout(0, Forms.GAP)));
 		root.add(north, BorderLayout.NORTH);
-		root.add(jsp, BorderLayout.CENTER);
+		root.add(scroll, BorderLayout.CENTER);
 		root.add(south, BorderLayout.SOUTH);
 		setContentPane(root);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -134,10 +134,10 @@ public class ProcessListDialog extends JDialog {
 	}
 
 	private void killSelected(ProcessListController controller) {
-		int row = jtable.getSelectedRow();
+		int row = processTable.getSelectedRow();
 		if (row > -1) {
-			String id = jtable.getValueAt(row, 0).toString();
-			String description = "process " + id + " of " + jtable.getValueAt(row, 1) + " on " + jtable.getValueAt(row, 2);
+			String id = processTable.getValueAt(row, 0).toString();
+			String description = "process " + id + " of " + processTable.getValueAt(row, 1) + " on " + processTable.getValueAt(row, 2);
 			if (Dialogs.confirmDestructive(this, "Kill process", "Kill " + description + "? Its running statement is stopped.", "Kill")) {
 				controller.killProcess(id);
 			}
@@ -145,7 +145,7 @@ public class ProcessListDialog extends JDialog {
 	}
 
 	private void showSelectedQuery() {
-		int row = jtable.getSelectedRow();
+		int row = processTable.getSelectedRow();
 		if (row > -1 && row < shown.size()) {
 			ServerProcess process = shown.get(row);
 			ProcessQueryDialog dialog = new ProcessQueryDialog(this, "process " + process.id() + " of " + process.user() + " on " + process.host(),
@@ -157,9 +157,9 @@ public class ProcessListDialog extends JDialog {
 	/** Replaces the rows in the same table model, so that the column widths stay and the process that was selected is still selected. */
 	public void showProcesses(List<ServerProcess> processes) {
 		this.processes = processes;
-		int selected = jtable.getSelectedRow();
-		Object selectedId = selected > -1 ? jtable.getValueAt(selected, 0) : null;
-		DefaultTableModel model = (DefaultTableModel) jtable.getModel();
+		int selected = processTable.getSelectedRow();
+		Object selectedId = selected > -1 ? processTable.getValueAt(selected, 0) : null;
+		DefaultTableModel model = (DefaultTableModel) processTable.getModel();
 		model.setRowCount(0);
 		shown = processes.stream().filter(p -> !hideIdle.isSelected() || !p.idle()).toList();
 		for (ServerProcess p : shown) {
@@ -167,30 +167,30 @@ public class ProcessListDialog extends JDialog {
 		}
 		for (int row = 0; selectedId != null && row < model.getRowCount(); row++) {
 			if (selectedId.equals(model.getValueAt(row, 0))) {
-				jtable.setRowSelectionInterval(row, row);
+				processTable.setRowSelectionInterval(row, row);
 			}
 		}
 	}
 
 	private void setColumnWidths() {
 		for (int i = 0; i < WIDTHS.length; i++) {
-			jtable.getColumnModel().getColumn(i).setPreferredWidth(WIDTHS[i]);
+			processTable.getColumnModel().getColumn(i).setPreferredWidth(WIDTHS[i]);
 		}
 	}
 
 	public void showCountdown(int seconds) {
-		lblInterval.setText("Refreshing in " + seconds + " s");
+		intervalLabel.setText("Refreshing in " + seconds + " s");
 	}
 
 	public void showPaused() {
-		lblInterval.setText("Paused");
+		intervalLabel.setText("Paused");
 	}
 
 	/** The list lost its connection: the last rows stay for reading, refreshing and killing stop. */
 	public void showDisconnected() {
 		connected = false;
-		lblInterval.setText("Disconnected, the list is no longer refreshed");
-		lblInterval.setForeground(UIManager.getColor("Label.disabledForeground"));
+		intervalLabel.setText("Disconnected, the list is no longer refreshed");
+		intervalLabel.setForeground(UIManager.getColor("Label.disabledForeground"));
 		kill.setEnabled(false);
 		pause.setEnabled(false);
 		interval.setEnabled(false);

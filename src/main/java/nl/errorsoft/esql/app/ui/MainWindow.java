@@ -38,55 +38,55 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	// Menubar
 	private JMenuBar menubar;
-	private JMenu mnuGroupOptions;
-	private JMenuItem mnuConnect;
-	private JMenuItem mnuDisconnect;
-	private JMenuItem mnuExit;
-	private JMenu mnuGroupSettings;
-	private JMenuItem mnuSettings;
-	private JMenuItem mnuJDBC;
-	private JMenu mnuGroupServer;
-	private JMenuItem mnuProcesses;
-	private JMenu mnuGroupImportExport;
-	private JMenuItem mnuImportFromFile;
-	private JMenuItem mnuExportToFile;
-	private JMenuItem mnuDesigner;
+	private JMenu optionsMenu;
+	private JMenuItem connectItem;
+	private JMenuItem disconnectItem;
+	private JMenuItem exitItem;
+	private JMenu settingsMenu;
+	private JMenuItem settingsItem;
+	private JMenuItem jdbcItem;
+	private JMenu serverMenu;
+	private JMenuItem processesItem;
+	private JMenu importExportMenu;
+	private JMenuItem importFromFileItem;
+	private JMenuItem exportToFileItem;
+	private JMenuItem designerItem;
 
-	private JMenu mnuGroupWindow;
-	private JMenuItem mnuTileCascade;
-	private JMenuItem mnuTileHorizontal;
-	private JMenuItem mnuTileVertical;
-	private JMenu mnuGroupHelp;
-	private JMenuItem mnuAbout;
+	private JMenu windowMenu;
+	private JMenuItem tileCascadeItem;
+	private JMenuItem tileHorizontalItem;
+	private JMenuItem tileVerticalItem;
+	private JMenu helpMenu;
+	private JMenuItem aboutItem;
 
 	// Toolbar
 	private JToolBar toolbar;
-	private JButton btnConnect;
-	private JButton btnDisconnect;
-	private JButton btnCascade;
-	private JButton btnTileHorizontal;
-	private JButton btnTileVertical;
-	private JComboBox<JInternalFrame> cmbWindows; // Connection windows and designers
+	private JButton connectButton;
+	private JButton disconnectButton;
+	private JButton cascadeButton;
+	private JButton tileHorizontalButton;
+	private JButton tileVerticalButton;
+	private JComboBox<JInternalFrame> windowsCombo; // Connection windows and designers
 
 	// Statusbar
 	private JPanel statusbar;
-	private StatusLight stl;
+	private StatusLight statusLight;
 	private static final String NO_CONNECTION = "No connection";
 	private JLabel statusMsg;
 	private JLabel statusInfo;
 
 	// Containers etc.
-	private JSplitPane jsplit;
-	private JScrollPane jsp;
-	private RSyntaxTextArea jta;
-	private JDesktopPane jdp;
-	private ImageLoader imgLoader;
+	private JSplitPane split;
+	private JScrollPane outputScroll;
+	private RSyntaxTextArea outputText;
+	private JDesktopPane desktop;
+	private ImageLoader imageLoader;
 
 	public MainWindow(MainController mainController) {
 		this.mainController = mainController;
 
 		// Get Imageloader
-		imgLoader = ApplicationContext.get().imageLoader();
+		imageLoader = ApplicationContext.get().imageLoader();
 
 		// Create components.
 		initComponents();
@@ -110,7 +110,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		});
 		this.pack();
 
-		// Fix found on Sun forum: http://forum.java.sun.com/thread.jsp?forum=57&thread=158893
+		// Fix found on Sun forum: http://forum.java.sun.com/thread.outputScroll?forum=57&thread=158893
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		Rectangle screenRect = ge.getMaximumWindowBounds();
 
@@ -125,7 +125,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 
 		// Show rest
-		jsplit.setDividerLocation(0.85);
+		split.setDividerLocation(0.85);
 	}
 
 	public void initComponents() {
@@ -135,47 +135,47 @@ public class MainWindow extends JFrame implements ActionListener {
 		 * Menubar
 		 */
 		menubar = new JMenuBar();
-		mnuGroupOptions = new JMenu("Options");
-		mnuConnect = new JMenuItem("Connect...");
-		mnuDisconnect = new JMenuItem("Disconnect");
-		mnuExit = new JMenuItem("Exit");
-		mnuGroupOptions.add(mnuConnect);
-		mnuGroupOptions.add(mnuDisconnect);
-		mnuGroupOptions.addSeparator();
-		mnuGroupOptions.add(mnuExit);
-		menubar.add(mnuGroupOptions);
+		optionsMenu = new JMenu("Options");
+		connectItem = new JMenuItem("Connect...");
+		disconnectItem = new JMenuItem("Disconnect");
+		exitItem = new JMenuItem("Exit");
+		optionsMenu.add(connectItem);
+		optionsMenu.add(disconnectItem);
+		optionsMenu.addSeparator();
+		optionsMenu.add(exitItem);
+		menubar.add(optionsMenu);
 
-		mnuGroupSettings = new JMenu("Settings");
-		mnuSettings = new JMenuItem("Preferences...");
-		mnuJDBC = new JMenuItem("JDBC Driver settings...");
-		mnuJDBC.addActionListener(this);
-		mnuGroupSettings.add(mnuSettings);
-		mnuGroupSettings.add(mnuJDBC);
-		menubar.add(mnuGroupSettings);
+		settingsMenu = new JMenu("Settings");
+		settingsItem = new JMenuItem("Preferences...");
+		jdbcItem = new JMenuItem("JDBC Driver settings...");
+		jdbcItem.addActionListener(this);
+		settingsMenu.add(settingsItem);
+		settingsMenu.add(jdbcItem);
+		menubar.add(settingsMenu);
 
-		mnuGroupImportExport = new JMenu("Tools");
-		mnuImportFromFile = new JMenuItem("Import data...");
-		mnuExportToFile = new JMenuItem("Export data...");
-		mnuDesigner = new JMenuItem("Database Designer");
-		mnuGroupImportExport.add(mnuImportFromFile);
-		mnuGroupImportExport.add(mnuExportToFile);
-		mnuGroupImportExport.addSeparator();
-		mnuGroupImportExport.add(mnuDesigner);
-		menubar.add(mnuGroupImportExport);
+		importExportMenu = new JMenu("Tools");
+		importFromFileItem = new JMenuItem("Import data...");
+		exportToFileItem = new JMenuItem("Export data...");
+		designerItem = new JMenuItem("Database Designer");
+		importExportMenu.add(importFromFileItem);
+		importExportMenu.add(exportToFileItem);
+		importExportMenu.addSeparator();
+		importExportMenu.add(designerItem);
+		menubar.add(importExportMenu);
 
-		mnuGroupWindow = new JMenu("Window");
-		mnuTileCascade = new JMenuItem("Cascade");
-		mnuTileHorizontal = new JMenuItem("Tile horizontal");
-		mnuTileVertical = new JMenuItem("Tile vertical");
-		mnuGroupWindow.add(mnuTileCascade);
-		mnuGroupWindow.add(mnuTileHorizontal);
-		mnuGroupWindow.add(mnuTileVertical);
-		menubar.add(mnuGroupWindow);
+		windowMenu = new JMenu("Window");
+		tileCascadeItem = new JMenuItem("Cascade");
+		tileHorizontalItem = new JMenuItem("Tile horizontal");
+		tileVerticalItem = new JMenuItem("Tile vertical");
+		windowMenu.add(tileCascadeItem);
+		windowMenu.add(tileHorizontalItem);
+		windowMenu.add(tileVerticalItem);
+		menubar.add(windowMenu);
 
-		mnuGroupHelp = new JMenu("Help");
-		mnuAbout = new JMenuItem("About...");
-		mnuGroupHelp.add(mnuAbout);
-		menubar.add(mnuGroupHelp);
+		helpMenu = new JMenu("Help");
+		aboutItem = new JMenuItem("About...");
+		helpMenu.add(aboutItem);
+		menubar.add(helpMenu);
 
 		setJMenuBar(menubar);
 
@@ -185,44 +185,44 @@ public class MainWindow extends JFrame implements ActionListener {
 		toolbar = new JToolBar();
 		toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
 		toolbar.setFloatable(true);
-		btnConnect = new JButton(imgLoader.getIcon("imgConnect"));
-		btnConnect.setEnabled(true);
-		btnConnect.setToolTipText("Connect");
-		toolbar.add(btnConnect);
+		connectButton = new JButton(imageLoader.getIcon("imgConnect"));
+		connectButton.setEnabled(true);
+		connectButton.setToolTipText("Connect");
+		toolbar.add(connectButton);
 
-		btnDisconnect = new JButton(imgLoader.getIcon("imgDisconnect"));
-		btnDisconnect.setEnabled(false);
-		btnDisconnect.setToolTipText("Disconnect");
-		toolbar.add(btnDisconnect);
-
-		toolbar.addSeparator();
-
-		btnCascade = new JButton(imgLoader.getIcon("imgCascade"));
-		btnCascade.setEnabled(false);
-		btnCascade.setToolTipText("Cascade");
-		toolbar.add(btnCascade);
-
-		btnTileHorizontal = new JButton(imgLoader.getIcon("imgTileHorizontal"));
-		btnTileHorizontal.setEnabled(false);
-		btnTileHorizontal.setToolTipText("Tile horizontal");
-		toolbar.add(btnTileHorizontal);
-
-		btnTileVertical = new JButton(imgLoader.getIcon("imgTileVertical"));
-		btnTileVertical.setEnabled(false);
-		btnTileVertical.setToolTipText("Tile vertical");
-		toolbar.add(btnTileVertical);
+		disconnectButton = new JButton(imageLoader.getIcon("imgDisconnect"));
+		disconnectButton.setEnabled(false);
+		disconnectButton.setToolTipText("Disconnect");
+		toolbar.add(disconnectButton);
 
 		toolbar.addSeparator();
 
-		cmbWindows = new JComboBox<>();
-		cmbWindows.setRenderer(new ServerIconRenderer());
-		cmbWindows.addActionListener(e -> {
+		cascadeButton = new JButton(imageLoader.getIcon("imgCascade"));
+		cascadeButton.setEnabled(false);
+		cascadeButton.setToolTipText("Cascade");
+		toolbar.add(cascadeButton);
+
+		tileHorizontalButton = new JButton(imageLoader.getIcon("imgTileHorizontal"));
+		tileHorizontalButton.setEnabled(false);
+		tileHorizontalButton.setToolTipText("Tile horizontal");
+		toolbar.add(tileHorizontalButton);
+
+		tileVerticalButton = new JButton(imageLoader.getIcon("imgTileVertical"));
+		tileVerticalButton.setEnabled(false);
+		tileVerticalButton.setToolTipText("Tile vertical");
+		toolbar.add(tileVerticalButton);
+
+		toolbar.addSeparator();
+
+		windowsCombo = new JComboBox<>();
+		windowsCombo.setRenderer(new ServerIconRenderer());
+		windowsCombo.addActionListener(e -> {
 			try {
-				if (cmbWindows.getItemCount() <= 0) {
+				if (windowsCombo.getItemCount() <= 0) {
 					return;
 				}
 
-				JInternalFrame window = (JInternalFrame) cmbWindows.getSelectedItem();
+				JInternalFrame window = (JInternalFrame) windowsCombo.getSelectedItem();
 
 				if (window != null) {
 					if (window.isIcon()) {
@@ -235,12 +235,12 @@ public class MainWindow extends JFrame implements ActionListener {
 			}
 		});
 
-		cmbWindows.setToolTipText("Active window");
-		cmbWindows.setMinimumSize(new Dimension(160, ToolbarButtons.HEIGHT));
-		cmbWindows.setPreferredSize(new Dimension(220, ToolbarButtons.HEIGHT));
-		toolbar.add(cmbWindows);
+		windowsCombo.setToolTipText("Active window");
+		windowsCombo.setMinimumSize(new Dimension(160, ToolbarButtons.HEIGHT));
+		windowsCombo.setPreferredSize(new Dimension(220, ToolbarButtons.HEIGHT));
+		toolbar.add(windowsCombo);
 		updateMenus();
-		ToolbarButtons.style(btnConnect, btnDisconnect, btnCascade, btnTileHorizontal, btnTileVertical);
+		ToolbarButtons.style(connectButton, disconnectButton, cascadeButton, tileHorizontalButton, tileVerticalButton);
 		this.getContentPane().add(toolbar, BorderLayout.NORTH);
 
 		/*
@@ -248,15 +248,15 @@ public class MainWindow extends JFrame implements ActionListener {
 		 */
 		statusbar = new JPanel();
 		statusbar.setLayout(new BorderLayout());
-		stl = new StatusLight(imgLoader);
-		stl.switchRedLight(true);
+		statusLight = new StatusLight(imageLoader);
+		statusLight.switchRedLight(true);
 
 		statusMsg = new JLabel(NO_CONNECTION);
 		statusMsg.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 8));
 		statusMsg.setPreferredSize(new Dimension(200, 20));
 		JPanel statusState = new JPanel(new BorderLayout());
 		statusState.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-		statusState.add(stl, BorderLayout.WEST);
+		statusState.add(statusLight, BorderLayout.WEST);
 		statusState.add(statusMsg, BorderLayout.CENTER);
 
 		statusInfo = new JLabel(" ", SwingConstants.RIGHT);
@@ -278,66 +278,66 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		// No line wrapping: re-wrapping a long log on every width change made resizing slow.
 		// The log shows the statements that were run, so it gets the SQL colours of the query editor.
-		jta = new RSyntaxTextArea();
-		jta.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
-		jta.setLineWrap(false);
-		jta.setEditable(false);
-		jta.setHighlightCurrentLine(false);
-		EditorTheme.install(jta);
+		outputText = new RSyntaxTextArea();
+		outputText.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
+		outputText.setLineWrap(false);
+		outputText.setEditable(false);
+		outputText.setHighlightCurrentLine(false);
+		EditorTheme.install(outputText);
 
 		// DesktopPane.
-		jdp = new JDesktopPane();
-		jdp.setBackground(UIManager.getColor("Desktop.background"));
+		desktop = new JDesktopPane();
+		desktop.setBackground(UIManager.getColor("Desktop.background"));
 		// A designer that is not maximized stays reachable when the main window gets smaller.
-		jdp.addComponentListener(new java.awt.event.ComponentAdapter() {
+		desktop.addComponentListener(new java.awt.event.ComponentAdapter() {
 			@Override
 			public void componentResized(java.awt.event.ComponentEvent e) {
-				DesktopWindows.keepFramesInside(jdp);
+				DesktopWindows.keepFramesInside(desktop);
 			}
 		});
 
 		//ScrollPane for tree.
-		jsp = new JScrollPane(jta);
-		jsp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		jsp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		outputPanel.add(jsp, BorderLayout.CENTER);
+		outputScroll = new JScrollPane(outputText);
+		outputScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		outputScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		outputPanel.add(outputScroll, BorderLayout.CENTER);
 
-		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jdp, outputPanel);
+		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, desktop, outputPanel);
 		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
-		jsplit.setContinuousLayout(true);
+		split.setContinuousLayout(true);
 		// A maximized internal frame must not limit how far the divider can move.
-		jdp.setMinimumSize(new Dimension(0, 0));
+		desktop.setMinimumSize(new Dimension(0, 0));
 		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
-		jsplit.setResizeWeight(1.0);
+		split.setResizeWeight(1.0);
 		outputPanel.setMinimumSize(new Dimension(0, 60));
-		getContentPane().add(jsplit);
+		getContentPane().add(split);
 
 		/*
 		 *	ActionListeners
 		 */
 		// Menubar
-		mnuConnect.addActionListener(this);
-		mnuDisconnect.addActionListener(this);
-		mnuExit.addActionListener(this);
+		connectItem.addActionListener(this);
+		disconnectItem.addActionListener(this);
+		exitItem.addActionListener(this);
 
-		mnuSettings.addActionListener(this);
-		mnuTileCascade.addActionListener(this);
-		mnuTileVertical.addActionListener(this);
-		mnuTileHorizontal.addActionListener(this);
+		settingsItem.addActionListener(this);
+		tileCascadeItem.addActionListener(this);
+		tileVerticalItem.addActionListener(this);
+		tileHorizontalItem.addActionListener(this);
 
-		mnuExportToFile.addActionListener(this);
-		mnuImportFromFile.addActionListener(this);
-		mnuDesigner.addActionListener(this);
+		exportToFileItem.addActionListener(this);
+		importFromFileItem.addActionListener(this);
+		designerItem.addActionListener(this);
 
-		btnCascade.addActionListener(this);
-		btnTileVertical.addActionListener(this);
-		btnTileHorizontal.addActionListener(this);
+		cascadeButton.addActionListener(this);
+		tileVerticalButton.addActionListener(this);
+		tileHorizontalButton.addActionListener(this);
 
-		mnuAbout.addActionListener(this);
+		aboutItem.addActionListener(this);
 
 		// Toolbar
-		btnConnect.addActionListener(this);
-		btnDisconnect.addActionListener(this);
+		connectButton.addActionListener(this);
+		disconnectButton.addActionListener(this);
 	}
 
 	public void closeWindow() {
@@ -347,7 +347,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public JInternalFrame getSelectedFrame() {
-		return this.jdp.getSelectedFrame();
+		return this.desktop.getSelectedFrame();
 	}
 
 	/** The resting state: green and connected while a connection window is open, red when there is none. */
@@ -365,13 +365,13 @@ public class MainWindow extends JFrame implements ActionListener {
 	/** The items that work on a connection are enabled while a connection window is open. */
 	private void updateMenus() {
 		boolean connected = getConnectionWindowCount() > 0;
-		for (JMenuItem item : new JMenuItem[]{mnuDisconnect, mnuImportFromFile, mnuExportToFile, mnuDesigner}) {
+		for (JMenuItem item : new JMenuItem[]{disconnectItem, importFromFileItem, exportToFileItem, designerItem}) {
 			item.setEnabled(connected);
 		}
 	}
 
 	public void updateStatus(final String message, final boolean red) {
-		stl.switchRedLight(red);
+		statusLight.switchRedLight(red);
 
 		statusMsg.setText(message);
 	}
@@ -394,9 +394,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 
 		try {
-			jta.append(s);
+			outputText.append(s);
 			trimOutput();
-			jta.setCaretPosition(jta.getDocument().getLength());
+			outputText.setCaretPosition(outputText.getDocument().getLength());
 		} catch (javax.swing.text.BadLocationException e) {
 			// Cannot happen, trimOutput only reads and removes inside the document.
 		}
@@ -404,7 +404,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	// Keeps the output panel from growing without limit.
 	private void trimOutput() throws javax.swing.text.BadLocationException {
-		javax.swing.text.Document doc = jta.getDocument();
+		javax.swing.text.Document doc = outputText.getDocument();
 		int length = doc.getLength();
 
 		if (length > MAX_OUTPUT_CHARS) {
@@ -416,13 +416,13 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public void addConnectionWindow(ConnectionWindow connectionWindow) {
-		btnConnect.setEnabled(true);
-		btnDisconnect.setEnabled(true);
-		btnCascade.setEnabled(true);
-		btnTileHorizontal.setEnabled(true);
-		btnTileVertical.setEnabled(true);
+		connectButton.setEnabled(true);
+		disconnectButton.setEnabled(true);
+		cascadeButton.setEnabled(true);
+		tileHorizontalButton.setEnabled(true);
+		tileVerticalButton.setEnabled(true);
 
-		jdp.add(connectionWindow);
+		desktop.add(connectionWindow);
 
 		// A maximized frame follows the size of the desktop, so the content scales with the output panel.
 		try {
@@ -431,26 +431,26 @@ public class MainWindow extends JFrame implements ActionListener {
 			log.warn("Could not maximize the connection window", e);
 		}
 
-		cmbWindows.addItem(connectionWindow);
-		cmbWindows.setSelectedIndex(cmbWindows.getItemCount() - 1);
+		windowsCombo.addItem(connectionWindow);
+		windowsCombo.setSelectedIndex(windowsCombo.getItemCount() - 1);
 		updateMenus();
 	}
 
 	/** Shows a designer on the desktop, centred and in front, and lists it in the window selector. */
 	public void addDesignerWindow(DesignerWindow designer) {
-		Dimension desktop = jdp.getSize();
-		designer.setSize(Math.min(designer.getWidth(), desktop.width), Math.min(designer.getHeight(), desktop.height));
-		designer.setLocation((desktop.width - designer.getWidth()) / 2, (desktop.height - designer.getHeight()) / 2);
-		jdp.add(designer);
-		designer.addPropertyChangeListener(JInternalFrame.TITLE_PROPERTY, e -> cmbWindows.repaint());
+		Dimension desktopSize = desktop.getSize();
+		designer.setSize(Math.min(designer.getWidth(), desktopSize.width), Math.min(designer.getHeight(), desktopSize.height));
+		designer.setLocation((desktopSize.width - designer.getWidth()) / 2, (desktopSize.height - designer.getHeight()) / 2);
+		desktop.add(designer);
+		designer.addPropertyChangeListener(JInternalFrame.TITLE_PROPERTY, e -> windowsCombo.repaint());
 		designer.setVisible(true);
 
-		cmbWindows.addItem(designer);
-		cmbWindows.setSelectedItem(designer);
+		windowsCombo.addItem(designer);
+		windowsCombo.setSelectedItem(designer);
 	}
 
 	public void removeDesignerWindow(DesignerWindow designer) {
-		cmbWindows.removeItem(designer);
+		windowsCombo.removeItem(designer);
 		designer.dispose();
 	}
 
@@ -459,7 +459,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	 * @return false when the user cancelled one of them
 	 */
 	public boolean closeDesigners(ConnectionWindow connectionWindow) {
-		for (JInternalFrame frame : jdp.getAllFrames()) {
+		for (JInternalFrame frame : desktop.getAllFrames()) {
 			if (frame instanceof DesignerWindow designer && designer.getConnectionWindow() == connectionWindow && !designer.close()) {
 				return false;
 			}
@@ -469,7 +469,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	/** The connection window in front, or the one the designer in front belongs to. */
 	public ConnectionWindow getConnectionWindow() {
-		return switch (cmbWindows.getSelectedItem()) {
+		return switch (windowsCombo.getSelectedItem()) {
 			case ConnectionWindow connectionWindow -> connectionWindow;
 			case DesignerWindow designer -> designer.getConnectionWindow();
 			case null, default -> null;
@@ -478,8 +478,8 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	public int getConnectionWindowCount() {
 		int count = 0;
-		for (int i = 0; i < cmbWindows.getItemCount(); i++) {
-			if (cmbWindows.getItemAt(i) instanceof ConnectionWindow) {
+		for (int i = 0; i < windowsCombo.getItemCount(); i++) {
+			if (windowsCombo.getItemAt(i) instanceof ConnectionWindow) {
 				count++;
 			}
 		}
@@ -487,15 +487,15 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public void removeConnectionWindow(ConnectionWindow connectionWindow) {
-		cmbWindows.removeItem(connectionWindow);
-		jdp.getDesktopManager().closeFrame(connectionWindow);
+		windowsCombo.removeItem(connectionWindow);
+		desktop.getDesktopManager().closeFrame(connectionWindow);
 
 		if (getConnectionWindowCount() == 0) {
-			btnConnect.setEnabled(true);
-			btnDisconnect.setEnabled(false);
-			btnCascade.setEnabled(false);
-			btnTileHorizontal.setEnabled(false);
-			btnTileVertical.setEnabled(false);
+			connectButton.setEnabled(true);
+			disconnectButton.setEnabled(false);
+			cascadeButton.setEnabled(false);
+			tileHorizontalButton.setEnabled(false);
+			tileVerticalButton.setEnabled(false);
 			mainController.showConnectionProfileDialog();
 		}
 
@@ -506,43 +506,43 @@ public class MainWindow extends JFrame implements ActionListener {
 		Object object = event.getSource();
 
 		// Check for menu or Toolbar events.
-		if (object == mnuExit) {
+		if (object == exitItem) {
 			closeWindow();
-		} else if (object == mnuConnect || object == btnConnect) {
+		} else if (object == connectItem || object == connectButton) {
 			mainController.showConnectionProfileDialog();
-		} else if (object == mnuSettings) {
+		} else if (object == settingsItem) {
 			mainController.showSettingsDialog();
-		} else if (object == mnuDisconnect || object == btnDisconnect) {
+		} else if (object == disconnectItem || object == disconnectButton) {
 			ConnectionWindow connectionWindow = getConnectionWindow();
 			if (connectionWindow != null) {
 				connectionWindow.closeWindow(true);
 			}
-		} else if (object == mnuTileVertical || object == btnTileVertical) {
-			DesktopWindows.tileVertical(jdp);
-		} else if (object == mnuTileHorizontal || object == btnTileHorizontal) {
-			DesktopWindows.tileHorizontal(jdp);
-		} else if (object == mnuTileCascade || object == btnCascade) {
-			DesktopWindows.cascadeAll(jdp);
-		} else if (object == mnuAbout) {
+		} else if (object == tileVerticalItem || object == tileVerticalButton) {
+			DesktopWindows.tileVertical(desktop);
+		} else if (object == tileHorizontalItem || object == tileHorizontalButton) {
+			DesktopWindows.tileHorizontal(desktop);
+		} else if (object == tileCascadeItem || object == cascadeButton) {
+			DesktopWindows.cascadeAll(desktop);
+		} else if (object == aboutItem) {
 			new AboutDialog(this, mainController.getAppName(), mainController.getAppVersion(), mainController.getAppCommit(),
 				() -> mainController.showSplashScreen(0)).showDialog();
-		} else if (object == mnuJDBC) {
+		} else if (object == jdbcItem) {
 			mainController.showDriverDialog();
 		}
 		// Import sql file.
-		else if (object == mnuImportFromFile) {
+		else if (object == importFromFileItem) {
 			if (getConnectionWindowCount() > 0) {
 				mainController.showImportDialog();
 			}
 		}
 		// Export sql file.
-		else if (object == mnuExportToFile) {
+		else if (object == exportToFileItem) {
 			if (getConnectionWindowCount() > 0) {
 				mainController.showExportDialog();
 			}
 		}
 		// Start designer
-		else if (object == mnuDesigner) {
+		else if (object == designerItem) {
 			if (getConnectionWindowCount() > 0) {
 				mainController.openDesigner();
 			}

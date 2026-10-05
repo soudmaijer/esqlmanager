@@ -10,14 +10,14 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 /** Server wide information: running processes. */
 public class ServerRepository extends AbstractRepository {
-	public ServerRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public ServerRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	public List<ServerProcess> listProcesses() throws SQLException {
 		List<ServerProcess> processes = new ArrayList<>();
 
-		try (ResultSet rs = dbc.executeQuery(dialect().listProcessesSql())) {
+		try (ResultSet rs = connection.executeQuery(dialect().listProcessesSql())) {
 			while (rs.next()) {
 				processes.add(dialect().readProcess(rs));
 			}
@@ -26,7 +26,7 @@ public class ServerRepository extends AbstractRepository {
 	}
 
 	public void killProcess(String id) throws SQLException {
-		dbc.execute(dialect().killProcessSql(id));
+		connection.execute(dialect().killProcessSql(id));
 	}
 
 	public String statusQuery() {

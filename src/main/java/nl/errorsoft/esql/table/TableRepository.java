@@ -20,8 +20,8 @@ import nl.errorsoft.esql.dialect.MaintenanceStatement;
  * What differs per database is asked from the {@link Dialect}.
  */
 public class TableRepository extends AbstractRepository {
-	public TableRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public TableRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	// Structure
@@ -29,9 +29,9 @@ public class TableRepository extends AbstractRepository {
 	public TableColumn[] loadColumns(Table table) throws SQLException {
 		useDatabaseOf(table);
 		List<TableColumn> columns = new ArrayList<>();
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
+		DatabaseMetaData metaData = connection.getConnection().getMetaData();
 
-		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), schemaOf(table), table.getName(), "%")) {
+		try (ResultSet rs = metaData.getColumns(connection.getConnection().getCatalog(), schemaOf(table), table.getName(), "%")) {
 			while (rs.next()) {
 				TableColumn column = new TableColumn(table);
 				column.setNativeTypeName(rs.getString("TYPE_NAME"));
@@ -44,7 +44,7 @@ public class TableRepository extends AbstractRepository {
 			}
 		}
 
-		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOf(table), table.getName())) {
+		try (ResultSet rs = metaData.getPrimaryKeys(connection.getConnection().getCatalog(), schemaOf(table), table.getName())) {
 			while (rs.next()) {
 				for (TableColumn column : columns) {
 					if (column.getName().equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
@@ -62,10 +62,10 @@ public class TableRepository extends AbstractRepository {
 	public TableIndex[] loadIndexes(Table table) throws SQLException {
 		List<TableIndex> indexes = new ArrayList<>();
 		useDatabaseOf(table);
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
+		DatabaseMetaData metaData = connection.getConnection().getMetaData();
 		String primaryKeyName = primaryKeyName(table);
 
-		try (ResultSet rs = dmd.getIndexInfo(dbc.getConnection().getCatalog(), schemaOf(table), table.getName(), false, false)) {
+		try (ResultSet rs = metaData.getIndexInfo(connection.getConnection().getCatalog(), schemaOf(table), table.getName(), false, false)) {
 			while (rs.next()) {
 				// Some drivers add a statistics row without an index name.
 				String indexName = rs.getString("INDEX_NAME");
@@ -113,7 +113,8 @@ public class TableRepository extends AbstractRepository {
 
 	/** The name the server gave the primary key of the table, null when it has none. */
 	private String primaryKeyName(Table table) throws SQLException {
-		try (ResultSet rs = dbc.getConnection().getMetaData().getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOf(table), table.getName())) {
+		try (
+			ResultSet rs = connection.getConnection().getMetaData().getPrimaryKeys(connection.getConnection().getCatalog(), schemaOf(table), table.getName())) {
 			return rs.next() ? rs.getString("PK_NAME") : null;
 		}
 	}
@@ -121,9 +122,9 @@ public class TableRepository extends AbstractRepository {
 	/** @param schema the schema to look in, null for the current one. */
 	public boolean exists(Database database, Schema schema, String name) throws SQLException {
 		useDatabase(database.getName());
-		String schemaName = schema == null ? dbc.getSchema() : schema.getName();
+		String schemaName = schema == null ? connection.getSchema() : schema.getName();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), schemaName, name,
+		try (ResultSet rs = connection.getConnection().getMetaData().getTables(connection.getConnection().getCatalog(), schemaName, name,
 			new String[]{"TABLE"})) {
 			return rs.next();
 		}
@@ -189,7 +190,7 @@ public class TableRepository extends AbstractRepository {
 			List<String> columns = autoNumbered == null ? List.of() : queryStrings(autoNumbered, target.schema(), target.name());
 
 			for (String statement : dialect().afterDataLoadSql(target, columns)) {
-				dbc.execute(statement);
+				connection.execute(statement);
 			}
 		}
 	}
@@ -198,7 +199,7 @@ public class TableRepository extends AbstractRepository {
 	public long countRows(Table table) throws SQLException {
 		useDatabaseOf(table);
 
-		try (ResultSet rs = dbc.executeQuery("SELECT count(*) FROM " + quote(table))) {
+		try (ResultSet rs = connection.executeQuery("SELECT count(*) FROM " + quote(table))) {
 			return rs.next() ? rs.getLong(1) : 0;
 		}
 	}
@@ -235,7 +236,7 @@ public class TableRepository extends AbstractRepository {
 			return statement.message();
 		}
 
-		try (ResultSet rs = dbc.executeQuery(statement.sql())) {
+		try (ResultSet rs = connection.executeQuery(statement.sql())) {
 			return rs.first() ? rs.getString(statement.resultColumn()) : statement.message();
 		}
 	}
@@ -247,9 +248,9 @@ public class TableRepository extends AbstractRepository {
 		executeAll(dialect().addColumnSql(table.qualifiedName(), column));
 	}
 
-	public void modifyColumn(TableColumn old, ColumnDefinition column) throws Exception {
-		useDatabaseOf(old.getTable());
-		executeAll(dialect().modifyColumnSql(old.getTable().qualifiedName(), old.getName(), column));
+	public void modifyColumn(TableColumn previousColumn, ColumnDefinition column) throws Exception {
+		useDatabaseOf(previousColumn.getTable());
+		executeAll(dialect().modifyColumnSql(previousColumn.getTable().qualifiedName(), previousColumn.getName(), column));
 	}
 
 	public void dropColumn(TableColumn column) throws Exception {
@@ -296,7 +297,8 @@ public class TableRepository extends AbstractRepository {
 		useDatabaseOf(table);
 		List<String> names = new ArrayList<>();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(dbc.getConnection().getCatalog(), schemaOf(table), table.getName())) {
+		try (ResultSet rs = connection.getConnection().getMetaData().getImportedKeys(connection.getConnection().getCatalog(), schemaOf(table),
+			table.getName())) {
 			while (rs.next()) {
 				String name = rs.getString("FK_NAME");
 				if (name != null && !names.contains(name)) {
@@ -315,7 +317,7 @@ public class TableRepository extends AbstractRepository {
 		TableColumn[] columns = table.getColumns();
 		String quotedTable = quote(table);
 
-		try (ResultSet rs = dbc.executeQuery("SELECT count(*) FROM " + quotedTable)) {
+		try (ResultSet rs = connection.executeQuery("SELECT count(*) FROM " + quotedTable)) {
 			if (rs.first()) {
 				table.setRowCount(rs.getInt(1));
 			}
@@ -330,7 +332,7 @@ public class TableRepository extends AbstractRepository {
 		}
 		String pageQuery = dialect().selectPage(quotedTable, String.join(", ", keyColumns), skip, show);
 
-		try (ResultSet rs = pageQuery != null ? dbc.executeQuery(pageQuery) : dbc.executeQuery("SELECT * FROM " + quotedTable)) {
+		try (ResultSet rs = pageQuery != null ? connection.executeQuery(pageQuery) : connection.executeQuery("SELECT * FROM " + quotedTable)) {
 			if (pageQuery == null) {
 				if (skip > 0) {
 					rs.absolute(skip);
@@ -438,7 +440,7 @@ public class TableRepository extends AbstractRepository {
 
 	/** Runs a query and returns its result with one column object per result column. */
 	public QueryResult query(String sql, boolean readOnly) throws Exception {
-		try (ResultSet rs = dbc.executeQuery(sql)) {
+		try (ResultSet rs = connection.executeQuery(sql)) {
 			return readResult(rs, readOnly);
 		}
 	}

@@ -7,8 +7,8 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 /** Runs the statements of an import script. */
 public class ImportRepository extends AbstractRepository {
-	public ImportRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public ImportRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	public void switchDatabase(String name) throws SQLException {
@@ -17,7 +17,7 @@ public class ImportRepository extends AbstractRepository {
 
 	/** The schema unqualified names resolve to, null on servers without schemas. */
 	public String currentSchema() throws SQLException {
-		return dbc.getSchema();
+		return connection.getSchema();
 	}
 
 	/** Makes unqualified names resolve to the schema; nothing on servers without schemas. */
@@ -27,26 +27,26 @@ public class ImportRepository extends AbstractRepository {
 
 	/** Statements from now on belong to a transaction that {@link #commit} or {@link #rollback} ends. */
 	public void beginTransaction() throws SQLException {
-		dbc.getConnection().setAutoCommit(false);
+		connection.getConnection().setAutoCommit(false);
 	}
 
 	public void commit() throws SQLException {
-		dbc.getConnection().commit();
+		connection.getConnection().commit();
 	}
 
 	public void rollback() throws SQLException {
-		dbc.getConnection().rollback();
+		connection.getConnection().rollback();
 	}
 
 	/** Every statement commits by itself again. */
 	public void endTransaction() throws SQLException {
-		dbc.getConnection().setAutoCommit(true);
+		connection.getConnection().setAutoCommit(true);
 	}
 
 	/** A statement that returns a result, such as moving a sequence, cannot go through executeUpdate. */
 	public void run(String statement) throws SQLException {
 		if (statement.trim().toUpperCase().startsWith("SELECT")) {
-			dbc.execute(statement);
+			connection.execute(statement);
 		} else {
 			executeUpdate(statement);
 		}

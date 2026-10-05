@@ -6,36 +6,36 @@ import javax.swing.filechooser.*;
 public class ExtensionFileFilter extends FileFilter {
 
 	String[] extensions;
-	String desc;
+	String description;
 
-	public ExtensionFileFilter(String desc, String[] extensions) {
+	public ExtensionFileFilter(String description, String[] extensions) {
 		this.extensions = extensions != null ? extensions : new String[]{};
-		this.desc = desc == null ? extList() : desc + " (" + extList() + ")";
+		this.description = description == null ? extList() : description + " (" + extList() + ")";
 	}
 
 	private String extList() {
-		int len = extensions.length;
-		if (len > 0) {
-			String ret = extensions[0];
+		int count = extensions.length;
+		if (count > 0) {
+			String joined = extensions[0];
 
-			for (int j = 1; j < len; ret += ", " + extensions[j++]) {
+			for (int j = 1; j < count; joined += ", " + extensions[j++]) {
 			}
-			return ret;
+			return joined;
 		} else {
 			return "";
 		}
 	}
 
-	public boolean accept(File f) {
-		if (f.isDirectory()) {
+	public boolean accept(File file) {
+		if (file.isDirectory()) {
 			return true;
 		}
 
-		if (f.isFile()) {
-			String fname = f.getName().toLowerCase();
+		if (file.isFile()) {
+			String fileName = file.getName().toLowerCase();
 
 			for (int j = extensions.length; j-- > 0;) {
-				if (fname.endsWith(extensions[j])) {
+				if (fileName.endsWith(extensions[j])) {
 					return true;
 				}
 			}
@@ -43,6 +43,6 @@ public class ExtensionFileFilter extends FileFilter {
 		return false;
 	}
 	public String getDescription() {
-		return desc;
+		return description;
 	}
 }

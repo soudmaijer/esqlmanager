@@ -17,34 +17,34 @@ import nl.errorsoft.esql.table.TableService;
 public class IndexesController {
 
 	private ConnectionWindowController connectionWindowController;
-	private Table t;
+	private Table table;
 	private IndexesTab indexesTab;
 
-	public IndexesController(ConnectionWindowController connectionWindowController, Table t) {
+	public IndexesController(ConnectionWindowController connectionWindowController, Table table) {
 		this.connectionWindowController = connectionWindowController;
-		this.t = t;
+		this.table = table;
 	}
 
 	/** Opens the indexes of the table in a tab ("Indexes orders"), or puts its open tab in front. The columns and indexes load in the background. */
 	public void showTab() {
-		String key = "indexes:" + t.getDatabase().getName() + "." + t.getName();
+		String key = "indexes:" + table.getDatabase().getName() + "." + table.getName();
 
 		if (!connectionWindowController.requireFeature(Dialect.Feature.INDEXES, "The index manager")
 			|| connectionWindowController.getWindow().selectEditorTab(key)) {
 			return;
 		}
 
-		String title = "Indexes " + t.getName();
+		String title = "Indexes " + table.getName();
 		connectionWindowController.inBackground("Load indexes", "Loading indexes...", () -> {
-			service().loadColumns(t);
-			return service().loadIndexes(t);
+			service().loadColumns(table);
+			return service().loadIndexes(table);
 		}, indexes -> {
 			// Opened twice while loading: the first tab stays.
 			if (connectionWindowController.getWindow().selectEditorTab(key)) {
 				return;
 			}
 			indexesTab = new IndexesTab(this, title, connectionWindowController.dialect().indexTypes());
-			indexesTab.loadIndexes(t.getIndexes());
+			indexesTab.loadIndexes(table.getIndexes());
 			connectionWindowController.getWindow().showEditorTab(key, title, indexesTab);
 		});
 	}
@@ -54,44 +54,44 @@ public class IndexesController {
 		connectionWindowController.getWindow().closeTab(indexesTab);
 	}
 
-	public void addIndex(TableIndex ti, TableColumn[] tc, String type) {
+	public void addIndex(TableIndex index, TableColumn[] columns, String type) {
 		try {
-			if (tc.length <= 0) {
+			if (columns.length <= 0) {
 				Dialogs.error(connectionWindowController.getWindow(), "Indexes", "Select at least one column for the index.");
 			} else {
-				service().addIndex(t, ti, tc, type);
-				indexesTab.loadIndexes(t.getIndexes());
-				connectionWindowController.tableSelected(t, true);
+				service().addIndex(table, index, columns, type);
+				indexesTab.loadIndexes(table.getIndexes());
+				connectionWindowController.tableSelected(table, true);
 			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindowController.getWindow(), "Add index", e);
 		}
 	}
 
-	public void modifyIndex(TableIndex ti, TableColumn[] tc, String type) {
+	public void modifyIndex(TableIndex index, TableColumn[] columns, String type) {
 		try {
-			if (tc.length <= 0) {
+			if (columns.length <= 0) {
 				Dialogs.error(connectionWindowController.getWindow(), "Indexes", "Select at least one column for the index.");
 			} else {
-				if (ti.isNew()) {
-					service().addIndex(t, ti, tc, type);
+				if (index.isNew()) {
+					service().addIndex(table, index, columns, type);
 				} else {
-					service().modifyIndex(t, ti, tc, type);
+					service().modifyIndex(table, index, columns, type);
 				}
 
-				indexesTab.loadIndexes(t.getIndexes());
-				connectionWindowController.tableSelected(t, true);
+				indexesTab.loadIndexes(table.getIndexes());
+				connectionWindowController.tableSelected(table, true);
 			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindowController.getWindow(), "Modify index", e);
 		}
 	}
 
-	public void dropIndex(TableIndex ti) {
+	public void dropIndex(TableIndex index) {
 		try {
-			service().dropIndex(t, ti);
-			indexesTab.loadIndexes(t.getIndexes());
-			connectionWindowController.tableSelected(t, true);
+			service().dropIndex(table, index);
+			indexesTab.loadIndexes(table.getIndexes());
+			connectionWindowController.tableSelected(table, true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindowController.getWindow(), "Drop index", e);
 		}
@@ -102,16 +102,16 @@ public class IndexesController {
 	}
 
 	public void addNew(String name) {
-		TableIndex ti = new TableIndex(t);
-		ti.setName(name);
-		ti.setNew(true);
-		indexesTab.addNewIndex(ti, t.getColumns());
+		TableIndex index = new TableIndex(table);
+		index.setName(name);
+		index.setNew(true);
+		indexesTab.addNewIndex(index, table.getColumns());
 	}
 
 	public void addPrimary() {
-		TableIndex ti = new TableIndex(t);
-		ti.setName("PRIMARY");
-		ti.setNew(true);
-		indexesTab.addNewIndex(ti, t.getColumns());
+		TableIndex index = new TableIndex(table);
+		index.setName("PRIMARY");
+		index.setNew(true);
+		indexesTab.addNewIndex(index, table.getColumns());
 	}
 }

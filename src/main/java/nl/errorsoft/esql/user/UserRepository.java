@@ -14,8 +14,8 @@ import nl.errorsoft.esql.dialect.UserAdmin;
 
 /** Accounts and privileges. The SQL differs so much per server that the dialect's {@link UserAdmin} writes it, this repository runs it. */
 public class UserRepository extends AbstractRepository {
-	public UserRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public UserRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	public boolean usesHost() {
@@ -29,7 +29,7 @@ public class UserRepository extends AbstractRepository {
 	public List<DatabaseUser> listUsers() throws SQLException {
 		List<DatabaseUser> users = new ArrayList<>();
 
-		try (ResultSet rs = dbc.executeQuery(admin().listUsersSql())) {
+		try (ResultSet rs = connection.executeQuery(admin().listUsersSql())) {
 			while (rs.next()) {
 				users.add(admin().readUser(rs));
 			}
@@ -56,7 +56,7 @@ public class UserRepository extends AbstractRepository {
 			useDatabase(query.database());
 		}
 
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement(query.sql())) {
+		try (PreparedStatement ps = connection.getConnection().prepareStatement(query.sql())) {
 			for (int i = 0; i < query.parameters().size(); i++) {
 				ps.setString(i + 1, query.parameters().get(i));
 			}

@@ -19,8 +19,8 @@ public class OracleDialect extends AbstractDialect {
 		return "system";
 	}
 
-	public String getConnectionDatabase(ConnectionProfile cp, String requested) {
-		return cp.getDatabases();
+	public String getConnectionDatabase(ConnectionProfile profile, String requested) {
+		return profile.getDatabases();
 	}
 
 	/** The SID of the profile is the only database. */

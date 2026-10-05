@@ -21,8 +21,8 @@ import nl.errorsoft.esql.table.TableColumn;
 
 /** Reads what an export script is made of: table names, table definitions and rows as statements. */
 public class ExportRepository extends AbstractRepository {
-	public ExportRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public ExportRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	/** The tables of a database that have structure and data of their own, so no views; on servers with schemas those of every schema. */
@@ -106,7 +106,7 @@ public class ExportRepository extends AbstractRepository {
 		if (show == null) {
 			return null;
 		}
-		try (ResultSet rs = dbc.executeQuery(show)) {
+		try (ResultSet rs = connection.executeQuery(show)) {
 			if (!rs.next()) {
 				throw new EsqlException("The server gave no definition of view " + view.name() + ".");
 			}
@@ -135,7 +135,7 @@ public class ExportRepository extends AbstractRepository {
 		String show = dialect().showCreateTableSql(table);
 
 		if (show != null) {
-			try (ResultSet rs = dbc.executeQuery(show)) {
+			try (ResultSet rs = connection.executeQuery(show)) {
 				if (!rs.next()) {
 					throw new EsqlException("The server gave no definition of table " + table.name() + ".");
 				}
@@ -143,19 +143,19 @@ public class ExportRepository extends AbstractRepository {
 			}
 		}
 
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-		String schema = table.schema() == null ? dbc.getSchema() : table.schema();
-		String catalog = dbc.getConnection().getCatalog();
+		DatabaseMetaData metaData = connection.getConnection().getMetaData();
+		String schema = table.schema() == null ? connection.getSchema() : table.schema();
+		String catalog = connection.getConnection().getCatalog();
 		List<String> columns = new ArrayList<>();
 
-		try (ResultSet rs = dmd.getColumns(catalog, schema, table.name(), "%")) {
+		try (ResultSet rs = metaData.getColumns(catalog, schema, table.name(), "%")) {
 			while (rs.next()) {
 				columns.add(dialect().columnDdl(rs));
 			}
 		}
 
 		Map<Integer, String> primary = new TreeMap<>();
-		try (ResultSet keys = dmd.getPrimaryKeys(catalog, schema, table.name())) {
+		try (ResultSet keys = metaData.getPrimaryKeys(catalog, schema, table.name())) {
 			while (keys.next()) {
 				primary.put(keys.getInt("KEY_SEQ"), keys.getString("COLUMN_NAME"));
 			}
@@ -169,7 +169,7 @@ public class ExportRepository extends AbstractRepository {
 	 * @param rowsPerInsert how many rows share one statement, 1 gives an INSERT per row.
 	 */
 	public void insertStatements(TableName table, int rowsPerInsert, Consumer<String> sink) throws SQLException {
-		try (ResultSet rs = dbc.executeQuery("SELECT * FROM " + quote(table))) {
+		try (ResultSet rs = connection.executeQuery("SELECT * FROM " + quote(table))) {
 			ResultSetMetaData rsm = rs.getMetaData();
 			List<String> batch = new ArrayList<>();
 

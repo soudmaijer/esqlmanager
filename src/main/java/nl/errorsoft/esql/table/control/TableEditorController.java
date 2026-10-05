@@ -100,7 +100,7 @@ public class TableEditorController {
 	}
 
 	/*
-	 	List all tabletypes, empty when the server has no such choice
+	 	List all tableTypes, empty when the server has no such choice
 	*/
 	public String[] getTableTypes() {
 		return connectionWindowController.dialect().getTableTypes();
@@ -137,9 +137,9 @@ public class TableEditorController {
 		}
 	}
 
-	public void modifyTable(TableEditorTab editor, Table t, String tableName, String tableType, String tableComment) {
+	public void modifyTable(TableEditorTab editor, Table table, String tableName, String tableType, String tableComment) {
 		try {
-			connectionWindowController.getContext().tables().modifyTable(t, tableName, tableType, tableComment);
+			connectionWindowController.getContext().tables().modifyTable(table, tableName, tableType, tableComment);
 			window().removeTab(editor);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(window(), "Modify table", e);

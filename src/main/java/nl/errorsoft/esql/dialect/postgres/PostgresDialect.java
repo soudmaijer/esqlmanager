@@ -149,12 +149,12 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	/** The profile's database list is a filter, so the first entry is where we connect to. */
-	public String getConnectionDatabase(ConnectionProfile cp, String requested) {
+	public String getConnectionDatabase(ConnectionProfile profile, String requested) {
 		if (requested != null && requested.trim().length() > 0) {
 			return requested.trim();
 		}
 
-		String first = cp.getDatabases().split(",")[0].trim();
+		String first = profile.getDatabases().split(",")[0].trim();
 		return first.length() > 0 ? first : DEFAULT_DATABASE;
 	}
 

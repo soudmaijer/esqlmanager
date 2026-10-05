@@ -17,8 +17,8 @@ import nl.errorsoft.esql.table.ColumnDefinition;
 
 /** Reads the structure of an existing database for the designer from the JDBC metadata; what differs per server is asked from the dialect. */
 public class DesignerRepository extends AbstractRepository {
-	public DesignerRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public DesignerRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	/**
@@ -29,7 +29,7 @@ public class DesignerRepository extends AbstractRepository {
 		useDatabase(database.getName());
 		List<String> names = new ArrayList<>();
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getTables(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), "%",
+		try (ResultSet rs = connection.getConnection().getMetaData().getTables(connection.getConnection().getCatalog(), schemaOrCurrent(schema), "%",
 			new String[]{"TABLE"})) {
 			while (rs.next()) {
 				names.add(rs.getString("TABLE_NAME"));
@@ -45,16 +45,16 @@ public class DesignerRepository extends AbstractRepository {
 
 	/** The columns of a table of the active database in their order, with the primary key columns marked. */
 	public List<ColumnDefinition> loadColumns(String schema, String table) throws SQLException {
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
+		DatabaseMetaData metaData = connection.getConnection().getMetaData();
 		List<ColumnDefinition> columns = new ArrayList<>();
 
-		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table, "%")) {
+		try (ResultSet rs = metaData.getColumns(connection.getConnection().getCatalog(), schemaOrCurrent(schema), table, "%")) {
 			while (rs.next()) {
 				columns.add(dialect().readColumn(rs));
 			}
 		}
 
-		try (ResultSet rs = dmd.getPrimaryKeys(dbc.getConnection().getCatalog(), schemaOrCurrent(schema), table)) {
+		try (ResultSet rs = metaData.getPrimaryKeys(connection.getConnection().getCatalog(), schemaOrCurrent(schema), table)) {
 			while (rs.next()) {
 				for (ColumnDefinition column : columns) {
 					column.primary |= column.name.equals(rs.getString("COLUMN_NAME"));
@@ -71,10 +71,10 @@ public class DesignerRepository extends AbstractRepository {
 	public List<DesignedForeignKey> loadForeignKeys(String schema, String table) throws SQLException {
 		Map<String, TreeMap<Integer, ColumnPair>> pairs = new LinkedHashMap<>();
 		Map<String, KeyDetail> details = new LinkedHashMap<>();
-		String catalog = dbc.getConnection().getCatalog();
+		String catalog = connection.getConnection().getCatalog();
 		String readSchema = schemaOrCurrent(schema);
 
-		try (ResultSet rs = dbc.getConnection().getMetaData().getImportedKeys(catalog, readSchema, table)) {
+		try (ResultSet rs = connection.getConnection().getMetaData().getImportedKeys(catalog, readSchema, table)) {
 			while (rs.next()) {
 				if (!sameName(rs.getString("PKTABLE_CAT"), catalog) || !sameName(rs.getString("PKTABLE_SCHEM"), readSchema)) {
 					continue;
@@ -114,7 +114,7 @@ public class DesignerRepository extends AbstractRepository {
 	}
 
 	private String schemaOrCurrent(String schema) throws SQLException {
-		return schema == null ? dbc.getSchema() : schema;
+		return schema == null ? connection.getSchema() : schema;
 	}
 
 	/** NO ACTION is what a key does when nothing is said, so it is left empty like a key drawn in the designer. */

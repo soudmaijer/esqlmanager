@@ -9,8 +9,8 @@ import nl.errorsoft.esql.jdbc.DatabaseConnection;
 
 /** Runs statements typed by the user. */
 public class QueryRepository extends AbstractRepository {
-	public QueryRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public QueryRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	public int update(String sql) throws SQLException {
@@ -22,7 +22,7 @@ public class QueryRepository extends AbstractRepository {
 	 * shows its result.
 	 */
 	public ExecutionResult execute(String sql) throws SQLException {
-		try (Statement statement = dbc.getConnection().createStatement()) {
+		try (Statement statement = connection.getConnection().createStatement()) {
 			if (statement.execute(sql)) {
 				try (ResultSet rs = statement.getResultSet()) {
 					return new ExecutionResult.Rows(readResult(rs, false));

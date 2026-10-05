@@ -18,7 +18,7 @@ public class ConnectionProfile {
 	private String port = "";
 	private String username = "";
 	private String password = "";
-	private ServerType st;
+	private ServerType serverType;
 	private boolean lastUsed = false;
 	private boolean autoConnect = false;
 	private boolean savePassword = true;
@@ -76,19 +76,19 @@ public class ConnectionProfile {
 	}
 
 	public ServerType getServerType() {
-		return st;
+		return serverType;
 	}
 
-	public void setServerType(ServerType st) {
-		this.st = st;
+	public void setServerType(ServerType serverType) {
+		this.serverType = serverType;
 	}
 
 	public boolean profileExists(String name) throws Exception {
 		if (document().hasRootElement()) {
-			java.util.List<?> l = document().getRootElement().getChildren("profile");
+			java.util.List<?> profileElements = document().getRootElement().getChildren("profile");
 
-			for (int i = 0; i < l.size(); i++) {
-				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(name)) {
+			for (int i = 0; i < profileElements.size(); i++) {
+				if (((org.jdom.Element) profileElements.get(i)).getChild("name").getText().equalsIgnoreCase(name)) {
 					return true;
 				}
 			}
@@ -96,7 +96,7 @@ public class ConnectionProfile {
 		return false;
 	}
 
-	public void setLastUsed(ConnectionProfile cp) throws Exception {
+	public void setLastUsed(ConnectionProfile profile) throws Exception {
 		java.util.List<?> profiles = null;
 
 		if (document().hasRootElement()) {
@@ -104,10 +104,10 @@ public class ConnectionProfile {
 		}
 
 		for (int i = 0; i < profiles.size(); i++) {
-			org.jdom.Element temp = (org.jdom.Element) profiles.get(i);
+			org.jdom.Element profileElement = (org.jdom.Element) profiles.get(i);
 
-			if (temp.getChild("lastUsed") != null) {
-				if (temp.getChild("name").getText().equalsIgnoreCase(cp.getName())) {
+			if (profileElement.getChild("lastUsed") != null) {
+				if (profileElement.getChild("name").getText().equalsIgnoreCase(profile.getName())) {
 					((org.jdom.Element) profiles.get(i)).getChild("lastUsed").setText("true");
 				} else {
 					((org.jdom.Element) profiles.get(i)).getChild("lastUsed").setText("false");
@@ -117,10 +117,10 @@ public class ConnectionProfile {
 		save(document());
 	}
 
-	public void addProfile(ConnectionProfile cp) throws Exception {
+	public void addProfile(ConnectionProfile profile) throws Exception {
 		if (document().hasRootElement()) {
 			org.jdom.Element newElement = new org.jdom.Element("profile");
-			ProfileXml.write(newElement, cp);
+			ProfileXml.write(newElement, profile);
 			document().getRootElement().addContent(newElement);
 		}
 		save(document());
@@ -133,10 +133,10 @@ public class ConnectionProfile {
 	/** Writes the settings over the saved profile that is called {@code previousName}, which renames it when the name of {@code profile} is another. */
 	public void editProfile(String previousName, ConnectionProfile profile) throws Exception {
 		if (document().hasRootElement()) {
-			java.util.List<?> l = document().getRootElement().getChildren("profile");
+			java.util.List<?> profileElements = document().getRootElement().getChildren("profile");
 
-			for (int i = 0; i < l.size(); i++) {
-				org.jdom.Element element = (org.jdom.Element) l.get(i);
+			for (int i = 0; i < profileElements.size(); i++) {
+				org.jdom.Element element = (org.jdom.Element) profileElements.get(i);
 
 				if (previousName.equalsIgnoreCase(element.getChildText("name"))) {
 					ProfileXml.write(element, profile);
@@ -158,7 +158,7 @@ public class ConnectionProfile {
 		copy.setPassword(password);
 		copy.setSavePassword(savePassword);
 		copy.setSelection(selection);
-		copy.setServerType(st);
+		copy.setServerType(serverType);
 		return copy;
 	}
 
@@ -166,7 +166,8 @@ public class ConnectionProfile {
 	public boolean sameSettings(ConnectionProfile other) {
 		return getName().equals(other.getName()) && getHost().equals(other.getHost()) && getPort().equals(other.getPort())
 			&& getUsername().equals(other.getUsername()) && getPassword().equals(other.getPassword())
-			&& (st == null ? other.st == null : other.st != null && st.getType() == other.st.getType()) && selection.equals(other.selection)
+			&& (serverType == null ? other.serverType == null : other.serverType != null && serverType.getType() == other.serverType.getType())
+			&& selection.equals(other.selection)
 			&& autoConnect == other.autoConnect && savePassword == other.savePassword;
 	}
 
@@ -190,11 +191,11 @@ public class ConnectionProfile {
 
 	public void deleteProfile(ConnectionProfile profile) throws Exception {
 		if (document().hasRootElement()) {
-			java.util.List<?> l = document().getRootElement().getChildren("profile");
+			java.util.List<?> profileElements = document().getRootElement().getChildren("profile");
 
-			for (int i = 0; i < l.size(); i++) {
-				if (((org.jdom.Element) l.get(i)).getChild("name").getText().equalsIgnoreCase(profile.getName())) {
-					document().getRootElement().removeContent((org.jdom.Element) l.get(i));
+			for (int i = 0; i < profileElements.size(); i++) {
+				if (((org.jdom.Element) profileElements.get(i)).getChild("name").getText().equalsIgnoreCase(profile.getName())) {
+					document().getRootElement().removeContent((org.jdom.Element) profileElements.get(i));
 					save(document());
 					break;
 				}

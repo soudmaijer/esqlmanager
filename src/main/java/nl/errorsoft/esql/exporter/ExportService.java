@@ -75,16 +75,16 @@ public class ExportService implements Runnable {
 	}
 
 	private void write() throws Exception {
-		try (PrintWriter pw = open()) {
+		try (PrintWriter writer = open()) {
 			progress(10);
 			List<Part> parts = parts();
 			tablesTotal = parts.stream().mapToInt(part -> part.tables().size()).sum();
 
 			for (Part part : parts) {
-				writePart(pw, part);
+				writePart(writer, part);
 			}
 
-			if (pw.checkError()) {
+			if (writer.checkError()) {
 				throw new IOException("The file " + file + " could not be written");
 			}
 		}
@@ -108,19 +108,19 @@ public class ExportService implements Runnable {
 		return parts;
 	}
 
-	private void writePart(PrintWriter pw, Part part) throws Exception {
+	private void writePart(PrintWriter writer, Part part) throws Exception {
 		if (options.createDatabase()) {
-			pw.println(repository.createDatabaseSql(part.database()) + ";\n");
+			writer.println(repository.createDatabaseSql(part.database()) + ";\n");
 		}
 
 		if (options.useDatabase()) {
-			pw.println(repository.useDatabaseSql(part.database()) + ";\n");
+			writer.println(repository.useDatabaseSql(part.database()) + ";\n");
 		}
 
 		if (options.dumpStructure()) {
 			// A table is restored into its own schema, which may not exist on the server the script is run on.
 			for (String schema : new LinkedHashSet<>(part.tables().stream().map(TableName::schema).filter(Objects::nonNull).toList())) {
-				pw.println(repository.createSchemaSql(schema) + ";\n");
+				writer.println(repository.createSchemaSql(schema) + ";\n");
 			}
 		}
 
@@ -128,55 +128,55 @@ public class ExportService implements Runnable {
 		boolean foreignKeys = options.disableForeignKeyChecks() && repository.disableForeignKeyChecksSql() != null;
 
 		if (transaction) {
-			pw.println(repository.beginSql() + ";\n");
+			writer.println(repository.beginSql() + ";\n");
 		}
 		if (foreignKeys) {
-			pw.println(repository.disableForeignKeyChecksSql() + ";\n");
+			writer.println(repository.disableForeignKeyChecksSql() + ";\n");
 		}
 
 		for (TableName table : part.tables()) {
 			cancellation.check();
 			listener.status("Exporting " + table);
-			dumpTable(pw, table);
+			dumpTable(writer, table);
 			tablesDone++;
 			progress(10 + 85 * tablesDone / Math.max(1, tablesTotal));
 		}
 
 		for (TableName view : part.views()) {
 			cancellation.check();
-			dumpView(pw, view);
+			dumpView(writer, view);
 		}
 
 		if (foreignKeys) {
-			pw.println(repository.enableForeignKeyChecksSql() + ";\n");
+			writer.println(repository.enableForeignKeyChecksSql() + ";\n");
 		}
 		if (transaction) {
-			pw.println(repository.commitSql() + ";\n");
+			writer.println(repository.commitSql() + ";\n");
 		}
 	}
 
-	private void dumpTable(PrintWriter pw, TableName table) throws Exception {
+	private void dumpTable(PrintWriter writer, TableName table) throws Exception {
 		if (options.dropTable()) {
-			pw.println(repository.dropTableSql(table, options.dropIfExists()) + ";\n");
+			writer.println(repository.dropTableSql(table, options.dropIfExists()) + ";\n");
 		}
 
 		if (options.dumpStructure()) {
-			pw.println(repository.structureSql(table, options.createIfNotExists()) + ";\n");
+			writer.println(repository.structureSql(table, options.createIfNotExists()) + ";\n");
 		}
 
 		if (options.dumpData()) {
 			repository.insertStatements(table, options.rowsPerInsert(), statement -> {
 				cancellation.check();
-				pw.println(statement);
+				writer.println(statement);
 			});
 
 			for (String statement : repository.afterDataStatements(table)) {
-				pw.println(statement + ";\n");
+				writer.println(statement + ";\n");
 			}
 		}
 	}
 
-	private void dumpView(PrintWriter pw, TableName view) throws Exception {
+	private void dumpView(PrintWriter writer, TableName view) throws Exception {
 		String definition = repository.viewSql(view);
 
 		if (definition == null) {
@@ -184,9 +184,9 @@ public class ExportService implements Runnable {
 			return;
 		}
 		if (options.dropTable()) {
-			pw.println(repository.dropViewSql(view, options.dropIfExists()) + ";\n");
+			writer.println(repository.dropViewSql(view, options.dropIfExists()) + ";\n");
 		}
-		pw.println(definition + ";\n");
+		writer.println(definition + ";\n");
 	}
 
 	/** The file is written as UTF-8 unless another encoding was chosen, compressed when the name ends in .gz. */

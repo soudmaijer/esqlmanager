@@ -27,54 +27,54 @@ public class ConnectionProfileController {
 
 	private MainController mainController;
 	private ConnectionProfileDialog profileDialog;
-	private ConnectionProfile cp;
+	private ConnectionProfile profileStore;
 
 	public ConnectionProfileController(MainController mainController) {
 		this.mainController = mainController;
-		cp = new ConnectionProfile();
+		profileStore = new ConnectionProfile();
 	}
 
 	public void showDialog(MainWindow mainWindow, boolean autoConnect) {
 		// Create Frame.
 		mainWindow.updateStatus("Starting profile manager...", true);
-		ConnectionProfile[] cpa;
+		ConnectionProfile[] profiles;
 		try {
-			cpa = cp.getProfiles();
+			profiles = profileStore.getProfiles();
 		} catch (Exception e) {
 			mainController.showConnectionState();
 			ApplicationContext.get().errors().report(mainWindow, "Load profiles", e);
 			return;
 		}
-		log.info("Loaded {} connection profile(s) from conf/profiles.xml", cpa.length);
+		log.info("Loaded {} connection profile(s) from conf/profiles.xml", profiles.length);
 		boolean conLastUsed = false;
 
 		if (autoConnect) {
-			for (int i = 0; i < cpa.length; i++) {
-				if (cpa[i].isAutoConnect()) {
-					connect(cpa[i]);
+			for (int i = 0; i < profiles.length; i++) {
+				if (profiles[i].isAutoConnect()) {
+					connect(profiles[i]);
 					conLastUsed = true;
 				}
 			}
 		}
 		if (!conLastUsed) {
 			profileDialog = new ConnectionProfileDialog(mainWindow, this);
-			profileDialog.loadProfiles(cpa, null);
+			profileDialog.loadProfiles(profiles, null);
 			mainController.showConnectionState();
 			profileDialog.setVisible(true);
 		}
 	}
 
-	public void connect(ConnectionProfile selcp) {
+	public void connect(ConnectionProfile selectedProfile) {
 		try {
-			if (!selcp.isSavePassword() && selcp.getPassword().isEmpty()) {
-				String password = askPassword(selcp);
+			if (!selectedProfile.isSavePassword() && selectedProfile.getPassword().isEmpty()) {
+				String password = askPassword(selectedProfile);
 				if (password == null) {
 					return;
 				}
-				selcp.setPassword(password);
+				selectedProfile.setPassword(password);
 			}
-			cp.setLastUsed(selcp);
-			mainController.openConnectionWindow(selcp);
+			profileStore.setLastUsed(selectedProfile);
+			mainController.openConnectionWindow(selectedProfile);
 
 			// An auto-connect at startup happens before the profile dialog exists.
 			if (profileDialog != null) {
@@ -97,7 +97,7 @@ public class ConnectionProfileController {
 	/** The first free "New profile", "New profile 2", ... for a profile that is not saved yet. */
 	public String newProfileName() {
 		try {
-			return cp.uniqueName("New profile");
+			return profileStore.uniqueName("New profile");
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "New profile", e);
 			return "New profile";
@@ -107,13 +107,13 @@ public class ConnectionProfileController {
 	/** Saves a new profile and selects it in the dialog. False (after a message) when the name is taken or saving failed. */
 	public boolean addProfile(ConnectionProfile typed) {
 		try {
-			if (cp.profileExists(typed.getName())) {
+			if (profileStore.profileExists(typed.getName())) {
 				Dialogs.warn(profileDialog, "Save profile", "A profile named '" + typed.getName() + "' exists already.");
 				return false;
 			}
 			mainController.updateStatus("Adding profile...", true);
-			cp.addProfile(typed);
-			profileDialog.loadProfiles(cp.getProfiles(), typed.getName());
+			profileStore.addProfile(typed);
+			profileDialog.loadProfiles(profileStore.getProfiles(), typed.getName());
 			mainController.showConnectionState();
 			return true;
 		} catch (Exception e) {
@@ -126,13 +126,13 @@ public class ConnectionProfileController {
 	public boolean editProfile(String previousName, ConnectionProfile typed) {
 		try {
 			boolean renamed = !previousName.equalsIgnoreCase(typed.getName());
-			if (renamed && cp.profileExists(typed.getName())) {
+			if (renamed && profileStore.profileExists(typed.getName())) {
 				Dialogs.warn(profileDialog, "Save profile", "A profile named '" + typed.getName() + "' exists already.");
 				return false;
 			}
 			mainController.updateStatus("Saving profile...", true);
-			cp.editProfile(previousName, typed);
-			profileDialog.loadProfiles(cp.getProfiles(), typed.getName());
+			profileStore.editProfile(previousName, typed);
+			profileDialog.loadProfiles(profileStore.getProfiles(), typed.getName());
 			mainController.showConnectionState();
 			return true;
 		} catch (Exception e) {
@@ -144,9 +144,9 @@ public class ConnectionProfileController {
 	/** Saves a copy of a saved profile as "name copy" and selects it. */
 	public void duplicateProfile(ConnectionProfile saved) {
 		try {
-			ConnectionProfile copy = saved.copyAs(cp.uniqueCopyName(saved.getName()));
-			cp.addProfile(copy);
-			profileDialog.loadProfiles(cp.getProfiles(), copy.getName());
+			ConnectionProfile copy = saved.copyAs(profileStore.uniqueCopyName(saved.getName()));
+			profileStore.addProfile(copy);
+			profileDialog.loadProfiles(profileStore.getProfiles(), copy.getName());
 			log.info("Profile '{}' duplicated as '{}'", saved.getName(), copy.getName());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Duplicate profile", e);
@@ -266,11 +266,11 @@ public class ConnectionProfileController {
 		}
 	}
 
-	public void deleteProfile(ConnectionProfile cp) {
+	public void deleteProfile(ConnectionProfile profile) {
 		try {
 			mainController.updateStatus("Deleting profile...", true);
-			this.cp.deleteProfile(cp);
-			profileDialog.loadProfiles(this.cp.getProfiles(), null);
+			this.profileStore.deleteProfile(profile);
+			profileDialog.loadProfiles(this.profileStore.getProfiles(), null);
 			mainController.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Delete profile", e);

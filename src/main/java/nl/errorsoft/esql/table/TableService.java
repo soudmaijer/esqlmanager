@@ -144,14 +144,14 @@ public class TableService {
 	}
 
 	/** Changes the column to the given definition; {@code column.primary} adds or drops the primary key. */
-	public void editColumn(TableColumn old, ColumnDefinition column) throws Exception {
-		repository.modifyColumn(old, column);
+	public void editColumn(TableColumn previousColumn, ColumnDefinition column) throws Exception {
+		repository.modifyColumn(previousColumn, column);
 
-		if (old.isPrimary() && !column.primary) {
-			repository.dropIndex(old.getTable(), "PRIMARY");
+		if (previousColumn.isPrimary() && !column.primary) {
+			repository.dropIndex(previousColumn.getTable(), "PRIMARY");
 		}
-		if (!old.isPrimary() && column.primary) {
-			repository.addIndex(old.getTable(), "PRIMARY", "INDEX", List.of(column.name));
+		if (!previousColumn.isPrimary() && column.primary) {
+			repository.addIndex(previousColumn.getTable(), "PRIMARY", "INDEX", List.of(column.name));
 		}
 	}
 
@@ -164,10 +164,10 @@ public class TableService {
 		ColumnDefinition column = new ColumnDefinition(name);
 		column.type = type;
 		column.length = length;
-		column.defaultval = defaultValue;
+		column.defaultValue = defaultValue;
 		column.unsigned = type.allows(DataType.Option.UNSIGNED) && unsigned;
-		column.notnull = type.allows(DataType.Option.NOT_NULL) && !nullable;
-		column.autoincrement = auto;
+		column.notNull = type.allows(DataType.Option.NOT_NULL) && !nullable;
+		column.autoIncrement = auto;
 		return column;
 	}
 

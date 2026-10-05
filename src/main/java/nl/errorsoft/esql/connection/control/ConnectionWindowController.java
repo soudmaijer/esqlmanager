@@ -56,9 +56,9 @@ public class ConnectionWindowController {
 	private TableController tableController;
 
 	/** Opens the connection window at once and connects in the background; the tree is filled when the databases are listed. */
-	public ConnectionWindowController(MainController mainController, nl.errorsoft.esql.connection.ConnectionProfile cp) {
+	public ConnectionWindowController(MainController mainController, nl.errorsoft.esql.connection.ConnectionProfile profile) {
 		this.mainController = mainController;
-		this.session = new ConnectionSession(this, cp);
+		this.session = new ConnectionSession(this, profile);
 		SwingUtilities.invokeLater(this::open);
 	}
 
@@ -254,21 +254,21 @@ public class ConnectionWindowController {
 	}
 
 	public void dropTable() {
-		Table tb = selectedTable("Drop table");
-		if (tb == null) {
+		Table table = selectedTable("Drop table");
+		if (table == null) {
 			return;
 		}
 
 		try {
 			mainController.updateStatus("Deleting table...", true);
 			TableController tableController = new TableController(this);
-			tableController.dropTable(tb);
-			connectionWindow.getDatabaseTree().deleteTable(tb);
+			tableController.dropTable(table);
+			connectionWindow.getDatabaseTree().deleteTable(table);
 			mainController.showConnectionState();
-			if (tb.getSchema() != null && hasSchemas()) {
-				this.schemaSelected(tb.getSchema());
+			if (table.getSchema() != null && hasSchemas()) {
+				this.schemaSelected(table.getSchema());
 			} else {
-				this.databaseSelected(tb.getDatabase());
+				this.databaseSelected(table.getDatabase());
 			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(connectionWindow, "Drop table", e);
@@ -292,11 +292,11 @@ public class ConnectionWindowController {
 		}
 	}
 
-	public void editTableColumn(ColumnPropertiesDialog fieldPropertiesDialog, TableColumn tbc, ColumnOptions options) {
+	public void editTableColumn(ColumnPropertiesDialog fieldPropertiesDialog, TableColumn tableColumn, ColumnOptions options) {
 		try {
 			mainController.updateStatus("Updating tablecolumn...", true);
 			TableController tableController = new TableController(this);
-			tableController.editTableColumn(tbc, options.toColumn());
+			tableController.editTableColumn(tableColumn, options.toColumn());
 			reloadSelectedTable();
 			fieldPropertiesDialog.dispose();
 		} catch (Exception e) {
@@ -305,16 +305,16 @@ public class ConnectionWindowController {
 	}
 
 	public void dropTableColumn() {
-		TableColumn tb = selectedColumn("Drop column");
-		if (tb == null) {
+		TableColumn column = selectedColumn("Drop column");
+		if (column == null) {
 			return;
 		}
 
 		try {
 			mainController.updateStatus("Deleting tablecolumn...", true);
 			TableController tableController = new TableController(this);
-			tableController.dropTableColumn(tb);
-			connectionWindow.getDatabaseTree().deleteTableColumn(tb);
+			tableController.dropTableColumn(column);
+			connectionWindow.getDatabaseTree().deleteTableColumn(column);
 			mainController.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {

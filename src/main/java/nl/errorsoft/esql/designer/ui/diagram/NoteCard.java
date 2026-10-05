@@ -8,38 +8,38 @@ import java.awt.geom.Path2D;
 public class NoteCard extends ModelCard implements MouseListener, FocusListener, AdjustmentListener {
 	private String comment;
 
-	private JTextArea jt = new JTextArea();
-	private JScrollPane jsp = new JScrollPane(jt, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-	private JButton jb = new JButton();
+	private JTextArea textArea = new JTextArea();
+	private JScrollPane textScroll = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	private JButton focusButton = new JButton();
 
 	public NoteCard(String comment, int identifier) {
 		this.comment = comment;
 		this.setOpaque(false);
 		this.setIdentifier(identifier);
 
-		jsp.setBorder(null);
-		jsp.getVerticalScrollBar().setPreferredSize(new Dimension(8, jsp.getVerticalScrollBar().getSize().height));
+		textScroll.setBorder(null);
+		textScroll.getVerticalScrollBar().setPreferredSize(new Dimension(8, textScroll.getVerticalScrollBar().getSize().height));
 
-		jt.setLineWrap(true);
-		jt.setWrapStyleWord(true);
+		textArea.setLineWrap(true);
+		textArea.setWrapStyleWord(true);
 
-		jb.setVisible(false);
-		this.add(jb);
+		focusButton.setVisible(false);
+		this.add(focusButton);
 
 		this.addMouseListener(this);
-		jsp.getVerticalScrollBar().addAdjustmentListener(this);
+		textScroll.getVerticalScrollBar().addAdjustmentListener(this);
 
-		jt.setFont(DesignerTheme.small());
-		jt.setForeground(DesignerTheme.text());
-		jt.setOpaque(false);
-		jt.addFocusListener(this);
-		jt.setText(comment);
+		textArea.setFont(DesignerTheme.small());
+		textArea.setForeground(DesignerTheme.text());
+		textArea.setOpaque(false);
+		textArea.addFocusListener(this);
+		textArea.setText(comment);
 
-		jt.setBackground(DesignerTheme.note());
+		textArea.setBackground(DesignerTheme.note());
 
-		jsp.getViewport().setOpaque(false);
-		jsp.setOpaque(false);
-		this.add(jsp);
+		textScroll.getViewport().setOpaque(false);
+		textScroll.setOpaque(false);
+		this.add(textScroll);
 
 		this.setCardSize(150, 80);
 	}
@@ -48,18 +48,18 @@ public class NoteCard extends ModelCard implements MouseListener, FocusListener,
 	@Override
 	public void setBounds(int x, int y, int width, int height) {
 		super.setBounds(x, y, width, height);
-		int m = DesignerTheme.SHADOW;
-		jsp.setBounds(m + 8, m + 8, width - 2 * m - 16, height - 2 * m - 12);
+		int shadow = DesignerTheme.SHADOW;
+		textScroll.setBounds(shadow + 8, shadow + 8, width - 2 * shadow - 16, height - 2 * shadow - 12);
 	}
 
 	@Override
 	public void updateUI() {
 		super.updateUI();
 		// The fields are null while the superclass constructor runs.
-		if (jt != null) {
-			jt.setFont(DesignerTheme.small());
-			jt.setForeground(DesignerTheme.text());
-			jt.setBackground(DesignerTheme.note());
+		if (textArea != null) {
+			textArea.setFont(DesignerTheme.small());
+			textArea.setForeground(DesignerTheme.text());
+			textArea.setBackground(DesignerTheme.note());
 		}
 	}
 
@@ -101,33 +101,33 @@ public class NoteCard extends ModelCard implements MouseListener, FocusListener,
 	}
 
 	public String getComment() {
-		return jt.getText();
+		return textArea.getText();
 	}
 
 	public void adjustmentValueChanged(AdjustmentEvent e) {
-		jt.requestFocus();
-		jt.setOpaque(true);
-		jt.repaint();
+		textArea.requestFocus();
+		textArea.setOpaque(true);
+		textArea.repaint();
 	}
 
 	public void focusLost(FocusEvent e) {
-		jt.setOpaque(false);
-		jt.repaint();
+		textArea.setOpaque(false);
+		textArea.repaint();
 	}
 
 	public void focusGained(FocusEvent e) {
-		jt.setOpaque(true);
-		jt.repaint();
+		textArea.setOpaque(true);
+		textArea.repaint();
 	}
 
 	/** Puts the caret at the end of the text so the user can type. */
 	public void startEditing() {
-		jt.requestFocusInWindow();
-		jt.setCaretPosition(jt.getDocument().getLength());
+		textArea.requestFocusInWindow();
+		textArea.setCaretPosition(textArea.getDocument().getLength());
 	}
 
 	public void mousePressed(MouseEvent e) {
-		jb.requestFocus();
+		focusButton.requestFocus();
 		this.repaint();
 	}
 

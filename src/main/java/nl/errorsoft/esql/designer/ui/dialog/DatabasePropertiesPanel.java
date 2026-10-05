@@ -9,43 +9,43 @@ import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 
 public class DatabasePropertiesPanel extends JPanel implements PropertiesPanel {
-	private JLabel lbl_name = new JLabel("Name:");
-	private JLabel lbl_comm = new JLabel("Description:");
-	private JTextField txt_name = new JTextField();
-	private JTextArea txt_comm = new JTextArea();
+	private JLabel nameLabel = new JLabel("Name:");
+	private JLabel commentLabel = new JLabel("Description:");
+	private JTextField nameField = new JTextField();
+	private JTextArea commentField = new JTextArea();
 
 	// Databaseobject
-	private DatabaseCard db;
+	private DatabaseCard databaseCard;
 
 	/** The model the database is part of, so that the name can be checked against the other databases. */
 	private final Model model;
 
-	public DatabasePropertiesPanel(DatabaseCard db, Model model) {
+	public DatabasePropertiesPanel(DatabaseCard databaseCard, Model model) {
 		this.model = model;
-		lbl_name.setLabelFor(txt_name);
-		lbl_name.setDisplayedMnemonic('N');
-		txt_name.setText(db.getName());
-		txt_comm.setFont(txt_name.getFont());
-		txt_comm.setLineWrap(true);
-		txt_comm.setWrapStyleWord(true);
-		txt_comm.setText(db.getDescription());
-		JScrollPane jsp = new JScrollPane(txt_comm);
-		jsp.setPreferredSize(new Dimension(185, 185));
+		nameLabel.setLabelFor(nameField);
+		nameLabel.setDisplayedMnemonic('N');
+		nameField.setText(databaseCard.getName());
+		commentField.setFont(nameField.getFont());
+		commentField.setLineWrap(true);
+		commentField.setWrapStyleWord(true);
+		commentField.setText(databaseCard.getDescription());
+		JScrollPane commentScroll = new JScrollPane(commentField);
+		commentScroll.setPreferredSize(new Dimension(185, 185));
 
-		JPanel general = Forms.padded(new Forms.Grid().row(lbl_name, txt_name).area(lbl_comm, jsp).panel());
+		JPanel general = Forms.padded(new Forms.Grid().row(nameLabel, nameField).area(commentLabel, commentScroll).panel());
 
 		setLayout(new BorderLayout());
 		add(general, BorderLayout.CENTER);
 
-		this.db = db;
+		this.databaseCard = databaseCard;
 	}
 
 	public String inputProblem() {
-		return model == null ? ObjectNames.modelProblem(txt_name.getText()) : ObjectNames.databaseProblem(model, db, txt_name.getText());
+		return model == null ? ObjectNames.modelProblem(nameField.getText()) : ObjectNames.databaseProblem(model, databaseCard, nameField.getText());
 	}
 
 	public void saveProperties() {
-		db.setName(txt_name.getText());
-		db.setDescription(txt_comm.getText());
+		databaseCard.setName(nameField.getText());
+		databaseCard.setDescription(commentField.getText());
 	}
 }

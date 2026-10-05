@@ -221,13 +221,13 @@ public class MySqlDialect extends AbstractDialect {
 			quoted.add(quote(column));
 		}
 
-		String cols = "(" + String.join(", ", quoted) + ")";
+		String columnList = "(" + String.join(", ", quoted) + ")";
 
 		if (name.equals("PRIMARY")) {
-			return Arrays.asList("ALTER TABLE " + quote(table) + " ADD PRIMARY KEY " + cols);
+			return Arrays.asList("ALTER TABLE " + quote(table) + " ADD PRIMARY KEY " + columnList);
 		}
 
-		return Arrays.asList("ALTER TABLE " + quote(table) + " ADD " + type + " " + quote(name) + " " + cols);
+		return Arrays.asList("ALTER TABLE " + quote(table) + " ADD " + type + " " + quote(name) + " " + columnList);
 	}
 
 	public List<String> dropIndexSql(TableName table, String name, String primaryKeyName) {
@@ -270,10 +270,10 @@ public class MySqlDialect extends AbstractDialect {
 
 		column.unsigned = type.endsWith(" UNSIGNED");
 		type = type.replace(" UNSIGNED", "");
-		column.autoincrement = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
-		column.notnull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
+		column.autoIncrement = "YES".equals(rs.getString("IS_AUTOINCREMENT"));
+		column.notNull = rs.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls;
 		column.type = DataType.named(type);
-		column.defaultval = defaultValue == null ? "" : defaultValue;
+		column.defaultValue = defaultValue == null ? "" : defaultValue;
 
 		if ((type.equals("VARCHAR") || type.equals("CHAR")) && size > 0) {
 			column.length = String.valueOf(size);
@@ -295,13 +295,13 @@ public class MySqlDialect extends AbstractDialect {
 		if (column.binary) {
 			definition += " BINARY";
 		}
-		if (column.defaultval.trim().length() > 0) {
-			definition += " DEFAULT " + literal(column.defaultval);
+		if (column.defaultValue.trim().length() > 0) {
+			definition += " DEFAULT " + literal(column.defaultValue);
 		}
-		if (column.notnull) {
+		if (column.notNull) {
 			definition += " NOT NULL";
 		}
-		if (column.autoincrement) {
+		if (column.autoIncrement) {
 			definition += " AUTO_INCREMENT";
 		}
 		if (!column.comment.isBlank()) {

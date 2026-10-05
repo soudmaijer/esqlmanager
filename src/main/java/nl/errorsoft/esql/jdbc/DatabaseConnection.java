@@ -17,7 +17,7 @@ public class DatabaseConnection implements AutoCloseable {
 	private String database = "";
 	private String schema;
 
-	private ConnectionProfile cp;
+	private ConnectionProfile profile;
 	private Connection connection;
 
 	// Connection types.
@@ -36,28 +36,28 @@ public class DatabaseConnection implements AutoCloseable {
 		this.driver = driver;
 	}
 
-	public void setConnectionProfile(ConnectionProfile cp) {
-		this.cp = cp;
+	public void setConnectionProfile(ConnectionProfile profile) {
+		this.profile = profile;
 	}
 
 	public ConnectionProfile getConnectionProfile() {
-		return cp;
+		return profile;
 	}
 
 	// Connect to given database, an empty name connects to the profile's default.
-	public void connect(ConnectionProfile _cp, String database) throws Exception, SQLException {
-		this.cp = _cp;
-		this.database = cp.getServerType().getDialect().getConnectionDatabase(cp, database);
+	public void connect(ConnectionProfile profile, String database) throws Exception, SQLException {
+		this.profile = profile;
+		this.database = profile.getServerType().getDialect().getConnectionDatabase(profile, database);
 		this.schema = null;
-		this.url = cp.getServerType().getConnectionURL(cp, this.database);
+		this.url = profile.getServerType().getConnectionURL(profile, this.database);
 
 		if (connection != null) {
 			this.close();
 		}
 
-		Class.forName(cp.getServerType().getDriverName()).getDeclaredConstructor().newInstance();
-		log.info("Connecting to {} as {}", url, cp.getUsername());
-		connection = java.sql.DriverManager.getConnection(url, cp.getUsername(), cp.getPassword());
+		Class.forName(profile.getServerType().getDriverName()).getDeclaredConstructor().newInstance();
+		log.info("Connecting to {} as {}", url, profile.getUsername());
+		connection = java.sql.DriverManager.getConnection(url, profile.getUsername(), profile.getPassword());
 
 		DatabaseMetaData meta = connection.getMetaData();
 		serverDescription = meta.getDatabaseProductName() + " " + meta.getDatabaseMajorVersion() + "." + meta.getDatabaseMinorVersion();
@@ -77,7 +77,7 @@ public class DatabaseConnection implements AutoCloseable {
 
 	// Makes the given database the active one, the way the server type needs it.
 	public void useDatabase(String database) throws SQLException {
-		switch (cp.getServerType().getDialect().databaseSwitch()) {
+		switch (profile.getServerType().getDialect().databaseSwitch()) {
 			case CATALOG -> connection.setCatalog(database);
 			case RECONNECT -> reconnect(database);
 			case NONE -> {
@@ -92,7 +92,7 @@ public class DatabaseConnection implements AutoCloseable {
 		}
 
 		try {
-			connect(cp, database);
+			connect(profile, database);
 		} catch (SQLException e) {
 			throw e;
 		} catch (Exception e) {
@@ -102,7 +102,7 @@ public class DatabaseConnection implements AutoCloseable {
 
 	// The schema tables are looked up in, null when the server type has none.
 	public String getSchema() throws SQLException {
-		String sql = cp.getServerType().getDialect().currentSchemaSql();
+		String sql = profile.getServerType().getDialect().currentSchemaSql();
 
 		if (schema == null && sql != null) {
 			try (ResultSet rs = executeQuery(sql)) {
@@ -115,7 +115,7 @@ public class DatabaseConnection implements AutoCloseable {
 
 	// Makes unqualified names resolve to the schema, on servers that have schemas; does nothing when it is the current one already.
 	public void useSchema(String name) throws SQLException {
-		String sql = cp.getServerType().getDialect().useSchemaSql(name);
+		String sql = profile.getServerType().getDialect().useSchemaSql(name);
 
 		if (sql != null && name != null && !name.equals(getSchema())) {
 			executeUpdate(sql);

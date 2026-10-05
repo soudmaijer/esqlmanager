@@ -11,8 +11,8 @@ import nl.errorsoft.esql.ui.dialog.FormDialog;
 import java.awt.*;
 
 public class DesignerPropertiesDialog extends FormDialog {
-	private Component cur;
-	private JPanel cont;
+	private Component currentPanel;
+	private JPanel content;
 
 	private nl.errorsoft.esql.connection.ServerType serverType;
 
@@ -21,36 +21,36 @@ public class DesignerPropertiesDialog extends FormDialog {
 		this.serverType = serverType;
 		setResizable(true);
 
-		cont = new JPanel(new BorderLayout());
-		setOkCancel(cont, "&Save", "Cancel");
-		setValidator(() -> cur == null ? null : ((PropertiesPanel) cur).inputProblem());
-		setOnAccept(() -> ((PropertiesPanel) cur).saveProperties());
+		content = new JPanel(new BorderLayout());
+		setOkCancel(content, "&Save", "Cancel");
+		setValidator(() -> currentPanel == null ? null : ((PropertiesPanel) currentPanel).inputProblem());
+		setOnAccept(() -> ((PropertiesPanel) currentPanel).saveProperties());
 	}
 
 	/** @param model the model the object is part of, so that edits to a table keep its foreign keys right. */
-	public void showProperties(Object obj, Model model) {
-		if (cur != null) {
-			cont.remove(cur);
+	public void showProperties(Object subject, Model model) {
+		if (currentPanel != null) {
+			content.remove(currentPanel);
 		}
-		if (obj instanceof TableCard object) {
+		if (subject instanceof TableCard object) {
 			TablePropertiesPanel properties = new TablePropertiesPanel(object, serverType, model);
 			this.setTitle("Properties of '" + object.getName() + "'");
-			this.cont.add(properties);
-			cur = properties;
+			this.content.add(properties);
+			currentPanel = properties;
 		}
-		if (obj instanceof DatabaseCard object1) {
+		if (subject instanceof DatabaseCard object1) {
 			DatabasePropertiesPanel properties = new DatabasePropertiesPanel(object1, model);
 			this.setTitle("Properties of '" + object1.getName() + "'");
-			this.cont.add(properties);
-			cur = properties;
+			this.content.add(properties);
+			currentPanel = properties;
 		}
-		if (obj instanceof nl.errorsoft.esql.designer.model.Model shown) {
+		if (subject instanceof nl.errorsoft.esql.designer.model.Model shown) {
 			ModelPropertiesPanel modelProperties = new ModelPropertiesPanel(shown);
 			this.setTitle("Properties of '" + shown.getName() + "'");
-			this.cont.add(modelProperties);
-			cur = modelProperties;
+			this.content.add(modelProperties);
+			currentPanel = modelProperties;
 		}
-		cont.revalidate();
+		content.revalidate();
 		pack();
 		setLocationRelativeTo(getOwner());
 	}

@@ -15,7 +15,7 @@ public class Model implements MouseListener, MouseMotionListener {
 	private String name = "";
 	private String comment = "";
 	private String author = "";
-	private final List<ModelCard> modelobjects = new ArrayList<>();
+	private final List<ModelCard> cards = new ArrayList<>();
 	private final List<ModelForeignKey> foreignKeys = new ArrayList<>();
 	private boolean locked = false;
 	private int identifier = 1;
@@ -42,54 +42,55 @@ public class Model implements MouseListener, MouseMotionListener {
 	}
 
 	public DatabaseCard createDatabaseCard(String name) {
-		DatabaseCard db = new DatabaseCard(name, identifier);
+		DatabaseCard database = new DatabaseCard(name, identifier);
 		identifier++;
-		db.addMouseListener(this);
-		db.addMouseMotionListener(this);
-		modelobjects.add(db);
-		return db;
+		database.addMouseListener(this);
+		database.addMouseMotionListener(this);
+		cards.add(database);
+		return database;
 	}
 
 	public TableCard createTableCard(String name) {
-		TableCard tb = new TableCard(name, identifier);
+		TableCard table = new TableCard(name, identifier);
 		identifier++;
-		tb.addMouseListener(this);
-		tb.addMouseMotionListener(this);
-		modelobjects.add(tb);
-		return tb;
+		table.addMouseListener(this);
+		table.addMouseMotionListener(this);
+		cards.add(table);
+		return table;
 	}
 
 	public NoteCard createNoteCard(String comment) {
-		NoteCard cm = new NoteCard(comment, identifier);
+		NoteCard note = new NoteCard(comment, identifier);
 		identifier++;
-		cm.addMouseListener(this);
-		cm.addMouseMotionListener(this);
-		modelobjects.add(cm);
-		return cm;
+		note.addMouseListener(this);
+		note.addMouseMotionListener(this);
+		cards.add(note);
+		return note;
 	}
 
-	public void addReference(ModelCard src, ModelCard end) {
-		if (src == end || (src instanceof DatabaseCard && end instanceof DatabaseCard) || (src instanceof TableCard && end instanceof TableCard)) {
+	public void addReference(ModelCard source, ModelCard target) {
+		if (source == target || (source instanceof DatabaseCard && target instanceof DatabaseCard)
+			|| (source instanceof TableCard && target instanceof TableCard)) {
 			return;
 		}
 
-		List<ModelCard> v = src.getReferences();
-		for (int i = 0; i < v.size(); i++) {
-			ModelCard mo = (ModelCard) v.get(i);
-			if (mo == end) {
+		List<ModelCard> references = source.getReferences();
+		for (int i = 0; i < references.size(); i++) {
+			ModelCard other = (ModelCard) references.get(i);
+			if (other == target) {
 				return;
 			}
 		}
 
-		v = end.getReferences();
-		for (int i = 0; i < v.size(); i++) {
-			ModelCard mo = (ModelCard) v.get(i);
-			if (mo == src) {
+		references = target.getReferences();
+		for (int i = 0; i < references.size(); i++) {
+			ModelCard other = (ModelCard) references.get(i);
+			if (other == source) {
 				return;
 			}
 		}
 
-		src.addReference(end);
+		source.addReference(target);
 	}
 
 	/** Adds a foreign key between two tables, a key with the same name on the same table is replaced. */
@@ -156,81 +157,81 @@ public class Model implements MouseListener, MouseMotionListener {
 	}
 
 	public List<ModelCard> getObjects() {
-		return modelobjects;
+		return cards;
 	}
 
-	public List<ModelCard> getReferences(ModelCard m) {
-		List<ModelCard> refs = new ArrayList<>();
-		for (int i = 0; i < modelobjects.size(); i++) {
-			ModelCard tmp = (ModelCard) modelobjects.get(i);
-			if (tmp.getReferences().contains(m) && !(tmp instanceof NoteCard)) {
-				refs.add(tmp);
+	public List<ModelCard> getReferences(ModelCard card) {
+		List<ModelCard> related = new ArrayList<>();
+		for (int i = 0; i < cards.size(); i++) {
+			ModelCard other = (ModelCard) cards.get(i);
+			if (other.getReferences().contains(card) && !(other instanceof NoteCard)) {
+				related.add(other);
 			}
 		}
-		for (int i = 0; i < m.getReferences().size(); i++) {
-			ModelCard tmp = (ModelCard) m.getReferences().get(i);
-			if (!(tmp instanceof NoteCard)) {
-				refs.add(tmp);
+		for (int i = 0; i < card.getReferences().size(); i++) {
+			ModelCard other = (ModelCard) card.getReferences().get(i);
+			if (!(other instanceof NoteCard)) {
+				related.add(other);
 			}
 		}
-		return refs;
+		return related;
 	}
 
 	public List<ModelCard> removeSelectedObjects() {
-		List<ModelCard> v = new ArrayList<>();
+		List<ModelCard> removed = new ArrayList<>();
 		if (!locked) {
-			List<ModelCard> sel = getSelectedObjects();
-			for (int i = 0; i < sel.size(); i++) {
-				ModelCard tmp = (ModelCard) sel.get(i);
-				if (tmp.isSelected()) {
-					for (int j = 0; j < modelobjects.size(); j++) {
-						ModelCard tmp2 = (ModelCard) modelobjects.get(j);
-						if (tmp != tmp2) {
-							tmp2.removeReference(tmp);
+			List<ModelCard> selectedCards = getSelectedObjects();
+			for (int i = 0; i < selectedCards.size(); i++) {
+				ModelCard card = (ModelCard) selectedCards.get(i);
+				if (card.isSelected()) {
+					for (int j = 0; j < cards.size(); j++) {
+						ModelCard other = (ModelCard) cards.get(j);
+						if (card != other) {
+							other.removeReference(card);
 						}
 					}
 				}
-				modelobjects.remove(tmp);
-				removeForeignKeysOf(tmp);
-				v.add(tmp);
+				cards.remove(card);
+				removeForeignKeysOf(card);
+				removed.add(card);
 			}
 		}
-		return v;
+		return removed;
 	}
 
-	public void removeObject(ModelCard m) {
+	public void removeObject(ModelCard card) {
 		if (!locked) {
-			for (int j = 0; j < modelobjects.size(); j++) {
-				ModelCard tmp2 = (ModelCard) modelobjects.get(j);
-				if (m != tmp2) {
-					tmp2.removeReference(m);
+			for (int j = 0; j < cards.size(); j++) {
+				ModelCard other = (ModelCard) cards.get(j);
+				if (card != other) {
+					other.removeReference(card);
 				}
 			}
-			modelobjects.remove(m);
-			removeForeignKeysOf(m);
+			cards.remove(card);
+			removeForeignKeysOf(card);
 		}
 	}
 
 	public List<ModelCard> getSelectedObjects() {
-		List<ModelCard> temp = new ArrayList<>();
-		for (int i = 0; i < modelobjects.size(); i++) {
-			ModelCard tmp = (ModelCard) modelobjects.get(i);
-			if (tmp.isSelected()) {
-				temp.add(tmp);
+		List<ModelCard> selected = new ArrayList<>();
+		for (int i = 0; i < cards.size(); i++) {
+			ModelCard card = (ModelCard) cards.get(i);
+			if (card.isSelected()) {
+				selected.add(card);
 			}
 		}
-		return temp;
+		return selected;
 	}
 
 	public void deselectAll() {
-		for (int i = 0; i < modelobjects.size(); i++) {
-			((ModelCard) modelobjects.get(i)).setSelected(false);
+		for (int i = 0; i < cards.size(); i++) {
+			((ModelCard) cards.get(i)).setSelected(false);
 		}
 	}
 
 	public void selectAll() {
-		for (int i = 0; i < modelobjects.size(); i++) {
-			((ModelCard) modelobjects.get(i)).setSelected(true);
+		for (int i = 0; i < cards.size(); i++) {
+			((ModelCard) cards.get(i)).setSelected(true);
 		}
 	}
 
@@ -246,52 +247,52 @@ public class Model implements MouseListener, MouseMotionListener {
 		return file;
 	}
 
-	public void setFile(File f) {
-		this.file = f;
+	public void setFile(File modelFile) {
+		this.file = modelFile;
 	}
 
 	public void mousePressed(MouseEvent e) {
 		if (!this.locked) {
-			ModelCard tmp = (ModelCard) e.getSource();
+			ModelCard card = (ModelCard) e.getSource();
 			// A right click (ctrl-click on macOS) selects the object for its context menu, it does not toggle it.
 			if (e.isPopupTrigger()) {
-				if (!tmp.isSelected()) {
+				if (!card.isSelected()) {
 					deselectAll();
-					tmp.setSelected(true);
+					card.setSelected(true);
 				}
-			} else if (!e.isControlDown() && !tmp.isSelected()) {
+			} else if (!e.isControlDown() && !card.isSelected()) {
 				deselectAll();
-				tmp.setSelected(true);
+				card.setSelected(true);
 			} else if (e.isControlDown()) {
-				tmp.setSelected(!tmp.isSelected());
+				card.setSelected(!card.isSelected());
 			}
-			tmp.xc = e.getX();
-			tmp.yc = e.getY();
+			card.xc = e.getX();
+			card.yc = e.getY();
 		}
 	}
 
 	public void mouseDragged(MouseEvent e) {
 		if (!e.isShiftDown() && !e.isControlDown() && !e.isMetaDown() && !this.locked) {
-			ModelCard tmp = (ModelCard) e.getSource();
+			ModelCard dragged = (ModelCard) e.getSource();
 			// A drag that starts on the icon of a field draws a foreign key, it does not move the table.
-			if (tmp instanceof TableCard table && table.handleAt(table.xc, table.yc) >= 0) {
+			if (dragged instanceof TableCard table && table.handleAt(table.xc, table.yc) >= 0) {
 				return;
 			}
 
-			int xloc = tmp.getX() + (e.getX() - tmp.xc);
-			int yloc = tmp.getY() + (e.getY() - tmp.yc);
+			int xloc = dragged.getX() + (e.getX() - dragged.xc);
+			int yloc = dragged.getY() + (e.getY() - dragged.yc);
 
-			tmp.setLocation(xloc, yloc);
+			dragged.setLocation(xloc, yloc);
 
-			int xadj = (e.getX() - tmp.xc);
-			int yadj = (e.getY() - tmp.yc);
-			for (int i = 0; i < modelobjects.size(); i++) {
-				ModelCard mo = (ModelCard) modelobjects.get(i);
-				if (mo.isSelected() && mo != tmp) {
-					xloc = mo.getX() + xadj;
-					yloc = mo.getY() + yadj;
+			int xadj = (e.getX() - dragged.xc);
+			int yadj = (e.getY() - dragged.yc);
+			for (int i = 0; i < cards.size(); i++) {
+				ModelCard other = (ModelCard) cards.get(i);
+				if (other.isSelected() && other != dragged) {
+					xloc = other.getX() + xadj;
+					yloc = other.getY() + yadj;
 
-					mo.setLocation(xloc, yloc);
+					other.setLocation(xloc, yloc);
 				}
 			}
 		}
@@ -301,29 +302,29 @@ public class Model implements MouseListener, MouseMotionListener {
 		if (!this.locked) {
 			int x = 0;
 			int y = 0;
-			for (int i = 0; i < modelobjects.size(); i++) {
-				ModelCard mo = (ModelCard) modelobjects.get(i);
-				if (mo.getX() < x) {
-					x = mo.getX();
+			for (int i = 0; i < cards.size(); i++) {
+				ModelCard card = (ModelCard) cards.get(i);
+				if (card.getX() < x) {
+					x = card.getX();
 				}
-				if (mo.getY() < y) {
-					y = mo.getY();
+				if (card.getY() < y) {
+					y = card.getY();
 				}
 			}
 			if (x < 0 || y < 0) {
-				for (int i = 0; i < modelobjects.size(); i++) {
-					ModelCard mo = (ModelCard) modelobjects.get(i);
-					mo.setLocation(mo.getX() + (-x) + 5, mo.getY() + (-y) + 5);
+				for (int i = 0; i < cards.size(); i++) {
+					ModelCard card = (ModelCard) cards.get(i);
+					card.setLocation(card.getX() + (-x) + 5, card.getY() + (-y) + 5);
 				}
 			}
 		}
 	}
 
 	public ModelCard getObjectByIdentifier(int identifier) {
-		for (int i = 0; i < modelobjects.size(); i++) {
-			ModelCard tmp = (ModelCard) modelobjects.get(i);
-			if (tmp.getIdentifier() == identifier) {
-				return tmp;
+		for (int i = 0; i < cards.size(); i++) {
+			ModelCard card = (ModelCard) cards.get(i);
+			if (card.getIdentifier() == identifier) {
+				return card;
 			}
 		}
 		return null;
@@ -365,7 +366,7 @@ public class Model implements MouseListener, MouseMotionListener {
 			relations.add(new DiagramModel.Relation(key.from().getName(), key.fromColumns(), key.to().getName(), key.toColumns(), key.name()));
 		}
 
-		for (Object object : modelobjects) {
+		for (Object object : cards) {
 			if (object instanceof DatabaseCard database) {
 				databases.add(database.getName());
 			} else if (object instanceof TableCard table) {

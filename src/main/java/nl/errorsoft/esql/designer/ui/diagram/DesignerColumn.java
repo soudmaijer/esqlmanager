@@ -4,7 +4,7 @@ package nl.errorsoft.esql.designer.ui.diagram;
 public class DesignerColumn {
 	private String name;
 	private String length;
-	private String dfault;
+	private String defaultValue;
 	private String comment;
 	private nl.errorsoft.esql.table.DataType type;
 
@@ -12,29 +12,29 @@ public class DesignerColumn {
 	public boolean index = false;
 	public boolean unique = false;
 	public boolean binary = false;
-	public boolean notnull = false;
+	public boolean notNull = false;
 	public boolean unsigned = false;
-	public boolean autoincrement = false;
+	public boolean autoIncrement = false;
 	public boolean zerofill = false;
 
-	public DesignerColumn(String name, nl.errorsoft.esql.table.DataType type, String length, String dfault, String comment) {
+	public DesignerColumn(String name, nl.errorsoft.esql.table.DataType type, String length, String defaultValue, String comment) {
 		this.name = name;
 		this.type = type;
 		this.length = length;
-		this.dfault = dfault;
+		this.defaultValue = defaultValue;
 		this.comment = comment;
 	}
 
 	/** A copy to edit, so that cancelling a dialog leaves the original untouched. */
 	public DesignerColumn copy() {
-		DesignerColumn copy = new DesignerColumn(name, type, length, dfault, comment);
+		DesignerColumn copy = new DesignerColumn(name, type, length, defaultValue, comment);
 		copy.primary = primary;
 		copy.index = index;
 		copy.unique = unique;
 		copy.binary = binary;
-		copy.notnull = notnull;
+		copy.notNull = notNull;
 		copy.unsigned = unsigned;
-		copy.autoincrement = autoincrement;
+		copy.autoIncrement = autoIncrement;
 		copy.zerofill = zerofill;
 		return copy;
 	}
@@ -64,11 +64,11 @@ public class DesignerColumn {
 	}
 
 	public String getDefault() {
-		return dfault;
+		return defaultValue;
 	}
 
-	public void setDefault(String dfault) {
-		this.dfault = dfault;
+	public void setDefault(String defaultValue) {
+		this.defaultValue = defaultValue;
 	}
 
 	public String getComment() {

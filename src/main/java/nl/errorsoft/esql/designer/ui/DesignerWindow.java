@@ -34,22 +34,22 @@ public class DesignerWindow extends JInternalFrame {
 	private static final Logger log = LogManager.getLogger(DesignerWindow.class);
 
 	private JMenu file = new JMenu("File");
-	private JMenuItem file_new = new JMenuItem("New model...");
-	private JMenuItem file_opn = new JMenuItem("Open model...");
-	private JMenuItem file_sav = new JMenuItem("Save model");
-	private JMenuItem file_sva = new JMenuItem("Save model as...");
-	private JMenuItem file_ext = new JMenuItem("Close");
-	private JMenuItem file_plantuml = new JMenuItem("Export as PlantUML...");
-	private JMenuItem file_mermaid = new JMenuItem("Export as Mermaid...");
+	private JMenuItem newItem = new JMenuItem("New model...");
+	private JMenuItem openItem = new JMenuItem("Open model...");
+	private JMenuItem saveItem = new JMenuItem("Save model");
+	private JMenuItem saveAsItem = new JMenuItem("Save model as...");
+	private JMenuItem closeItem = new JMenuItem("Close");
+	private JMenuItem plantUmlItem = new JMenuItem("Export as PlantUML...");
+	private JMenuItem mermaidItem = new JMenuItem("Export as Mermaid...");
 
 	private JMenu edit = new JMenu("Edit");
-	private JMenuItem edit_del = new JMenuItem("Delete selected");
-	private JMenuItem edit_sla = new JMenuItem("Select all");
-	private JMenuItem edit_dsa = new JMenuItem("Deselect all");
+	private JMenuItem deleteItem = new JMenuItem("Delete selected");
+	private JMenuItem selectAllItem = new JMenuItem("Select all");
+	private JMenuItem deselectAllItem = new JMenuItem("Deselect all");
 
 	private JMenu view = new JMenu("View");
-	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show grid", true);
-	private JMenuItem view_arrange = new JMenuItem("Arrange automatically");
+	private JCheckBoxMenuItem gridItem = new JCheckBoxMenuItem("Show grid", true);
+	private JMenuItem arrangeItem = new JMenuItem("Arrange automatically");
 
 	private DesignerCanvas canvas;
 
@@ -83,82 +83,82 @@ public class DesignerWindow extends JInternalFrame {
 
 		canvas = new DesignerCanvas(new DesignerCanvasController(this));
 
-		JScrollPane jsp = new JScrollPane(canvas);
+		JScrollPane canvasScroll = new JScrollPane(canvas);
 
-		this.getContentPane().add(jsp);
-		jsp.getViewport().setBackground(UIManager.getColor("Panel.background"));
-		jsp.setBorder(null);
+		this.getContentPane().add(canvasScroll);
+		canvasScroll.getViewport().setBackground(UIManager.getColor("Panel.background"));
+		canvasScroll.setBorder(null);
 
 		menu = new JMenuBar();
 		this.setJMenuBar(menu);
 
-		file.add(file_new);
-		file.add(file_opn);
+		file.add(newItem);
+		file.add(openItem);
 		file.addSeparator();
-		file.add(file_sav);
-		file.add(file_sva);
+		file.add(saveItem);
+		file.add(saveAsItem);
 		file.addSeparator();
-		file.add(file_plantuml);
-		file.add(file_mermaid);
+		file.add(plantUmlItem);
+		file.add(mermaidItem);
 		file.addSeparator();
-		file.add(file_ext);
+		file.add(closeItem);
 
 		int menuKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		file.setMnemonic('F');
-		file_new.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, menuKey));
-		file_new.setMnemonic('N');
-		file_opn.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, menuKey));
-		file_opn.setMnemonic('O');
-		file_sav.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuKey));
-		file_sav.setMnemonic('S');
-		file_sva.setMnemonic('A');
-		file_sva.setDisplayedMnemonicIndex(file_sva.getText().indexOf(" as") + 1);
-		file_plantuml.setMnemonic('P');
-		file_mermaid.setMnemonic('M');
-		file_ext.setMnemonic('C');
+		newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, menuKey));
+		newItem.setMnemonic('N');
+		openItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, menuKey));
+		openItem.setMnemonic('O');
+		saveItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuKey));
+		saveItem.setMnemonic('S');
+		saveAsItem.setMnemonic('A');
+		saveAsItem.setDisplayedMnemonicIndex(saveAsItem.getText().indexOf(" as") + 1);
+		plantUmlItem.setMnemonic('P');
+		mermaidItem.setMnemonic('M');
+		closeItem.setMnemonic('C');
 
-		edit.add(edit_sla);
-		edit.add(edit_dsa);
+		edit.add(selectAllItem);
+		edit.add(deselectAllItem);
 		edit.addSeparator();
-		edit.add(edit_del);
+		edit.add(deleteItem);
 
 		edit.setMnemonic('E');
-		edit_sla.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, menuKey));
-		edit_sla.setMnemonic('S');
-		edit_dsa.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, menuKey));
-		edit_dsa.setMnemonic('D');
-		edit_del.setMnemonic('L');
-		edit_del.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+		selectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, menuKey));
+		selectAllItem.setMnemonic('S');
+		deselectAllItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, menuKey));
+		deselectAllItem.setMnemonic('D');
+		deleteItem.setMnemonic('L');
+		deleteItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 
 		// Action listeners, so that the keyboard (mnemonics and the accelerators above) works as well as the mouse.
-		file_new.addActionListener(e -> andUpdateTitle(this::newModel));
-		file_opn.addActionListener(e -> andUpdateTitle(this::openWithSave));
-		file_sav.addActionListener(e -> andUpdateTitle(() -> saveCurrentModel(true)));
-		file_sva.addActionListener(e -> andUpdateTitle(() -> saveCurrentModel(false)));
-		file_ext.addActionListener(e -> close());
-		edit_sla.addActionListener(e -> {
+		newItem.addActionListener(e -> andUpdateTitle(this::newModel));
+		openItem.addActionListener(e -> andUpdateTitle(this::openWithSave));
+		saveItem.addActionListener(e -> andUpdateTitle(() -> saveCurrentModel(true)));
+		saveAsItem.addActionListener(e -> andUpdateTitle(() -> saveCurrentModel(false)));
+		closeItem.addActionListener(e -> close());
+		selectAllItem.addActionListener(e -> {
 			canvas.getModel().selectAll();
 			canvas.repaint();
 		});
-		edit_dsa.addActionListener(e -> {
+		deselectAllItem.addActionListener(e -> {
 			canvas.getModel().deselectAll();
 			canvas.repaint();
 		});
-		edit_del.addActionListener(e -> canvas.deleteSelection());
+		deleteItem.addActionListener(e -> canvas.deleteSelection());
 
-		file_plantuml.addActionListener(e -> exportDiagram("PlantUML", "puml", DiagramExporter::plantUml));
-		file_mermaid.addActionListener(e -> exportDiagram("Mermaid", "mmd", DiagramExporter::mermaid));
+		plantUmlItem.addActionListener(e -> exportDiagram("PlantUML", "puml", DiagramExporter::plantUml));
+		mermaidItem.addActionListener(e -> exportDiagram("Mermaid", "mmd", DiagramExporter::mermaid));
 
-		view.add(view_grid);
+		view.add(gridItem);
 		view.setMnemonic('V');
-		view_grid.setMnemonic('G');
-		view_arrange.setMnemonic('A');
-		view_grid.addActionListener(e -> canvas.setShowGrid(view_grid.isSelected()));
+		gridItem.setMnemonic('G');
+		arrangeItem.setMnemonic('A');
+		gridItem.addActionListener(e -> canvas.setShowGrid(gridItem.isSelected()));
 		// The context menu of the canvas can switch the grid too.
-		canvas.addPropertyChangeListener("showGrid", e -> view_grid.setSelected(canvas.showsGrid()));
+		canvas.addPropertyChangeListener("showGrid", e -> gridItem.setSelected(canvas.showsGrid()));
 		view.addSeparator();
-		view.add(view_arrange);
-		view_arrange.addActionListener(e -> arrangeAutomatically());
+		view.add(arrangeItem);
+		arrangeItem.addActionListener(e -> arrangeAutomatically());
 
 		buildMenu();
 
@@ -236,19 +236,19 @@ public class DesignerWindow extends JInternalFrame {
 			canvas.exitPlaceMode();
 		}
 
-		JFileChooser jfc = new JFileChooser();
-		jfc.setDialogTitle("Open existing model");
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Open existing model");
 
-		ModelFileFilter mf = new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)");
-		jfc.addChoosableFileFilter(mf);
+		ModelFileFilter modelFilter = new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)");
+		fileChooser.addChoosableFileFilter(modelFilter);
 
-		File f = jfc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION ? jfc.getSelectedFile() : null;
-		if (f != null && f.exists()) {
+		File selected = fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
+		if (selected != null && selected.exists()) {
 			try {
-				Model m = canvas.getModel().loadModel(f);
-				if (m != null) {
-					canvas.setModel(m);
-					m.setFile(f);
+				Model loaded = canvas.getModel().loadModel(selected);
+				if (loaded != null) {
+					canvas.setModel(loaded);
+					loaded.setFile(selected);
 				}
 			} catch (Exception ex) {
 				ApplicationContext.get().errors().report(this, "Open model", ex);
@@ -265,14 +265,14 @@ public class DesignerWindow extends JInternalFrame {
 	public boolean saveCurrentModel(boolean auto) {
 		File file = canvas.getModel().getFile();
 		if (!auto || file == null) {
-			JFileChooser jfc = new JFileChooser();
-			jfc.setDialogTitle("Save model as");
-			jfc.addChoosableFileFilter(new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)"));
-			jfc.setSelectedFile(file != null ? file : new File(canvas.getModel().getName() + ".edm"));
-			if (jfc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION || jfc.getSelectedFile() == null) {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setDialogTitle("Save model as");
+			fileChooser.addChoosableFileFilter(new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)"));
+			fileChooser.setSelectedFile(file != null ? file : new File(canvas.getModel().getName() + ".edm"));
+			if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION || fileChooser.getSelectedFile() == null) {
 				return false;
 			}
-			file = jfc.getSelectedFile();
+			file = fileChooser.getSelectedFile();
 		}
 		try {
 			Files.writeString(file.toPath(), canvas.getModel().getModelXML() + System.lineSeparator(), StandardCharsets.UTF_8);
@@ -286,15 +286,15 @@ public class DesignerWindow extends JInternalFrame {
 
 	/** Writes the model as a text diagram to a file the user chooses. */
 	private void exportDiagram(String format, String extension, java.util.function.Function<DiagramModel, String> exporter) {
-		JFileChooser jfc = new JFileChooser();
-		jfc.setDialogTitle("Export model as " + format);
-		jfc.setSelectedFile(new File(canvas.getModel().getName() + "." + extension));
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Export model as " + format);
+		fileChooser.setSelectedFile(new File(canvas.getModel().getName() + "." + extension));
 
-		if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+		if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 			try {
-				Files.writeString(jfc.getSelectedFile().toPath(), exporter.apply(canvas.getModel().toDiagram()),
+				Files.writeString(fileChooser.getSelectedFile().toPath(), exporter.apply(canvas.getModel().toDiagram()),
 					StandardCharsets.UTF_8);
-				log.info("Model exported as {} to {}", format, jfc.getSelectedFile());
+				log.info("Model exported as {} to {}", format, fileChooser.getSelectedFile());
 			} catch (Exception ex) {
 				ApplicationContext.get().errors().report(this, "Export as " + format, ex);
 			}

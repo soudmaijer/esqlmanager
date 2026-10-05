@@ -30,7 +30,7 @@ public class ServerType {
 	private String fieldCloseChar = "";
 	private String dataOpenChar = "";
 	private String dataCloseChar = "";
-	private DataType[] dt;
+	private DataType[] dataTypes;
 
 	/** Whether the number is one of the server types above (the ids of conf/driver.xml). */
 	public static boolean isKnown(int type) {
@@ -39,18 +39,18 @@ public class ServerType {
 
 	public ServerType(int type) {
 		this.type = type;
-		DatabaseDriver d = new DatabaseDriver();
-		DatabaseDriver[] da = d.getDatabaseDrivers();
+		DatabaseDriver driverSource = new DatabaseDriver();
+		DatabaseDriver[] drivers = driverSource.getDatabaseDrivers();
 
-		for (int i = 0; i < da.length; i++) {
-			if (type == da[i].getId()) {
-				description = da[i].getDriverName();
-				connectionURL = da[i].getDriverURL();
-				driverName = da[i].getDriverClassName();
-				fieldOpenChar = da[i].getFieldOpenChar();
-				fieldCloseChar = da[i].getFieldCloseChar();
-				dataOpenChar = da[i].getDataOpenChar();
-				dataCloseChar = da[i].getDataCloseChar();
+		for (int i = 0; i < drivers.length; i++) {
+			if (type == drivers[i].getId()) {
+				description = drivers[i].getDriverName();
+				connectionURL = drivers[i].getDriverURL();
+				driverName = drivers[i].getDriverClassName();
+				fieldOpenChar = drivers[i].getFieldOpenChar();
+				fieldCloseChar = drivers[i].getFieldCloseChar();
+				dataOpenChar = drivers[i].getDataOpenChar();
+				dataCloseChar = drivers[i].getDataCloseChar();
 			}
 		}
 	}
@@ -71,14 +71,14 @@ public class ServerType {
 		return dataCloseChar;
 	}
 
-	public String getConnectionURL(ConnectionProfile cp, String database) {
+	public String getConnectionURL(ConnectionProfile profile, String database) {
 		String url = connectionURL;
 
-		url = url.replace("@host", cp.getHost());
-		url = url.replace("@port", cp.getPort());
-		url = url.replace("@username", cp.getUsername());
-		url = url.replace("@password", cp.getPassword());
-		url = url.replace("@database", getDialect().getConnectionDatabase(cp, database));
+		url = url.replace("@host", profile.getHost());
+		url = url.replace("@port", profile.getPort());
+		url = url.replace("@username", profile.getUsername());
+		url = url.replace("@password", profile.getPassword());
+		url = url.replace("@database", getDialect().getConnectionDatabase(profile, database));
 
 		return url;
 	}
@@ -116,8 +116,8 @@ public class ServerType {
 
 	/** The column types of this server from conf/datatypes.xml, empty when the file has none for it; a file that cannot be read is an {@link EsqlException}. */
 	public DataType[] getDataTypes() {
-		if (dt != null && dt.length != 0) {
-			return dt;
+		if (dataTypes != null && dataTypes.length != 0) {
+			return dataTypes;
 		}
 		try {
 			SAXBuilder builder = new SAXBuilder();
@@ -130,13 +130,13 @@ public class ServerType {
 				}
 
 				java.util.List<?> types = ((Element) driver).getChildren("type");
-				this.dt = new DataType[types.size()];
+				this.dataTypes = new DataType[types.size()];
 
 				for (int i = 0; i < types.size(); i++) {
 					Element type = (Element) types.get(i);
-					this.dt[i] = new DataType(type.getChildText("name"), options(type));
+					this.dataTypes[i] = new DataType(type.getChildText("name"), options(type));
 				}
-				return this.dt;
+				return this.dataTypes;
 			}
 			log.warn("No datatypes specified for server type {}", this.getType());
 		} catch (Exception e) {
@@ -164,13 +164,13 @@ public class ServerType {
 	}
 
 	public static ServerType[] getServerTypes() {
-		ServerType[] st = new ServerType[4];
+		ServerType[] serverTypes = new ServerType[4];
 
-		st[0] = new ServerType(ServerType.MY_SQL);
-		st[1] = new ServerType(ServerType.MS_SQL_SERVER);
-		st[2] = new ServerType(ServerType.POSTGRES);
-		st[3] = new ServerType(ServerType.ORACLE);
+		serverTypes[0] = new ServerType(ServerType.MY_SQL);
+		serverTypes[1] = new ServerType(ServerType.MS_SQL_SERVER);
+		serverTypes[2] = new ServerType(ServerType.POSTGRES);
+		serverTypes[3] = new ServerType(ServerType.ORACLE);
 
-		return st;
+		return serverTypes;
 	}
 }

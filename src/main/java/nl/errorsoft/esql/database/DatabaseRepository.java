@@ -16,19 +16,19 @@ import nl.errorsoft.esql.table.Table;
 
 /** Runs the SQL for databases and their schemas, and lists their tables. */
 public class DatabaseRepository extends AbstractRepository {
-	public DatabaseRepository(DatabaseConnection dbc) {
-		super(dbc);
+	public DatabaseRepository(DatabaseConnection connection) {
+		super(connection);
 	}
 
 	public List<String> listNames() throws SQLException {
 		String sql = dialect().listDatabasesSql();
 
 		if (sql == null) {
-			return dbc.getConnectionProfile().getSelection().databases();
+			return connection.getConnectionProfile().getSelection().databases();
 		}
 
 		List<String> names = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery(sql)) {
+		try (ResultSet rs = connection.executeQuery(sql)) {
 			while (rs.next()) {
 				names.add(rs.getString(1));
 			}
@@ -51,7 +51,7 @@ public class DatabaseRepository extends AbstractRepository {
 
 		useDatabase(database.getName());
 		List<String> names = new ArrayList<>();
-		try (ResultSet rs = dbc.executeQuery(sql)) {
+		try (ResultSet rs = connection.executeQuery(sql)) {
 			while (rs.next()) {
 				names.add(rs.getString(1));
 			}
@@ -67,7 +67,7 @@ public class DatabaseRepository extends AbstractRepository {
 	/** The schema unqualified names resolve to, null on servers without schemas. */
 	public String currentSchema(Database database) throws SQLException {
 		useDatabase(database.getName());
-		return dbc.getSchema();
+		return connection.getSchema();
 	}
 
 	public void createSchema(Database database, String name) throws SQLException {
@@ -116,7 +116,7 @@ public class DatabaseRepository extends AbstractRepository {
 			return details;
 		}
 
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
+		try (PreparedStatement ps = connection.getConnection().prepareStatement(sql)) {
 			ps.setString(1, database.getName());
 
 			try (ResultSet rs = ps.executeQuery()) {
@@ -141,7 +141,7 @@ public class DatabaseRepository extends AbstractRepository {
 	public void drop(Database database) throws SQLException {
 		String leaveFor = dialect().databaseToLeaveFor(database.getName());
 
-		if (leaveFor != null && database.getName().equals(dbc.getDatabase())) {
+		if (leaveFor != null && database.getName().equals(connection.getDatabase())) {
 			useDatabase(leaveFor);
 		}
 		executeUpdate(dialect().dropDatabaseSql(database.getName()));

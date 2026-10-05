@@ -10,32 +10,32 @@ public class ImageLoader {
 	/** The stroke colour of the Lucide SVGs in icons/svg, replaced by a theme colour when an icon is drawn. */
 	public static final Color ICON_STROKE = new Color(0x6e6e6e);
 	private static final org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ImageLoader.class);
-	private String imgpath;
+	private String imagePath;
 	private Image[] images = new Image[0];
 	private String[] names = new String[0];
 	private java.util.Map<String, Icon> icons = new java.util.HashMap<>();
 
-	public ImageLoader(String imgpath) {
-		this.imgpath = imgpath;
+	public ImageLoader(String imagePath) {
+		this.imagePath = imagePath;
 	}
 
-	public void addImage(String img, String name) {
-		Image tmp = Toolkit.getDefaultToolkit().getImage(getResource(imgpath + img));
+	public void addImage(String fileName, String name) {
+		Image loaded = Toolkit.getDefaultToolkit().getImage(getResource(imagePath + fileName));
 
-		MediaTracker m = new MediaTracker(new Canvas());
-		m.addImage(tmp, 1);
+		MediaTracker tracker = new MediaTracker(new Canvas());
+		tracker.addImage(loaded, 1);
 		try {
-			m.waitForAll();
-			if (m.isErrorAny()) {
-				log.warn("Image {} ({}) could not be loaded", name, img);
+			tracker.waitForAll();
+			if (tracker.isErrorAny()) {
+				log.warn("Image {} ({}) could not be loaded", name, fileName);
 			}
 			this.expand();
-			images[0] = tmp;
+			images[0] = loaded;
 			names[0] = name;
 		} catch (InterruptedException e) {
 			// Interrupted while waiting for the image, which then stays unregistered; keep the interrupt for the caller.
 			Thread.currentThread().interrupt();
-			log.warn("Loading image {} ({}) was interrupted", name, img);
+			log.warn("Loading image {} ({}) was interrupted", name, fileName);
 		}
 	}
 
@@ -109,13 +109,13 @@ public class ImageLoader {
 	}
 
 	private void expand() {
-		Image[] img = new Image[images.length + 1];
-		String[] nms = new String[names.length + 1];
+		Image[] grownImages = new Image[images.length + 1];
+		String[] grownNames = new String[names.length + 1];
 		for (int i = 0; i < images.length; i++) {
-			img[i + 1] = images[i];
-			nms[i + 1] = names[i];
+			grownImages[i + 1] = images[i];
+			grownNames[i + 1] = names[i];
 		}
-		images = img;
-		names = nms;
+		images = grownImages;
+		names = grownNames;
 	}
 }

@@ -13,7 +13,7 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener {
 	private MainWindow mainWindow;
 	private MainController mainController;
 	private int time = 0;
-	private CreditsPanel c;
+	private CreditsPanel credits;
 	private Image splash;
 
 	public SplashWindow(MainController mainController, MainWindow mainWindow, int time) {
@@ -30,9 +30,9 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener {
 
 		if (time == 0) {
 			this.getContentPane().setLayout(null);
-			c = new CreditsPanel();
-			c.setBounds(0, 165, 400, 75);
-			this.getContentPane().add(c);
+			credits = new CreditsPanel();
+			credits.setBounds(0, 165, 400, 75);
+			this.getContentPane().add(credits);
 		}
 
 		splash = ApplicationContext.get().imageLoader().getImage("esql");
@@ -56,9 +56,9 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener {
 	}
 
 	public void cleanUp() {
-		if (c != null) {
-			c.switchoff();
-			c = null;
+		if (credits != null) {
+			credits.switchoff();
+			credits = null;
 		}
 		dispose();
 	}

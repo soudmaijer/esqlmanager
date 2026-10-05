@@ -79,9 +79,9 @@ public class MainController {
 		mainWindow.removeConnectionWindow(connectionWindow);
 	}
 
-	public void openConnectionWindow(ConnectionProfile cp) {
+	public void openConnectionWindow(ConnectionProfile profile) {
 		// Connect and start window.
-		new ConnectionWindowController(this, cp);
+		new ConnectionWindowController(this, profile);
 	}
 
 	public void showDriverDialog() {

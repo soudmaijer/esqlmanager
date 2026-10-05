@@ -156,14 +156,14 @@ public class UserManagerDialog extends JDialog {
 	}
 
 	private JPanel userButtons() {
-		JButton add = Forms.button("&Add...");
-		add.addActionListener(e -> addUser());
-		busyControls.add(add);
+		JButton addButton = Forms.button("&Add...");
+		addButton.addActionListener(e -> addUser());
+		busyControls.add(addButton);
 		changePassword.addActionListener(e -> changePassword());
 		delete.addActionListener(e -> deleteUser());
 
 		JPanel buttons = new JPanel(new GridLayout(1, 3, 4, 0));
-		buttons.add(add);
+		buttons.add(addButton);
 		buttons.add(changePassword);
 		buttons.add(delete);
 		return buttons;

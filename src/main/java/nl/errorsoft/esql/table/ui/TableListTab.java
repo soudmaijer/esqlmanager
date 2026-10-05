@@ -10,14 +10,14 @@ import javax.swing.*;
 
 public class TableListTab extends JScrollPane {
 	DatabaseController databaseController;
-	SortableTableModel dtm;
+	SortableTableModel tableModel;
 	JTable table;
 
 	public TableListTab(DatabaseController databaseController) {
 		this.databaseController = databaseController;
-		dtm = new SortableTableModel();
-		table = new JTable(dtm) {
-			public boolean isCellEditable(int row, int col) {
+		tableModel = new SortableTableModel();
+		table = new JTable(tableModel) {
+			public boolean isCellEditable(int row, int column) {
 				return false;
 			}
 		};
@@ -30,27 +30,27 @@ public class TableListTab extends JScrollPane {
 		this.getViewport().add(table);
 	}
 
-	public void loadTables(java.util.List<Table> v) {
-		dtm = new SortableTableModel();
+	public void loadTables(java.util.List<Table> tables) {
+		tableModel = new SortableTableModel();
 
-		dtm.addColumn("Name");
-		dtm.addColumn("Rows");
-		dtm.addColumn("Type");
-		dtm.addColumn("Comment");
+		tableModel.addColumn("Name");
+		tableModel.addColumn("Rows");
+		tableModel.addColumn("Type");
+		tableModel.addColumn("Comment");
 
 		Object[] data = new Object[4];
 
-		for (int i = 0; i < v.size(); i++) {
-			data[0] = (Table) v.get(i);
-			data[1] = Integer.valueOf(((Table) v.get(i)).getRowCount());
-			data[2] = ((Table) v.get(i)).getType();
-			data[3] = ((Table) v.get(i)).getComment();
+		for (int i = 0; i < tables.size(); i++) {
+			data[0] = (Table) tables.get(i);
+			data[1] = Integer.valueOf(((Table) tables.get(i)).getRowCount());
+			data[2] = ((Table) tables.get(i)).getType();
+			data[3] = ((Table) tables.get(i)).getComment();
 
-			dtm.addRow(data);
-			dtm.fireTableDataChanged();
+			tableModel.addRow(data);
+			tableModel.fireTableDataChanged();
 		}
 
-		table.setModel(dtm);
+		table.setModel(tableModel);
 		ColumnWidths.fitToContent(table);
 	}
 

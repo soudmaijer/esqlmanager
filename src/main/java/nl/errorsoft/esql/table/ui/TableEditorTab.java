@@ -64,10 +64,10 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final Table table;
 
 	// Table properties
-	private final JTextField tablename = new JTextField(24);
+	private final JTextField tableName = new JTextField(24);
 	private final JTextField comment = new JTextField(24);
-	private final JComboBox<Database> dbs;
-	private final JComboBox<String> tabletypes;
+	private final JComboBox<Database> databaseCombo;
+	private final JComboBox<String> tableTypes;
 
 	// The columns: new ones (ColumnDefinition) or, when editing, the existing ones (TableColumn) which are only shown
 	private final List<Object> columns = new ArrayList<>();
@@ -83,11 +83,11 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final JTextField columnName = new JTextField(16);
 	private final JComboBox<DataType> columnType = new JComboBox<>();
 	private final JTextField length = new JTextField(16);
-	private final JTextField defaultval = new JTextField(16);
+	private final JTextField defaultValue = new JTextField(16);
 	private final JTextField columnComment = new JTextField(16);
 	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary key");
-	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "Not &null");
-	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "Auto &increment");
+	private final JCheckBox notNull = Forms.mnemonic(new JCheckBox(), "Not &null");
+	private final JCheckBox autoIncrement = Forms.mnemonic(new JCheckBox(), "Auto &increment");
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "Unsi&gned");
 	private final JComponent[] columnFields;
 	private final JLabel problem = new JLabel(" ");
@@ -101,7 +101,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final JButton cancel = Forms.button("&Cancel");
 
 	/** The new column shown in the details, null when none is selected or the columns are the existing ones. */
-	private ColumnDefinition selField = null;
+	private ColumnDefinition selectedColumn = null;
 	/** True while the details are filled from a column, so that filling them does not write back. */
 	private boolean loading;
 	/** After a Save with a problem the message follows the input until the problem is gone. */
@@ -120,54 +120,54 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		this.table = table;
 		setBorder(BorderFactory.createEmptyBorder(Forms.PADDING, Forms.PADDING, Forms.PADDING, Forms.PADDING));
 
-		DefaultComboBoxModel<Database> dcm = new DefaultComboBoxModel<>();
+		DefaultComboBoxModel<Database> databaseModel = new DefaultComboBoxModel<>();
 		List<Database> db = createTableController.getDatabases();
 		for (Database candidate : db) {
-			dcm.addElement(candidate);
+			databaseModel.addElement(candidate);
 			if (database != null && candidate.toString().equals(database.toString())) {
 				database = candidate;
 			}
 		}
-		dcm.setSelectedItem(database);
-		dbs = new JComboBox<>(dcm);
+		databaseModel.setSelectedItem(database);
+		databaseCombo = new JComboBox<>(databaseModel);
 
-		DefaultComboBoxModel<String> ttmodel = new DefaultComboBoxModel<>();
-		String[] tbt = createTableController.getTableTypes();
-		for (String type : tbt) {
-			ttmodel.addElement(type);
+		DefaultComboBoxModel<String> tableTypeModel = new DefaultComboBoxModel<>();
+		String[] tableTypeNames = createTableController.getTableTypes();
+		for (String type : tableTypeNames) {
+			tableTypeModel.addElement(type);
 			if (table != null && type.equalsIgnoreCase(table.getType())) {
-				ttmodel.setSelectedItem(type);
+				tableTypeModel.setSelectedItem(type);
 			}
 		}
-		tabletypes = new JComboBox<>(ttmodel);
+		tableTypes = new JComboBox<>(tableTypeModel);
 
-		columnFields = new JComponent[]{columnName, columnType, length, defaultval, columnComment, primary, notnull, autoincrement, unsigned};
+		columnFields = new JComponent[]{columnName, columnType, length, defaultValue, columnComment, primary, notNull, autoIncrement, unsigned};
 
 		JPanel form = new JPanel(new BorderLayout(0, Forms.PADDING));
-		form.add(tableProperties(tbt.length > 0, table), BorderLayout.NORTH);
+		form.add(tableProperties(tableTypeNames.length > 0, table), BorderLayout.NORTH);
 		form.add(columnsPanel(), BorderLayout.CENTER);
 		add(Forms.verticalScroll(form), BorderLayout.CENTER);
 		add(bottom(), BorderLayout.SOUTH);
 
 		if (table != null) {
-			tablename.setText(table.getName());
+			tableName.setText(table.getName());
 			comment.setText(table.getComment());
 			columns.addAll(java.util.Arrays.asList(table.getColumns()));
-			dbs.setEnabled(false);
+			databaseCombo.setEnabled(false);
 			for (JButton button : List.of(addcolumn, remcolumn, moveup, movedown)) {
 				button.setEnabled(false);
 			}
 		}
 		showColumn();
 
-		initialName = tablename.getText();
+		initialName = tableName.getText();
 		initialComment = comment.getText();
 		initialType = selectedTableType();
 
-		tablename.getDocument().addDocumentListener(new Changed(this::edited));
+		tableName.getDocument().addDocumentListener(new Changed(this::edited));
 		comment.getDocument().addDocumentListener(new Changed(this::edited));
-		tabletypes.addActionListener(e -> refreshPreview());
-		dbs.addActionListener(e -> refreshPreview());
+		tableTypes.addActionListener(e -> refreshPreview());
+		databaseCombo.addActionListener(e -> refreshPreview());
 		getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
 			"saveTable");
 		getActionMap().put("saveTable", new AbstractAction() {
@@ -181,7 +181,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	/** Database (and schema), name, type and comment in one column. */
 	private JPanel tableProperties(boolean hasTableTypes, Table existing) {
 		Forms.Grid grid = new Forms.Grid();
-		grid.row("&Database:", dbs);
+		grid.row("&Database:", databaseCombo);
 		if (createTableController.supportsSchemas()) {
 			JTextField schema = new JTextField(24);
 			schema.setEditable(false);
@@ -194,10 +194,10 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			}
 			grid.row("S&chema:", schema);
 		}
-		grid.row("&Name:", tablename);
+		grid.row("&Name:", tableName);
 		// Servers without storage engines have nothing to choose here.
 		if (hasTableTypes) {
-			grid.row("&Type:", tabletypes);
+			grid.row("&Type:", tableTypes);
 		}
 		grid.row("Co&mment:", comment);
 		return Forms.titled(grid.panel(), "Table");
@@ -237,11 +237,11 @@ public class TableEditorTab extends JPanel implements EditorTab {
 
 		JPanel checks = new JPanel(new GridLayout(2, 2, Forms.GAP, 0));
 		checks.add(primary);
-		checks.add(notnull);
-		checks.add(autoincrement);
+		checks.add(notNull);
+		checks.add(autoIncrement);
 		checks.add(unsigned);
 		Forms.Grid grid = new Forms.Grid();
-		grid.row("Col&umn name:", columnName).row("Typ&e:", columnType).row("&Length:", length).row("De&fault:", defaultval);
+		grid.row("Col&umn name:", columnName).row("Typ&e:", columnType).row("&Length:", length).row("De&fault:", defaultValue);
 		if (createTableController.supportsColumnComments()) {
 			grid.row("C&omment:", columnComment);
 		}
@@ -258,17 +258,17 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			boolean taken = ColumnNames.isUsed(name, otherNames());
 			columnName.putClientProperty("JComponent.outline", name.isEmpty() || taken ? "error" : null);
 			if (!name.isEmpty() && !taken) {
-				selField.name = name;
+				selectedColumn.name = name;
 			}
 		})));
-		columnType.addActionListener(e -> write(() -> selField.applyType((DataType) columnType.getSelectedItem())));
-		length.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.length = length.getText())));
-		defaultval.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.defaultval = defaultval.getText())));
-		columnComment.getDocument().addDocumentListener(new Changed(() -> write(() -> selField.comment = columnComment.getText())));
-		primary.addActionListener(e -> write(() -> selField.primary = primary.isSelected()));
-		notnull.addActionListener(e -> write(() -> selField.notnull = notnull.isSelected()));
-		autoincrement.addActionListener(e -> write(() -> selField.autoincrement = autoincrement.isSelected()));
-		unsigned.addActionListener(e -> write(() -> selField.unsigned = unsigned.isSelected()));
+		columnType.addActionListener(e -> write(() -> selectedColumn.applyType((DataType) columnType.getSelectedItem())));
+		length.getDocument().addDocumentListener(new Changed(() -> write(() -> selectedColumn.length = length.getText())));
+		defaultValue.getDocument().addDocumentListener(new Changed(() -> write(() -> selectedColumn.defaultValue = defaultValue.getText())));
+		columnComment.getDocument().addDocumentListener(new Changed(() -> write(() -> selectedColumn.comment = columnComment.getText())));
+		primary.addActionListener(e -> write(() -> selectedColumn.primary = primary.isSelected()));
+		notNull.addActionListener(e -> write(() -> selectedColumn.notNull = notNull.isSelected()));
+		autoIncrement.addActionListener(e -> write(() -> selectedColumn.autoIncrement = autoIncrement.isSelected()));
+		unsigned.addActionListener(e -> write(() -> selectedColumn.unsigned = unsigned.isSelected()));
 
 		JPanel panel = new JPanel(new BorderLayout(0, Forms.PADDING));
 		panel.add(list, BorderLayout.CENTER);
@@ -319,13 +319,13 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	}
 
 	private String selectedTableType() {
-		Object type = tabletypes.getSelectedItem();
+		Object type = tableTypes.getSelectedItem();
 		return type == null ? null : type.toString();
 	}
 
 	/** True when the table properties or the columns differ from when the tab opened. */
 	public boolean isModified() {
-		return columnsChanged || !tablename.getText().equals(initialName) || !comment.getText().equals(initialComment)
+		return columnsChanged || !tableName.getText().equals(initialName) || !comment.getText().equals(initialComment)
 			|| !Objects.equals(selectedTableType(), initialType);
 	}
 
@@ -336,10 +336,10 @@ public class TableEditorTab extends JPanel implements EditorTab {
 
 	/** The problem that stops Save, null when the input is fine. */
 	private String inputProblem() {
-		if (tablename.getText().trim().isEmpty()) {
+		if (tableName.getText().trim().isEmpty()) {
 			return "Enter a table name.";
 		}
-		if (table == null && dbs.getSelectedItem() == null) {
+		if (table == null && databaseCombo.getSelectedItem() == null) {
 			return "Choose a database.";
 		}
 		if (table == null && columns.isEmpty()) {
@@ -365,7 +365,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 				created.add(c);
 			}
 		}
-		String name = tablename.getText().trim();
+		String name = tableName.getText().trim();
 		if (table == null && created.isEmpty()) {
 			sqlPreview.setText("-- Add a column to see the statements.");
 			return;
@@ -397,23 +397,23 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		showProblems = found != null;
 		problem.setText(found == null ? " " : found);
 		if (found != null) {
-			(tablename.getText().trim().isEmpty() ? tablename : addcolumn).requestFocusInWindow();
+			(tableName.getText().trim().isEmpty() ? tableName : addcolumn).requestFocusInWindow();
 			return;
 		}
 		if (table == null) {
-			List<ColumnDefinition> cols = new ArrayList<>();
+			List<ColumnDefinition> columnDefinitions = new ArrayList<>();
 			for (Object column : columns) {
-				cols.add((ColumnDefinition) column);
+				columnDefinitions.add((ColumnDefinition) column);
 			}
-			createTableController.createTable(definition(tablename.getText(), cols), this);
+			createTableController.createTable(definition(tableName.getText(), columnDefinitions), this);
 		} else {
-			createTableController.modifyTable(this, table, tablename.getText(), selectedTableType(), comment.getText());
+			createTableController.modifyTable(this, table, tableName.getText(), selectedTableType(), comment.getText());
 		}
 	}
 
 	/** The table as the editor holds it, in the chosen database. */
 	private TableDefinition definition(String name, List<ColumnDefinition> columns) {
-		Database database = dbs.getSelectedItem() instanceof Database chosen ? chosen : new Database("");
+		Database database = databaseCombo.getSelectedItem() instanceof Database chosen ? chosen : new Database("");
 		return new TableDefinition(database, null, name, selectedTableType(), comment.getText(), columns);
 	}
 
@@ -469,7 +469,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private List<String> allNames() {
 		List<String> names = new ArrayList<>();
 		for (Object column : columns) {
-			names.add(column instanceof TableColumn tc ? tc.getName() : ((ColumnDefinition) column).name);
+			names.add(column instanceof TableColumn tableColumn ? tableColumn.getName() : ((ColumnDefinition) column).name);
 		}
 		return names;
 	}
@@ -486,7 +486,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 
 	/** Runs a change to the selected new column made in the details, then marks it and updates the grid. */
 	private void write(Runnable change) {
-		if (loading || selField == null) {
+		if (loading || selectedColumn == null) {
 			return;
 		}
 		change.run();
@@ -495,7 +495,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		if (row >= 0) {
 			columnModel.fireTableRowsUpdated(row, row);
 		}
-		enableOptionsFor(selField.type);
+		enableOptionsFor(selectedColumn.type);
 		updateGroupTitle();
 		refreshPreview();
 	}
@@ -504,44 +504,44 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private void showColumn() {
 		int row = columnTable.getSelectedRow();
 		Object selected = row >= 0 && row < columns.size() ? columns.get(row) : null;
-		selField = selected instanceof ColumnDefinition column ? column : null;
+		selectedColumn = selected instanceof ColumnDefinition column ? column : null;
 		loading = true;
-		if (selField != null) {
-			columnName.setText(selField.name);
-			columnType.setSelectedItem(selField.type);
-			length.setText(selField.length);
-			defaultval.setText(selField.defaultval);
-			columnComment.setText(selField.comment);
-			primary.setSelected(selField.primary);
-			notnull.setSelected(selField.notnull);
-			autoincrement.setSelected(selField.autoincrement);
-			unsigned.setSelected(selField.unsigned);
+		if (selectedColumn != null) {
+			columnName.setText(selectedColumn.name);
+			columnType.setSelectedItem(selectedColumn.type);
+			length.setText(selectedColumn.length);
+			defaultValue.setText(selectedColumn.defaultValue);
+			columnComment.setText(selectedColumn.comment);
+			primary.setSelected(selectedColumn.primary);
+			notNull.setSelected(selectedColumn.notNull);
+			autoIncrement.setSelected(selectedColumn.autoIncrement);
+			unsigned.setSelected(selectedColumn.unsigned);
 			columnName.putClientProperty("JComponent.outline", null);
-		} else if (selected instanceof TableColumn tc) {
-			columnName.setText(tc.getName());
-			selectTypeNamed(tc.getNativeTypeName());
-			length.setText(tc.getLength());
-			defaultval.setText(tc.getDefault());
-			columnComment.setText(tc.getComment());
-			primary.setSelected(tc.isPrimary());
-			notnull.setSelected(!tc.isNullable());
-			autoincrement.setSelected(tc.isAutoIncrement());
-			unsigned.setSelected(!tc.isSigned());
+		} else if (selected instanceof TableColumn tableColumn) {
+			columnName.setText(tableColumn.getName());
+			selectTypeNamed(tableColumn.getNativeTypeName());
+			length.setText(tableColumn.getLength());
+			defaultValue.setText(tableColumn.getDefault());
+			columnComment.setText(tableColumn.getComment());
+			primary.setSelected(tableColumn.isPrimary());
+			notNull.setSelected(!tableColumn.isNullable());
+			autoIncrement.setSelected(tableColumn.isAutoIncrement());
+			unsigned.setSelected(!tableColumn.isSigned());
 		} else {
 			columnName.setText("");
 			length.setText("");
-			defaultval.setText("");
+			defaultValue.setText("");
 			columnComment.setText("");
-			for (JCheckBox box : List.of(primary, notnull, autoincrement, unsigned)) {
+			for (JCheckBox box : List.of(primary, notNull, autoIncrement, unsigned)) {
 				box.setSelected(false);
 			}
 		}
 		loading = false;
 		for (JComponent field : columnFields) {
-			field.setEnabled(selField != null);
+			field.setEnabled(selectedColumn != null);
 		}
-		if (selField != null) {
-			enableOptionsFor(selField.type);
+		if (selectedColumn != null) {
+			enableOptionsFor(selectedColumn.type);
 		}
 		updateGroupTitle();
 	}
@@ -560,13 +560,13 @@ public class TableEditorTab extends JPanel implements EditorTab {
 			return;
 		}
 		primary.setEnabled(type.allows(DataType.Option.PRIMARY));
-		notnull.setEnabled(type.allows(DataType.Option.NOT_NULL));
-		autoincrement.setEnabled(type.allows(DataType.Option.AUTO_INCREMENT));
+		notNull.setEnabled(type.allows(DataType.Option.NOT_NULL));
+		autoIncrement.setEnabled(type.allows(DataType.Option.AUTO_INCREMENT));
 		unsigned.setEnabled(type.allows(DataType.Option.UNSIGNED));
 		// Fixed in the box when the type does not allow it
 		primary.setSelected(primary.isSelected() && type.allows(DataType.Option.PRIMARY));
-		notnull.setSelected(notnull.isSelected() && type.allows(DataType.Option.NOT_NULL));
-		autoincrement.setSelected(autoincrement.isSelected() && type.allows(DataType.Option.AUTO_INCREMENT));
+		notNull.setSelected(notNull.isSelected() && type.allows(DataType.Option.NOT_NULL));
+		autoIncrement.setSelected(autoIncrement.isSelected() && type.allows(DataType.Option.AUTO_INCREMENT));
 		unsigned.setSelected(unsigned.isSelected() && type.allows(DataType.Option.UNSIGNED));
 	}
 
@@ -627,10 +627,10 @@ public class TableEditorTab extends JPanel implements EditorTab {
 					case NAME -> created.name;
 					case TYPE -> created.type;
 					case LENGTH -> created.length;
-					case NOT_NULL -> created.notnull;
+					case NOT_NULL -> created.notNull;
 					case PRIMARY -> created.primary;
-					case AUTO_INCREMENT -> created.autoincrement;
-					default -> created.defaultval;
+					case AUTO_INCREMENT -> created.autoIncrement;
+					default -> created.defaultValue;
 				};
 			}
 			TableColumn existing = (TableColumn) columns.get(row);
@@ -661,10 +661,10 @@ public class TableEditorTab extends JPanel implements EditorTab {
 				}
 				case TYPE -> created.applyType((DataType) value);
 				case LENGTH -> created.length = Objects.toString(value, "");
-				case NOT_NULL -> created.notnull = (Boolean) value;
+				case NOT_NULL -> created.notNull = (Boolean) value;
 				case PRIMARY -> created.primary = (Boolean) value;
-				case AUTO_INCREMENT -> created.autoincrement = (Boolean) value;
-				default -> created.defaultval = Objects.toString(value, "");
+				case AUTO_INCREMENT -> created.autoIncrement = (Boolean) value;
+				default -> created.defaultValue = Objects.toString(value, "");
 			}
 			columnsChanged = true;
 			refreshPreview();

@@ -108,12 +108,12 @@ public class ForeignKeyDialog extends FormDialog {
 	private JComponent content() {
 		JScrollPane scroll = new JScrollPane(pairTable);
 		scroll.setPreferredSize(new java.awt.Dimension(360, 110));
-		JButton add = Forms.button("Add &pair");
+		JButton addButton = Forms.button("Add &pair");
 		JButton remove = removePair;
-		add.addActionListener(e -> pairs.addRow(new Object[]{firstColumn(from), primaryColumn(selectedTable())}));
+		addButton.addActionListener(e -> pairs.addRow(new Object[]{firstColumn(from), primaryColumn(selectedTable())}));
 		remove.addActionListener(e -> removeSelectedPair());
 		JPanel pairButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
-		pairButtons.add(add);
+		pairButtons.add(addButton);
 		pairButtons.add(remove);
 		JPanel columns = new JPanel(new BorderLayout(0, Forms.GAP));
 		columns.add(scroll, BorderLayout.CENTER);

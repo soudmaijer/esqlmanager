@@ -21,12 +21,12 @@ public class ModelCard extends JPanel {
 		this.setLayout(null);
 	}
 
-	public void addReference(ModelCard mo) {
-		references.add(mo);
+	public void addReference(ModelCard other) {
+		references.add(other);
 	}
 
-	public void removeReference(ModelCard mo) {
-		references.remove(mo);
+	public void removeReference(ModelCard other) {
+		references.remove(other);
 	}
 
 	public List<ModelCard> getReferences() {
@@ -66,8 +66,8 @@ public class ModelCard extends JPanel {
 
 	/** Where the card is drawn in the viewer, without the margin around it that holds the shadow. */
 	public Rectangle cardBounds() {
-		int m = DesignerTheme.SHADOW;
-		return new Rectangle(getX() + m, getY() + m, getWidth() - 2 * m, getHeight() - 2 * m);
+		int shadow = DesignerTheme.SHADOW;
+		return new Rectangle(getX() + shadow, getY() + shadow, getWidth() - 2 * shadow, getHeight() - 2 * shadow);
 	}
 
 	/** Places the card (not the shadow margin) at a point of the viewer, the position a model file stores. */
@@ -83,14 +83,14 @@ public class ModelCard extends JPanel {
 	/** Only the card takes the mouse, a click on the shadow goes to the viewer (and to a connector below it). */
 	@Override
 	public boolean contains(int x, int y) {
-		int m = DesignerTheme.SHADOW;
-		return x >= m && y >= m && x < getWidth() - m && y < getHeight() - m;
+		int shadow = DesignerTheme.SHADOW;
+		return x >= shadow && y >= shadow && x < getWidth() - shadow && y < getHeight() - shadow;
 	}
 
 	/** The card area in component coordinates. */
 	protected Rectangle localCard() {
-		int m = DesignerTheme.SHADOW;
-		return new Rectangle(m, m, getWidth() - 2 * m, getHeight() - 2 * m);
+		int shadow = DesignerTheme.SHADOW;
+		return new Rectangle(shadow, shadow, getWidth() - 2 * shadow, getHeight() - 2 * shadow);
 	}
 
 	/** A soft shadow under a shape: a few translucent copies, a little lower and wider each time. */

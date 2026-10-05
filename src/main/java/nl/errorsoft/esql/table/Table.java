@@ -11,8 +11,8 @@ public class Table {
 	private int rows = 0;
 	private Database db;
 	private Schema schema;
-	private TableColumn tca[];
-	private TableIndex tia[];
+	private TableColumn columns[];
+	private TableIndex indexes[];
 
 	public Table(Database db) {
 		this.db = db;
@@ -24,30 +24,30 @@ public class Table {
 		this.schema = schema;
 	}
 
-	public void setColumns(TableColumn[] tca) {
-		this.tca = tca;
+	public void setColumns(TableColumn[] columns) {
+		this.columns = columns;
 	}
 
 	public TableColumn[] getColumns() {
-		return this.tca;
+		return this.columns;
 	}
 
-	public void setIndexes(TableIndex[] tia) {
-		this.tia = tia;
+	public void setIndexes(TableIndex[] indexes) {
+		this.indexes = indexes;
 	}
 
 	public TableIndex[] getIndexes() {
-		if (tia == null) {
+		if (indexes == null) {
 			return new TableIndex[0];
 		}
-		return this.tia;
+		return this.indexes;
 	}
 
 	public TableColumn getTableColumn(String name) {
-		if (tca != null) {
-			for (int i = 0; i < tca.length; i++) {
-				if (tca[i].getName().equals(name)) {
-					return tca[i];
+		if (columns != null) {
+			for (int i = 0; i < columns.length; i++) {
+				if (columns[i].getName().equals(name)) {
+					return columns[i];
 				}
 			}
 		}
@@ -55,10 +55,10 @@ public class Table {
 	}
 
 	public TableIndex getTableIndex(String name) {
-		if (tia != null) {
-			for (int i = 0; i < tia.length; i++) {
-				if (tia[i].getName().equals(name)) {
-					return tia[i];
+		if (indexes != null) {
+			for (int i = 0; i < indexes.length; i++) {
+				if (indexes[i].getName().equals(name)) {
+					return indexes[i];
 				}
 			}
 		}

@@ -28,17 +28,17 @@ public class SortHeaderListener implements MouseListener {
 			}
 		}
 
-		int col = header.columnAtPoint(e.getPoint());
-		int sortCol = header.getTable().convertColumnIndexToModel(col);
-		renderer.setPressed(col);
-		renderer.setSelectedColumn(col);
+		int viewColumn = header.columnAtPoint(e.getPoint());
+		int sortColumn = header.getTable().convertColumnIndexToModel(viewColumn);
+		renderer.setPressed(viewColumn);
+		renderer.setSelectedColumn(viewColumn);
 
-		SortableTableModel stm = (SortableTableModel) header.getTable().getModel();
+		SortableTableModel sortableModel = (SortableTableModel) header.getTable().getModel();
 
-		if (renderer.getState(col) == HeaderRenderer.DOWN) {
-			stm.sortByColumn(sortCol, true);
-		} else if (renderer.getState(col) == HeaderRenderer.UP) {
-			stm.sortByColumn(sortCol, false);
+		if (renderer.getState(viewColumn) == HeaderRenderer.DOWN) {
+			sortableModel.sortByColumn(sortColumn, true);
+		} else if (renderer.getState(viewColumn) == HeaderRenderer.UP) {
+			sortableModel.sortByColumn(sortColumn, false);
 		}
 		header.repaint();
 	}

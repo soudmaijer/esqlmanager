@@ -45,9 +45,9 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	private ImageLoader imgLoader;
 	private DatabaseTree databaseTree;
 	private DefaultMutableTreeNode selectedNode;
-	private JScrollPane jsp; // ScrolPane for JTree
-	private JSplitPane jsplp; // Tree and jsplData
-	private JTabbedPane tabbedPane; // Contains jsp2
+	private JScrollPane treeScroll; // Scroll pane for the tree
+	private JSplitPane treeSplit; // Tree and the tabs
+	private JTabbedPane tabbedPane; // Contains the tabs
 	private JScrollPane helpPane;
 	private static final String READY = "Ready"; // Only sizes the status bar
 	private JLabel status;
@@ -59,18 +59,18 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	private static final String STATUS_KEY = "ConnectionWindow.status"; // The status message of a tab
 
 	// Internal toolbar.
-	private JToolBar tbTable;
-	private JButton btnRefreshTree;
-	private JButton btnDropTable;
-	private JButton btnCreateTable;
-	private JButton btnUserManager;
-	private JButton btnDesigner;
-	private JButton btnRunQuery;
-	private JButton btnNewRow;
-	private JButton btnUpdateRow;
-	private JButton btnDeleteRow;
-	private JButton btnAddField;
-	private JButton btnDeleteField;
+	private JToolBar toolbar;
+	private JButton refreshTreeButton;
+	private JButton dropTableButton;
+	private JButton createTableButton;
+	private JButton userManagerButton;
+	private JButton designerButton;
+	private JButton runQueryButton;
+	private JButton newRowButton;
+	private JButton updateRowButton;
+	private JButton deleteRowButton;
+	private JButton addFieldButton;
+	private JButton deleteFieldButton;
 
 	public ConnectionWindow(nl.errorsoft.esql.connection.control.ConnectionWindowController connectionWindowController, MainWindow mainWindow) {
 		// Windowconstructor
@@ -102,60 +102,61 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		 *		JToolbar
 		 */
 
-		tbTable = new JToolBar();
-		tbTable.setFloatable(false);
-		btnRefreshTree = new JButton(imgLoader.getIcon("pc"));
-		btnRefreshTree.setToolTipText("Refresh tree");
-		btnCreateTable = new JButton(imgLoader.getIcon("imgCreateTable"));
-		btnCreateTable.setToolTipText("Create table");
-		btnDropTable = new JButton(imgLoader.getIcon("imgDropTable"));
-		btnDropTable.setToolTipText("Drop table");
-		btnDesigner = new JButton(imgLoader.getIcon("imgDesigner"));
-		btnDesigner.setToolTipText("Open database in designer");
-		btnUserManager = new JButton(imgLoader.getIcon("imgUserManager"));
-		btnUserManager.setToolTipText("User manager");
-		btnRunQuery = new JButton(imgLoader.getIcon("imgRunQuery"));
-		btnRunQuery.setToolTipText("Run SQL query");
-		btnNewRow = new JButton(imgLoader.getIcon("imgNewRow"));
-		btnNewRow.setToolTipText("Insert new row");
-		btnUpdateRow = new JButton(imgLoader.getIcon("imgUpdateRow"));
-		btnUpdateRow.setToolTipText("Update changes");
-		btnDeleteRow = new JButton(imgLoader.getIcon("imgDeleteRow"));
-		btnDeleteRow.setToolTipText("Delete row");
-		btnAddField = new JButton(imgLoader.getIcon("imgAddField"));
-		btnAddField.setToolTipText("Add field");
-		btnDeleteField = new JButton(imgLoader.getIcon("imgDeleteField"));
-		btnDeleteField.setToolTipText("Delete field");
+		toolbar = new JToolBar();
+		toolbar.setFloatable(false);
+		refreshTreeButton = new JButton(imgLoader.getIcon("pc"));
+		refreshTreeButton.setToolTipText("Refresh tree");
+		createTableButton = new JButton(imgLoader.getIcon("imgCreateTable"));
+		createTableButton.setToolTipText("Create table");
+		dropTableButton = new JButton(imgLoader.getIcon("imgDropTable"));
+		dropTableButton.setToolTipText("Drop table");
+		designerButton = new JButton(imgLoader.getIcon("imgDesigner"));
+		designerButton.setToolTipText("Open database in designer");
+		userManagerButton = new JButton(imgLoader.getIcon("imgUserManager"));
+		userManagerButton.setToolTipText("User manager");
+		runQueryButton = new JButton(imgLoader.getIcon("imgRunQuery"));
+		runQueryButton.setToolTipText("Run SQL query");
+		newRowButton = new JButton(imgLoader.getIcon("imgNewRow"));
+		newRowButton.setToolTipText("Insert new row");
+		updateRowButton = new JButton(imgLoader.getIcon("imgUpdateRow"));
+		updateRowButton.setToolTipText("Update changes");
+		deleteRowButton = new JButton(imgLoader.getIcon("imgDeleteRow"));
+		deleteRowButton.setToolTipText("Delete row");
+		addFieldButton = new JButton(imgLoader.getIcon("imgAddField"));
+		addFieldButton.setToolTipText("Add field");
+		deleteFieldButton = new JButton(imgLoader.getIcon("imgDeleteField"));
+		deleteFieldButton.setToolTipText("Delete field");
 
 		// Voeg knoppen toe aan toolbar
-		tbTable.add(btnRefreshTree);
-		tbTable.add(btnUserManager);
-		tbTable.add(btnRunQuery);
-		tbTable.addSeparator();
-		tbTable.add(btnDesigner);
-		tbTable.addSeparator();
-		tbTable.add(btnCreateTable);
-		tbTable.add(btnDropTable);
-		tbTable.addSeparator();
-		tbTable.add(btnAddField);
-		tbTable.add(btnDeleteField);
-		tbTable.addSeparator();
-		tbTable.add(btnNewRow);
-		tbTable.add(btnDeleteRow);
-		tbTable.add(btnUpdateRow);
-		ToolbarButtons.style(btnRefreshTree, btnUserManager, btnRunQuery, btnDesigner, btnCreateTable, btnDropTable, btnAddField, btnDeleteField, btnNewRow,
-			btnDeleteRow, btnUpdateRow);
+		toolbar.add(refreshTreeButton);
+		toolbar.add(userManagerButton);
+		toolbar.add(runQueryButton);
+		toolbar.addSeparator();
+		toolbar.add(designerButton);
+		toolbar.addSeparator();
+		toolbar.add(createTableButton);
+		toolbar.add(dropTableButton);
+		toolbar.addSeparator();
+		toolbar.add(addFieldButton);
+		toolbar.add(deleteFieldButton);
+		toolbar.addSeparator();
+		toolbar.add(newRowButton);
+		toolbar.add(deleteRowButton);
+		toolbar.add(updateRowButton);
+		ToolbarButtons.style(refreshTreeButton, userManagerButton, runQueryButton, designerButton, createTableButton, dropTableButton, addFieldButton,
+			deleteFieldButton, newRowButton,
+			deleteRowButton, updateRowButton);
 
 		// Disable.
-		this.btnNewRow.setEnabled(false);
-		this.btnUpdateRow.setEnabled(false);
-		this.btnDeleteRow.setEnabled(false);
-		this.btnDesigner.setEnabled(false);
-		this.btnDropTable.setEnabled(false);
-		this.btnCreateTable.setEnabled(false);
-		this.btnAddField.setEnabled(false);
-		this.btnDeleteField.setEnabled(false);
-		this.getContentPane().add(tbTable, BorderLayout.NORTH);
+		this.newRowButton.setEnabled(false);
+		this.updateRowButton.setEnabled(false);
+		this.deleteRowButton.setEnabled(false);
+		this.designerButton.setEnabled(false);
+		this.dropTableButton.setEnabled(false);
+		this.createTableButton.setEnabled(false);
+		this.addFieldButton.setEnabled(false);
+		this.deleteFieldButton.setEnabled(false);
+		this.getContentPane().add(toolbar, BorderLayout.NORTH);
 
 		/******************************************************************
 		 *
@@ -179,8 +180,8 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		 */
 
 		// JTree
-		jsp = new JScrollPane();
-		jsp.getViewport().setBackground(UIManager.getColor("Tree.background"));
+		treeScroll = new JScrollPane();
+		treeScroll.getViewport().setBackground(UIManager.getColor("Tree.background"));
 
 		// SplitPane properties.
 		// One bar below the tabs: what this connection did last on the left, the paging of the table data in the centre.
@@ -213,11 +214,11 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		tabsWithStatus.add(tabbedPane, BorderLayout.CENTER);
 		tabsWithStatus.add(statusBar, BorderLayout.SOUTH);
 
-		jsplp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, jsp, tabsWithStatus);
-		jsplp.setDividerLocation(200);
+		treeSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScroll, tabsWithStatus);
+		treeSplit.setDividerLocation(200);
 
 		// Add SplitPane.
-		getContentPane().add(jsplp, BorderLayout.CENTER);
+		getContentPane().add(treeSplit, BorderLayout.CENTER);
 
 		/******************************************************************
 		 *
@@ -225,17 +226,17 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		 */
 
 		// Toolbar actionlisteners.
-		btnRefreshTree.addActionListener(this);
-		btnCreateTable.addActionListener(this);
-		btnDropTable.addActionListener(this);
-		btnDesigner.addActionListener(this);
-		btnUserManager.addActionListener(this);
-		btnRunQuery.addActionListener(this);
-		btnNewRow.addActionListener(this);
-		btnUpdateRow.addActionListener(this);
-		btnDeleteRow.addActionListener(this);
-		btnAddField.addActionListener(this);
-		btnDeleteField.addActionListener(this);
+		refreshTreeButton.addActionListener(this);
+		createTableButton.addActionListener(this);
+		dropTableButton.addActionListener(this);
+		designerButton.addActionListener(this);
+		userManagerButton.addActionListener(this);
+		runQueryButton.addActionListener(this);
+		newRowButton.addActionListener(this);
+		updateRowButton.addActionListener(this);
+		deleteRowButton.addActionListener(this);
+		addFieldButton.addActionListener(this);
+		deleteFieldButton.addActionListener(this);
 
 		// Pack & show.
 		this.pack();
@@ -250,50 +251,50 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 	// Disable buttons if root selected.
 	public void rootSelected() {
-		btnDesigner.setEnabled(false);
-		btnCreateTable.setEnabled(false);
-		btnDropTable.setEnabled(false);
-		btnAddField.setEnabled(false);
-		btnDeleteField.setEnabled(false);
-		btnNewRow.setEnabled(false);
-		btnDeleteRow.setEnabled(false);
-		btnUpdateRow.setEnabled(false);
+		designerButton.setEnabled(false);
+		createTableButton.setEnabled(false);
+		dropTableButton.setEnabled(false);
+		addFieldButton.setEnabled(false);
+		deleteFieldButton.setEnabled(false);
+		newRowButton.setEnabled(false);
+		deleteRowButton.setEnabled(false);
+		updateRowButton.setEnabled(false);
 	}
 
 	// Disable buttons if database selected.
 	public void databaseSelected() {
-		btnDesigner.setEnabled(true);
-		btnCreateTable.setEnabled(true);
-		btnDropTable.setEnabled(false);
-		btnAddField.setEnabled(false);
-		btnDeleteField.setEnabled(false);
-		btnNewRow.setEnabled(false);
-		btnDeleteRow.setEnabled(false);
-		btnUpdateRow.setEnabled(false);
+		designerButton.setEnabled(true);
+		createTableButton.setEnabled(true);
+		dropTableButton.setEnabled(false);
+		addFieldButton.setEnabled(false);
+		deleteFieldButton.setEnabled(false);
+		newRowButton.setEnabled(false);
+		deleteRowButton.setEnabled(false);
+		updateRowButton.setEnabled(false);
 	}
 
 	// Disable buttons if table selected.
 	public void tableSelected() {
-		btnDesigner.setEnabled(false);
-		btnCreateTable.setEnabled(true);
-		btnDropTable.setEnabled(true);
-		btnAddField.setEnabled(true);
-		btnDeleteField.setEnabled(false);
-		btnNewRow.setEnabled(true);
-		btnDeleteRow.setEnabled(true);
-		btnUpdateRow.setEnabled(true);
+		designerButton.setEnabled(false);
+		createTableButton.setEnabled(true);
+		dropTableButton.setEnabled(true);
+		addFieldButton.setEnabled(true);
+		deleteFieldButton.setEnabled(false);
+		newRowButton.setEnabled(true);
+		deleteRowButton.setEnabled(true);
+		updateRowButton.setEnabled(true);
 	}
 
 	// Disable buttons if field selected.
 	public void fieldSelected() {
-		btnDesigner.setEnabled(false);
-		btnCreateTable.setEnabled(true);
-		btnDropTable.setEnabled(true);
-		btnAddField.setEnabled(true);
-		btnDeleteField.setEnabled(true);
-		btnNewRow.setEnabled(true);
-		btnDeleteRow.setEnabled(true);
-		btnUpdateRow.setEnabled(true);
+		designerButton.setEnabled(false);
+		createTableButton.setEnabled(true);
+		dropTableButton.setEnabled(true);
+		addFieldButton.setEnabled(true);
+		deleteFieldButton.setEnabled(true);
+		newRowButton.setEnabled(true);
+		deleteRowButton.setEnabled(true);
+		updateRowButton.setEnabled(true);
 	}
 
 	/*
@@ -301,9 +302,9 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	 * buttons which aren`t available.
 	 */
 	public void disableDataEdit() {
-		btnNewRow.setEnabled(false);
-		btnDeleteRow.setEnabled(false);
-		btnUpdateRow.setEnabled(false);
+		newRowButton.setEnabled(false);
+		deleteRowButton.setEnabled(false);
+		updateRowButton.setEnabled(false);
 	}
 
 	// Close frame.
@@ -323,7 +324,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		// A new tree starts without a selection, the old node is not part of it.
 		selectedNode = null;
 		rootSelected();
-		jsp.getViewport().add(databaseTree);
+		treeScroll.getViewport().add(databaseTree);
 
 		databaseTree.addMouseListener(this);
 		databaseTree.addTreeSelectionListener(e -> {
@@ -358,7 +359,7 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 	}
 
 	public DatabaseTree getDatabaseTree() {
-		return (DatabaseTree) jsp.getViewport().getView();
+		return (DatabaseTree) treeScroll.getViewport().getView();
 	}
 
 	public void showTableDataTab(String tabTitle, TableDataTab tableDataTab) {
@@ -524,43 +525,43 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 		Object eventSource = e.getSource();
 
 		// Insert new row
-		if (eventSource == btnNewRow) {
+		if (eventSource == newRowButton) {
 			connectionWindowController.insertNewRow();
 		}
 		// Delete row
-		else if (eventSource == btnDeleteRow) {
+		else if (eventSource == deleteRowButton) {
 			connectionWindowController.deleteSelectedRows();
 		}
 		// Update or insert row
-		else if (eventSource == btnUpdateRow) {
+		else if (eventSource == updateRowButton) {
 			connectionWindowController.saveSelectedRow();
 		}
 		// Refresh database tree.
-		else if (eventSource == btnRefreshTree) {
+		else if (eventSource == refreshTreeButton) {
 			connectionWindowController.showDatabaseTree();
 		}
 		// Run SQL query window.
-		else if (eventSource == btnRunQuery) {
+		else if (eventSource == runQueryButton) {
 			connectionWindowController.startQueryTab();
 		}
 		// Read the database into the designer.
-		else if (eventSource == btnDesigner) {
+		else if (eventSource == designerButton) {
 			connectionWindowController.openDatabaseInDesigner();
 		}
 		// Drop table.
-		else if (eventSource == btnDropTable) {
+		else if (eventSource == dropTableButton) {
 			dropTable();
 		}
 		// Add field.
-		else if (eventSource == btnAddField) {
+		else if (eventSource == addFieldButton) {
 			connectionWindowController.showColumnPropertiesDialog(true, false);
 		}
 		// Drop field.
-		else if (eventSource == btnDeleteField) {
+		else if (eventSource == deleteFieldButton) {
 			dropField();
-		} else if (eventSource == btnUserManager) {
+		} else if (eventSource == userManagerButton) {
 			connectionWindowController.showUserManagerDialog();
-		} else if (eventSource == btnCreateTable) {
+		} else if (eventSource == createTableButton) {
 			connectionWindowController.showCreateTableTab();
 		}
 	}

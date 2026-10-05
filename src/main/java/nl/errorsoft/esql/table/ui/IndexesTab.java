@@ -44,20 +44,20 @@ public class IndexesTab extends JPanel implements EditorTab {
 	private final String title;
 
 	private final JList<TableIndex> indexList = new JList<>(new DefaultListModel<>());
-	private final JButton jbtnAdd = Forms.button("&Add...");
-	private final JButton jbtnPrimary = Forms.button("Add &primary");
-	private final JList<TableColumn> jlstUsed = new JList<>(new DefaultListModel<>());
-	private final JList<TableColumn> jlstAvail = new JList<>(new DefaultListModel<>());
-	private final JButton jbtnAddToList = new JButton("<");
-	private final JButton jbtnRemoveFromList = new JButton(">");
-	private final JRadioButton jrdNormal = Forms.mnemonic(new JRadioButton(), "&Normal");
-	private final JRadioButton jrdUnique = Forms.mnemonic(new JRadioButton(), "&Unique");
-	private final JRadioButton jrdFulltext = Forms.mnemonic(new JRadioButton(), "&Fulltext");
-	private final JButton jbtnUp = Forms.button("U&p");
-	private final JButton jbtnDown = Forms.button("&Down");
-	private final JButton jbtnSave = Forms.button("&Save");
-	private final JButton jbtnDrop = Forms.button("D&rop");
-	private final JButton jbtnClose = Forms.button("&Close");
+	private final JButton addButton = Forms.button("&Add...");
+	private final JButton primaryButton = Forms.button("Add &primary");
+	private final JList<TableColumn> usedColumnList = new JList<>(new DefaultListModel<>());
+	private final JList<TableColumn> availableColumnList = new JList<>(new DefaultListModel<>());
+	private final JButton addToListButton = new JButton("<");
+	private final JButton removeFromListButton = new JButton(">");
+	private final JRadioButton normalRadio = Forms.mnemonic(new JRadioButton(), "&Normal");
+	private final JRadioButton uniqueRadio = Forms.mnemonic(new JRadioButton(), "&Unique");
+	private final JRadioButton fulltextRadio = Forms.mnemonic(new JRadioButton(), "&Fulltext");
+	private final JButton upButton = Forms.button("U&p");
+	private final JButton downButton = Forms.button("&Down");
+	private final JButton saveButton = Forms.button("&Save");
+	private final JButton dropButton = Forms.button("D&rop");
+	private final JButton closeButton = Forms.button("&Close");
 	private final JPanel editor = Forms.titled(new JPanel(new BorderLayout(0, Forms.GAP)), "Index");
 	private final JLabel hint = new JLabel(" ");
 
@@ -78,20 +78,20 @@ public class IndexesTab extends JPanel implements EditorTab {
 		add(editorPanel(indexTypes), BorderLayout.CENTER);
 		add(bottom(), BorderLayout.SOUTH);
 
-		jbtnAdd.addActionListener(e -> addIndex());
-		jbtnPrimary.addActionListener(e -> {
+		addButton.addActionListener(e -> addIndex());
+		primaryButton.addActionListener(e -> {
 			if (!modified || confirmDiscard()) {
 				indexesController.addPrimary();
 			}
 		});
-		jbtnAddToList.addActionListener(e -> moveSelected(jlstAvail, jlstUsed));
-		jbtnRemoveFromList.addActionListener(e -> moveSelected(jlstUsed, jlstAvail));
-		jbtnUp.addActionListener(e -> moveUsed(-1));
-		jbtnDown.addActionListener(e -> moveUsed(1));
-		jbtnSave.addActionListener(e -> save());
-		jbtnDrop.addActionListener(e -> dropIndex());
-		jbtnClose.addActionListener(e -> indexesController.close());
-		for (JRadioButton radio : List.of(jrdNormal, jrdUnique, jrdFulltext)) {
+		addToListButton.addActionListener(e -> moveSelected(availableColumnList, usedColumnList));
+		removeFromListButton.addActionListener(e -> moveSelected(usedColumnList, availableColumnList));
+		upButton.addActionListener(e -> moveUsed(-1));
+		downButton.addActionListener(e -> moveUsed(1));
+		saveButton.addActionListener(e -> save());
+		dropButton.addActionListener(e -> dropIndex());
+		closeButton.addActionListener(e -> indexesController.close());
+		for (JRadioButton radio : List.of(normalRadio, uniqueRadio, fulltextRadio)) {
 			radio.addActionListener(e -> modified = true);
 		}
 		indexList.addListSelectionListener(e -> {
@@ -123,8 +123,8 @@ public class IndexesTab extends JPanel implements EditorTab {
 		scroll.setPreferredSize(new Dimension(220, 240));
 		JPanel buttons = new JPanel(new GridLayout(1, 2, Forms.GAP, 0));
 		buttons.setBorder(BorderFactory.createEmptyBorder(Forms.GAP, 0, 0, 0));
-		buttons.add(jbtnAdd);
-		buttons.add(jbtnPrimary);
+		buttons.add(addButton);
+		buttons.add(primaryButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(Forms.label("&Indexes:", indexList), BorderLayout.NORTH);
@@ -135,49 +135,49 @@ public class IndexesTab extends JPanel implements EditorTab {
 
 	private JPanel editorPanel(List<String> indexTypes) {
 		ButtonGroup group = new ButtonGroup();
-		group.add(jrdNormal);
-		group.add(jrdUnique);
-		group.add(jrdFulltext);
+		group.add(normalRadio);
+		group.add(uniqueRadio);
+		group.add(fulltextRadio);
 		JPanel type = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.PADDING, 0));
 		type.add(new JLabel("Type:"));
-		type.add(jrdNormal);
+		type.add(normalRadio);
 		if (indexTypes.contains("UNIQUE")) {
-			type.add(jrdUnique);
+			type.add(uniqueRadio);
 		}
 		if (indexTypes.contains("FULLTEXT")) {
-			type.add(jrdFulltext);
+			type.add(fulltextRadio);
 		}
 
 		JPanel columns = new JPanel(new GridBagLayout());
-		columns.add(Forms.label("U&sed columns:", jlstUsed), constraints(0, 0));
-		columns.add(Forms.label("Availa&ble columns:", jlstAvail), constraints(2, 0));
+		columns.add(Forms.label("U&sed columns:", usedColumnList), constraints(0, 0));
+		columns.add(Forms.label("Availa&ble columns:", availableColumnList), constraints(2, 0));
 		GridBagConstraints c = constraints(0, 1);
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 1;
 		c.weighty = 1;
-		columns.add(new JScrollPane(jlstUsed), c);
+		columns.add(new JScrollPane(usedColumnList), c);
 		JPanel move = new JPanel(new GridLayout(2, 1, 0, Forms.GAP));
-		move.add(jbtnAddToList);
-		move.add(jbtnRemoveFromList);
+		move.add(addToListButton);
+		move.add(removeFromListButton);
 		columns.add(move, constraints(1, 1));
 		c = constraints(2, 1);
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 1;
 		c.weighty = 1;
-		columns.add(new JScrollPane(jlstAvail), c);
+		columns.add(new JScrollPane(availableColumnList), c);
 		JPanel order = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
-		order.add(jbtnUp);
-		order.add(jbtnDown);
+		order.add(upButton);
+		order.add(downButton);
 		c = constraints(0, 2);
 		c.fill = GridBagConstraints.HORIZONTAL;
 		columns.add(order, c);
 
-		jbtnAddToList.setToolTipText("Use the selected available column in the index");
-		jbtnRemoveFromList.setToolTipText("Remove the selected column from the index");
-		jbtnUp.setToolTipText("Move the selected column up: the order of the columns matters for the index");
-		jbtnDown.setToolTipText("Move the selected column down");
-		jlstAvail.addMouseListener(doubleClick(jlstAvail, jlstUsed));
-		jlstUsed.addMouseListener(doubleClick(jlstUsed, jlstAvail));
+		addToListButton.setToolTipText("Use the selected available column in the index");
+		removeFromListButton.setToolTipText("Remove the selected column from the index");
+		upButton.setToolTipText("Move the selected column up: the order of the columns matters for the index");
+		downButton.setToolTipText("Move the selected column down");
+		availableColumnList.addMouseListener(doubleClick(availableColumnList, usedColumnList));
+		usedColumnList.addMouseListener(doubleClick(usedColumnList, availableColumnList));
 
 		Color disabled = UIManager.getColor("Label.disabledForeground");
 		if (disabled != null) {
@@ -190,7 +190,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 	}
 
 	private JPanel bottom() {
-		return Forms.buttonRow(jbtnSave, jbtnDrop, jbtnClose);
+		return Forms.buttonRow(saveButton, dropButton, closeButton);
 	}
 
 	private static GridBagConstraints constraints(int x, int y) {
@@ -243,35 +243,35 @@ public class IndexesTab extends JPanel implements EditorTab {
 	}
 
 	private void dropIndex() {
-		if (indexList.getSelectedValue() instanceof TableIndex ti
-			&& Dialogs.confirmDestructive(this, "Drop index", "Drop index '" + ti + "' of " + title + "? This cannot be undone.", "Drop")) {
-			indexesController.dropIndex(ti);
+		if (indexList.getSelectedValue() instanceof TableIndex index
+			&& Dialogs.confirmDestructive(this, "Drop index", "Drop index '" + index + "' of " + title + "? This cannot be undone.", "Drop")) {
+			indexesController.dropIndex(index);
 		}
 	}
 
 	private void save() {
-		if (indexList.getSelectedValue() instanceof TableIndex ti) {
-			DefaultListModel<TableColumn> dlm = (DefaultListModel<TableColumn>) jlstUsed.getModel();
-			if (dlm.isEmpty()) {
+		if (indexList.getSelectedValue() instanceof TableIndex index) {
+			DefaultListModel<TableColumn> usedModel = (DefaultListModel<TableColumn>) usedColumnList.getModel();
+			if (usedModel.isEmpty()) {
 				hint.setForeground(errorColor());
 				hint.setText("Select at least one column for the index.");
 				return;
 			}
-			TableColumn[] tc = new TableColumn[dlm.getSize()];
+			TableColumn[] columns = new TableColumn[usedModel.getSize()];
 
-			for (int i = 0; i < dlm.getSize(); i++) {
-				tc[i] = dlm.elementAt(i);
+			for (int i = 0; i < usedModel.getSize(); i++) {
+				columns[i] = usedModel.elementAt(i);
 			}
 
 			String type = "INDEX";
 
-			if (jrdFulltext.isSelected()) {
+			if (fulltextRadio.isSelected()) {
 				type = "FULLTEXT";
-			} else if (jrdUnique.isSelected()) {
+			} else if (uniqueRadio.isSelected()) {
 				type = "UNIQUE";
 			}
 
-			indexesController.modifyIndex(ti, tc, type);
+			indexesController.modifyIndex(index, columns, type);
 		}
 	}
 
@@ -280,13 +280,13 @@ public class IndexesTab extends JPanel implements EditorTab {
 	}
 
 	private void moveUsed(int step) {
-		DefaultListModel<TableColumn> used = (DefaultListModel<TableColumn>) jlstUsed.getModel();
-		int from = jlstUsed.getSelectedIndex();
+		DefaultListModel<TableColumn> used = (DefaultListModel<TableColumn>) usedColumnList.getModel();
+		int from = usedColumnList.getSelectedIndex();
 		int to = from + step;
 
 		if (from > -1 && to > -1 && to < used.getSize()) {
 			used.add(to, used.remove(from));
-			jlstUsed.setSelectedIndex(to);
+			usedColumnList.setSelectedIndex(to);
 			modified = true;
 		}
 	}
@@ -304,8 +304,9 @@ public class IndexesTab extends JPanel implements EditorTab {
 		shown = null;
 		setTitle("Index");
 		hint.setText(" ");
-		for (Component component : new Component[]{jrdNormal, jrdUnique, jrdFulltext, jlstUsed, jlstAvail, jbtnAddToList, jbtnRemoveFromList, jbtnUp, jbtnDown,
-			jbtnSave, jbtnDrop}) {
+		for (Component component : new Component[]{normalRadio, uniqueRadio, fulltextRadio, usedColumnList, availableColumnList, addToListButton,
+			removeFromListButton, upButton, downButton,
+			saveButton, dropButton}) {
 			component.setEnabled(false);
 		}
 	}
@@ -318,44 +319,44 @@ public class IndexesTab extends JPanel implements EditorTab {
 	}
 
 	/** Shows the indexes as they are in the database, nothing is modified any more. */
-	public void loadIndexes(TableIndex[] tia) {
+	public void loadIndexes(TableIndex[] indexes) {
 		modified = false;
 		loading = true;
 		shown = null;
-		jbtnPrimary.setEnabled(true);
+		primaryButton.setEnabled(true);
 		DefaultListModel<TableIndex> model = new DefaultListModel<>();
 		indexList.setModel(model);
-		jlstUsed.setModel(new DefaultListModel<>());
-		jlstAvail.setModel(new DefaultListModel<>());
+		usedColumnList.setModel(new DefaultListModel<>());
+		availableColumnList.setModel(new DefaultListModel<>());
 		showNone();
 
-		if (tia != null && tia.length > 0) {
-			for (TableIndex index : tia) {
+		if (indexes != null && indexes.length > 0) {
+			for (TableIndex index : indexes) {
 				if (index.isPrimary()) {
-					jbtnPrimary.setEnabled(false);
+					primaryButton.setEnabled(false);
 				}
 				model.addElement(index);
 			}
 			indexList.setSelectedIndex(0);
-			itemSelected(tia[0]);
+			itemSelected(indexes[0]);
 		}
 		loading = false;
 	}
 
-	public void addNewIndex(TableIndex ti, TableColumn[] tc) {
-		DefaultListModel<TableColumn> dlmAvail = new DefaultListModel<>();
+	public void addNewIndex(TableIndex index, TableColumn[] columns) {
+		DefaultListModel<TableColumn> availableModel = new DefaultListModel<>();
 		loading = true;
-		((DefaultListModel<TableIndex>) indexList.getModel()).addElement(ti);
-		indexList.setSelectedValue(ti, true);
+		((DefaultListModel<TableIndex>) indexList.getModel()).addElement(index);
+		indexList.setSelectedValue(index, true);
 		loading = false;
-		itemSelected(ti);
+		itemSelected(index);
 
-		for (TableColumn column : tc) {
-			dlmAvail.addElement(column);
+		for (TableColumn column : columns) {
+			availableModel.addElement(column);
 		}
 
-		jlstUsed.setModel(new DefaultListModel<>());
-		jlstAvail.setModel(dlmAvail);
+		usedColumnList.setModel(new DefaultListModel<>());
+		availableColumnList.setModel(availableModel);
 		modified = true;
 	}
 
@@ -363,17 +364,18 @@ public class IndexesTab extends JPanel implements EditorTab {
 		shown = index;
 		TableColumn[] used = index.getTableColumns();
 		TableColumn[] avail = index.getTable().getColumns();
-		DefaultListModel<TableColumn> dlmUsed = new DefaultListModel<>();
-		DefaultListModel<TableColumn> dlmAvail = new DefaultListModel<>();
+		DefaultListModel<TableColumn> usedModel = new DefaultListModel<>();
+		DefaultListModel<TableColumn> availableModel = new DefaultListModel<>();
 
-		jrdUnique.setSelected(index.isUnique());
-		jrdFulltext.setSelected(!index.isUnique() && index.isFulltext());
-		jrdNormal.setSelected(!index.isUnique() && !index.isFulltext());
+		uniqueRadio.setSelected(index.isUnique());
+		fulltextRadio.setSelected(!index.isUnique() && index.isFulltext());
+		normalRadio.setSelected(!index.isUnique() && !index.isFulltext());
 		boolean editable = !index.isPrimary();
-		for (Component component : new Component[]{jrdNormal, jrdUnique, jrdFulltext}) {
+		for (Component component : new Component[]{normalRadio, uniqueRadio, fulltextRadio}) {
 			component.setEnabled(editable);
 		}
-		for (Component component : new Component[]{jlstUsed, jlstAvail, jbtnAddToList, jbtnRemoveFromList, jbtnUp, jbtnDown, jbtnSave, jbtnDrop}) {
+		for (Component component : new Component[]{usedColumnList, availableColumnList, addToListButton, removeFromListButton, upButton, downButton, saveButton,
+			dropButton}) {
 			component.setEnabled(true);
 		}
 		setTitle("Index: " + index);
@@ -381,17 +383,17 @@ public class IndexesTab extends JPanel implements EditorTab {
 		hint.setText(index.isPrimary() ? "The primary key is always unique, only its columns can change." : " ");
 
 		for (TableColumn column : avail) {
-			dlmAvail.addElement(column);
+			availableModel.addElement(column);
 		}
 
 		if (used != null) {
 			for (TableColumn column : used) {
-				dlmUsed.addElement(column);
-				dlmAvail.removeElement(column);
+				usedModel.addElement(column);
+				availableModel.removeElement(column);
 			}
 		}
 
-		jlstUsed.setModel(dlmUsed);
-		jlstAvail.setModel(dlmAvail);
+		usedColumnList.setModel(usedModel);
+		availableColumnList.setModel(availableModel);
 	}
 }

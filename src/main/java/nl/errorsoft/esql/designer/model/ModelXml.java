@@ -47,9 +47,9 @@ final class ModelXml {
 
 		for (Object object : model.getObjects()) {
 			switch (object) {
-				case DatabaseCard db -> databases.addContent(database(db));
-				case TableCard tb -> tables.addContent(table(tb));
-				case NoteCard cm -> comments.addContent(comment(cm));
+				case DatabaseCard databaseCard -> databases.addContent(database(databaseCard));
+				case TableCard tableCard -> tables.addContent(table(tableCard));
+				case NoteCard noteCard -> comments.addContent(comment(noteCard));
 				default -> {
 				}
 			}
@@ -72,51 +72,51 @@ final class ModelXml {
 		return new XMLOutputter(Format.getPrettyFormat().setEncoding("UTF-8")).outputString(new Document(root));
 	}
 
-	private static Element database(DatabaseCard db) {
+	private static Element database(DatabaseCard card) {
 		Element element = new Element("database");
-		element.addContent(text("name", db.getName()));
-		element.addContent(text("comment", db.getDescription()));
-		element.addContent(text("identifier", db.getIdentifier()));
-		element.addContent(bounds(db));
+		element.addContent(text("name", card.getName()));
+		element.addContent(text("comment", card.getDescription()));
+		element.addContent(text("identifier", card.getIdentifier()));
+		element.addContent(bounds(card));
 		return element;
 	}
 
-	private static Element table(TableCard tb) {
+	private static Element table(TableCard card) {
 		Element element = new Element("table");
-		element.addContent(text("name", tb.getName()));
-		element.addContent(text("comment", tb.getComment()));
-		element.addContent(text("description", tb.getDescription()));
-		element.addContent(text("type", tb.getType()));
-		element.addContent(text("identifier", tb.getIdentifier()));
-		element.addContent(bounds(tb));
+		element.addContent(text("name", card.getName()));
+		element.addContent(text("comment", card.getComment()));
+		element.addContent(text("description", card.getDescription()));
+		element.addContent(text("type", card.getType()));
+		element.addContent(text("identifier", card.getIdentifier()));
+		element.addContent(bounds(card));
 
 		Element fields = new Element("fields");
-		for (DesignerColumn fd : tb.getFields()) {
+		for (DesignerColumn column : card.getFields()) {
 			Element field = new Element("field");
-			field.addContent(text("name", fd.getName()));
-			field.addContent(text("comment", fd.getComment()));
-			field.addContent(text("default", fd.getDefault()));
-			field.addContent(text("length", fd.getLength()));
-			field.addContent(text("type", fd.getType().getName()));
-			field.addContent(text("primary", fd.primary));
-			field.addContent(text("autoincrement", fd.autoincrement));
-			field.addContent(text("binary", fd.binary));
-			field.addContent(text("index", fd.index));
-			field.addContent(text("notnull", fd.notnull));
-			field.addContent(text("unique", fd.unique));
-			field.addContent(text("unsigned", fd.unsigned));
-			field.addContent(text("zerofill", fd.zerofill));
+			field.addContent(text("name", column.getName()));
+			field.addContent(text("comment", column.getComment()));
+			field.addContent(text("default", column.getDefault()));
+			field.addContent(text("length", column.getLength()));
+			field.addContent(text("type", column.getType().getName()));
+			field.addContent(text("primary", column.primary));
+			field.addContent(text("autoincrement", column.autoIncrement));
+			field.addContent(text("binary", column.binary));
+			field.addContent(text("index", column.index));
+			field.addContent(text("notnull", column.notNull));
+			field.addContent(text("unique", column.unique));
+			field.addContent(text("unsigned", column.unsigned));
+			field.addContent(text("zerofill", column.zerofill));
 			fields.addContent(field);
 		}
 		element.addContent(fields);
 		return element;
 	}
 
-	private static Element comment(NoteCard cm) {
+	private static Element comment(NoteCard card) {
 		Element element = new Element("comment");
-		element.addContent(text("comment", cm.getComment()));
-		element.addContent(text("identifier", cm.getIdentifier()));
-		element.addContent(bounds(cm));
+		element.addContent(text("comment", card.getComment()));
+		element.addContent(text("identifier", card.getIdentifier()));
+		element.addContent(bounds(card));
 		return element;
 	}
 
@@ -171,45 +171,46 @@ final class ModelXml {
 		model.setAuthor(text(root, "author", ""));
 		model.setComment(text(root, "comment", ""));
 
-		for (Element db : children(root, "databases", "database")) {
-			DatabaseCard d = model.createDatabaseCard(text(db, "name", ""));
-			d.setDescription(text(db, "comment", ""));
-			d.setIdentifier(number(db, "identifier", -1));
-			place(d, db);
+		for (Element databaseElement : children(root, "databases", "database")) {
+			DatabaseCard databaseCard = model.createDatabaseCard(text(databaseElement, "name", ""));
+			databaseCard.setDescription(text(databaseElement, "comment", ""));
+			databaseCard.setIdentifier(number(databaseElement, "identifier", -1));
+			place(databaseCard, databaseElement);
 		}
 
-		for (Element cm : children(root, "comments", "comment")) {
-			NoteCard c = model.createNoteCard(text(cm, "comment", ""));
-			c.setIdentifier(number(cm, "identifier", -1));
-			place(c, cm);
+		for (Element noteElement : children(root, "comments", "comment")) {
+			NoteCard noteCard = model.createNoteCard(text(noteElement, "comment", ""));
+			noteCard.setIdentifier(number(noteElement, "identifier", -1));
+			place(noteCard, noteElement);
 		}
 
-		for (Element tb : children(root, "tables", "table")) {
-			TableCard t = model.createTableCard(text(tb, "name", ""));
-			t.setComment(text(tb, "comment", ""));
-			t.setDescription(text(tb, "description", ""));
-			t.setIdentifier(number(tb, "identifier", -1));
-			t.setType(text(tb, "type", ""));
-			place(t, tb);
+		for (Element tableElement : children(root, "tables", "table")) {
+			TableCard tableCard = model.createTableCard(text(tableElement, "name", ""));
+			tableCard.setComment(text(tableElement, "comment", ""));
+			tableCard.setDescription(text(tableElement, "description", ""));
+			tableCard.setIdentifier(number(tableElement, "identifier", -1));
+			tableCard.setType(text(tableElement, "type", ""));
+			place(tableCard, tableElement);
 
-			for (Element fd : children(tb, "fields", "field")) {
-				DataType type = DataType.named(text(fd, "type", ""));
-				DesignerColumn f = new DesignerColumn(text(fd, "name", ""), type, text(fd, "length", ""), text(fd, "default", ""), text(fd, "comment", ""));
-				f.primary = flag(fd, "primary");
-				f.autoincrement = flag(fd, "autoincrement");
-				f.binary = flag(fd, "binary");
-				f.index = flag(fd, "index");
-				f.notnull = flag(fd, "notnull");
-				f.unique = flag(fd, "unique");
-				f.unsigned = flag(fd, "unsigned");
-				f.zerofill = flag(fd, "zerofill");
-				t.addField(f);
+			for (Element fieldElement : children(tableElement, "fields", "field")) {
+				DataType type = DataType.named(text(fieldElement, "type", ""));
+				DesignerColumn column = new DesignerColumn(text(fieldElement, "name", ""), type, text(fieldElement, "length", ""),
+					text(fieldElement, "default", ""), text(fieldElement, "comment", ""));
+				column.primary = flag(fieldElement, "primary");
+				column.autoIncrement = flag(fieldElement, "autoincrement");
+				column.binary = flag(fieldElement, "binary");
+				column.index = flag(fieldElement, "index");
+				column.notNull = flag(fieldElement, "notnull");
+				column.unique = flag(fieldElement, "unique");
+				column.unsigned = flag(fieldElement, "unsigned");
+				column.zerofill = flag(fieldElement, "zerofill");
+				tableCard.addField(column);
 			}
 		}
 
-		for (Element rl : children(root, "relations", "relation")) {
-			ModelCard source = model.getObjectByIdentifier(number(rl, "source_identifier", -1));
-			ModelCard target = model.getObjectByIdentifier(number(rl, "target_identifier", -1));
+		for (Element relationElement : children(root, "relations", "relation")) {
+			ModelCard source = model.getObjectByIdentifier(number(relationElement, "source_identifier", -1));
+			ModelCard target = model.getObjectByIdentifier(number(relationElement, "target_identifier", -1));
 
 			// A relation to an object that is not in the file can't be drawn, it is left out.
 			if (source != null && target != null) {
@@ -225,9 +226,9 @@ final class ModelXml {
 	}
 
 	private static void readForeignKeys(Model model, Element root) {
-		for (Element fk : children(root, "foreignkeys", "foreignkey")) {
-			ModelCard from = model.getObjectByIdentifier(number(fk, "from_identifier", -1));
-			ModelCard to = model.getObjectByIdentifier(number(fk, "to_identifier", -1));
+		for (Element foreignKeyElement : children(root, "foreignkeys", "foreignkey")) {
+			ModelCard from = model.getObjectByIdentifier(number(foreignKeyElement, "from_identifier", -1));
+			ModelCard to = model.getObjectByIdentifier(number(foreignKeyElement, "to_identifier", -1));
 
 			// A key between tables that are not in the file can't be restored, it is left out.
 			if (!(from instanceof TableCard fromTable) || !(to instanceof TableCard toTable)) {
@@ -236,14 +237,14 @@ final class ModelXml {
 
 			List<String> fromColumns = new ArrayList<>();
 			List<String> toColumns = new ArrayList<>();
-			for (Object child : fk.getChildren("column")) {
+			for (Object child : foreignKeyElement.getChildren("column")) {
 				Element column = (Element) child;
 				fromColumns.add(column.getAttributeValue("from", ""));
 				toColumns.add(column.getAttributeValue("to", ""));
 			}
 
-			model.addForeignKey(new ModelForeignKey(fromTable, fromColumns, toTable, toColumns, text(fk, "name", ""),
-				text(fk, "on_delete", ""), text(fk, "on_update", "")));
+			model.addForeignKey(new ModelForeignKey(fromTable, fromColumns, toTable, toColumns, text(foreignKeyElement, "name", ""),
+				text(foreignKeyElement, "on_delete", ""), text(foreignKeyElement, "on_update", "")));
 		}
 	}
 

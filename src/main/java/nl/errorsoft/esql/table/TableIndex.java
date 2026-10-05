@@ -5,12 +5,12 @@ public class TableIndex {
 	private boolean unique = false;
 	private boolean newindex = false;
 	private boolean fulltext = false;
-	private TableColumn[] tca;
+	private TableColumn[] columns;
 	private String name;
 	private Table table;
 
 	public TableIndex(Table table) {
-		tca = new TableColumn[0];
+		columns = new TableColumn[0];
 		this.table = table;
 	}
 
@@ -38,20 +38,20 @@ public class TableIndex {
 		return this.fulltext;
 	}
 
-	public void addTableColumn(TableColumn tc) {
-		TableColumn[] temp = new TableColumn[tca.length + 1];
+	public void addTableColumn(TableColumn column) {
+		TableColumn[] extended = new TableColumn[columns.length + 1];
 
-		for (int i = 0; i < temp.length - 1; i++) {
-			temp[i] = tca[i];
+		for (int i = 0; i < extended.length - 1; i++) {
+			extended[i] = columns[i];
 		}
 
-		temp[temp.length - 1] = tc;
-		tca = temp;
-		temp = null;
+		extended[extended.length - 1] = column;
+		columns = extended;
+		extended = null;
 	}
 
 	public TableColumn[] getTableColumns() {
-		return this.tca;
+		return this.columns;
 	}
 
 	public void setName(String name) {

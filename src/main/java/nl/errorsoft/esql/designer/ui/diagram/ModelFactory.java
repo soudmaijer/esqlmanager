@@ -104,27 +104,27 @@ public final class ModelFactory {
 		ColumnDefinition column = new ColumnDefinition(field.getName());
 		column.type = field.getType();
 		column.length = field.getLength();
-		column.defaultval = field.getDefault();
+		column.defaultValue = field.getDefault();
 		column.primary = field.primary;
 		column.index = field.index;
 		column.unique = field.unique;
 		column.binary = field.binary;
-		column.notnull = field.notnull;
+		column.notNull = field.notNull;
 		column.unsigned = field.unsigned;
-		column.autoincrement = field.autoincrement;
+		column.autoIncrement = field.autoIncrement;
 		column.zerofill = field.zerofill;
 		return column;
 	}
 
 	private static DesignerColumn field(ColumnDefinition column, DataType[] dataTypes) {
-		DesignerColumn field = new DesignerColumn(column.name, dataType(column.type, dataTypes), column.length, column.defaultval, "");
+		DesignerColumn field = new DesignerColumn(column.name, dataType(column.type, dataTypes), column.length, column.defaultValue, "");
 		field.primary = column.primary;
 		field.index = column.index;
 		field.unique = column.unique;
 		field.binary = column.binary;
-		field.notnull = column.notnull;
+		field.notNull = column.notNull;
 		field.unsigned = column.unsigned;
-		field.autoincrement = column.autoincrement;
+		field.autoIncrement = column.autoIncrement;
 		field.zerofill = column.zerofill;
 		return field;
 	}

@@ -4,17 +4,17 @@ public class TableCell {
 	private Object data;
 	private boolean newRow = false;
 	private boolean nullData = true;
-	private nl.errorsoft.esql.table.TableColumn tc;
+	private nl.errorsoft.esql.table.TableColumn column;
 
 	public TableCell() {
 	}
 
-	public void setTableColumn(nl.errorsoft.esql.table.TableColumn tc) {
-		this.tc = tc;
+	public void setTableColumn(nl.errorsoft.esql.table.TableColumn column) {
+		this.column = column;
 	}
 
 	public TableColumn getTableColumn() {
-		return tc;
+		return column;
 	}
 
 	public void setData(Object data) {
@@ -57,7 +57,7 @@ public class TableCell {
 	}
 
 	public String toString() {
-		if (tc.isBinary()) {
+		if (column.isBinary()) {
 			return "[BINARY]";
 		} else if (data == null) {
 			return "null";

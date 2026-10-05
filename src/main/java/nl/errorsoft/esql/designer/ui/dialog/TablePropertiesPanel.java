@@ -42,96 +42,96 @@ import nl.errorsoft.esql.ui.util.Forms;
 /** The properties of a table in the designer: General, Fields (the list of fields and one form for the selected field) and Foreign keys. */
 public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel {
 	// General
-	private final JTextField txt_name = new JTextField();
-	private final JTextField txt_comm = new JTextField();
-	private final JTextArea txt_desc = new JTextArea();
-	private final JComboBox<String> cmb_type = new JComboBox<>();
+	private final JTextField nameField = new JTextField();
+	private final JTextField commentField = new JTextField();
+	private final JTextArea descriptionArea = new JTextArea();
+	private final JComboBox<String> typeCombo = new JComboBox<>();
 
 	// Fields
-	private final JList<DesignerColumn> lst_fields = new JList<>(new DefaultListModel<>());
-	private final JTextField txt_fieldname = new JTextField();
-	private final JComboBox<DataType> cmb_types = new JComboBox<>();
-	private final JTextField txt_length = new JTextField();
-	private final JTextField txt_default = new JTextField();
-	private final JTextArea txt_fieldcomm = new JTextArea();
+	private final JList<DesignerColumn> fieldList = new JList<>(new DefaultListModel<>());
+	private final JTextField fieldNameField = new JTextField();
+	private final JComboBox<DataType> dataTypeCombo = new JComboBox<>();
+	private final JTextField lengthField = new JTextField();
+	private final JTextField defaultValueField = new JTextField();
+	private final JTextArea fieldCommentArea = new JTextArea();
 
 	private final JCheckBox primary = Forms.mnemonic(new JCheckBox(), "&Primary key");
-	private final JCheckBox notnull = Forms.mnemonic(new JCheckBox(), "N&ot null");
+	private final JCheckBox notNull = Forms.mnemonic(new JCheckBox(), "N&ot null");
 	private final JCheckBox unique = Forms.mnemonic(new JCheckBox(), "&Unique");
-	private final JCheckBox autoincrement = Forms.mnemonic(new JCheckBox(), "&Auto increment");
+	private final JCheckBox autoIncrement = Forms.mnemonic(new JCheckBox(), "&Auto increment");
 	private final JCheckBox index = Forms.mnemonic(new JCheckBox(), "&Index");
 	private final JCheckBox unsigned = Forms.mnemonic(new JCheckBox(), "U&nsigned");
 	private final JCheckBox binary = Forms.mnemonic(new JCheckBox(), "&Binary");
 	private final JCheckBox zerofill = Forms.mnemonic(new JCheckBox(), "&Zerofill");
 
 	private JPanel fieldForm;
-	private DesignerColumn selField = null;
+	private DesignerColumn selectedColumn = null;
 	/** True while the form is filled from a field, so that filling it does not write back. */
 	private boolean loading;
 
-	private final JList<ModelForeignKey> lst_keys = new JList<>(new DefaultListModel<>());
+	private final JList<ModelForeignKey> keyList = new JList<>(new DefaultListModel<>());
 	/** The foreign keys of this table as they were, and as edited in the tab; the model gets the edited ones on OK, Cancel leaves it alone. */
 	private final List<ModelForeignKey> keysBefore = new ArrayList<>();
 
-	private final TableCard tb;
+	private final TableCard tableCard;
 
 	// The model keeps its foreign keys in step with renamed and removed fields.
 	private final Model model;
 	private final Map<DesignerColumn, String> namesBefore = new IdentityHashMap<>();
 
-	public TablePropertiesPanel(TableCard tb, ServerType serverType, Model model) {
+	public TablePropertiesPanel(TableCard tableCard, ServerType serverType, Model model) {
 		this.model = model;
-		this.tb = tb;
+		this.tableCard = tableCard;
 
-		addTab("General", generalTab(tb, serverType));
+		addTab("General", generalTab(tableCard, serverType));
 		addTab("Fields", fieldsTab(serverType));
 		if (model != null) {
 			addTab("Foreign keys", foreignKeysTab());
 		}
 
-		DefaultListModel<DesignerColumn> dlm = (DefaultListModel<DesignerColumn>) lst_fields.getModel();
-		for (DesignerColumn original : tb.getFields()) {
+		DefaultListModel<DesignerColumn> fieldModel = (DefaultListModel<DesignerColumn>) fieldList.getModel();
+		for (DesignerColumn original : tableCard.getFields()) {
 			// The dialog edits copies, the table gets them on OK.
 			DesignerColumn copy = original.copy();
-			dlm.addElement(copy);
+			fieldModel.addElement(copy);
 			namesBefore.put(copy, original.getName());
 		}
-		if (!dlm.isEmpty()) {
-			lst_fields.setSelectedIndex(0);
+		if (!fieldModel.isEmpty()) {
+			fieldList.setSelectedIndex(0);
 		} else {
 			showField(null);
 		}
 	}
 
-	private JPanel generalTab(TableCard tb, ServerType serverType) {
-		txt_name.setText(tb.getName());
-		txt_comm.setText(tb.getComment());
+	private JPanel generalTab(TableCard tableCard, ServerType serverType) {
+		nameField.setText(tableCard.getName());
+		commentField.setText(tableCard.getComment());
 		String[] tableTypes = serverType.getDialect().getTableTypes();
 		for (String tableType : tableTypes) {
-			cmb_type.addItem(tableType);
+			typeCombo.addItem(tableType);
 		}
-		cmb_type.setSelectedItem(tb.getType());
-		txt_desc.setFont(txt_name.getFont());
-		txt_desc.setLineWrap(true);
-		txt_desc.setWrapStyleWord(true);
-		txt_desc.setText(tb.getDescription());
-		JScrollPane notes = new JScrollPane(txt_desc);
+		typeCombo.setSelectedItem(tableCard.getType());
+		descriptionArea.setFont(nameField.getFont());
+		descriptionArea.setLineWrap(true);
+		descriptionArea.setWrapStyleWord(true);
+		descriptionArea.setText(tableCard.getDescription());
+		JScrollPane notes = new JScrollPane(descriptionArea);
 		notes.setPreferredSize(new Dimension(300, 120));
 
-		Forms.Grid grid = new Forms.Grid().row("&Name:", txt_name);
+		Forms.Grid grid = new Forms.Grid().row("&Name:", nameField);
 		// Servers without storage engines have nothing to choose here.
 		if (tableTypes.length > 0) {
-			grid.row("&Type:", cmb_type);
+			grid.row("&Type:", typeCombo);
 		}
-		grid.row("&Comment:", txt_comm).area("N&otes:", notes);
-		txt_comm.setToolTipText("The comment of the table in the database");
-		txt_desc.setToolTipText("Notes that only the model file keeps, they are not written to the database");
+		grid.row("&Comment:", commentField).area("N&otes:", notes);
+		commentField.setToolTipText("The comment of the table in the database");
+		descriptionArea.setToolTipText("Notes that only the model file keeps, they are not written to the database");
 		return Forms.padded(grid.panel());
 	}
 
 	private JPanel fieldsTab(ServerType serverType) {
 		for (DataType type : serverType.getDataTypes()) {
-			cmb_types.addItem(type);
+			dataTypeCombo.addItem(type);
 		}
 
 		// The type options exist for the servers whose data types have them.
@@ -149,18 +149,19 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 		JPanel constraints = Forms.titled(new JPanel(new GridLayout(0, 2, Forms.GAP, 0)), "Constraints");
 		constraints.add(primary);
-		constraints.add(notnull);
+		constraints.add(notNull);
 		constraints.add(unique);
-		constraints.add(autoincrement);
+		constraints.add(autoIncrement);
 		constraints.add(index);
 
 		Forms.Grid grid = new Forms.Grid();
-		txt_fieldcomm.setWrapStyleWord(true);
-		txt_fieldcomm.setLineWrap(true);
-		txt_fieldcomm.setFont(txt_fieldname.getFont());
-		JScrollPane comment = new JScrollPane(txt_fieldcomm);
+		fieldCommentArea.setWrapStyleWord(true);
+		fieldCommentArea.setLineWrap(true);
+		fieldCommentArea.setFont(fieldNameField.getFont());
+		JScrollPane comment = new JScrollPane(fieldCommentArea);
 		comment.setPreferredSize(new Dimension(300, 60));
-		grid.row("Na&me:", txt_fieldname).row("T&ype:", cmb_types).row("&Length:", txt_length).row("&Default:", txt_default).area("Co&mment:", comment);
+		grid.row("Na&me:", fieldNameField).row("T&ype:", dataTypeCombo).row("&Length:", lengthField).row("&Default:", defaultValueField).area("Co&mment:",
+			comment);
 		grid.full(constraints);
 		if (hasUnsigned || hasBinary || hasZerofill) {
 			JPanel options = Forms.titled(new JPanel(new GridLayout(0, 3, Forms.GAP, 0)), "Type options");
@@ -171,40 +172,40 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		}
 		fieldForm = grid.panel();
 
-		bind(txt_fieldname, text -> {
+		bind(fieldNameField, text -> {
 			if (!text.trim().isEmpty()) {
-				selField.setName(text);
+				selectedColumn.setName(text);
 			}
 			markNameProblem();
 		});
-		bind(txt_length, text -> {
-			selField.setLength(text);
+		bind(lengthField, text -> {
+			selectedColumn.setLength(text);
 			markLengthProblem();
 		});
-		bind(txt_default, text -> selField.setDefault(text));
-		bind(txt_fieldcomm, text -> selField.setComment(text));
-		cmb_types.addActionListener(e -> typeChosen());
-		bind(primary, value -> selField.primary = value);
-		bind(unique, value -> selField.unique = value);
-		bind(index, value -> selField.index = value);
-		bind(notnull, value -> selField.notnull = value);
-		bind(unsigned, value -> selField.unsigned = value);
-		bind(binary, value -> selField.binary = value);
-		bind(autoincrement, value -> selField.autoincrement = value);
-		bind(zerofill, value -> selField.zerofill = value);
-		lst_fields.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		lst_fields.addListSelectionListener(e -> {
+		bind(defaultValueField, text -> selectedColumn.setDefault(text));
+		bind(fieldCommentArea, text -> selectedColumn.setComment(text));
+		dataTypeCombo.addActionListener(e -> typeChosen());
+		bind(primary, value -> selectedColumn.primary = value);
+		bind(unique, value -> selectedColumn.unique = value);
+		bind(index, value -> selectedColumn.index = value);
+		bind(notNull, value -> selectedColumn.notNull = value);
+		bind(unsigned, value -> selectedColumn.unsigned = value);
+		bind(binary, value -> selectedColumn.binary = value);
+		bind(autoIncrement, value -> selectedColumn.autoIncrement = value);
+		bind(zerofill, value -> selectedColumn.zerofill = value);
+		fieldList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		fieldList.addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
-				showField(lst_fields.getSelectedValue());
+				showField(fieldList.getSelectedValue());
 			}
 		});
 
-		JButton add = Forms.button("&Add");
+		JButton addButton = Forms.button("&Add");
 		JButton duplicate = Forms.button("D&uplicate");
 		JButton remove = Forms.button("&Remove");
 		JButton up = Forms.button("U&p");
 		JButton down = Forms.button("Do&wn");
-		add.addActionListener(e -> addField());
+		addButton.addActionListener(e -> addField());
 		duplicate.addActionListener(e -> duplicateField());
 		remove.addActionListener(e -> removeField());
 		up.addActionListener(e -> moveField(-1));
@@ -212,16 +213,16 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 		JPanel buttons = new JPanel(new GridLayout(0, 3, Forms.GAP, Forms.GAP));
 		buttons.setBorder(BorderFactory.createEmptyBorder(Forms.GAP, 0, 0, 0));
-		buttons.add(add);
+		buttons.add(addButton);
 		buttons.add(duplicate);
 		buttons.add(remove);
 		buttons.add(up);
 		buttons.add(down);
 
-		JScrollPane list = new JScrollPane(lst_fields);
+		JScrollPane list = new JScrollPane(fieldList);
 		list.setPreferredSize(new Dimension(200, 200));
 		JPanel left = new JPanel(new BorderLayout());
-		left.add(Forms.label("&Fields:", lst_fields), BorderLayout.NORTH);
+		left.add(Forms.label("&Fields:", fieldList), BorderLayout.NORTH);
 		left.add(list, BorderLayout.CENTER);
 		left.add(buttons, BorderLayout.SOUTH);
 
@@ -249,9 +250,9 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			}
 
 			private void changed() {
-				if (!loading && selField != null) {
+				if (!loading && selectedColumn != null) {
 					write.accept(component.getText());
-					lst_fields.repaint();
+					fieldList.repaint();
 				}
 			}
 		});
@@ -259,7 +260,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	private void bind(JCheckBox box, Consumer<Boolean> write) {
 		box.addActionListener(e -> {
-			if (!loading && selField != null) {
+			if (!loading && selectedColumn != null) {
 				write.accept(box.isSelected());
 			}
 		});
@@ -267,16 +268,16 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	private void markNameProblem() {
 		List<String> names = fieldNames();
-		boolean problem = txt_fieldname.getText().isBlank()
-			|| FieldRules.nameProblem(names) != null && names.stream().filter(n -> n.equalsIgnoreCase(txt_fieldname.getText().trim())).count() > 1;
-		txt_fieldname.putClientProperty("JComponent.outline", problem ? "error" : null);
+		boolean problem = fieldNameField.getText().isBlank()
+			|| FieldRules.nameProblem(names) != null && names.stream().filter(n -> n.equalsIgnoreCase(fieldNameField.getText().trim())).count() > 1;
+		fieldNameField.putClientProperty("JComponent.outline", problem ? "error" : null);
 	}
 
 	private void markLengthProblem() {
-		DataType type = (DataType) cmb_types.getSelectedItem();
-		String problem = FieldRules.lengthProblem(type == null ? "" : type.getName(), txt_length.getText());
-		txt_length.putClientProperty("JComponent.outline", problem == null ? null : "error");
-		txt_length.setToolTipText(problem);
+		DataType type = (DataType) dataTypeCombo.getSelectedItem();
+		String problem = FieldRules.lengthProblem(type == null ? "" : type.getName(), lengthField.getText());
+		lengthField.putClientProperty("JComponent.outline", problem == null ? null : "error");
+		lengthField.setToolTipText(problem);
 	}
 
 	private List<String> fieldNames() {
@@ -289,19 +290,19 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	}
 
 	private DefaultListModel<DesignerColumn> fields() {
-		return (DefaultListModel<DesignerColumn>) lst_fields.getModel();
+		return (DefaultListModel<DesignerColumn>) fieldList.getModel();
 	}
 
 	private void addField() {
-		DesignerColumn field = new DesignerColumn(FieldRules.uniqueName("new_field", fieldNames()), cmb_types.getItemAt(0), "", "", "");
+		DesignerColumn field = new DesignerColumn(FieldRules.uniqueName("new_field", fieldNames()), dataTypeCombo.getItemAt(0), "", "", "");
 		fields().addElement(field);
-		lst_fields.setSelectedIndex(fields().getSize() - 1);
-		txt_fieldname.requestFocusInWindow();
-		txt_fieldname.selectAll();
+		fieldList.setSelectedIndex(fields().getSize() - 1);
+		fieldNameField.requestFocusInWindow();
+		fieldNameField.selectAll();
 	}
 
 	private void duplicateField() {
-		DesignerColumn source = lst_fields.getSelectedValue();
+		DesignerColumn source = fieldList.getSelectedValue();
 		if (source == null) {
 			return;
 		}
@@ -309,16 +310,16 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		copy.setName(FieldRules.uniqueName(source.getName() + "_copy", fieldNames()));
 		// A copy cannot be a second primary key or auto number.
 		copy.primary = false;
-		copy.autoincrement = false;
-		int at = lst_fields.getSelectedIndex() + 1;
+		copy.autoIncrement = false;
+		int at = fieldList.getSelectedIndex() + 1;
 		fields().add(at, copy);
-		lst_fields.setSelectedIndex(at);
-		txt_fieldname.requestFocusInWindow();
-		txt_fieldname.selectAll();
+		fieldList.setSelectedIndex(at);
+		fieldNameField.requestFocusInWindow();
+		fieldNameField.selectAll();
 	}
 
 	private void removeField() {
-		int at = lst_fields.getSelectedIndex();
+		int at = fieldList.getSelectedIndex();
 		if (at < 0) {
 			return;
 		}
@@ -328,84 +329,84 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		}
 		fields().remove(at);
 		if (!fields().isEmpty()) {
-			lst_fields.setSelectedIndex(Math.min(at, fields().getSize() - 1));
+			fieldList.setSelectedIndex(Math.min(at, fields().getSize() - 1));
 		} else {
 			showField(null);
 		}
 	}
 
 	private void moveField(int step) {
-		int at = lst_fields.getSelectedIndex();
+		int at = fieldList.getSelectedIndex();
 		int to = at + step;
 		if (at < 0 || to < 0 || to >= fields().getSize()) {
 			return;
 		}
 		DesignerColumn field = fields().remove(at);
 		fields().add(to, field);
-		lst_fields.setSelectedIndex(to);
+		fieldList.setSelectedIndex(to);
 	}
 
 	/** Fills the form from a field, or disables it when there is none. */
 	private void showField(DesignerColumn field) {
-		selField = field;
+		selectedColumn = field;
 		setEnabledDeep(fieldForm, field != null);
 		if (field == null) {
 			loading = true;
-			txt_fieldname.setText("");
-			txt_length.setText("");
-			txt_default.setText("");
-			txt_fieldcomm.setText("");
-			for (JCheckBox box : List.of(primary, notnull, unique, autoincrement, index, unsigned, binary, zerofill)) {
+			fieldNameField.setText("");
+			lengthField.setText("");
+			defaultValueField.setText("");
+			fieldCommentArea.setText("");
+			for (JCheckBox box : List.of(primary, notNull, unique, autoIncrement, index, unsigned, binary, zerofill)) {
 				box.setSelected(false);
 			}
 			loading = false;
 			return;
 		}
 		loading = true;
-		for (int i = 0; i < cmb_types.getItemCount(); i++) {
-			if (cmb_types.getItemAt(i).getName().equals(field.getType().getName())) {
-				cmb_types.setSelectedIndex(i);
+		for (int i = 0; i < dataTypeCombo.getItemCount(); i++) {
+			if (dataTypeCombo.getItemAt(i).getName().equals(field.getType().getName())) {
+				dataTypeCombo.setSelectedIndex(i);
 				break;
 			}
 		}
-		txt_fieldname.setText(field.getName());
-		txt_length.setText(field.getLength());
-		txt_default.setText(field.getDefault());
-		txt_fieldcomm.setText(field.getComment());
+		fieldNameField.setText(field.getName());
+		lengthField.setText(field.getLength());
+		defaultValueField.setText(field.getDefault());
+		fieldCommentArea.setText(field.getComment());
 		primary.setSelected(field.primary);
-		notnull.setSelected(field.notnull);
+		notNull.setSelected(field.notNull);
 		unique.setSelected(field.unique);
-		autoincrement.setSelected(field.autoincrement);
+		autoIncrement.setSelected(field.autoIncrement);
 		index.setSelected(field.index);
 		unsigned.setSelected(field.unsigned);
 		binary.setSelected(field.binary);
 		zerofill.setSelected(field.zerofill);
 		loading = false;
-		enableOptionsFor((DataType) cmb_types.getSelectedItem());
+		enableOptionsFor((DataType) dataTypeCombo.getSelectedItem());
 		markNameProblem();
 		markLengthProblem();
 	}
 
 	/** The type was chosen: options the type does not have are switched off. */
 	private void typeChosen() {
-		DataType type = (DataType) cmb_types.getSelectedItem();
-		if (loading || selField == null || type == null) {
+		DataType type = (DataType) dataTypeCombo.getSelectedItem();
+		if (loading || selectedColumn == null || type == null) {
 			return;
 		}
-		selField.setType(type);
+		selectedColumn.setType(type);
 		loading = true;
-		clearUnless(primary, type.allows(DataType.Option.PRIMARY), value -> selField.primary = value);
-		clearUnless(index, type.allows(DataType.Option.INDEX), value -> selField.index = value);
-		clearUnless(unique, type.allows(DataType.Option.UNIQUE), value -> selField.unique = value);
-		clearUnless(binary, type.allows(DataType.Option.BINARY), value -> selField.binary = value);
-		clearUnless(notnull, type.allows(DataType.Option.NOT_NULL), value -> selField.notnull = value);
-		clearUnless(unsigned, type.allows(DataType.Option.UNSIGNED), value -> selField.unsigned = value);
-		clearUnless(autoincrement, type.allows(DataType.Option.AUTO_INCREMENT), value -> selField.autoincrement = value);
-		clearUnless(zerofill, type.allows(DataType.Option.ZEROFILL), value -> selField.zerofill = value);
+		clearUnless(primary, type.allows(DataType.Option.PRIMARY), value -> selectedColumn.primary = value);
+		clearUnless(index, type.allows(DataType.Option.INDEX), value -> selectedColumn.index = value);
+		clearUnless(unique, type.allows(DataType.Option.UNIQUE), value -> selectedColumn.unique = value);
+		clearUnless(binary, type.allows(DataType.Option.BINARY), value -> selectedColumn.binary = value);
+		clearUnless(notNull, type.allows(DataType.Option.NOT_NULL), value -> selectedColumn.notNull = value);
+		clearUnless(unsigned, type.allows(DataType.Option.UNSIGNED), value -> selectedColumn.unsigned = value);
+		clearUnless(autoIncrement, type.allows(DataType.Option.AUTO_INCREMENT), value -> selectedColumn.autoIncrement = value);
+		clearUnless(zerofill, type.allows(DataType.Option.ZEROFILL), value -> selectedColumn.zerofill = value);
 		loading = false;
 		enableOptionsFor(type);
 		markLengthProblem();
-		lst_fields.repaint();
+		fieldList.repaint();
 	}
 
 	private static void clearUnless(JCheckBox box, boolean allowed, Consumer<Boolean> write) {
@@ -425,8 +426,8 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 		zerofill.setEnabled(type.allows(DataType.Option.ZEROFILL));
 		index.setEnabled(type.allows(DataType.Option.INDEX));
 		unique.setEnabled(type.allows(DataType.Option.UNIQUE));
-		notnull.setEnabled(type.allows(DataType.Option.NOT_NULL));
-		autoincrement.setEnabled(type.allows(DataType.Option.AUTO_INCREMENT));
+		notNull.setEnabled(type.allows(DataType.Option.NOT_NULL));
+		autoIncrement.setEnabled(type.allows(DataType.Option.AUTO_INCREMENT));
 	}
 
 	private static void setEnabledDeep(Container container, boolean enabled) {
@@ -440,14 +441,14 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	/** The foreign keys of this table on other tables. Changes are kept in the tab and reach the model on OK. */
 	private JPanel foreignKeysTab() {
-		for (ModelForeignKey key : model.foreignKeysOf(tb)) {
-			if (key.from() == tb) {
+		for (ModelForeignKey key : model.foreignKeysOf(tableCard)) {
+			if (key.from() == tableCard) {
 				keysBefore.add(key);
 				keys().addElement(key);
 			}
 		}
-		lst_keys.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		lst_keys.setCellRenderer(new DefaultListCellRenderer() {
+		keyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		keyList.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int i, boolean selected, boolean focus) {
 				ModelForeignKey key = (ModelForeignKey) value;
@@ -457,22 +458,22 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			}
 		});
 
-		JButton add = Forms.button("Add &key...");
+		JButton addButton = Forms.button("Add &key...");
 		JButton edit = Forms.button("&Edit...");
 		JButton remove = Forms.button("Remo&ve");
-		add.addActionListener(e -> addKey());
+		addButton.addActionListener(e -> addKey());
 		edit.addActionListener(e -> editKey());
 		remove.addActionListener(e -> removeKey());
 		Runnable enable = () -> {
-			edit.setEnabled(lst_keys.getSelectedValue() != null);
-			remove.setEnabled(lst_keys.getSelectedValue() != null);
+			edit.setEnabled(keyList.getSelectedValue() != null);
+			remove.setEnabled(keyList.getSelectedValue() != null);
 		};
-		lst_keys.addListSelectionListener(e -> enable.run());
+		keyList.addListSelectionListener(e -> enable.run());
 		enable.run();
 
 		// Lined up with the list: no gap before the first button.
 		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		buttons.add(add);
+		buttons.add(addButton);
 		buttons.add(javax.swing.Box.createHorizontalStrut(Forms.GAP));
 		buttons.add(edit);
 		buttons.add(javax.swing.Box.createHorizontalStrut(Forms.GAP));
@@ -480,35 +481,35 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 		JPanel panel = Forms.padded(new JPanel(new BorderLayout(0, Forms.GAP)));
 		panel.add(new JLabel("Foreign keys of this table:"), BorderLayout.NORTH);
-		panel.add(new JScrollPane(lst_keys), BorderLayout.CENTER);
+		panel.add(new JScrollPane(keyList), BorderLayout.CENTER);
 		panel.add(buttons, BorderLayout.SOUTH);
 		return panel;
 	}
 
 	private DefaultListModel<ModelForeignKey> keys() {
-		return (DefaultListModel<ModelForeignKey>) lst_keys.getModel();
+		return (DefaultListModel<ModelForeignKey>) keyList.getModel();
 	}
 
 	private void addKey() {
-		DesignerColumn[] f = tb.getFields();
-		String column = f.length == 0 ? "" : f[0].getName();
-		TableCard parent = tb;
+		DesignerColumn[] columns = tableCard.getFields();
+		String column = columns.length == 0 ? "" : columns[0].getName();
+		TableCard parent = tableCard;
 		for (Object object : model.getObjects()) {
-			if (object instanceof TableCard other && other != tb) {
+			if (object instanceof TableCard other && other != tableCard) {
 				parent = other;
 				break;
 			}
 		}
 		ModelForeignKey key = ForeignKeyDialog.edit(this, model,
-			new ModelForeignKey(tb, column.isEmpty() ? List.of() : List.of(column), parent, List.of(), "", "", ""));
+			new ModelForeignKey(tableCard, column.isEmpty() ? List.of() : List.of(column), parent, List.of(), "", "", ""));
 		if (key != null) {
 			keys().addElement(key);
-			lst_keys.setSelectedValue(key, true);
+			keyList.setSelectedValue(key, true);
 		}
 	}
 
 	private void editKey() {
-		int at = lst_keys.getSelectedIndex();
+		int at = keyList.getSelectedIndex();
 		if (at < 0) {
 			return;
 		}
@@ -519,9 +520,9 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 	}
 
 	private void removeKey() {
-		ModelForeignKey key = lst_keys.getSelectedValue();
+		ModelForeignKey key = keyList.getSelectedValue();
 		if (key != null && Dialogs.confirmDestructive(this, "Remove foreign key",
-			"Remove foreign key '" + key.name() + "' from table '" + tb.getName() + "'? It is removed from the model when you save the properties.",
+			"Remove foreign key '" + key.name() + "' from table '" + tableCard.getName() + "'? It is removed from the model when you save the properties.",
 			"Remove")) {
 			keys().removeElement(key);
 		}
@@ -539,8 +540,8 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	@Override
 	public String inputProblem() {
-		String name = txt_name.getText().trim();
-		String nameProblem = model == null ? (name.isEmpty() ? "The table needs a name." : null) : ObjectNames.tableProblem(model, tb, name);
+		String name = nameField.getText().trim();
+		String nameProblem = model == null ? (name.isEmpty() ? "The table needs a name." : null) : ObjectNames.tableProblem(model, tableCard, name);
 		if (nameProblem != null) {
 			setSelectedIndex(0);
 			return nameProblem;
@@ -556,7 +557,7 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 			String length = FieldRules.lengthProblem(field.getType().getName(), field.getLength());
 			if (length != null) {
 				setSelectedIndex(1);
-				lst_fields.setSelectedIndex(i);
+				fieldList.setSelectedIndex(i);
 				return "Field '" + field.getName() + "': " + length;
 			}
 		}
@@ -565,22 +566,22 @@ public class TablePropertiesPanel extends JTabbedPane implements PropertiesPanel
 
 	@Override
 	public void saveProperties() {
-		tb.setName(txt_name.getText());
-		tb.setDescription(txt_desc.getText());
-		tb.setType(cmb_type.getSelectedItem() == null ? "" : cmb_type.getSelectedItem().toString());
-		tb.setComment(txt_comm.getText());
+		tableCard.setName(nameField.getText());
+		tableCard.setDescription(descriptionArea.getText());
+		tableCard.setType(typeCombo.getSelectedItem() == null ? "" : typeCombo.getSelectedItem().toString());
+		tableCard.setComment(commentField.getText());
 
-		tb.removeAllFields();
+		tableCard.removeAllFields();
 
-		DefaultListModel<DesignerColumn> dtm = fields();
-		for (int i = 0; i < dtm.getSize(); i++) {
-			tb.addField(dtm.getElementAt(i));
+		DefaultListModel<DesignerColumn> fieldModel = fields();
+		for (int i = 0; i < fieldModel.getSize(); i++) {
+			tableCard.addField(fieldModel.getElementAt(i));
 		}
 
 		if (model != null) {
 			// The keys first, so that renaming or removing a field also reaches the keys added in this dialog.
 			saveKeys();
-			model.fieldsEdited(tb, namesBefore);
+			model.fieldsEdited(tableCard, namesBefore);
 		}
 	}
 }

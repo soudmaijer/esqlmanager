@@ -21,8 +21,8 @@ class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 		this.serverIcon = serverIcon;
 	}
 
-	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-		super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+		super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
 
 		if (node.getUserObject() instanceof Database) {
@@ -40,11 +40,11 @@ class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 				setIcon(imgldr.getIcon("tbimg"));
 			}
 		} else if (node.getUserObject() instanceof nl.errorsoft.esql.table.TableColumn) {
-			TableColumn temp = (TableColumn) node.getUserObject();
+			TableColumn column = (TableColumn) node.getUserObject();
 
-			if (temp.isPrimary()) {
+			if (column.isPrimary()) {
 				setIcon(imgldr.getIcon("keyimg"));
-			} else if (temp.hasIndex()) {
+			} else if (column.hasIndex()) {
 				setIcon(imgldr.getIcon("imgHasIndex"));
 			} else {
 				setIcon(imgldr.getIcon("fldimg"));

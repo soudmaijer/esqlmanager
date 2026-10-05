@@ -34,11 +34,11 @@ public class HeaderRenderer extends DefaultTableCellRenderer {
 			value = "";
 		}
 
-		Object obj = state.get(Integer.valueOf(column));
+		Object sortDirection = state.get(Integer.valueOf(column));
 
-		if (obj != null && ((Integer) obj).intValue() == UP) {
+		if (sortDirection != null && ((Integer) sortDirection).intValue() == UP) {
 			button.setIcon(ApplicationContext.get().imageLoader().getIcon("sortup"));
-		} else if (obj != null && ((Integer) obj).intValue() == DOWN) {
+		} else if (sortDirection != null && ((Integer) sortDirection).intValue() == DOWN) {
 			button.setIcon(ApplicationContext.get().imageLoader().getIcon("sortdown"));
 		} else {
 			button.setIcon(null);
@@ -56,11 +56,11 @@ public class HeaderRenderer extends DefaultTableCellRenderer {
 			return;
 		}
 		Integer value = null;
-		Object obj = state.get(Integer.valueOf(column));
-		if (obj == null) {
+		Object sortDirection = state.get(Integer.valueOf(column));
+		if (sortDirection == null) {
 			value = Integer.valueOf(DOWN);
 		} else {
-			if (((Integer) obj).intValue() == DOWN) {
+			if (((Integer) sortDirection).intValue() == DOWN) {
 				value = Integer.valueOf(UP);
 			} else {
 				value = Integer.valueOf(DOWN);
@@ -71,17 +71,17 @@ public class HeaderRenderer extends DefaultTableCellRenderer {
 	}
 
 	public int getState(int column) {
-		int retValue;
-		Object obj = state.get(Integer.valueOf(column));
-		if (obj == null) {
-			retValue = NONE;
+		int result;
+		Object sortDirection = state.get(Integer.valueOf(column));
+		if (sortDirection == null) {
+			result = NONE;
 		} else {
-			if (((Integer) obj).intValue() == DOWN) {
-				retValue = DOWN;
+			if (((Integer) sortDirection).intValue() == DOWN) {
+				result = DOWN;
 			} else {
-				retValue = UP;
+				result = UP;
 			}
 		}
-		return retValue;
+		return result;
 	}
 }

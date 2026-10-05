@@ -17,13 +17,13 @@ public class ColumnWidths {
 	public static void fitToContent(JTable table) {
 		int rows = Math.min(table.getRowCount(), ROWS_TO_MEASURE);
 
-		for (int col = 0; col < table.getColumnCount(); col++) {
-			TableColumn column = table.getColumnModel().getColumn(col);
-			int width = headerWidth(table, column, col);
+		for (int columnIndex = 0; columnIndex < table.getColumnCount(); columnIndex++) {
+			TableColumn column = table.getColumnModel().getColumn(columnIndex);
+			int width = headerWidth(table, column, columnIndex);
 
 			for (int row = 0; row < rows; row++) {
-				TableCellRenderer renderer = table.getCellRenderer(row, col);
-				Component cell = table.prepareRenderer(renderer, row, col);
+				TableCellRenderer renderer = table.getCellRenderer(row, columnIndex);
+				Component cell = table.prepareRenderer(renderer, row, columnIndex);
 				width = Math.max(width, cell.getPreferredSize().width);
 			}
 
@@ -31,14 +31,14 @@ public class ColumnWidths {
 		}
 	}
 
-	private static int headerWidth(JTable table, TableColumn column, int col) {
+	private static int headerWidth(JTable table, TableColumn column, int columnIndex) {
 		TableCellRenderer renderer = column.getHeaderRenderer();
 
 		if (renderer == null) {
 			renderer = table.getTableHeader().getDefaultRenderer();
 		}
 
-		Component header = renderer.getTableCellRendererComponent(table, column.getHeaderValue(), false, false, -1, col);
+		Component header = renderer.getTableCellRendererComponent(table, column.getHeaderValue(), false, false, -1, columnIndex);
 		return header.getPreferredSize().width;
 	}
 }

@@ -49,7 +49,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private int w = 0;
 	private int h = 0;
 
-	private ModelCard src = null;
+	private ModelCard linkSource = null;
 	private int refx = 0;
 	private int refy = 0;
 
@@ -67,16 +67,16 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private JMenuItem attach_comment = new JMenuItem("Attach comment");
 
 	private JToolBar toolbar = new JToolBar();
-	private JButton btn_add_database = new JButton();
-	private JButton btn_add_table = new JButton();
-	private JButton btn_add_comment = new JButton();
-	private JButton btn_properties = new JButton();
+	private JButton addDatabaseButton = new JButton();
+	private JButton addTableButton = new JButton();
+	private JButton addCommentButton = new JButton();
+	private JButton propertiesButton = new JButton();
 
-	private JButton btn_new = new JButton();
-	private JButton btn_save = new JButton();
-	private JButton btn_open = new JButton();
+	private JButton newButton = new JButton();
+	private JButton saveButton = new JButton();
+	private JButton openButton = new JButton();
 
-	private JButton btn_export = new JButton();
+	private JButton exportButton = new JButton();
 
 	// Whether the server has storage engines that tables show in their header
 	private boolean showTableTypes = false;
@@ -138,51 +138,51 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		show_properties.addActionListener(this);
 		show_model_properties.addActionListener(this);
 
-		btn_add_database.setIcon(ApplicationContext.get().imageLoader().getIcon("add_database"));
-		btn_add_table.setIcon(ApplicationContext.get().imageLoader().getIcon("add_table"));
-		btn_add_comment.setIcon(ApplicationContext.get().imageLoader().getIcon("add_comment"));
-		btn_properties.setIcon(ApplicationContext.get().imageLoader().getIcon("des_properties"));
+		addDatabaseButton.setIcon(ApplicationContext.get().imageLoader().getIcon("add_database"));
+		addTableButton.setIcon(ApplicationContext.get().imageLoader().getIcon("add_table"));
+		addCommentButton.setIcon(ApplicationContext.get().imageLoader().getIcon("add_comment"));
+		propertiesButton.setIcon(ApplicationContext.get().imageLoader().getIcon("des_properties"));
 
-		btn_new.setIcon(ApplicationContext.get().imageLoader().getIcon("des_new"));
-		btn_save.setIcon(ApplicationContext.get().imageLoader().getIcon("des_save"));
-		btn_open.setIcon(ApplicationContext.get().imageLoader().getIcon("des_open"));
+		newButton.setIcon(ApplicationContext.get().imageLoader().getIcon("des_new"));
+		saveButton.setIcon(ApplicationContext.get().imageLoader().getIcon("des_save"));
+		openButton.setIcon(ApplicationContext.get().imageLoader().getIcon("des_open"));
 
-		btn_export.setIcon(ApplicationContext.get().imageLoader().getIcon("des_check"));
+		exportButton.setIcon(ApplicationContext.get().imageLoader().getIcon("des_check"));
 
-		btn_add_database.setToolTipText("Add new database");
-		btn_add_table.setToolTipText("Add new table");
-		btn_add_comment.setToolTipText("Add new comment");
+		addDatabaseButton.setToolTipText("Add new database");
+		addTableButton.setToolTipText("Add new table");
+		addCommentButton.setToolTipText("Add new comment");
 
-		btn_new.setToolTipText("New model");
-		btn_save.setToolTipText("Save model");
-		btn_open.setToolTipText("Open model");
+		newButton.setToolTipText("New model");
+		saveButton.setToolTipText("Save model");
+		openButton.setToolTipText("Open model");
 
-		btn_add_database.addActionListener(this);
-		btn_add_table.addActionListener(this);
-		btn_add_comment.addActionListener(this);
-		btn_properties.addActionListener(this);
+		addDatabaseButton.addActionListener(this);
+		addTableButton.addActionListener(this);
+		addCommentButton.addActionListener(this);
+		propertiesButton.addActionListener(this);
 
-		btn_new.addActionListener(this);
-		btn_open.addActionListener(this);
-		btn_save.addActionListener(this);
+		newButton.addActionListener(this);
+		openButton.addActionListener(this);
+		saveButton.addActionListener(this);
 
-		btn_export.addActionListener(this);
+		exportButton.addActionListener(this);
 
-		btn_export.setToolTipText("Generate model in database");
-		btn_properties.setToolTipText("Properties of the selected object or the model");
+		exportButton.setToolTipText("Generate model in database");
+		propertiesButton.setToolTipText("Properties of the selected object or the model");
 
-		toolbar.add(btn_new);
-		toolbar.add(btn_save);
-		toolbar.add(btn_open);
+		toolbar.add(newButton);
+		toolbar.add(saveButton);
+		toolbar.add(openButton);
 		toolbar.addSeparator();
-		toolbar.add(btn_add_database);
-		toolbar.add(btn_add_table);
-		toolbar.add(btn_add_comment);
+		toolbar.add(addDatabaseButton);
+		toolbar.add(addTableButton);
+		toolbar.add(addCommentButton);
 		toolbar.addSeparator();
-		toolbar.add(btn_properties);
+		toolbar.add(propertiesButton);
 		toolbar.addSeparator();
-		toolbar.add(btn_export);
-		ToolbarButtons.style(btn_new, btn_save, btn_open, btn_add_database, btn_add_table, btn_add_comment, btn_properties, btn_export);
+		toolbar.add(exportButton);
+		ToolbarButtons.style(newButton, saveButton, openButton, addDatabaseButton, addTableButton, addCommentButton, propertiesButton, exportButton);
 	}
 
 	/** Every card on the canvas keeps the Model menu (and its F4/F5 shortcuts) in step with the selection. */
@@ -267,46 +267,46 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		Function creates a new tableobject
 	*/
 	public void createTableCard(String name) {
-		TableCard tb = model.createTableCard(name);
-		tb.addMouseListener(this);
-		tb.addMouseMotionListener(this);
-		this.enterPlaceMode(tb);
+		TableCard table = model.createTableCard(name);
+		table.addMouseListener(this);
+		table.addMouseMotionListener(this);
+		this.enterPlaceMode(table);
 	}
 
 	/*
 		Function creates a new tableobject, with reference from parent db
 	*/
 	public void createTableCard(String name, DatabaseCard db) {
-		TableCard tb = model.createTableCard(name);
-		tb.addMouseListener(this);
-		tb.addMouseMotionListener(this);
-		model.addReference(db, tb);
-		this.enterPlaceMode(tb);
+		TableCard table = model.createTableCard(name);
+		table.addMouseListener(this);
+		table.addMouseMotionListener(this);
+		model.addReference(db, table);
+		this.enterPlaceMode(table);
 	}
 
 	/*
 		Function creates a new commentobject, with reference to parentobject
 	*/
-	public void createNoteCard(String name, ModelCard obj) {
-		NoteCard tb = model.createNoteCard(name);
-		tb.addMouseListener(this);
-		tb.addMouseMotionListener(this);
-		model.addReference(tb, obj);
-		this.enterPlaceMode(tb);
+	public void createNoteCard(String name, ModelCard target) {
+		NoteCard note = model.createNoteCard(name);
+		note.addMouseListener(this);
+		note.addMouseMotionListener(this);
+		model.addReference(note, target);
+		this.enterPlaceMode(note);
 	}
 
 	/*
 		Function creates a new databaseobject
 	*/
 	public void createNoteCard(String name) {
-		NoteCard cm = model.createNoteCard(name);
-		cm.addMouseListener(this);
-		cm.addMouseMotionListener(this);
-		this.enterPlaceMode(cm);
+		NoteCard note = model.createNoteCard(name);
+		note.addMouseListener(this);
+		note.addMouseMotionListener(this);
+		this.enterPlaceMode(note);
 	}
 
-	public void enterPlaceMode(ModelCard mo) {
-		this.place = mo;
+	public void enterPlaceMode(ModelCard card) {
+		this.place = card;
 		this.placemode = true;
 		model.lock();
 		this.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
@@ -314,9 +314,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.create_table.setEnabled(false);
 		this.create_database.setEnabled(false);
 
-		this.btn_add_comment.setEnabled(false);
-		this.btn_add_database.setEnabled(false);
-		this.btn_add_table.setEnabled(false);
+		this.addCommentButton.setEnabled(false);
+		this.addDatabaseButton.setEnabled(false);
+		this.addTableButton.setEnabled(false);
 	}
 
 	public void exitPlaceMode() {
@@ -329,9 +329,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.create_table.setEnabled(true);
 		this.create_database.setEnabled(true);
 
-		this.btn_add_comment.setEnabled(true);
-		this.btn_add_database.setEnabled(true);
-		this.btn_add_table.setEnabled(true);
+		this.addCommentButton.setEnabled(true);
+		this.addDatabaseButton.setEnabled(true);
+		this.addTableButton.setEnabled(true);
 	}
 
 	public void resetModel() {
@@ -401,8 +401,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			lines.setColor(DesignerTheme.accent());
 			lines.drawRect(xpos, ypos, w, h);
 		}
-		if (src != null) {
-			lines.drawLine(src.getX() + (src.getWidth() / 2), src.getY() + (src.getHeight() / 2), refx, refy);
+		if (linkSource != null) {
+			lines.drawLine(linkSource.getX() + (linkSource.getWidth() / 2), linkSource.getY() + (linkSource.getHeight() / 2), refx, refy);
 		}
 		if (linkFrom != null && linkPoint != null) {
 			ConnectorPainter.paintGhost(lines, linkFrom, linkColumn, linkPoint);
@@ -564,18 +564,18 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.model = model;
 
 		for (int i = 0; i < model.getObjects().size(); i++) {
-			ModelCard mo = (ModelCard) model.getObjects().get(i);
+			ModelCard card = (ModelCard) model.getObjects().get(i);
 
-			mo.addMouseListener(this);
-			mo.addMouseMotionListener(this);
+			card.addMouseListener(this);
+			card.addMouseMotionListener(this);
 
-			if (mo instanceof DatabaseCard object) {
+			if (card instanceof DatabaseCard object) {
 				this.add(object);
 			}
-			if (mo instanceof NoteCard object1) {
+			if (card instanceof NoteCard object1) {
 				this.add(object1);
 			}
-			if (mo instanceof TableCard object2) {
+			if (card instanceof TableCard object2) {
 				this.add(object2);
 			}
 		}
@@ -595,8 +595,8 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	public boolean showProperties() {
 		model.lock();
 		try {
-			List<ModelCard> v = this.getModel().getSelectedObjects();
-			if (v.size() == 1 && (v.get(0) instanceof DatabaseCard || v.get(0) instanceof TableCard)) {
+			List<ModelCard> selected = this.getModel().getSelectedObjects();
+			if (selected.size() == 1 && (selected.get(0) instanceof DatabaseCard || selected.get(0) instanceof TableCard)) {
 				canvasController.showPropertiesDialog(model.getSelectedObjects());
 				return true;
 			}
@@ -608,17 +608,17 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	/** Model > Attach table (F4): a new table linked to the selected database. */
 	private void attachTable() {
-		List<ModelCard> v = this.getModel().getSelectedObjects();
-		if (!placemode && v.size() == 1 && v.get(0) instanceof DatabaseCard database) {
+		List<ModelCard> selected = this.getModel().getSelectedObjects();
+		if (!placemode && selected.size() == 1 && selected.get(0) instanceof DatabaseCard database) {
 			this.createTableCard("New Table", database);
 		}
 	}
 
 	/** Model > Attach comment (F5): a new note linked to the selected object. */
 	private void attachNote() {
-		List<ModelCard> v = this.getModel().getSelectedObjects();
-		if (!placemode && v.size() == 1) {
-			this.createNoteCard("New comment", v.get(0));
+		List<ModelCard> selected = this.getModel().getSelectedObjects();
+		if (!placemode && selected.size() == 1) {
+			this.createNoteCard("New comment", selected.get(0));
 		}
 	}
 
@@ -651,15 +651,15 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 			}
 			if (e.getSource() instanceof DesignerCanvas) {
 				model.deselectAll();
-				src = null;
+				linkSource = null;
 				selectedKey = connectorAt(e.getPoint());
 				if (selectedKey != null) {
 					requestFocusInWindow();
 				}
 			} else if (e.isShiftDown() && e.getSource() instanceof ModelCard) {
-				src = (ModelCard) e.getSource();
-				refx = src.getX() + e.getX();
-				refy = src.getY() + e.getY();
+				linkSource = (ModelCard) e.getSource();
+				refx = linkSource.getX() + e.getX();
+				refy = linkSource.getY() + e.getY();
 			}
 
 			this.srcx = e.getX();
@@ -682,13 +682,13 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		if (!placemode) {
 			if (e.getSource() instanceof DesignerCanvas) {
 				Rectangle rect = new Rectangle(xpos, ypos, w, h);
-				Component[] cmps = this.getComponents();
-				for (int i = 0; i < cmps.length; i++) {
-					ModelCard tmp = (ModelCard) cmps[i];
-					if (rect.contains(tmp.getLocation())) {
-						tmp.setSelected(true);
+				Component[] components = this.getComponents();
+				for (int i = 0; i < components.length; i++) {
+					ModelCard card = (ModelCard) components[i];
+					if (rect.contains(card.getLocation())) {
+						card.setSelected(true);
 					} else {
-						tmp.setSelected(false);
+						card.setSelected(false);
 					}
 				}
 				srcx = 0;
@@ -697,21 +697,21 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 				h = 0;
 			} else {
 				if (e.isShiftDown()) {
-					ModelCard end = (ModelCard) e.getSource();
-					int xloc = end.getX() + e.getX();
-					int yloc = end.getY() + e.getY();
+					ModelCard linkTarget = (ModelCard) e.getSource();
+					int xloc = linkTarget.getX() + e.getX();
+					int yloc = linkTarget.getY() + e.getY();
 
 					if (this.getComponentAt(xloc, yloc) instanceof ModelCard) {
-						end = (ModelCard) this.getComponentAt(xloc, yloc);
+						linkTarget = (ModelCard) this.getComponentAt(xloc, yloc);
 					}
 
-					if (src != null && end != null) {
-						model.addReference(src, end);
+					if (linkSource != null && linkTarget != null) {
+						model.addReference(linkSource, linkTarget);
 					}
 				}
 			}
 
-			src = null;
+			linkSource = null;
 		} else if (placemode && e.getSource() == this) {
 			place.setHidden(false);
 			this.add(place);
@@ -737,9 +737,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		}
 		if (!placemode) {
 			if (!e.isMetaDown()) {
-				if (e.isShiftDown() && src != null) {
-					refx = src.getX() + e.getX();
-					refy = src.getY() + e.getY();
+				if (e.isShiftDown() && linkSource != null) {
+					refx = linkSource.getX() + e.getX();
+					refy = linkSource.getY() + e.getY();
 				}
 				if (e.getSource() instanceof DesignerCanvas) {
 					w = e.getX() - srcx;
@@ -764,23 +764,23 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == create_database || e.getSource() == btn_add_database) {
+		if (e.getSource() == create_database || e.getSource() == addDatabaseButton) {
 			this.createDatabaseCard("New Database");
-		} else if (e.getSource() == create_table || e.getSource() == btn_add_table) {
+		} else if (e.getSource() == create_table || e.getSource() == addTableButton) {
 			this.createTableCard("New Table");
-		} else if (e.getSource() == create_comment || e.getSource() == btn_add_comment) {
+		} else if (e.getSource() == create_comment || e.getSource() == addCommentButton) {
 			this.createNoteCard("New comment");
-		} else if (e.getSource() == btn_open) {
+		} else if (e.getSource() == openButton) {
 			canvasController.openModel();
-		} else if (e.getSource() == btn_save) {
+		} else if (e.getSource() == saveButton) {
 			canvasController.saveModel();
-		} else if (e.getSource() == btn_new) {
+		} else if (e.getSource() == newButton) {
 			canvasController.newModel();
-		} else if (e.getSource() == btn_export) {
+		} else if (e.getSource() == exportButton) {
 			canvasController.generate();
-		} else if (e.getSource() == show_properties || e.getSource() == btn_properties) {
+		} else if (e.getSource() == show_properties || e.getSource() == propertiesButton) {
 			boolean b = this.showProperties();
-			if (e.getSource() == btn_properties && !b) {
+			if (e.getSource() == propertiesButton && !b) {
 				showModelProperties();
 			}
 		} else if (e.getSource() == show_model_properties) {

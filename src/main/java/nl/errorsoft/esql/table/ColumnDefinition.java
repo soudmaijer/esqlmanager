@@ -7,14 +7,14 @@ public class ColumnDefinition {
 	public boolean index = false;
 	public boolean unique = false;
 	public boolean binary = false;
-	public boolean notnull = false;
+	public boolean notNull = false;
 	public boolean unsigned = false;
-	public boolean autoincrement = false;
+	public boolean autoIncrement = false;
 	public boolean zerofill = false;
 
 	public DataType type = null;
 
-	public String defaultval = "";
+	public String defaultValue = "";
 	public String length = "";
 	/** The comment of the column, written where {@code Dialect.supportsColumnComments}. */
 	public String comment = "";
@@ -30,9 +30,9 @@ public class ColumnDefinition {
 		}
 		this.type = type;
 		primary &= type.allows(DataType.Option.PRIMARY);
-		notnull &= type.allows(DataType.Option.NOT_NULL);
+		notNull &= type.allows(DataType.Option.NOT_NULL);
 		unsigned &= type.allows(DataType.Option.UNSIGNED);
-		autoincrement &= type.allows(DataType.Option.AUTO_INCREMENT);
+		autoIncrement &= type.allows(DataType.Option.AUTO_INCREMENT);
 		zerofill &= type.allows(DataType.Option.ZEROFILL);
 	}
 

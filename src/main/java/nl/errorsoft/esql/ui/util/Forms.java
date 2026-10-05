@@ -217,9 +217,9 @@ public final class Forms {
 
 		/** Adds a label and a field that takes the remaining height, such as a text area. */
 		public Grid area(Component label, Component field) {
-			GridBagConstraints l = constraints(0, 1, 0);
-			l.anchor = GridBagConstraints.NORTHWEST;
-			panel.add(label, l);
+			GridBagConstraints labelConstraints = constraints(0, 1, 0);
+			labelConstraints.anchor = GridBagConstraints.NORTHWEST;
+			panel.add(label, labelConstraints);
 			GridBagConstraints c = constraints(1, 1, 1);
 			c.weighty = 1;
 			c.fill = GridBagConstraints.BOTH;

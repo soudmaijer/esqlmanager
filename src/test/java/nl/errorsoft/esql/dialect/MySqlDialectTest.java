@@ -18,13 +18,13 @@ class MySqlDialectTest extends DialectContractTest {
 	}
 
 	protected ConnectionProfile profile() {
-		ConnectionProfile cp = new ConnectionProfile();
-		cp.setHost(mysql.getHost());
-		cp.setPort(String.valueOf(mysql.getMappedPort(3306)));
-		cp.setUsername("root");
-		cp.setPassword("test");
-		cp.setDatabases(DATABASE);
-		cp.setServerType(new ServerType(ServerType.MY_SQL));
-		return cp;
+		ConnectionProfile profile = new ConnectionProfile();
+		profile.setHost(mysql.getHost());
+		profile.setPort(String.valueOf(mysql.getMappedPort(3306)));
+		profile.setUsername("root");
+		profile.setPassword("test");
+		profile.setDatabases(DATABASE);
+		profile.setServerType(new ServerType(ServerType.MY_SQL));
+		return profile;
 	}
 }

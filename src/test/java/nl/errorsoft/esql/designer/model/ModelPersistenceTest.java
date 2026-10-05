@@ -37,7 +37,7 @@ class ModelPersistenceTest {
 		DesignerColumn field = new DesignerColumn("id&key", DataType.named("int"), "11", HOSTILE,
 			HOSTILE);
 		field.primary = true;
-		field.notnull = true;
+		field.notNull = true;
 		table.addField(field);
 		NoteCard comment = model.createNoteCard(HOSTILE);
 		table.addReference(db);
@@ -58,7 +58,7 @@ class ModelPersistenceTest {
 		DesignerColumn loadedField = loadedTable.getFields()[0];
 		assertEquals("id&key", loadedField.getName());
 		assertEquals(HOSTILE, loadedField.getDefault());
-		assertTrue(loadedField.primary && loadedField.notnull);
+		assertTrue(loadedField.primary && loadedField.notNull);
 		assertTrue(loadedTable.getReferences().contains(loaded.getObjectByIdentifier(db.getIdentifier())));
 		assertEquals(HOSTILE, ((NoteCard) loaded.getObjectByIdentifier(comment.getIdentifier())).getComment());
 	}

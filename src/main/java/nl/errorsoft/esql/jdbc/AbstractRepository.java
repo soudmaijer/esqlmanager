@@ -24,14 +24,14 @@ import nl.errorsoft.esql.dialect.Dialect;
  * so a repository never needs to know which database it talks to.
  */
 public abstract class AbstractRepository {
-	protected final DatabaseConnection dbc;
+	protected final DatabaseConnection connection;
 
-	protected AbstractRepository(DatabaseConnection dbc) {
-		this.dbc = dbc;
+	protected AbstractRepository(DatabaseConnection connection) {
+		this.connection = connection;
 	}
 
 	protected Dialect dialect() {
-		return dbc.getConnectionProfile().getServerType().getDialect();
+		return connection.getConnectionProfile().getServerType().getDialect();
 	}
 
 	protected String quote(String identifier) {
@@ -49,28 +49,28 @@ public abstract class AbstractRepository {
 
 	/** The schema to look a table up in the metadata: its own, or the connection's current schema (null on servers without schemas). */
 	protected String schemaOf(Table table) throws SQLException {
-		return table.getSchema() != null ? table.getSchema().getName() : dbc.getSchema();
+		return table.getSchema() != null ? table.getSchema().getName() : connection.getSchema();
 	}
 
 	protected String literal(String value) {
-		return dbc.formatFieldValue(value);
+		return connection.formatFieldValue(value);
 	}
 
 	protected void useDatabase(String name) throws SQLException {
-		dbc.useDatabase(name);
+		connection.useDatabase(name);
 	}
 
 	protected void useSchema(String name) throws SQLException {
-		dbc.useSchema(name);
+		connection.useSchema(name);
 	}
 
 	protected int executeUpdate(String sql) throws SQLException {
-		return dbc.executeUpdate(sql);
+		return connection.executeUpdate(sql);
 	}
 
 	protected void executeAll(List<String> statements) throws SQLException {
 		for (String statement : statements) {
-			dbc.executeUpdate(statement);
+			connection.executeUpdate(statement);
 		}
 	}
 
@@ -78,7 +78,7 @@ public abstract class AbstractRepository {
 	protected List<String> queryStrings(String sql, String... parameters) throws SQLException {
 		List<String> values = new ArrayList<>();
 
-		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
+		try (PreparedStatement ps = connection.getConnection().prepareStatement(sql)) {
 			for (int i = 0; i < parameters.length; i++) {
 				ps.setString(i + 1, parameters[i]);
 			}
@@ -95,7 +95,7 @@ public abstract class AbstractRepository {
 	/** Reads every row of a result, with one column object per result column; read-only columns cannot be edited in the grid. */
 	protected QueryResult readResult(ResultSet rs, boolean readOnly) throws SQLException {
 		ResultSetMetaData rsmd = rs.getMetaData();
-		Database database = new Database(dbc.getConnection().getCatalog());
+		Database database = new Database(connection.getConnection().getCatalog());
 		Table result = new Table(database);
 		TableColumn[] columns = new TableColumn[rsmd.getColumnCount()];
 
@@ -136,7 +136,7 @@ public abstract class AbstractRepository {
 
 		if (sql != null) {
 			List<Table> tables = new ArrayList<>();
-			try (ResultSet rs = dbc.executeQuery(sql)) {
+			try (ResultSet rs = connection.executeQuery(sql)) {
 				while (rs.next()) {
 					tables.add(dialect().readTable(rs, database));
 				}
@@ -144,7 +144,7 @@ public abstract class AbstractRepository {
 			return tables;
 		}
 
-		String schema = dbc.getSchema();
+		String schema = connection.getSchema();
 		return listMetadataTables(database, schema == null ? null : new Schema(database, schema));
 	}
 
@@ -156,9 +156,10 @@ public abstract class AbstractRepository {
 
 	private List<Table> listMetadataTables(Database database, Schema schema) throws SQLException {
 		List<Table> tables = new ArrayList<>();
-		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
+		DatabaseMetaData metaData = connection.getConnection().getMetaData();
 
-		try (ResultSet rs = dmd.getTables(dbc.getConnection().getCatalog(), schema == null ? null : schema.getName(), "%", dialect().metadataTableTypes())) {
+		try (ResultSet rs = metaData.getTables(connection.getConnection().getCatalog(), schema == null ? null : schema.getName(), "%",
+			dialect().metadataTableTypes())) {
 			while (rs.next()) {
 				Table table = schema == null ? new Table(database) : new Table(schema);
 				table.setName(rs.getString("TABLE_NAME"));
@@ -169,7 +170,7 @@ public abstract class AbstractRepository {
 		}
 
 		for (Table table : tables) {
-			try (ResultSet counted = dbc.executeQuery("SELECT count(*) FROM " + quote(table))) {
+			try (ResultSet counted = connection.executeQuery("SELECT count(*) FROM " + quote(table))) {
 				if (counted.next()) {
 					table.setRowCount(counted.getInt(1));
 				}

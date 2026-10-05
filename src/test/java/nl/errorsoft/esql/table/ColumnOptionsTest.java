@@ -15,9 +15,9 @@ class ColumnOptionsTest {
 		ColumnDefinition column = new ColumnOptions("note", "", "x", text, false, true, false, false, "a note").toColumn();
 
 		assertEquals("note", column.name);
-		assertEquals("x", column.defaultval);
+		assertEquals("x", column.defaultValue);
 		assertEquals("a note", column.comment);
-		assertTrue(column.notnull);
+		assertTrue(column.notNull);
 		assertFalse(column.unsigned, "text has no unsigned");
 	}
 }

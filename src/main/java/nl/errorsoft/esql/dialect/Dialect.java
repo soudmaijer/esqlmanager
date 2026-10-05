@@ -42,7 +42,7 @@ public interface Dialect {
 	 * The database to put in the connection URL.
 	 * @param requested a database the caller wants to connect to, empty for the profile default.
 	 */
-	String getConnectionDatabase(ConnectionProfile cp, String requested);
+	String getConnectionDatabase(ConnectionProfile profile, String requested);
 
 	/** How a connection makes another database the active one. */
 	enum DatabaseSwitch {

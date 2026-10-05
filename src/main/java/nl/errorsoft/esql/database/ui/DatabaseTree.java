@@ -20,20 +20,20 @@ import nl.errorsoft.esql.table.TableColumn;
  */
 public class DatabaseTree extends JTree {
 	private final DefaultMutableTreeNode rootNode;
-	private final DefaultTreeModel dtm;
+	private final DefaultTreeModel treeModel;
 
 	/** @param serverIcon the icon of the root node, the server (see {@code ServerType.iconName}) */
 	public DatabaseTree(String title, String serverIcon) {
 		this.rootNode = new DefaultMutableTreeNode(title);
-		this.dtm = new DefaultTreeModel(rootNode, false);
-		setModel(dtm);
+		this.treeModel = new DefaultTreeModel(rootNode, false);
+		setModel(treeModel);
 		setCellRenderer(new DatabaseTreeCellRenderer(ApplicationContext.get().imageLoader(), serverIcon));
 	}
 
 	public void loadDatabases(List<Database> databases) {
 		rootNode.removeAllChildren();
 		databases.forEach(db -> rootNode.add(new DefaultMutableTreeNode(db)));
-		dtm.reload();
+		treeModel.reload();
 	}
 
 	/** The names of the databases in the tree. */
@@ -48,7 +48,7 @@ public class DatabaseTree extends JTree {
 
 	public void addDatabase(Database db) {
 		rootNode.add(new DefaultMutableTreeNode(db));
-		dtm.reload(rootNode);
+		treeModel.reload(rootNode);
 	}
 
 	public void deleteDatabase(Database database) {
@@ -99,7 +99,7 @@ public class DatabaseTree extends JTree {
 	private void replaceChildren(DefaultMutableTreeNode node, List<?> children) {
 		node.removeAllChildren();
 		children.forEach(child -> node.add(new DefaultMutableTreeNode(child)));
-		dtm.reload(node);
+		treeModel.reload(node);
 		TreePath path = new TreePath(node.getPath());
 		scrollPathToVisible(path);
 		expandPath(path);
@@ -108,7 +108,7 @@ public class DatabaseTree extends JTree {
 
 	private void remove(DefaultMutableTreeNode parent, DefaultMutableTreeNode node) {
 		parent.remove(node);
-		dtm.reload(parent);
+		treeModel.reload(parent);
 	}
 
 	private Optional<DefaultMutableTreeNode> databaseNode(String name) {

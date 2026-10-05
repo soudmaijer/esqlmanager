@@ -61,7 +61,7 @@ public class ImportController implements ProgressListener {
 		}
 	}
 
-	public void importNodesAsSQL(ImportSqlDialog importDialog, TreePath tpa, String file, ImportOptions options) {
+	public void importNodesAsSQL(ImportSqlDialog importDialog, TreePath selectedPath, String file, ImportOptions options) {
 		if (file.isBlank()) {
 			Dialogs.warn(importDialog, importDialog.getTitle(), "Select a file first.");
 			return;
@@ -70,16 +70,18 @@ public class ImportController implements ProgressListener {
 			Dialogs.error(importDialog, importDialog.getTitle(), "The file '" + file + "' does not exist.");
 			return;
 		}
-		String target = tpa == null ? "the current database" : String.valueOf(((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject());
+		String target = selectedPath == null
+			? "the current database"
+			: String.valueOf(((DefaultMutableTreeNode) selectedPath.getLastPathComponent()).getUserObject());
 		if (!Dialogs.confirm(importDialog, importDialog.getTitle(), "Run the statements of '" + file + "' in " + target + "?", "Import")) {
 			return;
 		}
 
 		try {
 			// Nothing or the server selected: the script runs in the database the connection uses.
-			ScriptTarget node = tpa == null || tpa.getPathCount() == 1
+			ScriptTarget node = selectedPath == null || selectedPath.getPathCount() == 1
 				? null
-				: ScriptTarget.of(((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject());
+				: ScriptTarget.of(((DefaultMutableTreeNode) selectedPath.getLastPathComponent()).getUserObject());
 
 			ImportService ie = connectionWindowController.getContext().newImport(node, file, options);
 			progressDialog = new ImportExportProgressDialog(importDialog, "Import data", file + " into " + target, ie::cancel);

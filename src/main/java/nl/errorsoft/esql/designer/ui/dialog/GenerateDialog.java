@@ -32,10 +32,10 @@ public class GenerateDialog extends JDialog {
 	/** True while checking or generating, the dialog cannot be closed then. */
 	private boolean busy;
 
-	public GenerateDialog(MainWindow mainWindow, ConnectionWindow connectionWindow, Model m) {
+	public GenerateDialog(MainWindow mainWindow, ConnectionWindow connectionWindow, Model model) {
 		super((JFrame) mainWindow, "Analyze / generate model", true);
 		this.controller = new GenerateController(connectionWindow.getController());
-		this.snapshot = controller.snapshot(m);
+		this.snapshot = controller.snapshot(model);
 
 		initComponents();
 		setLocationRelativeTo(mainWindow);

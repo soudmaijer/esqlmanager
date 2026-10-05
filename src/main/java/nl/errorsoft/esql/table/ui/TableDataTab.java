@@ -29,35 +29,35 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private int show;
 	private Table table;
 	private TableController tableController;
-	private MultiLineCellEditor mlce;
-	private SortableTableModel stm;
-	private TableColumnModel tcm;
-	private JLabel lblRows;
-	private JTable tbData;
-	private JScrollPane jsp;
-	private JSplitPane jsplit;
-	private JTextArea jta;
+	private MultiLineCellEditor multiLineEditor;
+	private SortableTableModel sortableModel;
+	private TableColumnModel columnModel;
+	private JLabel rowsLabel;
+	private JTable dataTable;
+	private JScrollPane dataScroll;
+	private JSplitPane split;
+	private JTextArea editorTextArea;
 	private JTextArea cellData; // Contains cell data.
-	private JScrollPane jspText; // ScrollPane for cellData textArea
+	private JScrollPane cellScroll; // ScrollPane for cellData textArea
 
 	private JComponent navigationBar;
-	private JButton btnFirst;
-	private JButton btnPrev;
-	private JButton btnRun;
-	private JButton btnNext;
-	private JButton btnLast;
-	private JButton btnSaveData;
-	private JButton btnAddData;
+	private JButton firstButton;
+	private JButton prevButton;
+	private JButton runButton;
+	private JButton nextButton;
+	private JButton lastButton;
+	private JButton saveDataButton;
+	private JButton addDataButton;
 
-	private JTextField jtfSkip;
-	private JTextField jtfShow;
+	private JTextField skipField;
+	private JTextField showField;
 	private boolean inserting = false;
 
 	// CellDataEditor toolbar.
-	private JPanel jcep;
-	private JButton btnUpdateRowData;
-	private JButton btnSaveCellData;
-	private JButton btnCloseCellData;
+	private JPanel cellEditorPanel;
+	private JButton updateRowDataButton;
+	private JButton saveCellDataButton;
+	private JButton closeCellDataButton;
 	private UndoManager undoManager;
 	private SortHeaderListener headerListener;
 	private TableCell editingCell;
@@ -68,47 +68,47 @@ public class TableDataTab extends JPanel implements ActionListener {
 		this.tableController = tableController;
 		this.setLayout(new BorderLayout());
 
-		tbData = new JTable(stm) {
+		dataTable = new JTable(sortableModel) {
 			public void editingStopped(javax.swing.event.ChangeEvent ev) {
 				// This method is invoked when editing in the current cell is stoped
 				// programmatically (by hitting TAB, ENTER, ARROW keys, or using mouse to
 				// move to another cell). We override this method to reset beingEdited flag.
-				if (tbData.isEditing()) {
-					int row = tbData.getEditingRow();
-					int cols = tbData.getColumnCount();
+				if (dataTable.isEditing()) {
+					int row = dataTable.getEditingRow();
+					int columnCount = dataTable.getColumnCount();
 
-					TableCell td = (TableCell) tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
-					TableCell[] rowData = new TableCell[cols];
-					java.util.Vector<?> dataVector = stm.getDataVector();
-					Object newData = tbData.getCellEditor().getCellEditorValue();
+					TableCell tableCell = (TableCell) dataTable.getValueAt(dataTable.getSelectedRow(), dataTable.getSelectedColumn());
+					TableCell[] rowData = new TableCell[columnCount];
+					java.util.Vector<?> dataVector = sortableModel.getDataVector();
+					Object newData = dataTable.getCellEditor().getCellEditorValue();
 
-					for (int i = 0; i < cols; i++) {
-						rowData[i] = (TableCell) tbData.getValueAt(row, i);
+					for (int i = 0; i < columnCount; i++) {
+						rowData[i] = (TableCell) dataTable.getValueAt(row, i);
 
 						// New data inserted.
 						if (rowData[i].isNewRow()) {
-							td.setData(newData);
-							tbData.setValueAt(td, tbData.getSelectedRow(), tbData.getSelectedColumn());
+							tableCell.setData(newData);
+							dataTable.setValueAt(tableCell, dataTable.getSelectedRow(), dataTable.getSelectedColumn());
 							removeEditor();
 							return;
 						}
 					}
 
 					// Data updated.
-					if (dataChanged(rowData, td, newData)) {
-						td.setEditedText(newData == null ? null : newData.toString());
-						tbData.setValueAt(td, tbData.getSelectedRow(), tbData.getSelectedColumn());
+					if (dataChanged(rowData, tableCell, newData)) {
+						tableCell.setEditedText(newData == null ? null : newData.toString());
+						dataTable.setValueAt(tableCell, dataTable.getSelectedRow(), dataTable.getSelectedColumn());
 						removeEditor();
 					}
 				}
 			}
-			public boolean isCellEditable(int row, int col) {
-				TableCell td = (TableCell) tbData.getValueAt(row, col);
-				return td.getTableColumn().isWritable();
+			public boolean isCellEditable(int row, int column) {
+				TableCell tableCell = (TableCell) dataTable.getValueAt(row, column);
+				return tableCell.getTableColumn().isWritable();
 			}
 		};
-		tbData.setAutoCreateColumnsFromModel(false);
-		tbData.addKeyListener(new KeyAdapter() {
+		dataTable.setAutoCreateColumnsFromModel(false);
+		dataTable.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_DELETE) {
 					deleteSelectedRows();
@@ -119,19 +119,19 @@ public class TableDataTab extends JPanel implements ActionListener {
 				}
 			}
 		});
-		tbData.addMouseListener(new MouseAdapter() {
+		dataTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 1) {
-					if (tbData.getSelectedColumn() > -1 && tbData.getSelectedRow() > -1) {
-						nl.errorsoft.esql.table.TableColumn tempTc = ((nl.errorsoft.esql.table.TableColumn) (tbData.getTableHeader().getColumnModel()
-							.getColumn(tbData.getSelectedColumn()).getHeaderValue()));
+					if (dataTable.getSelectedColumn() > -1 && dataTable.getSelectedRow() > -1) {
+						nl.errorsoft.esql.table.TableColumn clickedColumn = ((nl.errorsoft.esql.table.TableColumn) (dataTable.getTableHeader().getColumnModel()
+							.getColumn(dataTable.getSelectedColumn()).getHeaderValue()));
 
-						if (tempTc.isBinary()) {
+						if (clickedColumn.isBinary()) {
 							enableBinaryDataEditor();
 						} else {
-							Object temp = tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
+							Object clickedValue = dataTable.getValueAt(dataTable.getSelectedRow(), dataTable.getSelectedColumn());
 
-							if (temp instanceof TableCell data) {
+							if (clickedValue instanceof TableCell data) {
 								if (!data.isNewRow()) {
 									enabledCellDataEditor();
 								}
@@ -141,78 +141,78 @@ public class TableDataTab extends JPanel implements ActionListener {
 				}
 			}
 		});
-		tbData.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		tbData.setShowGrid(true);
-		tbData.setGridColor(UIManager.getColor("Table.gridColor"));
-		tbData.addFocusListener(new FocusAdapter() {
+		dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		dataTable.setShowGrid(true);
+		dataTable.setGridColor(UIManager.getColor("Table.gridColor"));
+		dataTable.addFocusListener(new FocusAdapter() {
 			public void focusLost(FocusEvent e) {
 				if (e.getOppositeComponent() != null && e.getOppositeComponent() instanceof JTextField) {
 					disableCellDataEditor();
 				}
 			}
 		});
-		jsp = new JScrollPane(tbData);
+		dataScroll = new JScrollPane(dataTable);
 
-		jta = new JTextArea();
-		jta.setLineWrap(true);
-		jta.setFont(tbData.getFont());
-		jta.setWrapStyleWord(true);
-		jta.setOpaque(true);
-		mlce = new MultiLineCellEditor(jta);
-		tbData.setCellEditor(mlce);
+		editorTextArea = new JTextArea();
+		editorTextArea.setLineWrap(true);
+		editorTextArea.setFont(dataTable.getFont());
+		editorTextArea.setWrapStyleWord(true);
+		editorTextArea.setOpaque(true);
+		multiLineEditor = new MultiLineCellEditor(editorTextArea);
+		dataTable.setCellEditor(multiLineEditor);
 
 		JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		JPanel jpButton = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		JPanel jpInfo = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
 		ImageLoader icons = ApplicationContext.get().imageLoader();
-		btnFirst = new JButton(icons.getIcon("imgFirst"));
-		btnPrev = new JButton(icons.getIcon("imgPrev"));
-		btnRun = new JButton(icons.getIcon("imgRun"));
-		btnNext = new JButton(icons.getIcon("imgNext"));
-		btnLast = new JButton(icons.getIcon("imgLast"));
+		firstButton = new JButton(icons.getIcon("imgFirst"));
+		prevButton = new JButton(icons.getIcon("imgPrev"));
+		runButton = new JButton(icons.getIcon("imgRun"));
+		nextButton = new JButton(icons.getIcon("imgNext"));
+		lastButton = new JButton(icons.getIcon("imgLast"));
 
-		btnFirst.addActionListener(this);
-		btnPrev.addActionListener(this);
-		btnRun.addActionListener(this);
-		btnNext.addActionListener(this);
-		btnLast.addActionListener(this);
+		firstButton.addActionListener(this);
+		prevButton.addActionListener(this);
+		runButton.addActionListener(this);
+		nextButton.addActionListener(this);
+		lastButton.addActionListener(this);
 
-		jpButton.add(btnFirst);
-		jpButton.add(btnPrev);
-		jpButton.add(btnRun);
-		jpButton.add(btnNext);
-		jpButton.add(btnLast);
+		buttonPanel.add(firstButton);
+		buttonPanel.add(prevButton);
+		buttonPanel.add(runButton);
+		buttonPanel.add(nextButton);
+		buttonPanel.add(lastButton);
 
 		/*
 		 * Info panel
 		 */
-		jtfSkip = new JTextField("0");
-		jtfSkip.setPreferredSize(new Dimension(40, 20));
-		jtfShow = new JTextField("50");
-		jtfShow.setPreferredSize(new Dimension(40, 20));
+		skipField = new JTextField("0");
+		skipField.setPreferredSize(new Dimension(40, 20));
+		showField = new JTextField("50");
+		showField.setPreferredSize(new Dimension(40, 20));
 
-		jpInfo.add(new JLabel("Skip:"));
-		jpInfo.add(jtfSkip);
-		jpInfo.add(new JLabel("Show:"));
-		jpInfo.add(jtfShow);
+		infoPanel.add(new JLabel("Skip:"));
+		infoPanel.add(skipField);
+		infoPanel.add(new JLabel("Show:"));
+		infoPanel.add(showField);
 
-		lblRows = new JLabel("Total: 0");
-		jpInfo.add(lblRows);
+		rowsLabel = new JLabel("Total: 0");
+		infoPanel.add(rowsLabel);
 
 		/*
 		 * Add panels to toolbar
 		 */
-		toolbar.add(jpButton);
-		toolbar.add(jpInfo);
+		toolbar.add(buttonPanel);
+		toolbar.add(infoPanel);
 
 		/*
 		 * Add toolbar to panel
 		 */
 
-		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		jsplit.setTopComponent(jsp);
-		this.add(jsplit, BorderLayout.CENTER);
+		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		split.setTopComponent(dataScroll);
+		this.add(split, BorderLayout.CENTER);
 		navigationBar = toolbar;
 
 		// Create TextArea for row data.
@@ -238,36 +238,36 @@ public class TableDataTab extends JPanel implements ActionListener {
 				undoManager.redo();
 			}
 		});
-		jspText = new JScrollPane(cellData, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		cellScroll = new JScrollPane(cellData, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 		// Add to splitpane
-		jcep = new JPanel();
-		jcep.setLayout(new BorderLayout());
+		cellEditorPanel = new JPanel();
+		cellEditorPanel.setLayout(new BorderLayout());
 
 		ImageLoader images = ApplicationContext.get().imageLoader();
-		btnUpdateRowData = new JButton(images.getIcon("imgUpdateRow"));
-		btnUpdateRowData.setToolTipText("Update changes");
-		btnUpdateRowData.addActionListener(this);
+		updateRowDataButton = new JButton(images.getIcon("imgUpdateRow"));
+		updateRowDataButton.setToolTipText("Update changes");
+		updateRowDataButton.addActionListener(this);
 
-		btnSaveCellData = new JButton(images.getIcon("imgSave"));
-		btnSaveCellData.setToolTipText("Save data to file");
-		btnSaveCellData.addActionListener(this);
+		saveCellDataButton = new JButton(images.getIcon("imgSave"));
+		saveCellDataButton.setToolTipText("Save data to file");
+		saveCellDataButton.addActionListener(this);
 
-		btnCloseCellData = new JButton(images.getIcon("imgClose"));
-		btnCloseCellData.setToolTipText("Close the cell editor");
-		btnCloseCellData.addActionListener(this);
+		closeCellDataButton = new JButton(images.getIcon("imgClose"));
+		closeCellDataButton.setToolTipText("Close the cell editor");
+		closeCellDataButton.addActionListener(this);
 
-		JToolBar jtb = new JToolBar();
-		jtb.setFloatable(false);
+		JToolBar cellToolbar = new JToolBar();
+		cellToolbar.setFloatable(false);
 
-		jtb.add(btnSaveCellData);
-		jtb.add(btnCloseCellData);
-		jtb.add(btnUpdateRowData);
+		cellToolbar.add(saveCellDataButton);
+		cellToolbar.add(closeCellDataButton);
+		cellToolbar.add(updateRowDataButton);
 
-		jspText.getViewport().add(cellData);
+		cellScroll.getViewport().add(cellData);
 
-		jcep.add(jtb, BorderLayout.NORTH);
-		jcep.add(jspText, BorderLayout.CENTER);
+		cellEditorPanel.add(cellToolbar, BorderLayout.NORTH);
+		cellEditorPanel.add(cellScroll, BorderLayout.CENTER);
 	}
 
 	private void bindUndo(KeyStroke key, String name, Runnable action) {
@@ -282,58 +282,58 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 	/** Keeps a button at its own width in a column that stretches. */
 	private static JPanel left(JButton button) {
-		JPanel p = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-		p.add(button);
-		return p;
+		JPanel flowPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+		flowPanel.add(button);
+		return flowPanel;
 	}
 
 	public void enableBinaryDataEditor() {
-		btnSaveData = Forms.button("&Download...");
-		JLabel lblSaveData = Forms.label("Save the cell data to a file:", btnSaveData);
-		btnAddData = Forms.button("&Upload...");
-		JLabel lblAddData = Forms.label("Load a file into the cell:", btnAddData);
+		saveDataButton = Forms.button("&Download...");
+		JLabel saveDataLabel = Forms.label("Save the cell data to a file:", saveDataButton);
+		addDataButton = Forms.button("&Upload...");
+		JLabel addDataLabel = Forms.label("Load a file into the cell:", addDataButton);
 
-		JPanel jpButtons = new Forms.Grid().row(lblAddData, left(btnAddData)).row(lblSaveData, left(btnSaveData)).panel();
-		Forms.titled(jpButtons, "Binary data options");
-		JPanel jp = Forms.padded(new JPanel(new BorderLayout()));
-		jp.add(jpButtons, BorderLayout.NORTH);
+		JPanel binaryOptionsPanel = new Forms.Grid().row(addDataLabel, left(addDataButton)).row(saveDataLabel, left(saveDataButton)).panel();
+		Forms.titled(binaryOptionsPanel, "Binary data options");
+		JPanel binaryPanel = Forms.padded(new JPanel(new BorderLayout()));
+		binaryPanel.add(binaryOptionsPanel, BorderLayout.NORTH);
 
-		btnSaveData.addActionListener(this);
-		btnAddData.addActionListener(this);
+		saveDataButton.addActionListener(this);
+		addDataButton.addActionListener(this);
 
-		jsplit.setBottomComponent(jp);
-		jsplit.setDividerLocation(jsplit.getHeight() - 140);
+		split.setBottomComponent(binaryPanel);
+		split.setDividerLocation(split.getHeight() - 140);
 
 	}
 
 	public void enabledCellDataEditor() {
 		// Enable textarea
-		editingRow = tbData.getSelectedRow();
-		editingCol = tbData.getSelectedColumn();
-		editingCell = (TableCell) tbData.getModel().getValueAt(editingRow, editingCol);
+		editingRow = dataTable.getSelectedRow();
+		editingCol = dataTable.getSelectedColumn();
+		editingCell = (TableCell) dataTable.getModel().getValueAt(editingRow, editingCol);
 
 		cellData.setEnabled(true);
 		cellData.setText(editingCell.getEditText());
 		undoManager.discardAllEdits();
 
 		if (editingCell.getTableColumn().isWritable()) {
-			btnUpdateRowData.setEnabled(true);
-			btnCloseCellData.setEnabled(true);
+			updateRowDataButton.setEnabled(true);
+			closeCellDataButton.setEnabled(true);
 			cellData.setEditable(true);
 		} else {
-			btnUpdateRowData.setEnabled(false);
-			btnCloseCellData.setEnabled(false);
+			updateRowDataButton.setEnabled(false);
+			closeCellDataButton.setEnabled(false);
 			cellData.setEditable(false);
 		}
-		jsplit.setBottomComponent(jcep);
-		jsplit.setDividerLocation(0.70);
+		split.setBottomComponent(cellEditorPanel);
+		split.setDividerLocation(0.70);
 		cellData.setCaretPosition(0);
 
-		SwingUtilities.invokeLater(() -> tbData.scrollRectToVisible(tbData.getCellRect(tbData.getSelectedRow(), 0, true)));
+		SwingUtilities.invokeLater(() -> dataTable.scrollRectToVisible(dataTable.getCellRect(dataTable.getSelectedRow(), 0, true)));
 	}
 
 	public void disableCellDataEditor() {
-		jsplit.setBottomComponent(null);
+		split.setBottomComponent(null);
 	}
 
 	public boolean dataChanged(TableCell[] rowData, TableCell cellData, Object newValue) {
@@ -350,45 +350,45 @@ public class TableDataTab extends JPanel implements ActionListener {
 		if (!inserting) {
 			this.disableCellDataEditor();
 			inserting = true;
-			int cols = tbData.getColumnCount();
+			int columnCount = dataTable.getColumnCount();
 			java.util.Vector<Object> newData = new java.util.Vector<>();
 
-			for (int i = 0; i < cols; i++) {
-				TableCell tempData = new TableCell();
-				tempData.setNewRow(true);
-				tempData.setData(new String());
-				tempData.setTableColumn((nl.errorsoft.esql.table.TableColumn) tbData.getColumnModel().getColumn(i).getHeaderValue());
+			for (int i = 0; i < columnCount; i++) {
+				TableCell newCell = new TableCell();
+				newCell.setNewRow(true);
+				newCell.setData(new String());
+				newCell.setTableColumn((nl.errorsoft.esql.table.TableColumn) dataTable.getColumnModel().getColumn(i).getHeaderValue());
 
-				newData.insertElementAt(tempData, i);
+				newData.insertElementAt(newCell, i);
 			}
 
-			stm.addRow(newData);
-			tbData.setRowSelectionInterval(stm.getRowCount() - 1, stm.getRowCount() - 1);
+			sortableModel.addRow(newData);
+			dataTable.setRowSelectionInterval(sortableModel.getRowCount() - 1, sortableModel.getRowCount() - 1);
 
-			SwingUtilities.invokeLater(() -> jsp.getVerticalScrollBar().setValue(jsp.getVerticalScrollBar().getMaximum()));
+			SwingUtilities.invokeLater(() -> dataScroll.getVerticalScrollBar().setValue(dataScroll.getVerticalScrollBar().getMaximum()));
 		}
 	}
 
 	public void saveSelectedRow() {
-		int ia = tbData.getSelectedRow();
+		int selectedRow = dataTable.getSelectedRow();
 
-		if (tbData.getSelectedRow() < 0) {
+		if (dataTable.getSelectedRow() < 0) {
 			return;
 		}
 
-		if (tbData.isEditing()) {
-			tbData.getCellEditor().stopCellEditing();
+		if (dataTable.isEditing()) {
+			dataTable.getCellEditor().stopCellEditing();
 		}
 
-		int cols = tbData.getColumnCount();
-		TableCell[] tda = new TableCell[cols];
+		int columnCount = dataTable.getColumnCount();
+		TableCell[] cells = new TableCell[columnCount];
 
-		for (int j = 0; j < cols; j++) {
-			tda[j] = (TableCell) stm.getValueAt(ia, j);
+		for (int j = 0; j < columnCount; j++) {
+			cells[j] = (TableCell) sortableModel.getValueAt(selectedRow, j);
 		}
 		try {
-			if (tda[0].isNewRow()) {
-				tableController.insertRow(table, tda);
+			if (cells[0].isNewRow()) {
+				tableController.insertRow(table, cells);
 				refreshData();
 			}
 		} catch (Exception e) {
@@ -398,34 +398,34 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 	public void deleteSelectedRows() {
 		this.disableCellDataEditor();
-		int[] ia = tbData.getSelectedRows();
+		int[] selectedRows = dataTable.getSelectedRows();
 
-		if (ia == null || ia.length == 0) {
+		if (selectedRows == null || selectedRows.length == 0) {
 			return;
 		}
 
 		String from = "'" + table.getDatabase().getName() + "." + table.getName() + "'";
 
-		if (Dialogs.confirmDestructive(this, "Delete rows", "Delete " + ia.length + " row(s) from " + from + "? This cannot be undone.", "Delete")) {
-			int cols = tbData.getColumnCount();
-			TableCell[] tda = new TableCell[cols];
+		if (Dialogs.confirmDestructive(this, "Delete rows", "Delete " + selectedRows.length + " row(s) from " + from + "? This cannot be undone.", "Delete")) {
+			int columnCount = dataTable.getColumnCount();
+			TableCell[] cells = new TableCell[columnCount];
 
-			for (int i = ia.length - 1; i >= 0; i--) {
-				for (int j = 0; j < cols; j++) {
-					tda[j] = (TableCell) stm.getValueAt(ia[i], j);
+			for (int i = selectedRows.length - 1; i >= 0; i--) {
+				for (int j = 0; j < columnCount; j++) {
+					cells[j] = (TableCell) sortableModel.getValueAt(selectedRows[i], j);
 				}
 				try {
-					if (!tda[0].isNewRow()) {
-						tableController.deleteRow(table, tda);
+					if (!cells[0].isNewRow()) {
+						tableController.deleteRow(table, cells);
 					} else {
 						inserting = false;
 					}
-					stm.removeRow(ia[i]);
+					sortableModel.removeRow(selectedRows[i]);
 					showRecordCount();
 				} catch (Exception e) {
 					ApplicationContext.get().errors().report(this, "Delete row", e);
 
-					if (ia.length > 1) {
+					if (selectedRows.length > 1) {
 						if (!Dialogs.confirm(this, "Delete rows", "Delete failed for a row. Continue with the remaining rows?", "Continue")) {
 							break;
 						}
@@ -441,35 +441,35 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	public void showRecordCount() {
-		lblRows.setText("Total: " + table.getRowCount());
+		rowsLabel.setText("Total: " + table.getRowCount());
 	}
 
-	public void loadData(Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableCell[][] tda) {
+	public void loadData(Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableCell[][] cells) {
 		this.table = table;
 		showRecordCount();
 
-		stm = new SortableTableModel();
-		tcm = new DefaultTableColumnModel();
-		HeaderRenderer hr = new HeaderRenderer();
+		sortableModel = new SortableTableModel();
+		columnModel = new DefaultTableColumnModel();
+		HeaderRenderer headerRenderer = new HeaderRenderer();
 
 		for (int i = 0; i < columns.length; i++) {
-			javax.swing.table.TableColumn tempCol = new javax.swing.table.TableColumn(i);
-			tempCol.setHeaderValue(columns[i]);
-			tempCol.setHeaderRenderer(hr);
-			tcm.addColumn(tempCol);
+			javax.swing.table.TableColumn headerColumn = new javax.swing.table.TableColumn(i);
+			headerColumn.setHeaderValue(columns[i]);
+			headerColumn.setHeaderRenderer(headerRenderer);
+			columnModel.addColumn(headerColumn);
 		}
 
 		// Every page has its own renderer, the listener of the previous page goes.
 		if (headerListener != null) {
-			tbData.getTableHeader().removeMouseListener(headerListener);
+			dataTable.getTableHeader().removeMouseListener(headerListener);
 		}
-		headerListener = new SortHeaderListener(tbData.getTableHeader(), hr);
-		tbData.getTableHeader().addMouseListener(headerListener);
-		stm.setDataVector(tda, columns);
-		tbData.setColumnModel(tcm);
-		tbData.setModel(stm);
-		ColumnWidths.fitToContent(tbData);
-		jsp.getViewport().revalidate();
+		headerListener = new SortHeaderListener(dataTable.getTableHeader(), headerRenderer);
+		dataTable.getTableHeader().addMouseListener(headerListener);
+		sortableModel.setDataVector(cells, columns);
+		dataTable.setColumnModel(columnModel);
+		dataTable.setModel(sortableModel);
+		ColumnWidths.fitToContent(dataTable);
+		dataScroll.getViewport().revalidate();
 	}
 
 	/** The paging buttons with skip, show and total. The window shows them in its own status bar, next to what the connection did last. */
@@ -478,22 +478,22 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		Object src = e.getSource();
+		Object source = e.getSource();
 
-		if (src == btnUpdateRowData) {
-			TableCell[] rowData = new TableCell[tbData.getColumnCount()];
+		if (source == updateRowDataButton) {
+			TableCell[] rowData = new TableCell[dataTable.getColumnCount()];
 
-			for (int i = 0; i < tbData.getColumnCount(); i++) {
-				rowData[i] = (TableCell) tbData.getValueAt(this.editingRow, i);
+			for (int i = 0; i < dataTable.getColumnCount(); i++) {
+				rowData[i] = (TableCell) dataTable.getValueAt(this.editingRow, i);
 			}
 
 			if (this.dataChanged(rowData, this.editingCell, this.cellData.getText())) {
 				editingCell.setEditedText(this.cellData.getText());
-				stm.fireTableDataChanged();
+				sortableModel.fireTableDataChanged();
 			}
-		} else if (src == btnCloseCellData) {
+		} else if (source == closeCellDataButton) {
 			this.disableCellDataEditor();
-		} else if (src == btnSaveCellData) {
+		} else if (source == saveCellDataButton) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.addChoosableFileFilter(new ExtensionFileFilter("text file", new String[]{".txt"}));
 			chooser.setAcceptAllFileFilterUsed(false);
@@ -507,28 +507,28 @@ public class TableDataTab extends JPanel implements ActionListener {
 			} catch (Exception err) {
 				ApplicationContext.get().errors().report(this, "Save cell data", err);
 			}
-		} else if (src == btnSaveData) {
-			int row = tbData.getSelectedRow();
-			TableCell[] rowData = new TableCell[tbData.getColumnCount()];
+		} else if (source == saveDataButton) {
+			int row = dataTable.getSelectedRow();
+			TableCell[] rowData = new TableCell[dataTable.getColumnCount()];
 
-			for (int i = 0; i < tbData.getColumnCount(); i++) {
-				rowData[i] = (TableCell) tbData.getValueAt(row, i);
+			for (int i = 0; i < dataTable.getColumnCount(); i++) {
+				rowData[i] = (TableCell) dataTable.getValueAt(row, i);
 			}
 
-			tableController.showDownloadFileDialog(this.table, rowData, (TableCell) tbData.getValueAt(row, tbData.getSelectedColumn()));
-		} else if (src == btnAddData) {
-			int row = tbData.getSelectedRow();
-			TableCell[] rowData = new TableCell[tbData.getColumnCount()];
+			tableController.showDownloadFileDialog(this.table, rowData, (TableCell) dataTable.getValueAt(row, dataTable.getSelectedColumn()));
+		} else if (source == addDataButton) {
+			int row = dataTable.getSelectedRow();
+			TableCell[] rowData = new TableCell[dataTable.getColumnCount()];
 
-			for (int i = 0; i < tbData.getColumnCount(); i++) {
-				rowData[i] = (TableCell) tbData.getValueAt(row, i);
+			for (int i = 0; i < dataTable.getColumnCount(); i++) {
+				rowData[i] = (TableCell) dataTable.getValueAt(row, i);
 			}
 
-			tableController.showUploadFileDialog(this.table, rowData, (TableCell) tbData.getValueAt(row, tbData.getSelectedColumn()));
+			tableController.showUploadFileDialog(this.table, rowData, (TableCell) dataTable.getValueAt(row, dataTable.getSelectedColumn()));
 		} else {
 			try {
-				skip = Integer.parseInt(this.jtfSkip.getText());
-				show = Integer.parseInt(this.jtfShow.getText());
+				skip = Integer.parseInt(this.skipField.getText());
+				show = Integer.parseInt(this.showField.getText());
 			} catch (Exception ex) {
 				Dialogs.error(this, "Show data", "Enter a number in Skip and Show.");
 				return;
@@ -537,28 +537,28 @@ public class TableDataTab extends JPanel implements ActionListener {
 			try {
 				int rows = table.getRowCount();
 
-				if (src == btnFirst) {
+				if (source == firstButton) {
 					skip = 0;
-				} else if (src == btnPrev) {
+				} else if (source == prevButton) {
 					skip = skip - show;
 
 					if (skip < 0) {
 						skip = 0;
 					}
-				} else if (src == btnRun) {
+				} else if (source == runButton) {
 					if (skip + show > rows) {
 						skip = rows - show;
 					}
 					if (rows - show < 0) {
 						skip = 0;
 					}
-				} else if (src == btnNext) {
+				} else if (source == nextButton) {
 					skip = skip + show;
 
 					if (skip >= rows) {
 						skip = skip - show;
 					}
-				} else if (src == btnLast) {
+				} else if (source == lastButton) {
 					skip = rows - show;
 
 					if (rows < show) {
@@ -566,8 +566,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 					}
 				}
 
-				jtfSkip.setText(Integer.toString(skip));
-				jtfShow.setText(Integer.toString(show));
+				skipField.setText(Integer.toString(skip));
+				showField.setText(Integer.toString(show));
 
 				tableController.showTableData(table, skip, show);
 				inserting = false;
@@ -581,8 +581,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 		int rows = table.getRowCount();
 
 		try {
-			skip = Integer.parseInt(this.jtfSkip.getText());
-			show = Integer.parseInt(this.jtfShow.getText());
+			skip = Integer.parseInt(this.skipField.getText());
+			show = Integer.parseInt(this.showField.getText());
 		} catch (Exception ex) {
 			Dialogs.error(this, "Refresh data", "Enter a number in Skip and Show.");
 			return;

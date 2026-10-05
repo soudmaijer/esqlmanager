@@ -17,27 +17,27 @@ public class CreditsPanel extends Canvas {
 	/** Moves the credits up a pixel at a time, on the event thread. */
 	private final Timer scroller = new Timer(45, e -> scroll());
 	private CreditObject root;
-	private CreditObject curr;
+	private CreditObject current;
 
-	private Image img = null;
+	private Image buffer = null;
 	private int y_offset = 0;
 
 	private int nodes = 0;
 
-	private Image bg;
+	private Image background;
 
 	public CreditsPanel() {
 		try {
 			try (BufferedReader fin = new BufferedReader(new FileReader(DataDirectory.file("credits.txt")))) {
 				String in = fin.readLine();
 				root = new CreditObject(in);
-				curr = root;
+				current = root;
 				nodes++;
 				while ((in = fin.readLine()) != null) {
 					nodes++;
-					CreditObject tmp = new CreditObject(in);
-					curr.next = tmp;
-					curr = tmp;
+					CreditObject nextCredit = new CreditObject(in);
+					current.next = nextCredit;
+					current = nextCredit;
 				}
 			}
 
@@ -53,12 +53,12 @@ public class CreditsPanel extends Canvas {
 	}
 
 	public void paint(Graphics g) {
-		if (img == null) {
-			img = createImage((int) this.getSize().getWidth(), (int) this.getSize().getHeight());
+		if (buffer == null) {
+			buffer = createImage((int) this.getSize().getWidth(), (int) this.getSize().getHeight());
 			y_offset = (int) this.getSize().getHeight();
 		}
 
-		Graphics2D g2 = (Graphics2D) img.getGraphics();
+		Graphics2D g2 = (Graphics2D) buffer.getGraphics();
 		Composite old = g2.getComposite();
 		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) 0.8));
 		g2.setColor(Color.WHITE);
@@ -77,33 +77,33 @@ public class CreditsPanel extends Canvas {
 		FontMetrics fmb = this.getFontMetrics(fb);
 		FontMetrics fmp = this.getFontMetrics(fp);
 
-		curr = root;
+		current = root;
 		int count = 0;
-		while (curr != null) {
-			if (!curr.txt.equalsIgnoreCase("-")) {
+		while (current != null) {
+			if (!current.text.equalsIgnoreCase("-")) {
 				int width;
-				String txt = curr.txt;
-				if (curr.txt.startsWith("<h>")) {
-					txt = txt.substring(3, txt.length());
-					width = fmb.stringWidth(txt);
+				String text = current.text;
+				if (current.text.startsWith("<h>")) {
+					text = text.substring(3, text.length());
+					width = fmb.stringWidth(text);
 					g2.setColor(HEADING);
 					g2.setFont(fb);
 				} else {
-					width = fmp.stringWidth(txt);
+					width = fmp.stringWidth(text);
 					g2.setColor(TEXT);
 					g2.setFont(fp);
 				}
-				g2.drawString(txt, (((int) this.getSize().getWidth()) - width) / 2, y_offset + ((count + 1) * 11));
+				g2.drawString(text, (((int) this.getSize().getWidth()) - width) / 2, y_offset + ((count + 1) * 11));
 			} else {
 				g2.setColor(BORDER);
 				g2.drawLine(10, y_offset + (count * 11) + 7, (int) this.getSize().getWidth() - 10, y_offset + (count * 11) + 7);
 			}
-			curr = curr.next;
+			current = current.next;
 			count++;
 		}
 
 		g = this.getGraphics();
-		g.drawImage(img, 0, 0, this);
+		g.drawImage(buffer, 0, 0, this);
 	}
 
 	public void switchoff() {
@@ -121,10 +121,10 @@ public class CreditsPanel extends Canvas {
 }
 
 class CreditObject {
-	String txt;
+	String text;
 	CreditObject next = null;
 
-	public CreditObject(String txt) {
-		this.txt = txt;
+	public CreditObject(String text) {
+		this.text = text;
 	}
 }
