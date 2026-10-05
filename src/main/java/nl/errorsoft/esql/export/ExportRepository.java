@@ -24,9 +24,21 @@ public class ExportRepository extends AbstractRepository {
 		super(dbc);
 	}
 
-	/** The tables of a database that have structure and data of their own, so no views. */
+	/** The tables of a database that have structure and data of their own, so no views; on servers with schemas those of every schema. */
 	public List<TableName> tableNames(Database database) throws SQLException {
-		return withoutViews(listTables(database));
+		String schemas = dialect().listSchemasSql();
+
+		if (schemas == null) {
+			return withoutViews(listTables(database));
+		}
+
+		useDatabase(database.getName());
+		List<TableName> names = new ArrayList<>();
+
+		for (String schema : queryStrings(schemas)) {
+			names.addAll(tableNames(new Schema(database, schema)));
+		}
+		return names;
 	}
 
 	/** The tables of one schema, no views. */
@@ -52,6 +64,10 @@ public class ExportRepository extends AbstractRepository {
 
 	public String useDatabaseSql(String database) {
 		return dialect().useDatabaseSql(database);
+	}
+
+	public String createSchemaSql(String schema) {
+		return dialect().createSchemaIfMissingSql(schema);
 	}
 
 	public String dropTableSql(TableName table) {

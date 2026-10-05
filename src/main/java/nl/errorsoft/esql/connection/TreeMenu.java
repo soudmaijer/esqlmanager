@@ -85,6 +85,7 @@ public final class TreeMenu {
 				addIf(items, dialect.supports(Feature.DESIGNER), Item.OPEN_IN_DESIGNER);
 				items.add(Item.SEPARATOR);
 				addIf(items, dialect.supports(Feature.EXPORT), Item.EXPORT);
+				addIf(items, dialect.supports(Feature.IMPORT), Item.IMPORT);
 				addIf(items, dialect.supports(Feature.SCHEMAS), Item.DROP_SCHEMA);
 				items.add(Item.SEPARATOR);
 				items.add(Item.RELOAD_TABLES);

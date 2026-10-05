@@ -113,6 +113,16 @@ public class DatabaseConnection implements AutoCloseable {
 		return schema;
 	}
 
+	// Makes unqualified names resolve to the schema, on servers that have schemas; does nothing when it is the current one already.
+	public void useSchema(String name) throws SQLException {
+		String sql = cp.getServerType().getDialect().useSchemaSql(name);
+
+		if (sql != null && name != null && !name.equals(getSchema())) {
+			executeUpdate(sql);
+			schema = name;
+		}
+	}
+
 	// Execute a query.
 	public java.sql.ResultSet executeQuery(String query) throws java.sql.SQLException {
 		log.debug("Query: {}", query);

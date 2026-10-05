@@ -436,6 +436,57 @@ abstract class DialectContractTest {
 		service().dropTable(table("orders"));
 	}
 
+	@Test
+	void exportOfADatabaseRestoresEverySchema(@TempDir Path dir) throws Exception {
+		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.SCHEMAS), "The server has no schemas");
+		var databases = new ConnectionContext(connection).databases();
+		Database other = databases.createDatabase("multi_" + System.nanoTime());
+		connection.useDatabase(other.getName());
+		Schema schema = databases.createSchema(other, "archive");
+		service().createTable(schema, "items", List.of(column("id", INTEGER, "", true), column("note", VARCHAR, "20", false)), null, "");
+		connection.executeUpdate("INSERT INTO " + dialect.quote(new TableName("archive", "items")) + " VALUES (1, 'kept')");
+
+		File file = dir.resolve("database.sql").toFile();
+		ExportService export = new ConnectionContext(connection).newExport(new Object[]{other}, file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, true));
+		runSynchronously(export::setListener, export);
+		databases.dropSchema(schema);
+
+		// The script creates the schema again and puts the table back into it, not into the current schema.
+		ImportService imported = new ConnectionContext(connection).newImport(other, file.getAbsolutePath());
+		runSynchronously(imported::setListener, imported);
+		List<Table> tables = databases.getTables(schema);
+		assertEquals(List.of("items"), tables.stream().map(Table::getName).toList());
+		assertEquals("kept", service().loadPage(tables.get(0), 0, 10)[0][1].getData());
+		assertFalse(service().exists(new Schema(other, connection.getSchema()), "items"));
+
+		databases.dropDatabase(other);
+	}
+
+	@Test
+	void importIntoASchemaPutsUnqualifiedTablesThere(@TempDir Path dir) throws Exception {
+		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.SCHEMAS), "The server has no schemas");
+		var databases = new ConnectionContext(connection).databases();
+		Schema schema = databases.createSchema(database, "loose_" + System.nanoTime());
+		String current = connection.getSchema();
+		Path script = dir.resolve("plain.sql");
+		java.nio.file.Files.writeString(script, "CREATE TABLE plain_rows (id integer);\nINSERT INTO plain_rows VALUES(1);\n");
+
+		ImportService imported = new ConnectionContext(connection).newImport(schema, script.toString());
+		runSynchronously(imported::setListener, imported);
+		assertTrue(service().exists(schema, "plain_rows"));
+		assertFalse(service().exists(new Schema(database, current), "plain_rows"));
+		assertEquals(current, connection.getSchema());
+
+		// The query tab chooses a schema the same way.
+		new ConnectionContext(connection).queries().useSchema(DATABASE, schema.getName());
+		assertEquals(schema.getName(), connection.getSchema());
+		assertEquals(1, new ConnectionContext(connection).queries().update("UPDATE plain_rows SET id = 2"));
+		connection.useSchema(current);
+
+		databases.dropSchema(schema);
+	}
+
 	private static CreateColumn column(String name, DataType type, String length, boolean primary) {
 		CreateColumn column = new CreateColumn(name);
 		column.type = type;

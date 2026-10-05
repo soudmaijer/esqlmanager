@@ -53,6 +53,14 @@ public abstract class AbstractDialect implements Dialect {
 		return "CREATE SCHEMA " + quote(schema);
 	}
 
+	public String createSchemaIfMissingSql(String schema) {
+		return "CREATE SCHEMA IF NOT EXISTS " + quote(schema);
+	}
+
+	public String useSchemaSql(String schema) {
+		return null;
+	}
+
 	public String dropSchemaSql(String schema) {
 		return "DROP SCHEMA " + quote(schema) + " CASCADE";
 	}

@@ -3,7 +3,9 @@ package nl.errorsoft.esql.export;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
@@ -58,6 +60,13 @@ public class ExportService implements Runnable {
 
 				if (options.useDatabase()) {
 					pw.println(repository.useDatabaseSql(database) + ";\n");
+				}
+
+				if (options.dumpStructure()) {
+					// A table is restored into its own schema, which may not exist on the server the script is run on.
+					for (String schema : new LinkedHashSet<>(tables.stream().map(TableName::schema).filter(Objects::nonNull).toList())) {
+						pw.println(repository.createSchemaSql(schema) + ";\n");
+					}
 				}
 
 				for (TableName table : tables) {

@@ -533,6 +533,11 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	/** The connection window, the parent of messages and the owner of the tabs. */
+	/** What is selected in the tree (a database, schema, table, ...), null when nothing is. */
+	public Object selectedObject() {
+		return cwui.getSelectedNode() == null ? null : cwui.getSelectedNode().getUserObject();
+	}
+
 	public ConnectionWindowUI getWindow() {
 		return cwui;
 	}

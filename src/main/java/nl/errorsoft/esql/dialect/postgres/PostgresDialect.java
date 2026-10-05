@@ -123,6 +123,10 @@ public class PostgresDialect extends AbstractDialect {
 			ORDER BY nspname""";
 	}
 
+	public String useSchemaSql(String schema) {
+		return "SET search_path TO " + quote(schema);
+	}
+
 	public String currentSchemaSql() {
 		return "SELECT current_schema()";
 	}

@@ -74,6 +74,14 @@ public class DatabaseTreeView extends JTree {
 		tableNode(table).ifPresent(node -> replaceChildren(node, List.of(columns)));
 	}
 
+	public void selectDatabase(Database database) {
+		databaseNode(database.getName()).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
+	}
+
+	public void selectSchema(Schema schema) {
+		schemaNode(schema).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
+	}
+
 	public void selectTableInTree(Table table) {
 		tableNode(table).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
 	}

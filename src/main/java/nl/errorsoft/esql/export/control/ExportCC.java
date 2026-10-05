@@ -2,7 +2,6 @@ package nl.errorsoft.esql.export.control;
 
 import nl.errorsoft.esql.job.ProgressListener;
 
-import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.export.ExportOptions;
 import nl.errorsoft.esql.export.ExportService;
 
@@ -52,17 +51,18 @@ public class ExportCC implements ProgressListener {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			ExportAsSQLUI iasu = new ExportAsSQLUI(ecc.getUI(), this);
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
+			dbcc.selectInTree(iasu.getDatabaseTreeView(), cwcc.selectedObject());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Export as SQL", e);
 		}
 	}
 
-	public void showTables(ExportAsSQLUI iasu, Database db) {
+	/** Loads the schemas or tables of a database, or the tables of a schema, the first time it is selected. */
+	public void showChildren(ExportAsSQLUI iasu, Object node) {
 		try {
-			DatabaseCC dbcc = new DatabaseCC(cwcc);
-			iasu.getDatabaseTreeView().loadTables(db, dbcc.getTables(db));
+			new DatabaseCC(cwcc).loadChildren(iasu.getDatabaseTreeView(), node);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Load tables", e);
+			ApplicationContext.get().errors().report(iasu, "Load tables", e);
 		}
 	}
 

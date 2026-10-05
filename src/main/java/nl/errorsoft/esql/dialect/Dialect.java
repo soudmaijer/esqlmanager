@@ -69,6 +69,12 @@ public interface Dialect {
 
 	String createSchemaSql(String schema);
 
+	/** Creates a schema unless it exists, for a script that restores tables into it. */
+	String createSchemaIfMissingSql(String schema);
+
+	/** Makes unqualified names resolve to the schema (PostgreSQL sets the search_path), null when the server has no schemas. */
+	String useSchemaSql(String schema);
+
 	/** Drops a schema with everything in it. */
 	String dropSchemaSql(String schema);
 

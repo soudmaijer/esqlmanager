@@ -70,7 +70,7 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		});
 
 		jLabel1.setText(
-			"<html><body style='width: 300px'>1. Select a database or table you want to import data into. If you don`t want to import data into a specific database or table go to step 2.<br><br>2. Press the \"Browse..\" button to select the file containing the sql-statements.<br><br>3. Press the \"Import\" button to start.</body></html>");
+			"<html><body style='width: 300px'>1. Select the database or schema to run the script in. Without a selection it runs in the current one.<br><br>2. Press the \"Browse..\" button to select the file containing the sql-statements.<br><br>3. Press the \"Import\" button to start.</body></html>");
 		jLabel1.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 		jPanel2.setLayout(new java.awt.BorderLayout());
 		jPanel2.add(jLabel1);
@@ -104,12 +104,17 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		dtv = tv;
 		this.jScrollPane1.getViewport().add(dtv);
 		dtv.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-	}
+		dtv.addTreeSelectionListener(e -> {
+			if (e.isAddedPath()) {
+				DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
 
-	//public void databaseSelected( Database db )
-	//{
-	//	ecc.showTables( this, db );
-	//}
+				// A database opens to its schemas, so the script can be run in one of them.
+				if (node.getUserObject() instanceof Database && node.getChildCount() <= 0) {
+					ecc.showChildren(this, node.getUserObject());
+				}
+			}
+		});
+	}
 
 	public DatabaseTreeView getDatabaseTreeView() {
 		return dtv;

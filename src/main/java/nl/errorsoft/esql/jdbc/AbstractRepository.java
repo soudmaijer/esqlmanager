@@ -56,6 +56,10 @@ public abstract class AbstractRepository {
 		dbc.useDatabase(name);
 	}
 
+	protected void useSchema(String name) throws SQLException {
+		dbc.useSchema(name);
+	}
+
 	protected int executeUpdate(String sql) throws SQLException {
 		return dbc.executeUpdate(sql);
 	}

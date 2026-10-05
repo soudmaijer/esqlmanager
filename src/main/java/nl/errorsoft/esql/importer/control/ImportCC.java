@@ -4,7 +4,6 @@ import nl.errorsoft.esql.error.Dialogs;
 
 import nl.errorsoft.esql.job.ProgressListener;
 
-import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.importer.ImportService;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
@@ -54,17 +53,18 @@ public class ImportCC implements ProgressListener {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			iasu = new ImportAsSQLUI(ecc.getUI(), this);
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
+			dbcc.selectInTree(iasu.getDatabaseTreeView(), cwcc.selectedObject());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Import as SQL", e);
 		}
 	}
 
-	public void showTables(ImportAsSQLUI iasu, Database db) {
+	/** Loads the schemas or tables of a database, or the tables of a schema, the first time it is selected. */
+	public void showChildren(ImportAsSQLUI iasu, Object node) {
 		try {
-			DatabaseCC dbcc = new DatabaseCC(cwcc);
-			iasu.getDatabaseTreeView().loadTables(db, dbcc.getTables(db));
+			new DatabaseCC(cwcc).loadChildren(iasu.getDatabaseTreeView(), node);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Load tables", e);
+			ApplicationContext.get().errors().report(iasu, "Load tables", e);
 		}
 	}
 

@@ -10,6 +10,7 @@ import nl.errorsoft.esql.table.ui.TableListView;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
+import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 public class DatabaseCC {
@@ -62,6 +63,44 @@ public class DatabaseCC {
 		DatabaseTreeView dbtv = new DatabaseTreeView(cwcc.getTitle(), cwcc.getConnectionProfile().getServerType().iconName());
 		dbtv.loadDatabases(getDatabases());
 		return dbtv;
+	}
+
+	/**
+	 * Loads what a node of a dialog's tree holds when it is opened: the schemas of a database on servers with schemas, otherwise its tables, the tables of a
+	 * schema. Nothing for other nodes.
+	 */
+	public void loadChildren(DatabaseTreeView tree, Object node) throws Exception {
+		if (node instanceof Database database) {
+			if (cwcc.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS)) {
+				tree.loadSchemas(database, getSchemas(database));
+			} else {
+				tree.loadTables(database, getTables(database));
+			}
+		} else if (node instanceof Schema schema) {
+			tree.loadTables(schema, getTables(schema));
+		}
+	}
+
+	/** Opens a dialog's tree at the node selected in the connection window (a database, schema or table), so that the dialog starts from it. */
+	public void selectInTree(DatabaseTreeView tree, Object node) throws Exception {
+		switch (node) {
+			case Database database -> tree.selectDatabase(database);
+			case Schema schema -> {
+				loadChildren(tree, schema.getDatabase());
+				tree.selectSchema(schema);
+			}
+			case Table table -> {
+				if (table.getSchema() != null) {
+					selectInTree(tree, table.getSchema());
+				} else {
+					loadChildren(tree, table.getDatabase());
+				}
+				tree.selectTableInTree(table);
+			}
+			case null, default -> {
+				// Nothing selected, or a node (server, column) the dialog does not start from.
+			}
+		}
 	}
 
 	public TableListView getTableListView(java.util.List<Table> tables) throws Exception {

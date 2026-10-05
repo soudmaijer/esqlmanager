@@ -53,8 +53,10 @@ class TreeMenuTest {
 		assertFalse(database.contains(Item.RELOAD_TABLES));
 		assertEquals("Reload schemas", Item.RELOAD_SCHEMAS.label(POSTGRES));
 		assertEquals("Reload databases", Item.RELOAD_DATABASES.label(POSTGRES));
-		assertEquals(List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.DROP_SCHEMA,
-			Item.SEPARATOR, Item.RELOAD_TABLES), TreeMenu.itemsFor(Node.SCHEMA, POSTGRES));
+		assertEquals(
+			List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.IMPORT, Item.DROP_SCHEMA,
+				Item.SEPARATOR, Item.RELOAD_TABLES),
+			TreeMenu.itemsFor(Node.SCHEMA, POSTGRES));
 	}
 
 	@Test

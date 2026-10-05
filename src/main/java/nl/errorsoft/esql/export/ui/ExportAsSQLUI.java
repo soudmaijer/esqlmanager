@@ -5,6 +5,7 @@ import nl.errorsoft.esql.error.Dialogs;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
@@ -56,21 +57,21 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		dtv.addTreeSelectionListener(e -> {
 			if (e.isAddedPath()) {
 				final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
+				Object selected = selectedNode.getUserObject();
 
-				if (selectedNode.getUserObject() instanceof Database) {
-					if (selectedNode.getChildCount() <= 0) {
-						databaseSelected((Database) selectedNode.getUserObject());
-					}
+				if ((selected instanceof Database || selected instanceof Schema) && selectedNode.getChildCount() <= 0) {
+					ecc.showChildren(this, selected);
 				}
-				if (selectedNode.getUserObject() instanceof Table) {
-					tv.removeSelectionPath(new TreePath(((DefaultMutableTreeNode) selectedNode.getParent()).getPath()));
+				if (selected instanceof Table || selected instanceof Schema) {
+					// A selected database or schema exports everything in it already, so a table or schema below it is not selected twice.
+					for (DefaultMutableTreeNode parent = (DefaultMutableTreeNode) selectedNode
+						.getParent(); parent != null; parent = (DefaultMutableTreeNode) parent
+							.getParent()) {
+						tv.removeSelectionPath(new TreePath(parent.getPath()));
+					}
 				}
 			}
 		});
-	}
-
-	public void databaseSelected(Database db) {
-		ecc.showTables(this, db);
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -128,7 +129,7 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 			}
 		});
 
-		jLabel1.setText("Select the database(s) / table(s) you would like to export on the left");
+		jLabel1.setText("Select the database(s), schema(s) or table(s) you would like to export on the left");
 		jPanel2.setLayout(new java.awt.BorderLayout());
 		jPanel2.add(jLabel1);
 		Forms.titled(jPanel2, "Info");
