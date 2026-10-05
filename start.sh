@@ -23,7 +23,17 @@ elif [ "$(docker ps -aq -f "name=^${CONTAINER}$")" ]; then
 	docker start "${CONTAINER}" >/dev/null
 else
 	echo "Creating PostgreSQL container ${CONTAINER} (${IMAGE})..."
-	docker run -d --name "${CONTAINER}" -e POSTGRES_PASSWORD="${PASSWORD}" -p "${PORT}:5432" "${IMAGE}" >/dev/null
+	# Another PostgreSQL may already own the port. That is fine: keep going and use that server.
+	if ! docker run -d --name "${CONTAINER}" -e POSTGRES_PASSWORD="${PASSWORD}" -p "${PORT}:5432" "${IMAGE}" >/dev/null; then
+		echo "Could not start ${CONTAINER} (port ${PORT} is probably used by another PostgreSQL), continuing without it." >&2
+		docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
+		if [ "${1:-}" = "--db-only" ]; then
+			exit 0
+		fi
+		echo
+		echo "Starting eSQLManager..."
+		exec ./mvnw -q compile exec:exec
+	fi
 fi
 
 echo -n "Waiting for PostgreSQL"
