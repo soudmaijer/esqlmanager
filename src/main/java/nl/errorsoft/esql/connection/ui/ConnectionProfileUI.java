@@ -54,6 +54,8 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		jc.setEditable(true);
 		jcServer = new JComboBox<>(new DefaultComboBoxModel<>());
 		jcServer.setEditable(false);
+		jc.setRenderer(new ServerIconRenderer());
+		jcServer.setRenderer(new ServerIconRenderer());
 		ip = new JTextField("", 28);
 		un = new JTextField("");
 		pw = new JPasswordField();

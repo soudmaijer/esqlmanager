@@ -1,1 +1,3 @@
 Icons from Lucide (https://lucide.dev), ISC license, version 0.468.0. Combined icons (database-add, table-drop, ...) place a Lucide mark on a base icon. The title bar buttons (window-minimize, window-maximize, window-restore, window-close) are Lucide minus, square, copy and x.
+
+The server brand icons (brand-postgresql, brand-mysql, brand-oracle, brand-microsoftsqlserver) are from Simple Icons (https://simpleicons.org), whose SVG data is CC0 1.0, filled with the brand colour. The logos themselves remain trademarks of their owners (PostgreSQL Global Development Group, Oracle Corporation for MySQL and Oracle, Microsoft Corporation for SQL Server) and are used only to identify the server type.

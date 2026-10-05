@@ -4,6 +4,8 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Server icons: the profile lists, the connection window and the server node of the tree show the logo of the
+  server (PostgreSQL, MySQL, Oracle, SQL Server, Simple Icons), lighter on a dark theme.
 - Build: Maven with the Maven wrapper, standard src/main/java and src/main/resources layout, Java 25, UTF-8 sources.
   The old dist and lib folders are gone, JDBC drivers (MySQL, PostgreSQL, SQL Server, Oracle) come from Maven Central.
 - Packages: merged esql and nl.errorsoft into nl.errorsoft.esql, the database designer lives under it as dbcreator.

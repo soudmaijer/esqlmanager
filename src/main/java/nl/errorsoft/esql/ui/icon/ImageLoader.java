@@ -45,6 +45,21 @@ public class ImageLoader {
 		icons.put(name, icon);
 	}
 
+	/**
+	 * Registers a brand logo (a file in icons/svg filled with its brand colour). It keeps its colour when selected; on a dark theme the colour is made
+	 * lighter so that it stays readable.
+	 */
+	public void addBrandIcon(String name, String svg, int size) {
+		FlatSVGIcon icon = new FlatSVGIcon("icons/svg/" + svg + ".svg", size, size, getClass().getClassLoader());
+		icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> com.formdev.flatlaf.FlatLaf.isLafDark() ? lighter(color) : color));
+		icons.put(name, icon);
+	}
+
+	private static Color lighter(Color color) {
+		float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+		return Color.getHSBColor(hsb[0], hsb[1] * 0.75f, Math.min(1f, hsb[2] + 0.25f));
+	}
+
 	/** Icons are created once per image, renderers ask for them on every repaint. */
 	public Icon getIcon(String name) {
 		Icon icon = icons.get(name);

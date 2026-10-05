@@ -13,9 +13,11 @@ import java.awt.*;
 
 class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer {
 	private ImageLoader imgldr;
+	private String serverIcon;
 
-	public DatabaseTreeViewCellRenderer(ImageLoader imgldr) {
+	public DatabaseTreeViewCellRenderer(ImageLoader imgldr, String serverIcon) {
 		this.imgldr = imgldr;
+		this.serverIcon = serverIcon;
 	}
 
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -45,7 +47,7 @@ class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer {
 				setIcon(imgldr.getIcon("fldimg"));
 			}
 		} else {
-			setIcon(imgldr.getIcon("pc"));
+			setIcon(imgldr.getIcon(serverIcon));
 		}
 
 		return this;

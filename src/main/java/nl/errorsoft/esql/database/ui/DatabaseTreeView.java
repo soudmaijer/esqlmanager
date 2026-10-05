@@ -22,11 +22,12 @@ public class DatabaseTreeView extends JTree {
 	private final DefaultMutableTreeNode rootNode;
 	private final DefaultTreeModel dtm;
 
-	public DatabaseTreeView(String title) {
+	/** @param serverIcon the icon of the root node, the server (see {@code ServerType.iconName}) */
+	public DatabaseTreeView(String title, String serverIcon) {
 		this.rootNode = new DefaultMutableTreeNode(title);
 		this.dtm = new DefaultTreeModel(rootNode, false);
 		setModel(dtm);
-		setCellRenderer(new DatabaseTreeViewCellRenderer(ApplicationContext.get().imageLoader()));
+		setCellRenderer(new DatabaseTreeViewCellRenderer(ApplicationContext.get().imageLoader(), serverIcon));
 	}
 
 	public void loadDatabases(List<Database> databases) {

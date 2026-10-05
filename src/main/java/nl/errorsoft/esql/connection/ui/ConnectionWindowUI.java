@@ -74,7 +74,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		// Windowconstructor
 		this.cwcc = cwcc;
 		this.setTitle(cwcc.getTitle());
-		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon("pc"));
+		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon(cwcc.getConnectionProfile().getServerType().iconName()));
 		this.setResizable(true);
 		this.setMaximizable(true);
 		this.setClosable(true);

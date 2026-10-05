@@ -183,7 +183,7 @@ Note that `profiles.xml` stores passwords in plain text. Keep local changes out 
 
 ### Appearance
 
-Settings > Preferences > Appearance chooses the look and feel: follow the system (light or dark, on macOS), light, dark or the native look of the operating system. The choice is stored in `settings.xml` and applies at once. On macOS the menu is in the screen menu bar. The icons are vector icons from [Lucide](https://lucide.dev) that follow the theme.
+Settings > Preferences > Appearance chooses the look and feel: follow the system (light or dark, on macOS), light, dark or the native look of the operating system. The choice is stored in `settings.xml` and applies at once. On macOS the menu is in the screen menu bar. The icons are vector icons from [Lucide](https://lucide.dev) that follow the theme. Profiles, connection windows and the server node of the tree show the logo of the server (PostgreSQL, MySQL, Oracle, SQL Server, from [Simple Icons](https://simpleicons.org)).
 
 ## Logging
 

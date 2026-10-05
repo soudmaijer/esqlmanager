@@ -81,6 +81,17 @@ public class ServerType {
 		return Dialects.forType(type);
 	}
 
+	/** The name of this server's brand icon in the {@code ImageLoader}, the only place that maps a server type to an icon. */
+	public String iconName() {
+		return switch (type) {
+			case POSTGRES -> "serverPostgres";
+			case MY_SQL -> "serverMySql";
+			case ORACLE -> "serverOracle";
+			case MS_SQL_SERVER -> "serverSqlServer";
+			default -> "pc";
+		};
+	}
+
 	public String getDriverName() {
 		return driverName;
 	}
