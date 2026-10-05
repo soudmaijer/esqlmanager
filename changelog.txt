@@ -60,6 +60,9 @@ eSQLManager changelog
   and the ON DELETE and ON UPDATE actions, and checks that the columns exist and their types fit. Double click a line to
   edit it, Delete removes it.
 - Designer export: File > Export as PlantUML... and Export as Mermaid... write the model as an ER diagram.
+- Package structure by feature: dialect (with mysql, postgres, sqlserver and oracle sub packages), jdbc, error, job,
+  export, importer, server, settings, and shared ui split into icon, table, editor and util. The designer UI is split
+  into diagram and dialog. The old domain, data and importexport packages are gone.
 
 build #64 - RC3
 

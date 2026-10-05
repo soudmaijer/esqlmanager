@@ -8,7 +8,7 @@ A graphical database manager written in Java Swing. It started in 2002 as a grad
 
 ## Features
 
-Each database has its own dialect (`nl.errorsoft.esql.domain.dialect`) that decides how a feature is carried out, so the same feature works on MySQL and PostgreSQL. SQL Server and Oracle only have the features that work through plain JDBC; they have not been tested against a live server recently.
+Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how a feature is carried out, so the same feature works on MySQL and PostgreSQL. SQL Server and Oracle only have the features that work through plain JDBC; they have not been tested against a live server recently.
 
 | Feature | MySQL | PostgreSQL | SQL Server | Oracle |
 |---|---|---|---|---|
@@ -170,7 +170,7 @@ Settings > Preferences > Appearance chooses the look and feel: follow the system
 
 ## Logging
 
-The application logs with Log4j 2. The configuration is `src/main/resources/log4j2.xml`: messages go to the console and to the output panel. Executed queries are logged at `debug` level, set the `nl.errorsoft.esql.data` logger to `info` to hide them.
+The application logs with Log4j 2. The configuration is `src/main/resources/log4j2.xml`: messages go to the console and to the output panel. Executed queries are logged at `debug` level, set the `nl.errorsoft.esql.jdbc` logger to `info` to hide them.
 
 ## Try it with a local PostgreSQL
 
@@ -197,13 +197,16 @@ Design decisions and the architecture are described in `CLAUDE.md`. Format the c
 ```
 src/main/java/nl/errorsoft/esql
   Main.java  starts the application
-  table/ database/ importexport/ blob/ user/ designer/ query/ connection/
+  table/ database/ export/ importer/ blob/ user/ designer/ query/
+  connection/ server/ settings/
              one package per feature: data, service and repository, with
              control/ and ui/ below it for the controllers and Swing windows
-  app/       main window, settings, the ApplicationContext
-  ui/        Swing parts shared by features
-  data/      the database connection and the repository base class
-  domain/    shared types, including dialect/ with the per-database behaviour
+  app/       main window, start up, the ApplicationContext
+  ui/        Swing parts shared by features (icon/, table/, editor/, util/)
+  jdbc/      the database connection and the repository base class
+  dialect/   the per-database behaviour (mysql/, postgres/, sqlserver/, oracle/)
+  error/     EsqlException and the ErrorHandler
+  job/       progress reporting for long running jobs
 src/main/resources   icons, images, help pages and log4j2.xml
 src/test/java        dialect tests against real servers
 runtime/             configuration the application reads and writes

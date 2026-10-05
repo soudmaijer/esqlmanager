@@ -18,8 +18,8 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Database differences live in a Dialect
 
-* `domain/dialect/Dialect` is the single place that knows how a server differs: quoting, string literals, DDL for tables, columns and indexes, paging, switching database, listing databases and tables, table maintenance, and exporting a table definition. `AbstractDialect` holds ANSI/JDBC-metadata behaviour, `MySqlDialect` and `PostgresDialect` override what differs.
-* Callers ask the dialect. Never branch on the server type (`if type == MY_SQL`) outside `domain/dialect`. Adding a database means adding a `Dialect`, a `<driver>` section in `runtime/conf/datatypes.xml`, and a case in `Dialects.forType`.
+* `dialect/Dialect` is the single place that knows how a server differs: quoting, string literals, DDL for tables, columns and indexes, paging, switching database, listing databases and tables, table maintenance, and exporting a table definition. `AbstractDialect` holds ANSI/JDBC-metadata behaviour, `dialect.mysql.MySqlDialect` and `dialect.postgres.PostgresDialect` override what differs.
+* Callers ask the dialect. Never branch on the server type (`if type == MY_SQL`) outside `dialect`. Adding a database means adding a `Dialect`, a `<driver>` section in `runtime/conf/datatypes.xml`, and a case in `Dialects.forType`.
 * Optional functionality is declared with `Dialect.supports(Feature)`; the controllers show a message when a feature is missing.
 * `UserAdmin` (per dialect, from `Dialect.getUserAdmin()`) holds account and privilege management. MySQL accounts are `user@host` and privileges are GRANT/REVOKE; PostgreSQL accounts are roles, global privileges are role attributes, database and table privileges come from the object ACLs.
 * PostgreSQL has one database per connection: `useDatabase` reconnects. The profile's "Database(s)" field is a filter, and its first entry is the database to connect to (default `postgres`). Tables are looked up in `current_schema()`.
@@ -46,7 +46,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### Logging and output
 
-* log4j2 only, never `System.out`/`System.err`. `OutputPanelAppender` shows log lines in the output panel. Query text is logged at `debug` in `nl.errorsoft.esql.data`.
+* log4j2 only, never `System.out`/`System.err`. `OutputPanelAppender` shows log lines in the output panel. Query text is logged at `debug` in `nl.errorsoft.esql.jdbc`.
 * Log connection start, server product/version and driver, so the output explains what happened.
 
 ### Errors
@@ -94,12 +94,12 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 The code is moving from layers by technical type (`gui`, `control`, `domain`, `data`) to packaging by feature. The target:
 
-* Package by feature (functional packaging), for example `connection`, `database`, `table`, `data` (row editing), `index`, `importexport`, `designer`, `user`, `query`.
+* Package by feature (functional packaging), for example `connection`, `database`, `table`, `export`, `importer`, `server`, `designer`, `user`, `query`.
 * Inside each feature the layers are strictly UI -> Controller -> Service -> Repository. Dependencies point downwards only.
   * UI (Swing): no business logic, no JDBC. Swing classes only in UI packages.
   * Controller: translates UI events into service calls and shows the outcome. It gets its service from `cwcc.getContext()`.
   * Service: application logic (order of steps, validation, updating the domain objects after a change). Calls repositories, never SQL.
-  * Repository: the only place that runs SQL. It extends `data.AbstractRepository`, which holds the connection and gives `dialect()`, `quote()`, `literal()`, `useDatabase()`, `executeUpdate()` and `executeAll()`. A repository asks the `Dialect` for everything that differs per server and never branches on the server type.
+  * Repository: the only place that runs SQL. It extends `jdbc.AbstractRepository`, which holds the connection and gives `dialect()`, `quote()`, `literal()`, `useDatabase()`, `executeUpdate()` and `executeAll()`. A repository asks the `Dialect` for everything that differs per server and never branches on the server type.
 * Domain types (`Table`, `TableColumn`, `TableIndex`, `TableData`, `DatabaseUser`, ...) are plain data without a connection.
 * A result that is more than one object is a small record in the feature package (`table.QueryResult`).
 * Do this one feature at a time and keep the contract tests green.
@@ -108,20 +108,24 @@ Features and their packages (all under `nl.errorsoft.esql`; each has `control` a
 
 * `table`: tables, columns, indexes, rows (`Table`, `TableColumn`, `TableIndex`, `TableData`, `TableService`, `TableRepository`, `QueryResult`).
 * `database`: databases and their table lists (`Database`, `DatabaseService`, `DatabaseRepository`), including the tree view.
-* `importexport`: SQL export and import (`ExportService`, `ImportService`, with an `ExportRepository` and `ImportRepository`). Services run on their own thread and report progress to a `ProgressListener`.
+* `export` and `importer`: SQL export (`ExportService`, `ExportRepository`, `ExportOptions`) and import (`ImportService`, `ImportRepository`). Services run on their own thread and report progress to a `job.ProgressListener`; `job.ui.ImportExportProgressUI` shows it for both.
 * `blob`: uploading and saving binary cells (`BlobService`, `BlobRepository`).
 * `user`: accounts and privileges (`UserService`, `UserRepository`). The SQL itself is in the dialect's `UserAdmin`, which the repository wraps.
 * `designer`: the model designer. `DesignerService` creates the designed databases and tables from `DesignedDatabase` and `DesignedTable`, then adds each table's `DesignedForeignKey`s in a second pass (skipping keys that exist, checking that the columns exist) through `TableService.addForeignKey`.
   * The model links a table to its database with a generic reference (`Model.addReference`, never table-to-table). Foreign keys are separate: `designer.model.ForeignKey` records in `Model` (`addForeignKey`, `foreignKeysOf`), removed with their table and kept in step with renamed or removed fields (`Model.fieldsEdited`, called by `TableProperties`).
   * Model files (.edm) are read and written by `designer.model.ModelXml` with JDOM. New files are version 0.2 (with `<foreignkeys>`), 0.1 files still load, missing sections mean empty. `ModelPersistenceTest` has a 0.1 fixture in `src/test/resources/designer`.
   * Foreign key SQL comes from `Dialect.addForeignKeySql`/`dropForeignKeySql`; actions are checked against the whitelist `Dialect.REFERENTIAL_ACTIONS`. `Dialect.checkForeignKeyTable` refuses MySQL tables that are not InnoDB.
-  * Look: objects are cards painted by themselves (`TableObject`, `DatabaseObject` as a pill, `CommentObject` as a note) with colours and fonts from `designer.ui.DesignerTheme` (UIManager keys, so light and dark both work). A component is larger than its card by `DesignerTheme.SHADOW` for the shadow; `ModelObject.cardBounds()` is the card in viewer coordinates, `contains` only accepts the card, and model files store the card position (`setCardLocation`). The table header shows the storage engine only when the server's dialect has table types (`ModelViewer.setShowTableTypes`). `ModelViewer` paints the canvas with an optional dotted grid (View > Show Grid).
-  * Relations are drawn by `designer.ui.ConnectorRenderer` below the cards: a foreign key is an orthogonal connector with rounded corners from the child's column row (`TableObject.rowAnchorY`) to the parent's, a crow's foot at the child and a double bar at the parent, around the right side when the cards overlap horizontally or for a self reference. Hit testing uses an 8px stroked shape. Database and note links are dashed curves.
+  * Look: objects are cards painted by themselves (`TableObject`, `DatabaseObject` as a pill, `CommentObject` as a note) with colours and fonts from `designer.ui.diagram.DesignerTheme` (UIManager keys, so light and dark both work). A component is larger than its card by `DesignerTheme.SHADOW` for the shadow; `ModelObject.cardBounds()` is the card in viewer coordinates, `contains` only accepts the card, and model files store the card position (`setCardLocation`). The table header shows the storage engine only when the server's dialect has table types (`ModelViewer.setShowTableTypes`). `ModelViewer` paints the canvas with an optional dotted grid (View > Show Grid).
+  * Relations are drawn by `designer.ui.diagram.ConnectorRenderer` below the cards: a foreign key is an orthogonal connector with rounded corners from the child's column row (`TableObject.rowAnchorY`) to the parent's, a crow's foot at the child and a double bar at the parent, around the right side when the cards overlap horizontally or for a self reference. Hit testing uses an 8px stroked shape. Database and note links are dashed curves.
   * Foreign key UI: drag from the field icon of a row onto a column of another table (a ghost connector follows the mouse; `Model.mouseDragged` does not move a table when the drag starts on a field icon), a table's context menu "Add Foreign Key...", or the Foreign Keys tab of `TableProperties`. All open `ForeignKeyDialog`, which checks the key with `ForeignKey.validate()` (columns exist, types of the same kind, allowed actions) and reports problems through the `ErrorHandler`. Double click on a connector edits it, Delete or its context menu removes it. Shift-drag still links a database or a note.
   * Exports: `designer.export.DiagramExporter` writes a `DiagramModel` (plain records made from a `Model` with `DiagramModel.of`) as PlantUML or Mermaid text, without Swing (File > Export as PlantUML/Mermaid).
+* `designer.ui.diagram` holds the canvas (`ModelViewer`, the model objects, `ConnectorRenderer`, `ModelBrowser`), `designer.ui.dialog` the property, foreign key, history and generate dialogs, `designer.ui` the window (`DBCreator`).
 * `query`: statements typed by the user (`QueryService`, `QueryRepository`) and the editor with syntax highlighting.
-* `connection`: profiles, drivers, the connection window, process list, server status and variables (`ServerService`).
-* `app`: main window, settings, start up. `ui`: Swing parts shared by several features (`ImageLoader`, `ColumnWidths`, ...). `data`: `DatabaseConnection` and `AbstractRepository`. `domain`: types shared by features (`CreateColumn`, `DataType`) and `domain.dialect`.
+* `connection`: profiles, drivers, server types, the connection window and `ConnectionContext`.
+* `server`: process list, server status and variables (`ServerService`, `ServerRepository`, `ServerProcess`, `server.ui.Processlist`).
+* `app`: main window, credits, splash, start up. `settings`: `Settings`, `Appearance` and `settings.ui.SettingsUI`.
+* `ui`: Swing parts shared by several features: `ui.icon` (`ImageLoader`, `StatusLight`), `ui.table` (`ColumnWidths`, sortable headers, `MultiLineCellEditor`), `ui.editor` (`EditorTheme`), `ui.util` (`DesktopUtils`, file filter, hyperlinks).
+* `jdbc`: `DatabaseConnection` and `AbstractRepository`. `dialect`: `Dialect`, `AbstractDialect`, `Dialects`, `UserAdmin`, with `mysql`, `postgres`, `sqlserver` and `oracle` sub packages. `error`: `EsqlException` and `ErrorHandler`. `job`: `ProgressListener`. `CreateColumn` and `DataType` are in `table`.
 * `app.ApplicationContext` (singleton, `ApplicationContext.get()`) is where components are resolved from. It holds what exists once per application (`imageLoader()`, `settings()`) and one `connection.ConnectionContext` per open connection (`connection(databaseConnection)`, released when the window closes). Do not pass an `ImageLoader` or `Settings` through controllers.
 * `ConnectionContext` creates every repository and service of one connection once and wires them with constructor injection. Services are per connection because several connections are open at the same time, so they are never application singletons. Controllers get a service from `cwcc.getContext()` (`getContext().tables()`, `.databases()`, `.users()`, `.servers()`, `.queries()`, `.designer()`) and never create services or repositories themselves. A service receives its repository and the services it needs in its constructor (`BlobService` uses `TableService.rowFilter`). Jobs that report progress to observers (export, import, blob transfer) are created per run with `newExport`, `newImport` and `newBlobTransfer`. A new feature adds its repository and service to `ConnectionContext`.
 * Parameters that belong together are a record (`ExportOptions`, `DesignedTable`), not a long argument list.
