@@ -35,13 +35,6 @@ public class FieldObject
 	{	return this.name;
 	}
 	
-	public static nl.errorsoft.esql.domain.DataType [] getFieldTypes()
-	{	
-		nl.errorsoft.esql.domain.ServerType t = new nl.errorsoft.esql.domain.ServerType( nl.errorsoft.esql.domain.ServerType.MY_SQL );
-		return t.getDataTypes();
-
-	}
-	
 	public String toString()
 	{	return name;
 	}		

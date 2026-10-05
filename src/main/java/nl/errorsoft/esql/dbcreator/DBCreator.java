@@ -100,7 +100,7 @@ public class DBCreator extends JDialog implements MouseListener
 		
 		buildMenu();
 		
-		properties = new Properties(eui);
+		properties = new Properties(eui, cwui.getControlClass().getConnectionProfile().getServerType());
 		
 		this.setLocation( eui.getLocation().x + (int)((eui.getSize().width - this.getSize().width) / 2), eui.getLocation().y + (int)((eui.getSize().height - this.getSize().height) / 2) );
 		

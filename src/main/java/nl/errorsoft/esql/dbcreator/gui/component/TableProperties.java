@@ -53,9 +53,11 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	
 	// Tableobject
 	private TableObject tb;
+	private nl.errorsoft.esql.domain.ServerType serverType;
 
-	public TableProperties ( TableObject tb )
+	public TableProperties ( TableObject tb, nl.errorsoft.esql.domain.ServerType serverType )
 	{	JPanel general = new JPanel();
+		this.serverType = serverType;
 		general.setLayout(null);
 		general.setOpaque(false);
 		
@@ -76,14 +78,14 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		lbl_type.setBounds(10,65,60,20);
 		general.add(lbl_type);
 		
-		cmb_type.addItem(new String("MyIsam"));
-		cmb_type.addItem(new String("ISAM"));
-		cmb_type.addItem(new String("HEAP"));
-		cmb_type.addItem(new String("MERGE"));
-		cmb_type.addItem(new String("MRGMyISAM"));
-		cmb_type.addItem(new String("InnoDB"));
-		cmb_type.addItem(new String("BDB"));
+		String [] tableTypes = serverType.getDialect().getTableTypes();
+		for(int i = 0; i < tableTypes.length; i++)
+		{	cmb_type.addItem(tableTypes[i]);
+		}
 		cmb_type.setSelectedItem(tb.getType());
+		// Servers without storage engines have nothing to choose here.
+		lbl_type.setVisible(tableTypes.length > 0);
+		cmb_type.setVisible(tableTypes.length > 0);
 		cmb_type.setBounds(70,67,185,20);
 		general.add(cmb_type);		
 		
@@ -146,7 +148,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		
 		cmb_types.setBounds(60,12,180,20);
 		properties.add(cmb_types);
-		nl.errorsoft.esql.domain.DataType [] fo = FieldObject.getFieldTypes();
+		nl.errorsoft.esql.domain.DataType [] fo = serverType.getDataTypes();
 		for(int i = 0 ; i < fo.length; i++ )
 		{	cmb_types.addItem(fo[i]);
 		}
@@ -225,7 +227,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	public void saveProperties()
 	{	tb.setName(txt_name.getText());
 		tb.setDescription(txt_desc.getText());
-		tb.setType(cmb_type.getSelectedItem().toString());
+		tb.setType(cmb_type.getSelectedItem() == null ? "" : cmb_type.getSelectedItem().toString());
 		tb.setComment(txt_comm.getText());
 		
 		tb.removeAllFields();

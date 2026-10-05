@@ -8,11 +8,13 @@ public class Properties extends JDialog implements ActionListener
 {	private Component cur;
 	private JPanel cont;
 	
+	private nl.errorsoft.esql.domain.ServerType serverType;
 	private JButton ok = new JButton("Ok");
 	private JButton cancel = new JButton("Cancel");
 
-	public Properties ( JFrame jm )
+	public Properties ( JFrame jm, nl.errorsoft.esql.domain.ServerType serverType )
 	{	super(jm, true);
+		this.serverType = serverType;
 		this.setSize(275,350);
 		this.setTitle("Properties");
 		this.setResizable(false);
@@ -45,7 +47,7 @@ public class Properties extends JDialog implements ActionListener
 	{	if(cur != null)
 			cont.remove(cur);
 		if ( obj instanceof TableObject )
-		{	TableProperties tp = new TableProperties((TableObject)obj);
+		{	TableProperties tp = new TableProperties((TableObject)obj, serverType);
 			this.setTitle("Properties for '" + ((TableObject)obj).getName() + "'");
 			this.cont.add(tp);
 			cur = tp;

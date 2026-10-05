@@ -1,13 +1,18 @@
 package nl.errorsoft.esql.dbcreator.gui.component;
 
 import nl.errorsoft.esql.gui.*;
+import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.domain.CreateColumn;
+import nl.errorsoft.esql.domain.dialect.Dialect;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.dbcreator.gui.model.Model;
 import javax.swing.*;
 import java.util.*;
 import nl.errorsoft.esql.dbcreator.gui.component.*;
 
 public class Generate extends javax.swing.JDialog implements Runnable
-{	private ConnectionWindowUI cwui;
+{	private static final Logger log = LogManager.getLogger( Generate.class );	private ConnectionWindowUI cwui;
 	private ESQLManagerUI eui;
 	private Model m;
 	
@@ -318,73 +323,46 @@ public class Generate extends javax.swing.JDialog implements Runnable
 		
 		boolean error = false;
 		
-		for( int i = 0; i < db.size(); i ++ )
-		{	DatabaseObject d = (DatabaseObject)db.get(i);
-		
-			try
-			{
-				cwui.getControlClass().getDatabaseConnection().executeUpdate("CREATE DATABASE IF NOT EXISTS `" + d.getName() + "`");
-			}
-			catch(Exception e)
-			{	error = true;
-				break;
-			}
+		try
+		{
+			DatabaseConnection dbc = cwui.getControlClass().getDatabaseConnection();
+			Dialect dialect = dbc.getConnectionProfile().getServerType().getDialect();
+			List<String> existingDatabases = dialect.listDatabases( dbc );
 			
-			Vector tb = m.getReferences(d);
-			
-			progress.setValue(progress.getValue() + 1);
-			
-			for( int j = 0; j < tb.size() ; j ++ )
-			{
-				TableObject tbs = (TableObject)tb.get(j);	
-				if(tbs.getName().trim().length() == 0)
-				{	//ct.showErrorMessage("Tablename missing. You must enter a tablename in order to create a table.");
-				}
-				if(tbs.getFields().length == 0)
-				{	//ct.showErrorMessage("You didn't add any columns to the table. Please add some fields to the table prior to generating it.");
-				}
+			for( int i = 0; i < db.size(); i ++ )
+			{	DatabaseObject d = (DatabaseObject)db.get(i);
 				
-				String query = "CREATE TABLE IF NOT EXISTS `" + tbs.getName() + "` ";
-				query = query + " (";
+				if( !existingDatabases.contains( d.getName() ) )
+					dbc.executeUpdate( dialect.createDatabaseSql( d.getName() ) );
 				
+				dbc.useDatabase( d.getName() );
 				progress.setValue(progress.getValue() + 1);
 				
-				for(int k = 0; k < tbs.getFields().length; k++)
-				{	if(k != 0)	{	query = query + ", ";	}
-					
-					Field f = tbs.getFields()[k];
-					
-					query = query + " `" + f.getName() + "` " ;
-					query = query + f.getType().getName();
-					if(!f.getLength().trim().equals("")) { query = query + " (" + f.getLength() + ")";  }
-					if(f.unsigned){ query = query + " UNSIGNED"; }
-					if(!f.getDefault().trim().equals("")) {query = query + " DEFAULT '" + f.getDefault() + "'"; }
-					if(f.notnull){ query = query + " NOT NULL"; }
-					if(f.zerofill){ query = query + " ZEROFILL"; }
-					if(f.binary){ query = query + " BINARY"; }
-					if(f.autoincrement){ query = query + " AUTO_INCREMENT"; }
-					if(f.primary){ query = query + ", PRIMARY KEY(`" + f.getName() + "`)"; }
-					if(f.unique){ query = query + ", UNIQUE(`" + f.getName() + "`)"; }
-					if(f.index){ query = query + ", INDEX(`" + f.getName() + "`)"; }
-					
-					progress.setValue(progress.getValue() + 1);
-				}	
-				query = query + ") TYPE=" + tbs.getType();
-				if(!tbs.getComment().trim().equals(""))
-				{	query = query + " COMMENT='" + tbs.getComment() + "'";
-				}	
+				Vector tb = m.getReferences(d);
 				
-				try
+				for( int j = 0; j < tb.size() ; j ++ )
 				{
-					cwui.getControlClass().getDatabaseConnection().executeUpdate("USE `" + d.getName() + "`;");
-					cwui.getControlClass().getDatabaseConnection().executeUpdate(query);
-				}
-				catch(Exception e)
-				{
-					error = true;
-					break;
+					TableObject tbs = (TableObject)tb.get(j);	
+					List<CreateColumn> columns = new ArrayList<CreateColumn>();
+					progress.setValue(progress.getValue() + 1);
+					
+					for(int k = 0; k < tbs.getFields().length; k++)
+					{	columns.add( toCreateColumn( tbs.getFields()[k] ) );
+						progress.setValue(progress.getValue() + 1);
+					}
+					
+					// Generating a model again leaves the tables that are already there alone.
+					if( !tableExists( dbc, dialect, tbs.getName() ) )
+					{	for( String query : dialect.createTableSql( tbs.getName(), columns, tbs.getType(), tbs.getComment() ) )
+							dbc.executeUpdate( query );
+					}
 				}
 			}
+		}
+		catch(Exception e)
+		{
+			log.error( "Model generation failed", e );
+			error = true;
 		}
 		
 		if(error)
@@ -395,6 +373,35 @@ public class Generate extends javax.swing.JDialog implements Runnable
 		cwui.getControlClass().showDatabaseTree();
 		
 		this.dispose();
+	}
+	
+	private CreateColumn toCreateColumn( Field f )
+	{
+		CreateColumn column = new CreateColumn( f.getName() );
+		column.type = f.getType();
+		column.length = f.getLength();
+		column.defaultval = f.getDefault();
+		column.primary = f.primary;
+		column.index = f.index;
+		column.unique = f.unique;
+		column.binary = f.binary;
+		column.notnull = f.notnull;
+		column.unsigned = f.unsigned;
+		column.autoincrement = f.autoincrement;
+		column.zerofill = f.zerofill;
+		return column;
+	}
+	
+	private boolean tableExists( DatabaseConnection dbc, Dialect dialect, String table ) throws java.sql.SQLException
+	{
+		java.sql.ResultSet rs = dbc.getConnection().getMetaData().getTables( dbc.getConnection().getCatalog(), dialect.getSchema( dbc ), table, new String[] { "TABLE" } );
+		
+		try
+		{	return rs.next();
+		}
+		finally
+		{	rs.close();
+		}
 	}
 	
 	public void showMessage(String message)

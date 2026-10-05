@@ -8,7 +8,7 @@ public class TableObject extends ModelObject
 {	private String name;
 	private String description = "";
 	private Vector fields = new Vector();
-	private String type = "MyIsam";
+	private String type = "InnoDB";
 	private String comment = "";
 	
 	private int width;
