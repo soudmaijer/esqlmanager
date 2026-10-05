@@ -21,6 +21,7 @@ import nl.errorsoft.esql.domain.Export;
 import nl.errorsoft.esql.domain.GrantTarget;
 import nl.errorsoft.esql.domain.Import;
 import nl.errorsoft.esql.domain.Table;
+import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.domain.TableColumn;
 import nl.errorsoft.esql.domain.TableData;
 import nl.errorsoft.esql.domain.TableIndex;
@@ -80,30 +81,30 @@ abstract class DialectContractTest
 		Table table = table( name );
 
 		assertEquals( Arrays.asList( "id", "name", "note" ), columnNames( table ) );
-		assertTrue( table.getIndexes( table )[0].isPrimary() || indexNames( table ).contains( "PRIMARY" ) );
+		assertTrue( service().loadIndexes( table )[0].isPrimary() || indexNames( table ).contains( "PRIMARY" ) );
 
-		table.addTableColumn( table, "age", "", "0", INTEGER, false, false, false, true );
+		service().addColumn( table, "age", "", "0", INTEGER, false, false, false, true );
 		assertTrue( columnNames( table ).contains( "age" ) );
 
-		table.editTableColumn( table.getTableColumn( "age" ), "years", "", "5", BIGINT, false, false, false, false );
+		service().editColumn( table.getTableColumn( "age" ), "years", "", "5", BIGINT, false, false, false, false );
 		assertTrue( columnNames( table ).contains( "years" ) );
 		assertFalse( columnNames( table ).contains( "age" ) );
 
 		TableIndex index = new TableIndex( table );
 		index.setName( "u_years" );
-		table.addIndex( table, index, new TableColumn[] { table.getTableColumn( "years" ) }, "UNIQUE" );
+		service().addIndex( table, index, new TableColumn[] { table.getTableColumn( "years" ) }, "UNIQUE" );
 		assertTrue( table.getTableIndex( "u_years" ).isUnique() );
 
-		table.modifyIndex( table, table.getTableIndex( "u_years" ), new TableColumn[] { table.getTableColumn( "years" ), table.getTableColumn( "name" ) }, "INDEX" );
+		service().modifyIndex( table, table.getTableIndex( "u_years" ), new TableColumn[] { table.getTableColumn( "years" ), table.getTableColumn( "name" ) }, "INDEX" );
 		assertFalse( table.getTableIndex( "u_years" ).isUnique() );
 		assertEquals( 2, table.getTableIndex( "u_years" ).getTableColumns().length );
 
-		table.dropIndex( table, table.getTableIndex( "u_years" ) );
+		service().dropIndex( table, table.getTableIndex( "u_years" ) );
 		assertFalse( indexNames( table ).contains( "u_years" ) );
 
-		table.modifyTable( table, name + "_renamed", null, "new comment" );
+		service().modifyTable( table, name + "_renamed", null, "new comment" );
 		assertEquals( name + "_renamed", table.getName() );
-		table.dropTable( table );
+		service().dropTable( table );
 	}
 
 	@Test
@@ -120,15 +121,15 @@ abstract class DialectContractTest
 		runSynchronously( new Export( connection, new Object[] { table }, file.getAbsolutePath(), true, true, false, true, true ) );
 		runSynchronously( new Import( connection, database, file.getAbsolutePath() ) );
 
-		TableData[][] rows = table.getData( table, 0, 100 );
+		TableData[][] rows = service().loadPage( table, 0, 100 );
 		assertEquals( 3, rows.length );
 		assertEquals( "it's \\ tricky\nwith a second line", rows[1][2].getData() );
 		assertTrue( rows[2][2].isNull() );
 
 		// Auto numbering continues after the highest id that was loaded.
 		insert( table, "fourth", "after import" );
-		assertEquals( 4, table.getData( table, 0, 100 ).length );
-		table.dropTable( table );
+		assertEquals( 4, service().loadPage( table, 0, 100 ).length );
+		service().dropTable( table );
 	}
 
 	@Test
@@ -141,13 +142,13 @@ abstract class DialectContractTest
 		insert( table, "b", "y" );
 		String hostile = "O'Brien \\' ; DROP TABLE " + name + "; -- \\";
 
-		TableData[][] rows = table.getData( table, 0, 100 );
-		assertEquals( 1, table.dataChanged( table, rows[0], rows[0][2], hostile ) );
-		assertEquals( hostile, table.getData( table, 0, 100 )[0][2].getData() );
+		TableData[][] rows = service().loadPage( table, 0, 100 );
+		assertEquals( 1, service().changeCell( table, rows[0], rows[0][2], hostile ) );
+		assertEquals( hostile, service().loadPage( table, 0, 100 )[0][2].getData() );
 
-		table.deleteRow( table, table.getData( table, 0, 100 )[1] );
-		assertEquals( 1, table.getData( table, 0, 100 ).length );
-		table.dropTable( table );
+		service().deleteRow( table, service().loadPage( table, 0, 100 )[1] );
+		assertEquals( 1, service().loadPage( table, 0, 100 ).length );
+		service().dropTable( table );
 	}
 
 	@Test
@@ -179,7 +180,7 @@ abstract class DialectContractTest
 		admin.setGrants( connection, user, onDatabase, new LinkedHashSet<String>() );
 		admin.dropUser( connection, user );
 		assertFalse( admin.listUsers( connection ).stream().anyMatch( u -> u.getName().equals( name ) ) );
-		table( tableName ).dropTable( table( tableName ) );
+		service().dropTable( table( tableName ) );
 	}
 
 	@Test
@@ -220,9 +221,9 @@ abstract class DialectContractTest
 		String name = "maint_" + System.nanoTime();
 		createTable( name, "" );
 		Table table = table( name );
-		assertNotNull( table.optimizeTable( table ) );
-		assertNotNull( table.analyseTable( table ) );
-		table.dropTable( table );
+		assertNotNull( service().optimizeTable( table ) );
+		assertNotNull( service().analyseTable( table ) );
+		service().dropTable( table );
 	}
 
 	private void createTable( String name, String comment ) throws Exception
@@ -245,9 +246,14 @@ abstract class DialectContractTest
 			connection.executeUpdate( statement );
 	}
 
+	private TableService service()
+	{
+		return new TableService( connection );
+	}
+
 	private Table table( String name )
 	{
-		Table table = new Table( connection, database );
+		Table table = new Table( database );
 		table.setName( name );
 		table.setType( "TABLE" );
 		table.setComment( "" );
@@ -256,7 +262,7 @@ abstract class DialectContractTest
 
 	private void insert( Table table, String name, String note ) throws Exception
 	{
-		TableColumn[] columns = table.getColumns( table );
+		TableColumn[] columns = service().loadColumns( table );
 		table.setColumns( columns );
 		TableData[] row = new TableData[2];
 
@@ -266,19 +272,19 @@ abstract class DialectContractTest
 			row[i].setTableColumn( columns[i + 1] );
 			row[i].setData( i == 0 ? name : note );
 		}
-		table.insertRow( table, row );
+		service().insertRow( table, row );
 	}
 
 	private List<String> columnNames( Table table ) throws Exception
 	{
-		TableColumn[] columns = table.getColumns( table );
+		TableColumn[] columns = service().loadColumns( table );
 		table.setColumns( columns );
 		return Arrays.stream( columns ).map( TableColumn::getName ).collect( Collectors.toList() );
 	}
 
-	private List<String> indexNames( Table table )
+	private List<String> indexNames( Table table ) throws Exception
 	{
-		return Arrays.stream( table.getIndexes( table ) ).map( TableIndex::getName ).collect( Collectors.toList() );
+		return Arrays.stream( service().loadIndexes( table ) ).map( TableIndex::getName ).collect( Collectors.toList() );
 	}
 
 	/** Export and Import are written to run on a thread, a test wants them finished. */

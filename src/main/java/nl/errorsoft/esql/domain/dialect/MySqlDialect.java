@@ -233,7 +233,7 @@ public class MySqlDialect extends AbstractDialect
 
 		while( rs.next() )
 		{
-			Table table = new Table( dbc, db );
+			Table table = new Table( db );
 			table.setName( rs.getString("Name") );
 			table.setType( rs.getString("Engine") );
 			table.setRowCount( rs.getInt("Rows") );

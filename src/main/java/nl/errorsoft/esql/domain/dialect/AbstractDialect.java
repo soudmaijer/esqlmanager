@@ -346,7 +346,7 @@ public abstract class AbstractDialect implements Dialect
 
 		while( rs.next() )
 		{
-			Table table = new Table( dbc, db );
+			Table table = new Table( db );
 			table.setName( rs.getString("TABLE_NAME") );
 			table.setType( rs.getString("TABLE_TYPE") );
 			table.setComment( rs.getString("REMARKS") );

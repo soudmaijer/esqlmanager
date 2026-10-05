@@ -4,6 +4,8 @@ import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
+import nl.errorsoft.esql.table.QueryResult;
+import nl.errorsoft.esql.table.TableService;
 import java.util.Vector;
 
 public class TableCC 
@@ -50,7 +52,7 @@ public class TableCC
 	   
 		eu.updateStatus("Starting modify table interface...", true );
 		if( t.getColumns() == null )
-			t.setColumns( t.getColumns( t ) );
+			service().loadColumns( t );
 		CreateTable ct = new CreateTable( eu, cwcc, this, d, t );
 		eu.updateStatus("Ready...", false );
 		ct.setVisible( true );
@@ -70,7 +72,7 @@ public class TableCC
    
    public TableDataView getTableDataView( Table table, int skip, int show ) throws Exception
    {
-		TableData [][] tdata = table.getData( table, skip, show );
+		TableData [][] tdata = service().loadPage( table, skip, show );
 		tdv = new TableDataView( this );
 		tdv.loadData( table, table.getColumns(), tdata );
 		return tdv;
@@ -78,59 +80,48 @@ public class TableCC
 	
 	public TableColumn[] getColumns( Table table ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), table.getDatabase() );
-		return t.getColumns( table );
+		return service().loadColumns( table );
 	}
 	
 	public void showTableData( Table table, int skip, int show ) throws Exception
 	{
-		TableData [][] tdata = table.getData( table, skip, show );
+		TableData [][] tdata = service().loadPage( table, skip, show );
 		tdv.loadData( table, table.getColumns(), tdata );
 	}
 	
 	public TableDataView executeQuery( String query ) throws Exception
 	{
-		Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-		TableData [][] tdaq = tempTable.executeQuery( query );
-		TableDataView tdvq = new TableDataView( this );
-		tdvq.loadData( tempTable, tempTable.getColumns(), tdaq );
-		return tdvq;		
+		return show( service().executeQuery( query ) );
 	}
 
 	public void dropTableColumn( TableColumn tb ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), tb.getTable().getDatabase() );
-		t.dropTableColumn( tb );
+		service().dropColumn( tb );
 	}
 
 	public void dropTable( Table tb ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), tb.getDatabase() );
-		t.dropTable( tb );
+		service().dropTable( tb );
 	}
 
 	public void flushTable( Table tb ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), tb.getDatabase() );
-		t.flushTable( tb );
+		service().flushTable( tb );
 	}
 	
 	public void executeUpdate( String query ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), null );
-		t.executeUpdate( query );
+		service().executeUpdate( query );
 	}		
 	
 	public void addTableColumn( Table tb, String name, String length, String defaultValue, DataType dt, boolean primary, boolean auto, boolean unsigned, boolean nullable ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), null );
-		t.addTableColumn( tb, name, length, defaultValue, dt, primary, auto, unsigned, nullable );
+		service().addColumn( tb, name, length, defaultValue, dt, primary, auto, unsigned, nullable );
 	}		
 	
 	public void editTableColumn( TableColumn tbc, String name, String length, String defaultValue, DataType dt, boolean primary, boolean auto, boolean unsigned, boolean nullable ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), null );
-		t.editTableColumn( tbc, name, length, defaultValue, dt, primary, auto, unsigned, nullable );
+		service().editColumn( tbc, name, length, defaultValue, dt, primary, auto, unsigned, nullable );
 	}
 		
 	public void insertNewRow()
@@ -155,20 +146,17 @@ public class TableCC
 	
 	public void insertRow( Table table, TableData [] rowData ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), table.getDatabase() );
-		t.insertRow( table, rowData );
+		service().insertRow( table, rowData );
 	}
 	
 	public void dataChanged( Table table, TableData [] rowData, TableData cellData, Object newValue ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), table.getDatabase() );
-		t.dataChanged( table, rowData, cellData, newValue );
+		service().changeCell( table, rowData, cellData, newValue );
 	}
 
 	public void deleteRow( Table table, TableData [] rowData ) throws Exception
 	{
-		Table t = new Table( cwcc.getDatabaseConnection(), table.getDatabase() );
-		t.deleteRow( table, rowData );
+		service().deleteRow( table, rowData );
 	}
 	
 	/*
@@ -186,35 +174,38 @@ public class TableCC
 	
 	public String optimizeTable( Table table ) throws Exception
 	{
-		Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-		return tempTable.optimizeTable( table );
+		return service().optimizeTable( table );
 	}
 
 	public String analyseTable( Table table ) throws Exception
 	{
-		Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-		return tempTable.analyseTable( table );
+		return service().analyseTable( table );
 	}
 
 	public String checkTable( Table table ) throws Exception
 	{
-		Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-		return tempTable.checkTable( table );
+		return service().checkTable( table );
 	}		
 
 	public String repairTable( Table table ) throws Exception
 	{
-		Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-		return tempTable.repairTable( table );
+		return service().repairTable( table );
 	}	
 	
 	public TableDataView runCommand( String query ) throws Exception
 	{
-  		TableDataView tdvq = new TableDataView( this );
-   	Table tempTable = new Table( cwcc.getDatabaseConnection(), null );
-   	TableData [][] tdaq = tempTable.runCommand( query );
-   	tdvq.loadData( tempTable, tempTable.getColumns(), tdaq );
-   	return tdvq;				
+		return show( service().runCommand( query ) );
 	} 
-	
+
+	private TableDataView show( QueryResult result ) throws Exception
+	{
+		TableDataView view = new TableDataView( this );
+		view.loadData( result.table(), result.table().getColumns(), result.rows() );
+		return view;
+	}
+
+	private TableService service() throws Exception
+	{
+		return new TableService( cwcc.getDatabaseConnection() );
+	}
 }

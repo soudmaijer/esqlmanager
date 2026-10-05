@@ -61,18 +61,28 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * `DialectContractTest` runs the same scenarios against every dialect: create and alter tables, indexes, export and import, editing data with hostile text, user management, creating databases. `PostgresDialectTest` and `MySqlDialectTest` supply the container. A new dialect gets a subclass.
 * Prefer a real database over mocks for anything that produces SQL.
 
-## Target architecture (agreed direction, not implemented yet)
+## Architecture
 
-The code is still layered by technical type (`gui`, `control`, `domain`, `data`) with domain classes that also run SQL. The agreed target:
+The code is moving from layers by technical type (`gui`, `control`, `domain`, `data`) to packaging by feature. The target:
 
 * Package by feature (functional packaging), for example `connection`, `database`, `table`, `data` (row editing), `index`, `importexport`, `designer`, `user`, `query`.
-* Inside each feature the layers are strictly UI -> Controller -> Service -> Repository. The UI has no business logic and does not touch JDBC. Controllers translate UI events into service calls. Services hold application logic. Repositories are the only place that runs SQL, and they ask the `Dialect` for the SQL that differs. Dependencies point downwards only.
-* Swing classes only in UI packages. Domain types (`Table`, `TableColumn`, `DatabaseUser`, ...) are plain data without a connection.
-* Do this in steps, one feature at a time, keeping the contract tests green. Start by moving what `Table` does (columns, indexes, data, DDL) into a repository and a service.
+* Inside each feature the layers are strictly UI -> Controller -> Service -> Repository. Dependencies point downwards only.
+  * UI (Swing): no business logic, no JDBC. Swing classes only in UI packages.
+  * Controller: translates UI events into service calls and shows the outcome. It creates a service per call from the connection of the window.
+  * Service: application logic (order of steps, validation, updating the domain objects after a change). Calls repositories, never SQL.
+  * Repository: the only place that runs SQL. It extends `data.AbstractRepository`, which holds the connection and gives `dialect()`, `quote()`, `literal()`, `useDatabase()`, `executeUpdate()` and `executeAll()`. A repository asks the `Dialect` for everything that differs per server and never branches on the server type.
+* Domain types (`Table`, `TableColumn`, `TableIndex`, `TableData`, `DatabaseUser`, ...) are plain data without a connection.
+* A result that is more than one object is a small record in the feature package (`table.QueryResult`).
+* Do this one feature at a time and keep the contract tests green.
+
+Status per feature:
+
+* `table`: done in `nl.errorsoft.esql.table` (`TableRepository`, `TableService`, `QueryResult`). `Table` is plain data. `TableCC`, `IndexesCC`, `CreateTableCC` call `TableService`. The data classes and the controllers still live in `domain`, `control` and `gui`, moving them into `table/` is the next step.
+* `database`, `importexport` (`Export`, `Import`, `UDData`), `designer`, `user`, `connection`: not done.
 
 ## Known technical debt
 
 * Raw `Vector` and other raw types (about 100 lint warnings), `java.util.Observable`/`Observer` for progress reporting.
 * Many dialogs still use null layouts (`ConnectionWindowUI`, `CreateTable`, `IndexesUI`, ...).
-* Domain classes mix data, behaviour and SQL (`Table`, `Database`, `Export`, `Import`, `UDData`).
+* Domain classes mix data, behaviour and SQL (`Database`, `Export`, `Import`, `UDData`). `Dialect` methods such as `maintain` and `dropIndexSql` still take a `DatabaseConnection` and run SQL themselves.
 * SQL Server and Oracle dialects only browse; their DDL, user management and maintenance are not implemented.

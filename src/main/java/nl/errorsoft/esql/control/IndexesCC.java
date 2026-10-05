@@ -9,6 +9,7 @@ import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
 import nl.errorsoft.esql.domain.*;
+import nl.errorsoft.esql.table.TableService;
 
 public class IndexesCC 
 {
@@ -37,8 +38,8 @@ public class IndexesCC
 	   }
 	   
 		iu = new IndexesUI( cwcc.getUI(), this );
-		t.setColumns( t.getColumns(t) );
-		t.setIndexes( t.getIndexes(t) );
+		service().loadColumns( t );
+		service().loadIndexes( t );
 		iu.loadIndexes( t.getIndexes() );
 	}
 	
@@ -50,7 +51,7 @@ public class IndexesCC
 				iu.showErrorMessage("No columns specified!");
 			else
 			{
-				t.addIndex( t, ti, tc, type );
+				service().addIndex( t, ti, tc, type );
 				iu.loadIndexes( t.getIndexes() );
 				cwcc.tableSelected( t, true );
 			}
@@ -71,9 +72,9 @@ public class IndexesCC
 			else
 			{
 				if( ti.isNew() )
-					t.addIndex( t, ti, tc, type );
+					service().addIndex( t, ti, tc, type );
 				else
-					t.modifyIndex( t, ti, tc, type );
+					service().modifyIndex( t, ti, tc, type );
 				
 				iu.loadIndexes( t.getIndexes() );
 				cwcc.tableSelected( t, true );
@@ -90,7 +91,7 @@ public class IndexesCC
 	{
 		try
 		{		
-			t.dropIndex( t, ti );
+			service().dropIndex( t, ti );
 			iu.loadIndexes( t.getIndexes() );
 			cwcc.tableSelected( t, true );
 		}
@@ -99,6 +100,11 @@ public class IndexesCC
 			iu.showErrorMessage("Error while dropping the index! " + e.getMessage() );
 			log.error( e.getMessage(), e );
 		}
+	}
+
+	private TableService service() throws Exception
+	{
+		return new TableService( cwcc.getDatabaseConnection() );
 	}
 
 	public void addNew( String name )

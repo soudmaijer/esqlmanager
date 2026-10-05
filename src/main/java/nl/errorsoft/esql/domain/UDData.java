@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
 import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.table.TableService;
 import java.util.*;
 import java.io.*;
 
@@ -22,7 +23,7 @@ public class UDData extends Observable
 
 	public void uploadData( Table tb, TableData [] rowData, TableData tc, String file ) throws Exception
 	{
-		String sqlWhere = tb.rowFilter( rowData );
+		String sqlWhere = new TableService( dbc ).rowFilter( rowData );
 
 		byte [] temp = java.nio.file.Files.readAllBytes( new File(file).toPath() );
 		log.debug( "Read {} bytes from {}", temp.length, file );
@@ -40,7 +41,7 @@ public class UDData extends Observable
 	
 	public void downloadData( Table tb, TableData [] rowData, TableData tc, String file ) throws Exception
 	{
-		String sqlWhere = tb.rowFilter( rowData );
+		String sqlWhere = new TableService( dbc ).rowFilter( rowData );
 
 		dbc.useDatabase( tb.getDatabase().getName() );
 		java.sql.ResultSet rs = dbc.executeQuery("SELECT * FROM "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tb.getName() ) +" WHERE "+ sqlWhere );

@@ -7,6 +7,7 @@ import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.gui.*;
 import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.table.TableService;
 import java.util.Vector;
 
 public class CreateTableCC
@@ -90,7 +91,7 @@ public class CreateTableCC
 	{
 		try
 		{	
-			t.modifyTable( t, tableName, tableType, tableComment );
+			new TableService( cwcc.getDatabaseConnection() ).modifyTable( t, tableName, tableType, tableComment );
 			ct.dispose();
 			//cwcc.reloadSelectedDatabase();
 		}
