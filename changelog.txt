@@ -1,6 +1,7 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: One way to read and write the XML files (settings, profiles, drivers, datatypes, models): safer reading, atomic writing, JDOM removed
 05-10-2026: Main window cannot be made too small
 
 - The main window has a minimum size (640 x 420), so the toolbar, the desktop, the output panel and the status bar at

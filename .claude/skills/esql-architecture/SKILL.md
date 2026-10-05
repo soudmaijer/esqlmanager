@@ -207,7 +207,7 @@ Known layer and naming problems that are not fixed yet. Do not report them again
 
 - `settings.Appearance` mixes an enum with look-and-feel (Swing/FlatLaf) code.
 - `designer.model.Model` and `ModelXml` import Swing/AWT classes (they hold canvas objects such as `TableCard`).
-- `connection.ConnectionProfile` and `connection.DatabaseDriver` mix domain data with reading and writing their XML files (JDOM). `ProfileXml` maps one `<profile>` element, but the file IO is still in `ConnectionProfile`; a `DriverXml` does not exist yet.
+- `connection.ConnectionProfile` and `connection.DatabaseDriver` mix domain data with reading and writing their XML files. `ProfileXml` maps one `<profile>` element, but the file IO is still in `ConnectionProfile`; a `DriverXml` does not exist yet.
 - Some controllers use Swing types beyond `Dialogs`/`SwingUtilities`: `connection.control.ConnectionProfileController` (`JPasswordField`), `server.control.ProcessListController` (`JFrame`), and `exporter.control.ExportController` and `importer.control.ImportController` (`javax.swing.tree` nodes for the tree of their window).
 - `database.DatabaseListService` owns a scratch `DatabaseConnection` of its own (the only service that refers to `jdbc.DatabaseConnection`) and is created by the profile controller, not by `ConnectionContext` (it runs before a connection window exists).
 - `ProcessListDialog`, `UserManagerDialog` and `GenerateDialog` extend `JDialog` directly instead of `ui.dialog.FormDialog`.
