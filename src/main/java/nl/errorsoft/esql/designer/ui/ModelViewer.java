@@ -12,6 +12,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.Toolkit;
@@ -22,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.ImageIcon;
@@ -34,6 +36,7 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
 import nl.errorsoft.esql.designer.control.ModelViewerControl;
+import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 public class ModelViewer extends JLayeredPane implements MouseListener, MouseMotionListener, ActionListener, AWTEventListener { //	Model for this component
@@ -94,6 +97,11 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	// Whether the server has storage engines that tables show in their header
 	private boolean showTableTypes = false;
 	private boolean showGrid = true;
+
+	// The foreign key connector that is selected or under the mouse, and the card under the mouse
+	private ForeignKey selectedKey;
+	private ForeignKey hoveredKey;
+	private ModelObject hoveredObject;
 
 	/*
 	 	ModelViewer default constructor
@@ -361,40 +369,54 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		Graphics2D g2 = (Graphics2D) g;
 		paintCanvas(g2);
 		markForeignKeyColumns();
-		Vector objects = model.getObjects();
-		g2.setColor(DesignerTheme.muted());
-		for (int i = 0; i < objects.size(); i++) {
-			ModelObject tmp = (ModelObject) objects.get(i);
-			Vector vect = tmp.getReferences();
+		Graphics2D lines = (Graphics2D) g2.create();
+		DesignerTheme.smooth(lines);
 
-			for (int j = 0; j < vect.size(); j++) {
-				ModelObject tmp2 = (ModelObject) vect.get(j);
-
-				if (tmp instanceof CommentObject || tmp2 instanceof CommentObject) {
-					if (!tmp.isHidden() && !tmp2.isHidden()) {
-						float[] dash = {3.0f};
-						Stroke s = g2.getStroke();
-						g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
-						g2.drawLine(tmp.getX() + (tmp.getWidth() / 2), tmp.getY() + (tmp.getHeight() / 2), tmp2.getX() + (tmp2.getWidth() / 2),
-							tmp2.getY() + (tmp2.getHeight() / 2));
-						g2.setStroke(s);
-					}
-				} else {
-					if (!tmp.isHidden() && !tmp2.isHidden()) {
-						g2.drawLine(tmp.getX() + (tmp.getWidth() / 2), tmp.getY() + (tmp.getHeight() / 2), tmp2.getX() + (tmp2.getWidth() / 2),
-							tmp2.getY() + (tmp2.getHeight() / 2));
-					}
+		for (Object object : model.getObjects()) {
+			ModelObject from = (ModelObject) object;
+			for (Object reference : from.getReferences()) {
+				ModelObject to = (ModelObject) reference;
+				if (!from.isHidden() && !to.isHidden()) {
+					ConnectorRenderer.paintLink(lines, from, to);
 				}
 			}
 		}
-		float[] dash = {3.0f};
-		Stroke s = g2.getStroke();
-		g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
-		g2.drawRect(xpos, ypos, w, h);
-		if (src != null) {
-			g2.drawLine(src.getX() + (src.getWidth() / 2), src.getY() + (src.getHeight() / 2), refx, refy);
+
+		for (ForeignKey key : model.getForeignKeys()) {
+			if (!key.from().isHidden() && !key.to().isHidden()) {
+				ConnectorRenderer.paint(lines, key, isHighlighted(key));
+			}
 		}
-		g2.setStroke(s);
+
+		lines.setColor(DesignerTheme.accent());
+		lines.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, new float[]{3.0f}, 0.0f));
+		if (w > 0 || h > 0) {
+			lines.setColor(DesignerTheme.hover());
+			lines.fillRect(xpos, ypos, w, h);
+			lines.setColor(DesignerTheme.accent());
+			lines.drawRect(xpos, ypos, w, h);
+		}
+		if (src != null) {
+			lines.drawLine(src.getX() + (src.getWidth() / 2), src.getY() + (src.getHeight() / 2), refx, refy);
+		}
+		lines.dispose();
+	}
+
+	/** A connector is drawn in the accent colour when it, or one of its tables, is selected or under the mouse. */
+	private boolean isHighlighted(ForeignKey key) {
+		return key == selectedKey || key == hoveredKey || key.from().isSelected() || key.to().isSelected() || key.from() == hoveredObject
+			|| key.to() == hoveredObject;
+	}
+
+	/** The connector under a point of the viewer, the one painted last wins. */
+	private ForeignKey connectorAt(Point point) {
+		List<ForeignKey> keys = model.getForeignKeys();
+		for (int i = keys.size() - 1; i >= 0; i--) {
+			if (ConnectorRenderer.hit(keys.get(i), point)) {
+				return keys.get(i);
+			}
+		}
+		return null;
 	}
 
 	private void paintCanvas(Graphics2D g2) {
@@ -510,6 +532,9 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	public void mousePressed(MouseEvent e) {
 		if (!placemode) {
 			this.moveToFront((Component) e.getSource());
+			if (e.getSource() instanceof ModelObject) {
+				selectedKey = null;
+			}
 			if (e.isMetaDown() && e.getSource() instanceof ModelObject) {
 				ModelObject t = (ModelObject) e.getSource();
 				objectrel.removeAll();
@@ -556,6 +581,10 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 				model.deselectAll();
 				selected = null;
 				src = null;
+				selectedKey = connectorAt(e.getPoint());
+				if (selectedKey != null) {
+					requestFocusInWindow();
+				}
 			} else if (e.isShiftDown() && e.getSource() instanceof ModelObject) {
 				src = (ModelObject) e.getSource();
 				refx = src.getX() + e.getX();
@@ -717,10 +746,29 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	public void mouseClicked(MouseEvent e) {
 	}
 	public void mouseEntered(MouseEvent e) {
+		if (e.getSource() instanceof ModelObject object) {
+			hoveredObject = object;
+			hoveredKey = null;
+			repaint();
+		}
 	}
+
 	public void mouseExited(MouseEvent e) {
+		if (e.getSource() == hoveredObject) {
+			hoveredObject = null;
+			repaint();
+		}
 	}
+
 	public void mouseMoved(MouseEvent e) {
+		if (e.getSource() == this) {
+			ForeignKey key = connectorAt(e.getPoint());
+			if (key != hoveredKey) {
+				hoveredKey = key;
+				setToolTipText(key == null ? null : key.name());
+				repaint();
+			}
+		}
 	}
 
 	public void eventDispatched(AWTEvent event) {
