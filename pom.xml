@@ -15,7 +15,43 @@
   </properties>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>build.properties</exclude>
+        </excludes>
+      </resource>
+      <!-- Version from this pom and the commit the build was made from -->
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>build.properties</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <version>10.0.1</version>
+        <executions>
+          <execution>
+            <id>commit-id</id>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <phase>initialize</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <failOnNoGitDirectory>false</failOnNoGitDirectory>
+          <generateGitPropertiesFile>false</generateGitPropertiesFile>
+          <abbrevLength>7</abbrevLength>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -33,7 +69,7 @@
         <configuration>
           <!-- The app reads and writes conf/ and credits.txt relative to the working directory -->
           <executable>java</executable>
-          <classpathScope>compile</classpathScope>
+          <classpathScope>runtime</classpathScope>
           <workingDirectory>${project.basedir}/runtime</workingDirectory>
           <arguments>
             <argument>-cp</argument>

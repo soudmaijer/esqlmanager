@@ -85,7 +85,7 @@ public class SplashUI extends javax.swing.JWindow implements MouseListener, Runn
 		g1.drawString(jmcc.getAppName(), 17, 196);
 		g1.setFont(new Font("Arial", Font.PLAIN, 11));
 		g1.drawString("Version " + jmcc.getAppVersion(), 17, 212);
-		g1.drawString("Build #" + jmcc.getAppBuild(), 17, 227);
+		g1.drawString("Commit " + jmcc.getAppCommit(), 17, 227);
 		g1.drawString("http://www.errorsoft.nl", 274, 212);
 		g1.drawString("© Copyright Errorsoft 2002-" + cal.get(java.util.Calendar.YEAR), 230, 227);
 	}
