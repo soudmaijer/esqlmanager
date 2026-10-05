@@ -40,6 +40,9 @@ public class DBCreator extends JDialog implements MouseListener {
 	private JMenuItem edit_sla = new JMenuItem("Select All");
 	private JMenuItem edit_dsa = new JMenuItem("Deselect All");
 
+	private JMenu view = new JMenu("View");
+	private JCheckBoxMenuItem view_grid = new JCheckBoxMenuItem("Show Grid", true);
+
 	private ModelBrowser mb;
 	private ModelViewer mv;
 
@@ -62,7 +65,7 @@ public class DBCreator extends JDialog implements MouseListener {
 		JScrollPane jsp = new JScrollPane(mv);
 
 		this.getContentPane().add(jsp);
-		jsp.getViewport().setBackground(Color.white);
+		jsp.getViewport().setBackground(UIManager.getColor("Panel.background"));
 		jsp.setBorder(null);
 
 		menu = new JMenuBar();
@@ -107,7 +110,13 @@ public class DBCreator extends JDialog implements MouseListener {
 		file_sva.addMouseListener(this);
 		file_new.addMouseListener(this);
 
+		view.add(view_grid);
+		view.setMnemonic('V');
+		view_grid.addActionListener(e -> mv.setShowGrid(view_grid.isSelected()));
+
 		buildMenu();
+
+		mv.setShowTableTypes(cwui.getControlClass().getConnectionProfile().getServerType().getDialect().getTableTypes().length > 0);
 
 		properties = new Properties(eui, cwui.getControlClass().getConnectionProfile().getServerType());
 
@@ -127,6 +136,7 @@ public class DBCreator extends JDialog implements MouseListener {
 		menu.removeAll();
 		menu.add(file);
 		menu.add(edit);
+		menu.add(view);
 		menu.add(mv.getModelMenu());
 
 		this.getContentPane().add(mv.getToolbar(), BorderLayout.NORTH);

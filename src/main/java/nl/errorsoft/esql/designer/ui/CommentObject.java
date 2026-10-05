@@ -3,6 +3,7 @@ package nl.errorsoft.esql.designer.ui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Path2D;
 
 public class CommentObject extends ModelObject implements MouseListener, FocusListener, AdjustmentListener {
 	private String comment;
@@ -13,10 +14,9 @@ public class CommentObject extends ModelObject implements MouseListener, FocusLi
 
 	public CommentObject(String comment, int identifier) {
 		this.comment = comment;
-		this.setSize(90, 55);
+		this.setOpaque(false);
 		this.setIdentifier(identifier);
 
-		jsp.setBounds(3, 12, this.getSize().width - 6, this.getSize().height - 14);
 		jsp.setBorder(null);
 		jsp.getVerticalScrollBar().setPreferredSize(new Dimension(8, jsp.getVerticalScrollBar().getSize().height));
 
@@ -29,52 +29,75 @@ public class CommentObject extends ModelObject implements MouseListener, FocusLi
 		this.addMouseListener(this);
 		jsp.getVerticalScrollBar().addAdjustmentListener(this);
 
-		jt.setFont(new Font("Arial", Font.PLAIN, 9));
+		jt.setFont(DesignerTheme.small());
+		jt.setForeground(DesignerTheme.text());
 		jt.setOpaque(false);
 		jt.addFocusListener(this);
 		jt.setText(comment);
 
-		jt.setBackground(new Color(255, 248, 196));
+		jt.setBackground(DesignerTheme.note());
 
 		jsp.getViewport().setOpaque(false);
 		jsp.setOpaque(false);
 		this.add(jsp);
+
+		this.setCardSize(150, 80);
+	}
+
+	/** The text area fills the note below the folded corner. */
+	@Override
+	public void setBounds(int x, int y, int width, int height) {
+		super.setBounds(x, y, width, height);
+		int m = DesignerTheme.SHADOW;
+		jsp.setBounds(m + 8, m + 8, width - 2 * m - 16, height - 2 * m - 12);
+	}
+
+	@Override
+	public void updateUI() {
+		super.updateUI();
+		// The fields are null while the superclass constructor runs.
+		if (jt != null) {
+			jt.setFont(DesignerTheme.small());
+			jt.setForeground(DesignerTheme.text());
+			jt.setBackground(DesignerTheme.note());
+		}
 	}
 
 	public void paintComponent(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g;
+		Graphics2D g2 = (Graphics2D) g.create();
+		DesignerTheme.smooth(g2);
 
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		Rectangle card = localCard();
+		int fold = 14;
+		Path2D note = new Path2D.Float();
+		note.moveTo(card.x + 6, card.y);
+		note.lineTo(card.x + card.width - 1 - fold, card.y);
+		note.lineTo(card.x + card.width - 1, card.y + fold);
+		note.lineTo(card.x + card.width - 1, card.y + card.height - 7);
+		note.quadTo(card.x + card.width - 1, card.y + card.height - 1, card.x + card.width - 7, card.y + card.height - 1);
+		note.lineTo(card.x + 6, card.y + card.height - 1);
+		note.quadTo(card.x, card.y + card.height - 1, card.x, card.y + card.height - 7);
+		note.lineTo(card.x, card.y + 6);
+		note.quadTo(card.x, card.y, card.x + 6, card.y);
+		note.closePath();
 
-		if (!this.isSelected()) {
-			g2.setColor(new Color(255, 248, 196));
-			Polygon p = new Polygon();
-			p.addPoint(0, 0);
-			p.addPoint((int) this.getSize().width - 11, 0);
-			p.addPoint((int) this.getSize().width - 1, 10);
-			p.addPoint((int) this.getSize().width - 1, (int) this.getSize().height - 1);
-			p.addPoint(0, (int) this.getSize().height - 1);
+		paintShadow(g2, note);
+		g2.setColor(DesignerTheme.note());
+		g2.fill(note);
 
-			g2.fillPolygon(p);
-			g2.setColor(Color.black);
-			g2.drawPolygon(p);
-			g2.drawLine((int) this.getSize().width - 11, 0, (int) this.getSize().width - 11, 10);
-			g2.drawLine((int) this.getSize().width - 11, 10, (int) this.getSize().width - 1, 10);
-		} else {
-			g2.setColor(new Color(255, 248, 196, 175));
-			Polygon p = new Polygon();
-			p.addPoint(0, 0);
-			p.addPoint((int) this.getSize().width - 11, 0);
-			p.addPoint((int) this.getSize().width - 1, 10);
-			p.addPoint((int) this.getSize().width - 1, (int) this.getSize().height - 1);
-			p.addPoint(0, (int) this.getSize().height - 1);
+		Path2D corner = new Path2D.Float();
+		corner.moveTo(card.x + card.width - 1 - fold, card.y);
+		corner.lineTo(card.x + card.width - 1 - fold, card.y + fold - 3);
+		corner.quadTo(card.x + card.width - 1 - fold, card.y + fold, card.x + card.width - 1 - fold + 3, card.y + fold);
+		corner.lineTo(card.x + card.width - 1, card.y + fold);
+		corner.closePath();
+		g2.setColor(DesignerTheme.noteBorder());
+		g2.fill(corner);
 
-			g2.fillPolygon(p);
-			g2.setColor(Color.black);
-			g2.drawPolygon(p);
-			g2.drawLine((int) this.getSize().width - 11, 0, (int) this.getSize().width - 11, 10);
-			g2.drawLine((int) this.getSize().width - 11, 10, (int) this.getSize().width - 1, 10);
-		}
+		g2.setColor(isSelected() ? DesignerTheme.accent() : DesignerTheme.noteBorder());
+		g2.setStroke(new BasicStroke(isSelected() ? 2f : 1f));
+		g2.draw(note);
+		g2.dispose();
 	}
 
 	public String getComment() {

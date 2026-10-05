@@ -91,12 +91,17 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 
 	private JButton btn_export = new JButton();
 
+	// Whether the server has storage engines that tables show in their header
+	private boolean showTableTypes = false;
+	private boolean showGrid = true;
+
 	/*
 	 	ModelViewer default constructor
 	 */
 	public ModelViewer(ModelViewerControl mvc) {
 		this.mvc = mvc;
 		this.setLayout(null);
+		this.setOpaque(true);
 		model = new Model("New Model");
 
 		this.addMouseListener(this);
@@ -211,11 +216,28 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		return toolbar;
 	}
 
-	/*
-		Sets the model for this component
-	*/
-	public void setModel() {
-		this.model = model;
+	public boolean showsTableTypes() {
+		return showTableTypes;
+	}
+
+	/** Tables show their storage engine only on servers that have them. */
+	public void setShowTableTypes(boolean showTableTypes) {
+		this.showTableTypes = showTableTypes;
+		for (Component component : getComponents()) {
+			if (component instanceof TableObject table) {
+				table.reviewSize();
+			}
+		}
+		repaint();
+	}
+
+	public boolean showsGrid() {
+		return showGrid;
+	}
+
+	public void setShowGrid(boolean showGrid) {
+		this.showGrid = showGrid;
+		repaint();
 	}
 
 	/*
@@ -336,10 +358,11 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 	 	and connections between components
 	 */
 	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Vector objects = model.getObjects();
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setColor(Color.black);
+		paintCanvas(g2);
+		markForeignKeyColumns();
+		Vector objects = model.getObjects();
+		g2.setColor(DesignerTheme.muted());
 		for (int i = 0; i < objects.size(); i++) {
 			ModelObject tmp = (ModelObject) objects.get(i);
 			Vector vect = tmp.getReferences();
@@ -372,6 +395,35 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 			g2.drawLine(src.getX() + (src.getWidth() / 2), src.getY() + (src.getHeight() / 2), refx, refy);
 		}
 		g2.setStroke(s);
+	}
+
+	private void paintCanvas(Graphics2D g2) {
+		Rectangle area = g2.getClipBounds() != null ? g2.getClipBounds() : new Rectangle(0, 0, getWidth(), getHeight());
+		g2.setColor(DesignerTheme.canvas());
+		g2.fill(area);
+
+		if (showGrid) {
+			int step = 20;
+			g2.setColor(DesignerTheme.grid());
+			for (int x = area.x - area.x % step; x < area.x + area.width; x += step) {
+				for (int y = area.y - area.y % step; y < area.y + area.height; y += step) {
+					g2.fillRect(x, y, 1, 1);
+				}
+			}
+		}
+	}
+
+	/** Columns that are part of a foreign key get the link icon in their table. */
+	private void markForeignKeyColumns() {
+		java.util.Map<TableObject, java.util.Set<String>> columns = new java.util.HashMap<>();
+		for (nl.errorsoft.esql.designer.model.ForeignKey key : model.getForeignKeys()) {
+			columns.computeIfAbsent(key.from(), table -> new java.util.HashSet<>()).addAll(key.fromColumns());
+		}
+		for (Object object : model.getObjects()) {
+			if (object instanceof TableObject table) {
+				table.setForeignKeyColumns(columns.getOrDefault(table, java.util.Set.of()));
+			}
+		}
 	}
 
 	public void resize() {
@@ -592,7 +644,7 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 		} else if (placemode && e.getSource() == this) {
 			place.setHidden(false);
 			this.add(place);
-			this.place.setLocation(e.getX(), e.getY());
+			this.place.setCardLocation(e.getX(), e.getY());
 			this.exitPlaceMode();
 		}
 

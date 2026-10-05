@@ -3,8 +3,7 @@ package nl.errorsoft.esql.designer.control;
 import nl.errorsoft.esql.designer.DBCreator;
 
 import java.util.Vector;
-import nl.errorsoft.esql.ui.ImageLoader;
-
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.ui.ImageLoader;
 
 public class ModelViewerControl {
@@ -45,7 +44,7 @@ public class ModelViewerControl {
 	}
 
 	public ImageLoader getImageList() {
-		return db.getImageList();
+		return ApplicationContext.get().imageLoader();
 	}
 
 	public void saveModel() {

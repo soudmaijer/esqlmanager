@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.designer.model;
 
 import java.io.File;
+import java.awt.Rectangle;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -141,11 +142,13 @@ final class ModelXml {
 	}
 
 	private static Element bounds(ModelObject object) {
+		// The card, not the shadow margin around it, so that models written before the cards had a shadow keep their positions.
+		Rectangle card = object.cardBounds();
 		Element bounds = new Element("bounds");
-		bounds.addContent(text("x", object.getX()));
-		bounds.addContent(text("y", object.getY()));
-		bounds.addContent(text("w", object.getWidth()));
-		bounds.addContent(text("h", object.getHeight()));
+		bounds.addContent(text("x", card.x));
+		bounds.addContent(text("y", card.y));
+		bounds.addContent(text("w", card.width));
+		bounds.addContent(text("h", card.height));
 		return bounds;
 	}
 
@@ -247,7 +250,12 @@ final class ModelXml {
 	private static void place(ModelObject object, Element element) {
 		Element bounds = element.getChild("bounds");
 		if (bounds != null) {
-			object.setBounds(number(bounds, "x", 0), number(bounds, "y", 0), number(bounds, "w", object.getWidth()), number(bounds, "h", object.getHeight()));
+			Rectangle card = object.cardBounds();
+			object.setCardLocation(number(bounds, "x", 0), number(bounds, "y", 0));
+			// Tables and databases size themselves to their content, only a note keeps the size it was given.
+			if (object instanceof CommentObject) {
+				object.setCardSize(Math.max(120, number(bounds, "w", card.width)), Math.max(60, number(bounds, "h", card.height)));
+			}
 		}
 		object.setHidden(false);
 	}
