@@ -543,8 +543,4 @@ public class CreateTable extends JDialog implements ActionListener, ListSelectio
 		}
 	}
 
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
-	}
 }

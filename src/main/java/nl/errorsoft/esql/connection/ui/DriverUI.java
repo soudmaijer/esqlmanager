@@ -145,7 +145,7 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 		getContentPane().add(jTabbedPane1);
 		jTabbedPane1.setBounds(10, 10, 385, 260);
 
-		jbtnClose.setText("Close");
+		jbtnClose.setText("Cancel");
 		getContentPane().add(jbtnClose);
 		jbtnClose.setBounds(315, 275, 80, 25);
 
@@ -205,16 +205,6 @@ public class DriverUI extends javax.swing.JDialog implements ActionListener, Ite
 			this.jtxtLibPath.setText(temp.getDriverFilePath());
 			this.jtxtURL.setText(temp.getDriverURL());
 		}
-	}
-
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 	// Variables declaration - do not modify

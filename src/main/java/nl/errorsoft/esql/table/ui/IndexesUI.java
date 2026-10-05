@@ -5,6 +5,8 @@
  */
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.control.IndexesCC;
@@ -169,16 +171,6 @@ public class IndexesUI extends javax.swing.JDialog implements ActionListener {
 		pack();
 	}
 
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
-	}
-
 	public void actionPerformed(java.awt.event.ActionEvent evt) {
 
 		if (evt.getSource() == this.jbtnClose) {
@@ -205,7 +197,7 @@ public class IndexesUI extends javax.swing.JDialog implements ActionListener {
 				this.tcc.dropIndex((TableIndex) jcmbIndexes.getSelectedItem());
 			}
 		} else if (evt.getSource() == this.jbtnAdd) {
-			String input = JOptionPane.showInputDialog(this, "Enter index name", "New index", JOptionPane.INFORMATION_MESSAGE);
+			String input = Dialogs.input(this, "New index", "Name of the new index:");
 
 			if (input != null) {
 				tcc.addNew(input);

@@ -3,13 +3,10 @@ package nl.errorsoft.esql.error;
 import java.awt.Component;
 import java.util.function.Consumer;
 
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import nl.errorsoft.esql.error.EsqlException;
 
 /**
  * The one way errors reach the user. Services and repositories throw, controllers and windows catch and call {@link #report}.
@@ -44,9 +41,9 @@ public class ErrorHandler {
 			log.error("{} failed", action, error);
 		}
 
-		String message = action + " failed: " + describe(error);
+		String message = message(action, error);
 		status.accept("Error...");
-		Runnable show = () -> JOptionPane.showMessageDialog(parent != null ? parent : mainWindow, message, TITLE, JOptionPane.WARNING_MESSAGE);
+		Runnable show = () -> Dialogs.error(parent != null ? parent : mainWindow, TITLE, message);
 
 		// On the event thread the message is shown at once, so what follows (a question about continuing) comes after it.
 		if (SwingUtilities.isEventDispatchThread()) {
@@ -54,6 +51,12 @@ public class ErrorHandler {
 		} else {
 			SwingUtilities.invokeLater(show);
 		}
+	}
+
+	/** "Drop table failed: cause", an action that already names the failure ("Unexpected error") is not followed by "failed". */
+	static String message(String action, Throwable error) {
+		boolean failure = action.toLowerCase().endsWith("error") || action.toLowerCase().endsWith("failed");
+		return action + (failure ? ": " : " failed: ") + describe(error);
 	}
 
 	/** The most specific message in the chain of causes, a driver message is clearer than the wrapper around it. */

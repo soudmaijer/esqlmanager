@@ -182,3 +182,6 @@ New:
 - Added a new interface for managing indexes, available through popup menu. 
 - Connection windows have a flat, taller title bar in the colours of the theme, with the server icon and Lucide buttons
   for minimize, maximize, restore and close. Split pane dividers are thin and flat, without one-touch arrows.
+- Dialogs: one helper for all message boxes. Errors show the error icon, dropping and deleting asks with a warning
+  that names the object and a button named after the action, revoking privileges asks first. Clearer texts and titles
+  (Upload no longer says Download, Drop user, typos), no popups after adding or saving a profile.

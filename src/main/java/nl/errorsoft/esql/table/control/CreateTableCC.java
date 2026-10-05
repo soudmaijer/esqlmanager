@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table.control;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
@@ -58,11 +60,11 @@ public class CreateTableCC {
 	*/
 	public void createTable(String name, String database, String comment, String type, CreateTable ct, Vector columns) {
 		if (name.trim().length() == 0) {
-			ct.showErrorMessage("Tablename missing. You must enter a tablename in order to create a table.");
+			Dialogs.error(ct, ct.getTitle(), "Enter a table name.");
 			return;
 		}
 		if (columns.size() == 0) {
-			ct.showErrorMessage("You didn't add any columns to the table. Please add some fields to the table prior to generating it.");
+			Dialogs.error(ct, ct.getTitle(), "Add at least one column.");
 			return;
 		}
 		try {

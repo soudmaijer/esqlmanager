@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.importer.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.export.ui.ExportAsSQLUI;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -36,7 +38,7 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		this.ecc = ecc;
 		this.getRootPane().setPreferredSize(new java.awt.Dimension(560, 300));
 		this.initComponents();
-		this.setTitle("Import data");
+		this.setTitle("Import as SQL");
 		this.setResizable(false);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
@@ -152,25 +154,15 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 					this.jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
 				}
 			} catch (Exception err) {
-				ApplicationContext.get().errors().report(this, "Select file", err);
+				ApplicationContext.get().errors().report(this, "Choose file", err);
 			}
 		} else if (src == jButton2) {
 			if (jTextField1.getText().trim().length() <= 0) {
-				showErrorMessage("No file selected!");
+				Dialogs.error(this, getTitle(), "Select a file first.");
 			} else {
 				ecc.importNodesAsSQL(this, dtv.getSelectionPath(), jTextField1.getText());
 			}
 		}
-	}
-
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 	/** Closes the dialog */

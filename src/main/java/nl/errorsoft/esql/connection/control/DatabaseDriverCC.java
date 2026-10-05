@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
@@ -33,7 +35,7 @@ public class DatabaseDriverCC {
 		String dataClose) {
 		try {
 			new DatabaseDriver().saveProperties(drivers, id, name, url, className, filePath, fieldOpen, fieldClose, dataOpen, dataClose);
-			du.showMessage("Saved changed successfully!");
+			Dialogs.info(du, du.getTitle(), "Driver properties saved.");
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(du, "Save properties", e);
 		}

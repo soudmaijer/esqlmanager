@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.table.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
@@ -72,7 +74,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.showConnectionState();
 		} catch (Exception e) {
 			cwui.closeUI(false);
-			jmcc.updateStatus("Can`t connect to server...", true);
+			jmcc.updateStatus("Cannot connect to server...", true);
 			ApplicationContext.get().errors().report("Connect to " + cw.getConnectionProfile().getName(), e);
 		}
 	}
@@ -108,7 +110,7 @@ public class ConnectionWindowCC extends Thread {
 			ApplicationContext.get().release(cw.getDatabaseConnection());
 			cw.stop();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Close", e);
+			ApplicationContext.get().errors().report("Disconnect", e);
 		}
 
 		// Remove references
@@ -127,7 +129,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.showHelp();
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Database tree", e);
+			ApplicationContext.get().errors().report(cwui, "Load databases", e);
 		}
 	}
 
@@ -208,7 +210,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Drop table column", e);
+			ApplicationContext.get().errors().report(cwui, "Drop column", e);
 		}
 	}
 
@@ -231,7 +233,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Flush selected table", e);
+			ApplicationContext.get().errors().report(cwui, "Empty table", e);
 		}
 	}
 
@@ -249,7 +251,7 @@ public class ConnectionWindowCC extends Thread {
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Database selected", e);
+			ApplicationContext.get().errors().report(cwui, "Load tables", e);
 		}
 	}
 
@@ -282,7 +284,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.tableSelected();
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Table selected", e);
+			ApplicationContext.get().errors().report(cwui, "Load table", e);
 		}
 	}
 
@@ -317,7 +319,7 @@ public class ConnectionWindowCC extends Thread {
 			QueryCC controller = new QueryCC(this);
 			cwui.showQueryTab(new QueryUI(controller, controller.databases(), cwui.getDatabase()));
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Query", e);
+			ApplicationContext.get().errors().report(cwui, "Run query", e);
 		}
 	}
 
@@ -328,7 +330,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.showConnectionState();
 			fpu.setVisible(true);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Field", e);
+			ApplicationContext.get().errors().report(cwui, "Load columns", e);
 		}
 	}
 
@@ -352,7 +354,7 @@ public class ConnectionWindowCC extends Thread {
 				table.getDatabase().getName() + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Table data", e);
+			ApplicationContext.get().errors().report(cwui, "Load table data", e);
 		}
 	}
 
@@ -365,7 +367,7 @@ public class ConnectionWindowCC extends Thread {
 			IndexesCC tcc = new IndexesCC(this, (Table) cwui.getSelectedNode().getUserObject());
 			tcc.startUI(jmcc.getUI());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(cwui, "Table indexes", e);
+			ApplicationContext.get().errors().report(cwui, "Load indexes", e);
 		}
 	}
 
@@ -386,7 +388,7 @@ public class ConnectionWindowCC extends Thread {
 			return true;
 		}
 
-		cwui.showErrorMessage(description + " is not available for " + cw.getConnectionProfile().getServerType().getDescription());
+		Dialogs.info(cwui, description, description + " is not available for " + cw.getConnectionProfile().getServerType().getDescription() + ".");
 		return false;
 	}
 
@@ -484,7 +486,7 @@ public class ConnectionWindowCC extends Thread {
 	public void optimizeTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			cwui.showMessage("Optimize table: " + cwui.getTable().getName(), tcc.optimizeTable(cwui.getTable()));
+			Dialogs.info(cwui, "Optimize table: " + cwui.getTable().getName(), tcc.optimizeTable(cwui.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Optimize table", e);
 		}
@@ -493,16 +495,16 @@ public class ConnectionWindowCC extends Thread {
 	public void analyseTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			cwui.showMessage("Analyze table: " + cwui.getTable().getName(), tcc.analyseTable(cwui.getTable()));
+			Dialogs.info(cwui, "Analyze table: " + cwui.getTable().getName(), tcc.analyseTable(cwui.getTable()));
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Analyse table", e);
+			ApplicationContext.get().errors().report("Analyze table", e);
 		}
 	}
 
 	public void checkTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			cwui.showMessage("Check table: " + cwui.getTable().getName(), tcc.checkTable(cwui.getTable()));
+			Dialogs.info(cwui, "Check table: " + cwui.getTable().getName(), tcc.checkTable(cwui.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Check table", e);
 		}
@@ -511,7 +513,7 @@ public class ConnectionWindowCC extends Thread {
 	public void repairTable() {
 		try {
 			TableCC tcc = new TableCC(this);
-			cwui.showMessage("Repair table: " + cwui.getTable().getName(), tcc.repairTable(cwui.getTable()));
+			Dialogs.info(cwui, "Repair table: " + cwui.getTable().getName(), tcc.repairTable(cwui.getTable()));
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Repair table", e);
 		}

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.blob.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.blob.control.UDDataCC;
@@ -95,19 +97,9 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 		this.jProgressBar1.setValue(percentage);
 
 		if (percentage == 100) {
-			showMessage("Download completed!");
+			Dialogs.info(this, getTitle(), "Download completed.");
 			this.dispose();
 		}
-	}
-
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 	/** Closes the dialog */
@@ -127,7 +119,7 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 					jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
 				}
 			} catch (Exception err) {
-				ApplicationContext.get().errors().report(this, "Select file", err);
+				ApplicationContext.get().errors().report(this, "Choose file", err);
 			}
 		} else if (e.getSource() == jButton2) {
 			this.dispose();

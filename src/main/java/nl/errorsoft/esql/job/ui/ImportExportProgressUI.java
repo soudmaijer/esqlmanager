@@ -1,4 +1,6 @@
 package nl.errorsoft.esql.job.ui;
+
+import nl.errorsoft.esql.error.Dialogs;
 /*
  * JDialog.java
  *
@@ -67,19 +69,9 @@ public class ImportExportProgressUI extends javax.swing.JDialog {
 
 		if (percentage == 100) {
 			this.jButton1.setEnabled(true);
-			showMessage("Process completed successfully!");
+			Dialogs.info(this, getTitle(), "Completed.");
 			this.dispose();
 		}
-	}
-
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 	/** Closes the dialog */

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.app.control;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
@@ -118,7 +120,7 @@ public class ESQLManagerCC {
 		try {
 			if (!jmui.getConnectionWindow().getControlClass().getDatabaseConnection().getConnectionProfile().getServerType().getDialect()
 				.supports(Dialect.Feature.DESIGNER)) {
-				jmui.showErrorMessage("This feature is only available for MySQL");
+				Dialogs.info(jmui, "Designer", "The designer is only available for MySQL.");
 				return;
 			}
 		} catch (Exception e) {

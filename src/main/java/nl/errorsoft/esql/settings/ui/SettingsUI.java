@@ -14,7 +14,7 @@ public class SettingsUI extends JDialog implements ActionListener {
 	private JTabbedPane jtp;
 
 	private JButton btnOk = new JButton("Save");
-	private JButton btnCancel = new JButton("Close");
+	private JButton btnCancel = new JButton("Cancel");
 
 	private JCheckBox update;
 	private JTextField updateServer;

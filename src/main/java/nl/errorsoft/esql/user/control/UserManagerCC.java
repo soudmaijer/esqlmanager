@@ -36,7 +36,7 @@ public class UserManagerCC {
 			emui.showConnectionState();
 			ui.setVisible(true);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Start user manager", e);
+			ApplicationContext.get().errors().report("Open user manager", e);
 		}
 	}
 

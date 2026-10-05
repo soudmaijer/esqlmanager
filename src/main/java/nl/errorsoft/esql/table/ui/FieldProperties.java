@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.table.TableIndex;
 
@@ -250,7 +252,7 @@ public class FieldProperties extends JDialog implements ActionListener {
 					index.isSelected(), autoIncrement.isSelected(), unsigned.isSelected(), notnull.isSelected());
 			}
 		} else if (source == addIndex) {
-			String input = JOptionPane.showInputDialog(this, "Enter index name", "New index", JOptionPane.INFORMATION_MESSAGE);
+			String input = Dialogs.input(this, "New index", "Name of the new index:");
 
 			if (input != null) {
 				TableIndex ti = new TableIndex(null);
@@ -258,13 +260,9 @@ public class FieldProperties extends JDialog implements ActionListener {
 				dlm.addElement(ti);
 			}
 		} else if (source == dropIndex) {
-			int result = JOptionPane.showConfirmDialog(this,
-				"Drop index from list? Notice that you have to press the \"Save\" button to actually drop the index", "Drop index", JOptionPane.YES_NO_OPTION);
-
-			if (result == JOptionPane.YES_OPTION) {
-				if (indexList.getSelectedIndex() > -1) {
-					dlm.removeElementAt(indexList.getSelectedIndex());
-				}
+			if (indexList.getSelectedIndex() > -1 && Dialogs.confirm(this, "Remove index",
+				"Remove index '" + indexList.getSelectedValue() + "'? It is dropped when you click Save.", "Remove")) {
+				dlm.removeElementAt(indexList.getSelectedIndex());
 			}
 		} else if (source == unique) {
 			if (indexList.getSelectedIndex() > -1) {

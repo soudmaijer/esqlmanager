@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.app.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
@@ -305,9 +307,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	}
 
 	public void closeUI() {
-		JOptionPane pane = new JOptionPane("Shutdown", JOptionPane.WARNING_MESSAGE);
-
-		if (JOptionPane.showConfirmDialog(this, "Are you sure you want to exit ?", "Shutdown", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+		if (Dialogs.confirmDestructive(this, "Exit eSQLManager", "Exit eSQLManager? Open connections will be closed.", "Exit")) {
 			jmcc.closeUI();
 		}
 	}
@@ -459,18 +459,4 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		}
 	}
 
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showMessage(String title, String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
-	}
 }

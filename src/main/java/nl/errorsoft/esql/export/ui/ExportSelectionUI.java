@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.export.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -39,7 +41,7 @@ public class ExportSelectionUI extends JDialog implements ActionListener {
 			this.ecc = ecc;
 			jbInit();
 		} catch (Exception ex) {
-			ApplicationContext.get().errors().report(this, "Export selection", ex);
+			ApplicationContext.get().errors().report(this, "Export", ex);
 		}
 	}
 
@@ -81,7 +83,7 @@ public class ExportSelectionUI extends JDialog implements ActionListener {
 			dispose();
 		} else if (e.getSource() == this.jButton2) {
 			if (!jRadioButton1.isSelected() && !jRadioButton2.isSelected()) {
-				showErrorMessage("Select an export option!");
+				Dialogs.error(this, getTitle(), "Select an export option.");
 			} else {
 				// CSV
 				if (jRadioButton1.isSelected()) {
@@ -92,16 +94,6 @@ public class ExportSelectionUI extends JDialog implements ActionListener {
 				this.dispose();
 			}
 		}
-	}
-
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 }

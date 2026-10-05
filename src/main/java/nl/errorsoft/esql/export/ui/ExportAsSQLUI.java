@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.export.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
@@ -34,7 +36,7 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		this.ecc = ecc;
 		this.getRootPane().setPreferredSize(new java.awt.Dimension(560, 320));
 		this.initComponents();
-		this.setTitle("Export data");
+		this.setTitle("Export as SQL");
 		this.setResizable(false);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
@@ -86,26 +88,16 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 					this.jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
 				}
 			} catch (Exception err) {
-				ApplicationContext.get().errors().report(this, "Select file", err);
+				ApplicationContext.get().errors().report(this, "Choose file", err);
 			}
 		} else if (src == jButton2) {
 			if (jTextField1.getText().trim().length() <= 0) {
-				showErrorMessage("No file selected!");
+				Dialogs.error(this, getTitle(), "Select a file first.");
 			} else {
 				ecc.exportNodesAsSQL(this, dtv.getSelectionPaths(), jTextField1.getText(), jCheckBox1.isSelected(), jCheckBox2.isSelected(),
 					jCheckBox3.isSelected(), jCheckBox5.isSelected(), jCheckBox4.isSelected());
 			}
 		}
-	}
-
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
 	}
 
 	/** This method is called from within the constructor to

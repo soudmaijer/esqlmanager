@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import org.apache.logging.log4j.LogManager;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -514,11 +516,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	// Close frame.
 	public void closeUI(boolean confirmation) {
 		if (confirmation) {
-			Object[] options = {"Disconnect", "Cancel"};
-			int answer = JOptionPane.showOptionDialog(this, "Disconnect from " + getTitle() + "?", "Disconnect", JOptionPane.DEFAULT_OPTION,
-				JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-
-			if (answer == 0) {
+			if (Dialogs.confirm(this, "Disconnect", "Disconnect from " + getTitle() + "?", "Disconnect")) {
 				cwcc.closeUI();
 			}
 		} else {
@@ -642,21 +640,6 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		status.setText(text == null || text.isEmpty() ? READY : text);
 	}
 
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showMessage(String title, String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
-	}
-
 	public String toString() {
 		return this.getTitle();
 	}
@@ -691,7 +674,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		}
 		// Create database
 		else if (eventSource == rtCreate || eventSource == dbCreateDatabase) {
-			String input = JOptionPane.showInputDialog(this, "Enter database name", "Create new database", JOptionPane.INFORMATION_MESSAGE);
+			String input = Dialogs.input(this, "Create database", "Name of the new database:");
 
 			if (input != null) {
 				cwcc.createDatabase(input);
@@ -699,9 +682,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		}
 		// Drop database
 		else if (eventSource == dbDrop) {
-			int result = JOptionPane.showConfirmDialog(this, "Are you sure you want drop the selected database?", "Drop database", JOptionPane.YES_NO_OPTION);
+			Database database = getDatabase();
+			String name = database != null ? "'" + database.getName() + "'" : "the selected database";
 
-			if (result == JOptionPane.YES_OPTION) {
+			if (Dialogs.confirmDestructive(this, "Drop database", "Drop database " + name + " and all its tables? This cannot be undone.", "Drop")) {
 				cwcc.dropDatabase();
 			}
 		}
@@ -719,17 +703,13 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		}
 		// Flush table data.
 		else if (eventSource == this.tbEmptyTable) {
-			int result = JOptionPane.showConfirmDialog(this, "Are you sure you want empty the selected table?", "Empty table", JOptionPane.YES_NO_OPTION);
-
-			if (result == JOptionPane.YES_OPTION) {
+			if (Dialogs.confirmDestructive(this, "Empty table", "Delete all rows from " + tableName(getTable()) + "? This cannot be undone.", "Empty")) {
 				cwcc.flushSelectedTable();
 			}
 		}
 		// Drop table.
 		else if (eventSource == btnDropTable || eventSource == tbDropTable) {
-			int result = JOptionPane.showConfirmDialog(this, "Are you sure you want drop the selected table?", "Drop table", JOptionPane.YES_NO_OPTION);
-
-			if (result == JOptionPane.YES_OPTION) {
+			if (Dialogs.confirmDestructive(this, "Drop table", "Drop table " + tableName(getTable()) + "? All its data will be lost.", "Drop")) {
 				cwcc.dropTable();
 			}
 		}
@@ -743,9 +723,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		}
 		// Drop field.
 		else if (eventSource == btnDeleteField || eventSource == fdDropField) {
-			int result = JOptionPane.showConfirmDialog(this, "Are you sure you want drop the selected field?", "Drop field", JOptionPane.YES_NO_OPTION);
+			TableColumn column = getTableColumn();
+			String name = column != null ? "column '" + column.getName() + "' from table " + tableName(column.getTable()) : "the selected column";
 
-			if (result == JOptionPane.YES_OPTION) {
+			if (Dialogs.confirmDestructive(this, "Drop column", "Drop " + name + "? This cannot be undone.", "Drop")) {
 				cwcc.dropTableColumn();
 			}
 		} else if (eventSource == rtStatus) {
@@ -778,9 +759,12 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			cwcc.dispatchCreateTableUI();
 		} else if (eventSource == tbEditTable) {
 			cwcc.dispatchModifyTableUI();
-		} else {
-			JOptionPane.showMessageDialog(this, "Not implemented yet!");
 		}
+	}
+
+	/** 'database.table' for the questions before a table is changed. */
+	private static String tableName(Table table) {
+		return table != null ? "'" + table.getDatabase().getName() + "." + table.getName() + "'" : "the selected table";
 	}
 	/******************************************************************
 	 *

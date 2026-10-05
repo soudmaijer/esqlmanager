@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.importer.control;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.job.ProgressListener;
 
 import nl.errorsoft.esql.database.Database;
@@ -53,7 +55,7 @@ public class ImportCC implements ProgressListener {
 			iasu = new ImportAsSQLUI(ecc.getUI(), this);
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Import sql", e);
+			ApplicationContext.get().errors().report("Import as SQL", e);
 		}
 	}
 
@@ -62,14 +64,14 @@ public class ImportCC implements ProgressListener {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			iasu.getDatabaseTreeView().loadTables(db, dbcc.getTables(db));
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Tables", e);
+			ApplicationContext.get().errors().report("Load tables", e);
 		}
 	}
 
 	public void importNodesAsSQL(ImportAsSQLUI iasu, TreePath tpa, String file) {
 		// check if file exist...
 		if (!(new java.io.File(file).exists())) {
-			iasu.showErrorMessage("File doesn`t exist!");
+			Dialogs.error(iasu, iasu.getTitle(), "File does not exist.");
 			return;
 		}
 		// open progress window...
@@ -87,7 +89,7 @@ public class ImportCC implements ProgressListener {
 			ie.setListener(this);
 			ie.start();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iasu, "Import nodes as sql", e);
+			ApplicationContext.get().errors().report(iasu, "Import as SQL", e);
 		}
 	}
 
@@ -98,7 +100,7 @@ public class ImportCC implements ProgressListener {
 
 	@Override
 	public void failed(Exception error) {
-		ApplicationContext.get().errors().report(ies, "Import", error);
+		ApplicationContext.get().errors().report(ies, "Import as SQL", error);
 		ies.dispose();
 	}
 

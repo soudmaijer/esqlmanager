@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -339,22 +341,11 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		} else if (object == btnClose) {
 			this.dispose();
 		} else if (object == btnDelete) {
-			JOptionPane pane = new JOptionPane();
-			int i = pane.showConfirmDialog(this, "Delete selected profile?", this.getTitle(), JOptionPane.YES_NO_OPTION);
-
-			if (i == JOptionPane.YES_OPTION && jc.getSelectedIndex() > -1) {
+			if (jc.getSelectedIndex() > -1
+				&& Dialogs.confirmDestructive(this, "Delete profile", "Delete profile '" + jc.getSelectedItem() + "'?", "Delete")) {
 				cpcc.deleteProfile((ConnectionProfile) jc.getSelectedItem());
 			}
 		}
 	}
 
-	public void showMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), JOptionPane.WARNING_MESSAGE);
-	}
 }

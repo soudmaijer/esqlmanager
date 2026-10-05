@@ -2,8 +2,9 @@
 
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.error.EsqlException;
 
 import nl.errorsoft.esql.query.ui.UndoHandler;
 import nl.errorsoft.esql.ui.table.ColumnWidths;
@@ -419,10 +420,9 @@ public class TableDataView extends JPanel implements ActionListener {
 			return;
 		}
 
-		JOptionPane pane = new JOptionPane();
+		String from = "'" + table.getDatabase().getName() + "." + table.getName() + "'";
 
-		if ((pane.showConfirmDialog(this, "Delete " + ia.length + " selected row(s)?", "Confirm delete", JOptionPane.YES_NO_OPTION,
-			JOptionPane.WARNING_MESSAGE)) == JOptionPane.YES_OPTION) {
+		if (Dialogs.confirmDestructive(this, "Delete rows", "Delete " + ia.length + " row(s) from " + from + "? This cannot be undone.", "Delete")) {
 			int cols = tbData.getColumnCount();
 			TableData[] tda = new TableData[cols];
 
@@ -442,10 +442,7 @@ public class TableDataView extends JPanel implements ActionListener {
 					ApplicationContext.get().errors().report(this, "Delete row", e);
 
 					if (ia.length > 1) {
-						pane = new JOptionPane();
-
-						if ((pane.showConfirmDialog(this, "Do you want to continue with next row?", "Continue delete", JOptionPane.YES_NO_OPTION,
-							JOptionPane.WARNING_MESSAGE)) == JOptionPane.NO_OPTION) {
+						if (!Dialogs.confirm(this, "Delete rows", "Delete failed for a row. Continue with the remaining rows?", "Continue")) {
 							break;
 						}
 					}
@@ -453,11 +450,6 @@ public class TableDataView extends JPanel implements ActionListener {
 				}
 			}
 		}
-	}
-
-	public void showErrorMessage(String message) {
-		JOptionPane pane = new JOptionPane();
-		pane.showMessageDialog(this, message, table.getDatabase() + ":" + table.getName(), JOptionPane.WARNING_MESSAGE);
 	}
 
 	public int getRowCount() {
@@ -548,7 +540,7 @@ public class TableDataView extends JPanel implements ActionListener {
 				skip = Integer.parseInt(this.jtfSkip.getText());
 				show = Integer.parseInt(this.jtfShow.getText());
 			} catch (Exception ex) {
-				ApplicationContext.get().errors().report(this, "Show data", new EsqlException("No numeric value in skip or show field!"));
+				Dialogs.error(this, "Show data", "Enter a number in Skip and Show.");
 				return;
 			}
 
@@ -602,7 +594,7 @@ public class TableDataView extends JPanel implements ActionListener {
 			skip = Integer.parseInt(this.jtfSkip.getText());
 			show = Integer.parseInt(this.jtfShow.getText());
 		} catch (Exception ex) {
-			ApplicationContext.get().errors().report(this, "Refresh data", new EsqlException("No numeric value in skip or show field!"));
+			Dialogs.error(this, "Refresh data", "Enter a number in Skip and Show.");
 			return;
 		}
 

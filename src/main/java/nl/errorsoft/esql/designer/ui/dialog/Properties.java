@@ -15,7 +15,7 @@ public class Properties extends JDialog implements ActionListener {
 	private JPanel cont;
 
 	private nl.errorsoft.esql.connection.ServerType serverType;
-	private JButton ok = new JButton("Ok");
+	private JButton ok = new JButton("OK");
 	private JButton cancel = new JButton("Cancel");
 
 	public Properties(JFrame jm, nl.errorsoft.esql.connection.ServerType serverType) {

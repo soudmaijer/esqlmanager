@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.designer.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.app.ApplicationContext;
 
@@ -278,12 +280,11 @@ public class DBCreator extends JDialog implements MouseListener {
 	}
 
 	public void newModel() {
-		int result = JOptionPane.showConfirmDialog(this, "Do you want to save the current model before continuing?", "New model",
-			JOptionPane.YES_NO_CANCEL_OPTION);
-		if (result == JOptionPane.YES_OPTION) {
+		Dialogs.SaveChoice choice = Dialogs.askSave(this, "New model", "Save model '" + mv.getModel().getName() + "' first?");
+		if (choice == Dialogs.SaveChoice.SAVE) {
 			saveCurrentModel(true);
 			mv.resetModel();
-		} else if (result == JOptionPane.NO_OPTION) {
+		} else if (choice == Dialogs.SaveChoice.DISCARD) {
 			mv.resetModel();
 		}
 	}
@@ -302,12 +303,11 @@ public class DBCreator extends JDialog implements MouseListener {
 	}
 	public void mouseReleased(MouseEvent e) {
 		if (e.getSource() == file_ext) {
-			int result = JOptionPane.showConfirmDialog(this, "Do you want to save the current model before continuing?", "New model",
-				JOptionPane.YES_NO_CANCEL_OPTION);
-			if (result == JOptionPane.YES_OPTION) {
+			Dialogs.SaveChoice choice = Dialogs.askSave(this, "Close designer", "Save model '" + mv.getModel().getName() + "' first?");
+			if (choice == Dialogs.SaveChoice.SAVE) {
 				saveCurrentModel(true);
 				this.dispose();
-			} else if (result == JOptionPane.NO_OPTION) {
+			} else if (choice == Dialogs.SaveChoice.DISCARD) {
 				this.dispose();
 			}
 		}
@@ -315,12 +315,11 @@ public class DBCreator extends JDialog implements MouseListener {
 			newModel();
 		}
 		if (e.getSource() == file_opn) {
-			int result = JOptionPane.showConfirmDialog(this, "Do you want to save the current model before continuing?", "Open model",
-				JOptionPane.YES_NO_CANCEL_OPTION);
-			if (result == JOptionPane.YES_OPTION) {
+			Dialogs.SaveChoice choice = Dialogs.askSave(this, "Open model", "Save model '" + mv.getModel().getName() + "' first?");
+			if (choice == Dialogs.SaveChoice.SAVE) {
 				saveCurrentModel(true);
 				openModel();
-			} else if (result == JOptionPane.NO_OPTION) {
+			} else if (choice == Dialogs.SaveChoice.DISCARD) {
 				openModel();
 			}
 		}

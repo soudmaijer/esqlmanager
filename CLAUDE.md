@@ -58,7 +58,8 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 ### Errors
 
 * Services and repositories do not swallow exceptions, they throw. A problem the user can fix (a row that can't be identified, a feature the database does not have) is an `EsqlException`, anything else is unexpected.
-* The controller or window that handles a user action catches and calls `ApplicationContext.get().errors().report(parentWindow, "Drop table", e)`. That logs the error once (a stack trace only for unexpected ones) and shows one message, "Drop table failed: <cause>". Do not call `log.error` and `showErrorMessage` yourself.
+* The controller or window that handles a user action catches and calls `ApplicationContext.get().errors().report(parentWindow, "Drop table", e)`. That logs the error once (a stack trace only for unexpected ones) and shows one message with the ERROR icon, "Drop table failed: <cause>" (an action that already says "error" gets no "failed"). Report titles are verbs a user knows ("Load table", "Run query"). Do not call `log.error` and show a dialog yourself.
+* Every dialog goes through `error.Dialogs`: `info`, `warn`, `error`, `confirm` (QUESTION), `confirmDestructive` (WARNING, for dropping and deleting), `input`, `form` and `askSave`. Never `new JOptionPane()` or `JOptionPane.show...` elsewhere, and no `showMessage`/`showErrorMessage` copies in windows. A confirmation names the object and what happens ("Drop database 'shop' and all its tables? This cannot be undone.") and its button is the action ("Drop") next to Cancel. No success popup when the status bar or the window already shows the outcome.
 * Long running jobs (export, import) report through `ProgressListener.failed`. `Main` installs `report` as the uncaught exception handler.
 * A catch that stays silent has a comment saying why (for example a table that can't be counted is still listed).
 

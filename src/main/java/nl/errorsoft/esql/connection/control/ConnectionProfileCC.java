@@ -24,7 +24,7 @@ public class ConnectionProfileCC {
 		try {
 			cp = new ConnectionProfile();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Connection profile cc", e);
+			ApplicationContext.get().errors().report("Load profiles", e);
 		}
 	}
 
@@ -83,7 +83,6 @@ public class ConnectionProfileCC {
 				cpui.loadProfiles(cp.getProfiles());
 				cpui.setSelectedProfile(cpt);
 				jmcc.showConnectionState();
-				cpui.showMessage("Profile added succesfully!");
 			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cpui, "Add profile", e);
@@ -104,7 +103,6 @@ public class ConnectionProfileCC {
 			cpt.setAutoConnect(autoConnect);
 			cp.editProfile(cpt);
 			jmcc.showConnectionState();
-			cpui.showMessage("Saved changes!");
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cpui, "Edit profile", e);
 		}

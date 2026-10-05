@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.user.ui;
 
+import nl.errorsoft.esql.error.Dialogs;
+
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 
 import java.awt.*;
@@ -15,12 +18,9 @@ import javax.swing.tree.TreePath;
 import nl.errorsoft.esql.user.control.UserManagerCC;
 import nl.errorsoft.esql.user.DatabaseUser;
 import nl.errorsoft.esql.user.GrantTarget;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /** Manages the accounts of the server and the privileges they have on the server, a database or a table. */
 public class UserManagerUI extends JDialog {
-	private static final Logger log = LogManager.getLogger(UserManagerUI.class);
 	private static final String LOADING = "Loading...";
 
 	private final UserManagerCC cc;
@@ -130,7 +130,7 @@ public class UserManagerUI extends JDialog {
 
 			treeModel.nodeStructureChanged(databaseNode);
 		} catch (Exception e) {
-			showError("Can't load the tables", e);
+			showError("Load tables", e);
 		}
 	}
 
@@ -143,7 +143,7 @@ public class UserManagerUI extends JDialog {
 				userModel.addElement(user);
 			}
 		} catch (Exception e) {
-			showError("Can't load the users", e);
+			showError("Load users", e);
 		}
 
 		if (selected != null) {
@@ -188,7 +188,7 @@ public class UserManagerUI extends JDialog {
 
 				message.setText(user + " on " + describe(target));
 			} catch (Exception e) {
-				showError("Can't read the privileges", e);
+				showError("Read privileges", e);
 			}
 		}
 		privilegePanel.revalidate();
@@ -207,11 +207,19 @@ public class UserManagerUI extends JDialog {
 		}
 
 		try {
-			cc.setGrants(users.getSelectedValue(), selectedTarget(), selected);
+			DatabaseUser user = users.getSelectedValue();
+			Set<String> revoked = new LinkedHashSet<>(cc.getGrants(user, selectedTarget()));
+			revoked.removeAll(selected);
+
+			if (!revoked.isEmpty() && !Dialogs.confirmDestructive(this, "Revoke privileges",
+				"Revoke " + String.join(", ", revoked) + " from '" + user + "' on " + describe(selectedTarget()) + "?", "Revoke")) {
+				return;
+			}
+			cc.setGrants(user, selectedTarget(), selected);
 			showGrants();
 			message.setText("Privileges saved for " + users.getSelectedValue() + " on " + describe(selectedTarget()));
 		} catch (Exception e) {
-			showError("Can't save the privileges", e);
+			showError("Save privileges", e);
 		}
 	}
 
@@ -230,7 +238,7 @@ public class UserManagerUI extends JDialog {
 		form.add(new JLabel("Password"));
 		form.add(password);
 
-		if (JOptionPane.showConfirmDialog(this, form, "Add user", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
+		if (!Dialogs.form(this, "Add user", form)) {
 			return;
 		}
 
@@ -245,15 +253,14 @@ public class UserManagerUI extends JDialog {
 			loadUsers();
 			message.setText("Created user " + user);
 		} catch (Exception e) {
-			showError("Can't create the user", e);
+			showError("Add user", e);
 		}
 	}
 
 	private void changePassword() {
 		JPasswordField password = new JPasswordField(16);
 
-		if (JOptionPane.showConfirmDialog(this, password, "New password for " + users.getSelectedValue(), JOptionPane.OK_CANCEL_OPTION,
-			JOptionPane.PLAIN_MESSAGE) != JOptionPane.OK_OPTION) {
+		if (!Dialogs.form(this, "New password for " + users.getSelectedValue(), password)) {
 			return;
 		}
 
@@ -261,23 +268,23 @@ public class UserManagerUI extends JDialog {
 			cc.changePassword(users.getSelectedValue(), new String(password.getPassword()));
 			message.setText("Changed the password of " + users.getSelectedValue());
 		} catch (Exception e) {
-			showError("Can't change the password", e);
+			showError("Change password", e);
 		}
 	}
 
 	private void deleteUser() {
 		DatabaseUser user = users.getSelectedValue();
 
-		if (JOptionPane.showConfirmDialog(this, "Delete user " + user + "?", "Delete user", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+		if (!Dialogs.confirmDestructive(this, "Drop user", "Drop user '" + user + "'? This cannot be undone.", "Drop")) {
 			return;
 		}
 
 		try {
 			cc.dropUser(user);
 			loadUsers();
-			message.setText("Deleted user " + user);
+			message.setText("Dropped user " + user);
 		} catch (Exception e) {
-			showError("Can't delete the user", e);
+			showError("Drop user", e);
 		}
 	}
 
@@ -289,9 +296,8 @@ public class UserManagerUI extends JDialog {
 		};
 	}
 
-	private void showError(String text, Exception e) {
-		log.error(text, e);
-		message.setText(text + ": " + e.getMessage());
-		JOptionPane.showMessageDialog(this, text + ": " + e.getMessage(), getTitle(), JOptionPane.WARNING_MESSAGE);
+	private void showError(String action, Exception e) {
+		message.setText(action + " failed: " + e.getMessage());
+		ApplicationContext.get().errors().report(this, action, e);
 	}
 }

@@ -2,6 +2,8 @@
 
 package nl.errorsoft.esql.table.control;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
@@ -44,7 +46,7 @@ public class IndexesCC {
 	public void addIndex(TableIndex ti, TableColumn[] tc, String type) {
 		try {
 			if (tc.length <= 0) {
-				iu.showErrorMessage("No columns specified!");
+				Dialogs.error(iu, iu.getTitle(), "Select at least one column for the index.");
 			} else {
 				service().addIndex(t, ti, tc, type);
 				iu.loadIndexes(t.getIndexes());
@@ -58,7 +60,7 @@ public class IndexesCC {
 	public void modifyIndex(TableIndex ti, TableColumn[] tc, String type) {
 		try {
 			if (tc.length <= 0) {
-				iu.showErrorMessage("No columns specified!");
+				Dialogs.error(iu, iu.getTitle(), "Select at least one column for the index.");
 			} else {
 				if (ti.isNew()) {
 					service().addIndex(t, ti, tc, type);

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
+import nl.errorsoft.esql.error.Dialogs;
+
 import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
 import nl.errorsoft.esql.designer.ui.diagram.Field;
@@ -153,7 +155,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 					DatabaseObject tmp2 = (DatabaseObject) db.get(j);
 					if (d.getName().equalsIgnoreCase(tmp2.getName()) && tmp2 != d) {
 						db_error = true;
-						showErrorMessage("Can't generate model - There are identical databases in the model (" + d.getName() + ")");
+						Dialogs.error(this, getTitle(), "The model has two databases named '" + d.getName() + "'.");
 						break;
 					}
 					progress.setValue(progress.getValue() + 1);
@@ -174,7 +176,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 						TableObject tmp2 = (TableObject) tb.get(j);
 						if (tmp.getName().equalsIgnoreCase(tmp2.getName()) && tmp2 != tmp) {
 							tb_error = true;
-							showErrorMessage("Can't generate model - There are identical tables in database '" + d.getName() + "' (" + tmp.getName() + ")");
+							Dialogs.error(this, getTitle(), "Database '" + d.getName() + "' has two tables named '" + tmp.getName() + "'.");
 							break;
 						}
 						progress.setValue(progress.getValue() + 1);
@@ -183,7 +185,7 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 					Field[] f = tmp.getFields();
 
 					if (f.length == 0) {
-						showErrorMessage("Can't generate model - There are no fields in table '" + tmp.getName() + "'");
+						Dialogs.error(this, getTitle(), "Table '" + tmp.getName() + "' has no columns.");
 						fd_error = true;
 						break;
 					}
@@ -191,8 +193,8 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 					for (int k = 0; k < f.length; k++) {
 						for (int l = 0; l < f.length; l++) {
 							if (f[k].getName().equalsIgnoreCase(f[l].getName()) && k != l) {
-								showErrorMessage(
-									"Can't generate model - There are identical field-names in table '" + tmp.getName() + "' (" + f[l].getName() + ")");
+								Dialogs.error(this, getTitle(),
+									"Table '" + tmp.getName() + "' has two columns named '" + f[l].getName() + "'.");
 								fd_error = true;
 								break;
 							}
@@ -326,9 +328,9 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		}
 
 		if (error) {
-			this.showErrorMessage("Model Generation failed - Please read the log for more information");
+			Dialogs.error(this, getTitle(), "Model generation failed, the output panel shows why.");
 		} else {
-			this.showMessage("Model has been succesfully generated!");
+			Dialogs.info(this, getTitle(), "Model generated.");
 		}
 
 		cwui.getControlClass().showDatabaseTree();
@@ -362,16 +364,6 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		column.autoincrement = f.autoincrement;
 		column.zerofill = f.zerofill;
 		return column;
-	}
-
-	public void showMessage(String message) {
-		javax.swing.JOptionPane pane = new javax.swing.JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), javax.swing.JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	public void showErrorMessage(String message) {
-		javax.swing.JOptionPane pane = new javax.swing.JOptionPane();
-		pane.showMessageDialog(this, message, this.getTitle(), javax.swing.JOptionPane.WARNING_MESSAGE);
 	}
 
 	private javax.swing.JLabel jLabel4;

@@ -53,7 +53,7 @@ public class ExportCC implements ProgressListener {
 			ExportAsSQLUI iasu = new ExportAsSQLUI(ecc.getUI(), this);
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Export sql", e);
+			ApplicationContext.get().errors().report("Export as SQL", e);
 		}
 	}
 
@@ -62,7 +62,7 @@ public class ExportCC implements ProgressListener {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			iasu.getDatabaseTreeView().loadTables(db, dbcc.getTables(db));
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Tables", e);
+			ApplicationContext.get().errors().report("Load tables", e);
 		}
 	}
 
@@ -83,7 +83,7 @@ public class ExportCC implements ProgressListener {
 			exp.setListener(this);
 			exp.start();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iasu, "Export nodes as sql", e);
+			ApplicationContext.get().errors().report(iasu, "Export as SQL", e);
 		}
 	}
 
@@ -94,7 +94,7 @@ public class ExportCC implements ProgressListener {
 
 	@Override
 	public void failed(Exception error) {
-		ApplicationContext.get().errors().report(ies, "Export", error);
+		ApplicationContext.get().errors().report(ies, "Export as SQL", error);
 		ies.dispose();
 	}
 
