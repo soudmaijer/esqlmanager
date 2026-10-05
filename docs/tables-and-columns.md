@@ -1,0 +1,37 @@
+# Tables and columns
+
+[Back to the help index](index.md)
+
+## Viewing data
+
+Double click a table in the tree (or choose Open in its context menu) to show its rows. The data is shown a page at a time; the paging buttons are in the bar below the tabs. Click a column header to sort. Paging orders by the primary key, so rows keep their place after an update.
+
+## Editing data
+
+* Click a cell and type to change it, then press **Update changes** in the toolbar. An empty cell is stored as `NULL`.
+* **Insert new row** adds an empty row to fill in, **Delete row** removes the selected rows after asking.
+* Binary columns (blobs) can be uploaded from a file and saved to a file.
+
+A row can only be changed or deleted when it can be identified, by its primary key or else by all its values.
+
+## Tables
+
+* **Create table** (toolbar, or the context menu of a database) asks for a name and the columns: type, length, default, not null, auto increment, and primary key, unique and index flags.
+* **Edit table** renames a table and changes its comment and, on MySQL, its storage engine.
+* **Indexes** manages the primary key, unique indexes, plain indexes and (MySQL) fulltext indexes.
+* **Empty table** deletes every row, **Drop table** removes the table. Both ask first.
+* Maintenance: Optimize and Analyze table, and on MySQL Check and Repair table. On PostgreSQL optimize runs `VACUUM`.
+
+## Columns
+
+Add field, Edit field and Drop field are in the toolbar and in the context menu of a table or column.
+
+## Export and import
+
+* **Export** (context menu of a database or table) writes the structure, the data or both as an SQL script. On servers that cannot switch database in SQL the script uses `\connect`.
+* **Import** runs an SQL script against the selected database. A progress window shows how far it is.
+
+## Users and server
+
+* **Users** (server context menu or toolbar) manages accounts, passwords and privileges per server, database and table. On PostgreSQL accounts are roles.
+* **Process list** shows the running queries and can end one. **Show status** and **Show variables** list the server's status values and settings.

@@ -13,7 +13,7 @@ import nl.errorsoft.esql.connection.TreeMenu;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
 import nl.errorsoft.esql.query.ui.QueryUI;
-import nl.errorsoft.esql.ui.util.HyperLinkListener;
+import nl.errorsoft.esql.help.ui.HelpPane;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 import nl.errorsoft.esql.table.Table;
@@ -49,7 +49,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private JLabel status;
 	private JPanel navigation;
 	private Component viewTab; // The table data or table list, shown in front of the help
-	private JEditorPane html; // The HTML info data.
+	private HelpPane html; // The user documentation from docs/.
 	private int queryTabs; // Query tabs opened so far, for their numbers
 
 	// Internal toolbar.
@@ -156,16 +156,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		 */
 
 		// EditorPane
-		try {
-			html = new JEditorPane(this.getClass().getResource("/html/help.html"));
-			html.setEditable(false);
-			// The help page is written for a white page, FlatLaf paints a read-only pane grey.
-			html.setBackground(Color.white);
-			html.setForeground(Color.black);
-			html.addHyperlinkListener(new HyperLinkListener(cwcc));
-		} catch (Exception e) {
-			LogManager.getLogger(ConnectionWindowUI.class).warn("The help page could not be loaded: {}", e.getMessage());
-		}
+		html = new HelpPane();
 
 		// TabbedPane properties.
 		tabbedPane = new JTabbedPane();

@@ -79,7 +79,8 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).
 * `runtime/conf/profiles.xml` must not contain passwords or local test profiles when committed. Running the application rewrites it (`lastUsed`), so `git checkout runtime/conf/profiles.xml` before committing.
 * JDBC drivers come from Maven Central, no jars in the repository.
-* Images, HTML and `log4j2.xml` are in `src/main/resources`. Images are loaded through `ImageLoader` (cached, paths relative to the classpath root).
+* The user documentation is Markdown in `docs/` (index.md, getting-started.md, tables-and-columns.md, query.md, designer.md, settings.md), with its images next to it. Maven copies `docs/*.md` and `docs/*.png` into the jar under `/docs`; `help.HelpPages` renders a page with commonmark (+ GFM tables) to HTML 3.2 friendly HTML and `help.ui.HelpPane` shows it in the help tab (links to .md pages stay in the pane, http(s) links open in the browser). Update these pages when a feature changes.
+* Images and `log4j2.xml` are in `src/main/resources`. Images are loaded through `ImageLoader` (cached, paths relative to the classpath root).
 * Icons are Lucide SVGs in `src/main/resources/icons/svg` (ISC license, `NOTICE.txt`), drawn with FlatLaf's `FlatSVGIcon` so they follow the theme. A new icon is a stroke `#6e6e6e` SVG plus an `images.addIcon(name, file, size, selected)` line in `ApplicationContext.imageLoader()`; callers use `imageLoader().getIcon(name)`, never `new ImageIcon(...)`. The tree uses a `...sel` variant (selection colour) for selected rows. GIFs remain only for the window icon and the splash.
 * There is no licensing, registration or auto-update any more; do not reintroduce them.
 

@@ -31,6 +31,15 @@
           <include>build.properties</include>
         </includes>
       </resource>
+      <!-- The user documentation in docs/ is also the help of the application -->
+      <resource>
+        <directory>docs</directory>
+        <targetPath>docs</targetPath>
+        <includes>
+          <include>*.md</include>
+          <include>*.png</include>
+        </includes>
+      </resource>
     </resources>
     <plugins>
       <plugin>
@@ -134,6 +143,16 @@
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
       <version>2.26.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>0.24.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-gfm-tables</artifactId>
+      <version>0.24.0</version>
     </dependency>
     <dependency>
       <groupId>com.formdev</groupId>

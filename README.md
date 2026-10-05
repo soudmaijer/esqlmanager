@@ -6,6 +6,10 @@ A graphical database manager written in Java Swing. It started in 2002 as a grad
 
 ![The model designer with a shop database and its tables](docs/designer.png)
 
+## Documentation
+
+The user documentation is in [docs/](docs/index.md): [getting started](docs/getting-started.md), [tables and columns](docs/tables-and-columns.md), [SQL query](docs/query.md), [database designer](docs/designer.md) and [settings](docs/settings.md). The same Markdown pages are the help tab of the application.
+
 ## Features
 
 Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how a feature is carried out, so the same feature works on MySQL and PostgreSQL. SQL Server and Oracle only have the features that work through plain JDBC; they have not been tested against a live server recently.
@@ -215,7 +219,8 @@ src/main/java/nl/errorsoft/esql
   dialect/   the per-database behaviour (mysql/, postgres/, sqlserver/, oracle/)
   error/     EsqlException and the ErrorHandler
   job/       progress reporting for long running jobs
-src/main/resources   icons, images, help pages and log4j2.xml
+src/main/resources   icons, images and log4j2.xml
+docs/                user documentation (Markdown), also the in-app help
 src/test/java        dialect tests against real servers
 runtime/             configuration the application reads and writes
 ```

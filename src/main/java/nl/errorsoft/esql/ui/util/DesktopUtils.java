@@ -212,4 +212,17 @@ public class DesktopUtils {
 		nextX += offsetX;
 		nextY += offsetY;
 	}
+
+	/** Opens a web page in the system browser. */
+	public static void openInBrowser(java.net.URI uri) {
+		if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+			log.warn("No browser available to open {}", uri);
+			return;
+		}
+		try {
+			Desktop.getDesktop().browse(uri);
+		} catch (java.io.IOException e) {
+			log.warn("Could not open {}: {}", uri, e.getMessage());
+		}
+	}
 }
