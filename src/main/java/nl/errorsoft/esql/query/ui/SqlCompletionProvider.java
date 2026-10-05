@@ -18,7 +18,7 @@ import nl.errorsoft.esql.query.SqlContext;
 import nl.errorsoft.esql.query.SqlScript;
 
 /**
- * Completion for the SQL editor. After FROM, JOIN, UPDATE and INTO it offers tables, after {@code alias.} the columns of that table, elsewhere keywords,
+ * Completion for the SQL editor. After FROM, JOIN, UPDATE and INTO it offers tables and schemas, after {@code schema.} the tables of that schema, after {@code alias.} the columns of that table, elsewhere keywords,
  * functions and the columns of the tables the statement names. Names that need quotes are inserted quoted.
  */
 public class SqlCompletionProvider extends DefaultCompletionProvider {
@@ -54,7 +54,14 @@ public class SqlCompletionProvider extends DefaultCompletionProvider {
 		String prefix = context.prefix().toLowerCase(Locale.ROOT);
 
 		switch (context.kind()) {
-			case TABLES -> add(completions, names.tables(), "table", prefix, true);
+			case TABLES -> {
+				if (context.schema() != null) {
+					add(completions, names.tables(context.schema()), context.schema(), prefix, true);
+				} else {
+					add(completions, names.tables(), "table", prefix, true);
+					add(completions, names.schemas(), "schema", prefix, true);
+				}
+			}
 			case COLUMNS -> add(completions, context.table() == null ? List.of() : names.columns(context.table()), context.table(), prefix, true);
 			case ANY -> {
 				Set<String> statementColumns = new LinkedHashSet<>();
@@ -65,6 +72,7 @@ public class SqlCompletionProvider extends DefaultCompletionProvider {
 				add(completions, FUNCTIONS, "function", prefix, false);
 				add(completions, KEYWORDS, "keyword", prefix, false);
 				add(completions, names.tables(), "table", prefix, true);
+				add(completions, names.schemas(), "schema", prefix, true);
 			}
 		}
 		return completions;

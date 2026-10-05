@@ -28,4 +28,4 @@ Each server has a dialect that decides how a feature is carried out. Menus only 
 | Process list, server status and variables | yes | yes | no | no |
 | Table maintenance | optimize, analyze, check, repair | VACUUM, ANALYZE | no | no |
 
-A PostgreSQL connection is made to one database. Opening another database in the tree reconnects, and the tables shown are those of the current schema (normally `public`).
+A PostgreSQL connection is made to one database. Opening another database in the tree reconnects and shows its schemas (`public` and any others); each schema holds its tables.

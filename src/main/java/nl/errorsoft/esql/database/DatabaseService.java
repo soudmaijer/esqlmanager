@@ -73,6 +73,11 @@ public class DatabaseService {
 		return tables;
 	}
 
+	/** The schema unqualified table names resolve to (the first of the search path), null on servers without schemas. */
+	public String currentSchema(Database database) throws Exception {
+		return repository.currentSchema(database);
+	}
+
 	public Schema createSchema(Database database, String name) throws Exception {
 		repository.createSchema(database, name);
 		return new Schema(database, name);

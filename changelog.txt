@@ -4,6 +4,10 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- PostgreSQL schemas: the tree is server > databases > schemas > tables (MySQL keeps databases > tables). A
+  schema node has Reload tables, Create table, Open in designer, Export and Drop schema, a database has Create
+  schema and Reload schemas; menu words come from the dialect. Every statement on a table names schema.table, the
+  query completion knows the tables of all schemas (schema. lists the tables of a schema).
 - Logo: a new vector logo (database with an "e", icons/logo.svg) is the window icon at 16 to 512px and the
   Dock icon on macOS, replacing the 16x16 GIF. The MySQL and SQL Server icons are heavier, brand icons are
   lighter on a dark theme and white on a selected row.

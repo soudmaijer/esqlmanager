@@ -26,6 +26,6 @@ Statements are separated by `;`. A semicolon inside quotes, dollar quotes or com
 | Cmd+Shift+Space (Ctrl+Shift+Space) | Open the completion |
 | `.` after a table or alias | Show its columns |
 
-The completion offers SQL keywords, the tables of the chosen database and their columns. It knows what fits at the caret: tables after `FROM` and `JOIN`, columns of a table or alias after a period. Aliases such as `o` in `FROM orders o` are resolved. Names that need it are quoted for the server.
+The completion offers SQL keywords, the tables of the chosen database and their columns. It knows what fits at the caret: tables after `FROM` and `JOIN`, columns of a table or alias after a period. Aliases such as `o` in `FROM orders o` are resolved. On PostgreSQL the tables of every schema of the database are known: a plain name is a table of the current schema (the first of the search path), other schemas are offered after `FROM` and `sales.` lists the tables of `sales`; `sales.orders` resolves for the column completion too. Names that need it are quoted for the server.
 
 macOS gives Cmd+Space to Spotlight. To use it for completion, turn off that shortcut in System Settings > Keyboard > Keyboard Shortcuts > Spotlight.

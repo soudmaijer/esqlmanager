@@ -59,6 +59,12 @@ public class DatabaseRepository extends AbstractRepository {
 		return super.listTables(schema);
 	}
 
+	/** The schema unqualified names resolve to, null on servers without schemas. */
+	public String currentSchema(Database database) throws SQLException {
+		useDatabase(database.getName());
+		return dbc.getSchema();
+	}
+
 	public void createSchema(Database database, String name) throws SQLException {
 		useDatabase(database.getName());
 		executeUpdate(dialect().createSchemaSql(name));

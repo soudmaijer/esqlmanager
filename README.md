@@ -63,7 +63,7 @@ The SQL query opens as a tab of the connection window ("Query", "Query 2", ...).
 
 Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export and Import on a database, Edit, Indexes and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 
-PostgreSQL shows the tables of the connection's current schema (normally `public`), and has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects.
+On PostgreSQL the tree is server > databases > schemas > tables: a database shows its schemas (`public` and the others, system schemas left out) and a schema its tables. A schema has its own menu (Reload tables, Create table, Open in designer, Export, Drop schema), a database has Create schema and Reload schemas. PostgreSQL has no check and repair commands. A PostgreSQL connection is made to one database; opening another database in the tree reconnects. MySQL stays server > databases > tables.
 
 ## Database designer
 

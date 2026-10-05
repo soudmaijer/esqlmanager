@@ -14,9 +14,10 @@ import java.util.Set;
  * @param kind what fits at the caret.
  * @param prefix the part of a name typed so far, empty when none.
  * @param table for {@link Kind#COLUMNS}: the table whose columns fit, an alias already resolved; null when the qualifier is unknown.
- * @param tables the tables the statement names, in order, without quotes.
+ * @param tables the tables the statement names, in order, without quotes; a schema qualified table as {@code schema.table}.
+ * @param schema for {@link Kind#TABLES}: the schema typed before the dot ({@code FROM sales.|}), null when none.
  */
-public record SqlContext(Kind kind, String prefix, String table, List<String> tables) {
+public record SqlContext(Kind kind, String prefix, String table, List<String> tables, String schema) {
 	public enum Kind {
 		/** After FROM, JOIN, UPDATE, INTO or TABLE: a table name. */
 		TABLES,
@@ -54,14 +55,24 @@ public record SqlContext(Kind kind, String prefix, String table, List<String> ta
 
 		if (head.size() >= 2 && head.getLast().is(".") && head.get(head.size() - 2).isName()) {
 			String qualifier = head.get(head.size() - 2).name();
-			return new SqlContext(Kind.COLUMNS, prefix, resolve(qualifier, aliases, tables), tables);
+
+			// FROM sales.| : the tables of a schema.
+			if (head.size() >= 3 && expectsTable(head.subList(0, head.size() - 2))) {
+				return new SqlContext(Kind.TABLES, prefix, null, tables, qualifier);
+			}
+			return new SqlContext(Kind.COLUMNS, prefix, resolve(qualifier, aliases, tables), tables, null);
 		}
 
-		if (!head.isEmpty() && (TABLE_KEYWORDS.contains(head.getLast().upper()) || afterTableListComma(head))) {
-			return new SqlContext(Kind.TABLES, prefix, null, tables);
+		if (!head.isEmpty() && expectsTable(head)) {
+			return new SqlContext(Kind.TABLES, prefix, null, tables, null);
 		}
 
-		return new SqlContext(Kind.ANY, prefix, null, tables);
+		return new SqlContext(Kind.ANY, prefix, null, tables, null);
+	}
+
+	/** True when the tokens end where a table name goes: after FROM, JOIN, UPDATE, INTO, TABLE or a comma in a FROM list. */
+	private static boolean expectsTable(List<Token> head) {
+		return TABLE_KEYWORDS.contains(head.getLast().upper()) || afterTableListComma(head);
 	}
 
 	/** True for {@code FROM a, |}: a comma inside the table list of a FROM. */
@@ -90,7 +101,7 @@ public record SqlContext(Kind kind, String prefix, String table, List<String> ta
 			return table;
 		}
 		for (String name : tables) {
-			if (name.equalsIgnoreCase(qualifier)) {
+			if (name.equalsIgnoreCase(qualifier) || name.toLowerCase(Locale.ROOT).endsWith("." + qualifier.toLowerCase(Locale.ROOT))) {
 				return name;
 			}
 		}
@@ -113,12 +124,12 @@ public record SqlContext(Kind kind, String prefix, String table, List<String> ta
 			int j = i + 1;
 
 			while (j < tokens.size() && tokens.get(j).isName() && !CLAUSE_WORDS.contains(tokens.get(j).upper())) {
-				// schema.table: the last part is the table.
+				// schema.table is kept qualified, so the completion can find the table in its schema.
 				String table = tokens.get(j).name();
 				j++;
 
 				while (j + 1 < tokens.size() && tokens.get(j).is(".") && tokens.get(j + 1).isName()) {
-					table = tokens.get(j + 1).name();
+					table = table + "." + tokens.get(j + 1).name();
 					j += 2;
 				}
 				tables.add(table);

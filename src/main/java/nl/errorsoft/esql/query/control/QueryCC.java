@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.DatabaseService;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
@@ -21,14 +23,18 @@ import nl.errorsoft.esql.table.control.TableCC;
 import nl.errorsoft.esql.table.ui.TableDataView;
 
 /**
- * The controller of one query tab: runs the statements of the editor and gives the completion the names of the current database. The names are loaded
+ * The controller of one query tab: runs the statements of the editor and gives the completion the names of the current database (of all its schemas). The names are loaded
  * once per tab, the tables in the background when the database is chosen, the columns of a table the first time they are asked for.
  */
 public class QueryCC implements SchemaNames {
 	private static final Logger log = LogManager.getLogger(QueryCC.class);
 
 	private final ConnectionWindowCC cwcc;
-	private volatile Map<String, Table> tables = Map.of();
+	/** The tables per schema (lower case schema, "" on servers without schemas, to lower case table name). */
+	private volatile Map<String, Map<String, Table>> tables = Map.of();
+	private volatile List<String> schemaNames = List.of();
+	/** The schema unqualified names resolve to, lower case; "" on servers without schemas. */
+	private volatile String currentSchema = "";
 	private String database = "";
 	private final Map<String, List<String>> columns = new ConcurrentHashMap<>();
 
@@ -59,14 +65,24 @@ public class QueryCC implements SchemaNames {
 
 		this.database = database.getName();
 		tables = Map.of();
+		schemaNames = List.of();
 		columns.clear();
 		Thread.ofVirtual().name("completion-tables").start(() -> {
 			try {
-				Map<String, Table> loaded = new ConcurrentHashMap<>();
+				DatabaseService service = cwcc.getContext().databases();
+				Map<String, Map<String, Table>> loaded = new ConcurrentHashMap<>();
+				List<Schema> schemas = service.getSchemas(database);
 
-				for (Table table : cwcc.getContext().databases().getTables(database)) {
-					loaded.put(table.getName().toLowerCase(), table);
+				if (schemas.isEmpty()) {
+					loaded.put("", byName(service.getTables(database)));
+				} else {
+					for (Schema schema : schemas) {
+						loaded.put(schema.getName().toLowerCase(), byName(service.getTables(schema)));
+					}
 				}
+				String current = service.currentSchema(database);
+				currentSchema = current == null || schemas.isEmpty() ? "" : current.toLowerCase();
+				schemaNames = schemas.stream().map(Schema::getName).toList();
 				tables = loaded;
 			} catch (Exception e) {
 				// Completion then offers keywords only, running statements still works.
@@ -131,26 +147,49 @@ public class QueryCC implements SchemaNames {
 		return database;
 	}
 
+	private static Map<String, Table> byName(List<Table> list) {
+		Map<String, Table> named = new ConcurrentHashMap<>();
+
+		for (Table table : list) {
+			named.put(table.getName().toLowerCase(), table);
+		}
+		return named;
+	}
+
 	@Override
 	public List<String> tables() {
+		return tables(currentSchema);
+	}
+
+	@Override
+	public List<String> schemas() {
+		return schemaNames;
+	}
+
+	@Override
+	public List<String> tables(String schema) {
 		List<String> names = new ArrayList<>();
 
-		for (Table table : tables.values()) {
+		for (Table table : tables.getOrDefault(schema.toLowerCase(), Map.of()).values()) {
 			names.add(table.getName());
 		}
 		names.sort(String.CASE_INSENSITIVE_ORDER);
 		return names;
 	}
 
+	/** {@code schema.table} is looked up in that schema, a plain name in the current schema. */
 	@Override
 	public List<String> columns(String tableName) {
-		Table table = tables.get(tableName.toLowerCase());
+		String name = tableName.toLowerCase();
+		int dot = name.lastIndexOf('.');
+		Map<String, Table> schema = tables.getOrDefault(dot < 0 ? currentSchema : name.substring(0, dot), Map.of());
+		Table table = schema.get(dot < 0 ? name : name.substring(dot + 1));
 
 		if (table == null) {
 			return List.of();
 		}
 
-		return columns.computeIfAbsent(table.getName().toLowerCase(), key -> {
+		return columns.computeIfAbsent(table.qualifiedName().toString().toLowerCase(), key -> {
 			try {
 				List<String> names = new ArrayList<>();
 

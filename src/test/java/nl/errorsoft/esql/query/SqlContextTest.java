@@ -49,8 +49,22 @@ class SqlContextTest {
 	@Test
 	void quotedAndSchemaQualifiedTables() {
 		SqlContext context = at("select x.| from public.\"Order Lines\" x");
-		assertEquals("Order Lines", context.table());
-		assertEquals(List.of("Order Lines"), context.tables());
+		assertEquals("public.Order Lines", context.table());
+		assertEquals(List.of("public.Order Lines"), context.tables());
+		assertEquals("sales.orders", at("select orders.| from sales.orders").table());
+	}
+
+	@Test
+	void schemaBeforeTheDotOffersItsTables() {
+		SqlContext context = at("select * from sales.ord|");
+		assertEquals(Kind.TABLES, context.kind());
+		assertEquals("sales", context.schema());
+		assertEquals("ord", context.prefix());
+		assertEquals("sales", at("select * from a, \"Sales\".|").schema().toLowerCase());
+		assertEquals(Kind.TABLES, at("insert into sales.|").kind());
+		assertEquals(null, at("select * from |").schema());
+		// After SELECT a qualifier is still a table or alias.
+		assertEquals(Kind.COLUMNS, at("select sales.| from sales").kind());
 	}
 
 	@Test
