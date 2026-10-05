@@ -1,6 +1,11 @@
 eSQLManager changelog
 ---------------------
 
+05-10-2026: Packaging starts from a clean slate
+
+- The jlink and package profiles delete target/libs, target/runtime-image (and target/dist) before they build, so jars
+  from an earlier build can no longer end up in the installer (a stale libs folder had made the dmg 77 MB instead of 51 MB).
+
 05-10-2026: Window tabs next to the toolbar buttons, Help and Preferences buttons
 
 - The window tabs are in the same row as the toolbar, filling the width; Connect and Disconnect are at the right end
