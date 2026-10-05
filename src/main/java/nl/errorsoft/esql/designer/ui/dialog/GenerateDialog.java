@@ -1,41 +1,33 @@
 package nl.errorsoft.esql.designer.ui.dialog;
 
-import nl.errorsoft.esql.ui.dialog.Dialogs;
-
-import nl.errorsoft.esql.designer.ui.diagram.CommentObject;
-import nl.errorsoft.esql.designer.ui.diagram.DatabaseObject;
-import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
-import nl.errorsoft.esql.designer.ui.diagram.ModelObject;
-import nl.errorsoft.esql.designer.ui.diagram.TableObject;
-
-import nl.errorsoft.esql.app.ApplicationContext;
-
-import nl.errorsoft.esql.app.ui.MainWindow;
-import nl.errorsoft.esql.connection.ui.ConnectionWindow;
-
-import nl.errorsoft.esql.table.CreateColumn;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import nl.errorsoft.esql.designer.model.Model;
-import javax.swing.*;
-
-import nl.errorsoft.esql.ui.util.Forms;
-import nl.errorsoft.esql.designer.DesignedDatabase;
-import nl.errorsoft.esql.designer.DesignedTable;
-import nl.errorsoft.esql.designer.DesignedForeignKey;
-import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.*;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.app.ui.MainWindow;
+import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.designer.DesignedModel;
+import nl.errorsoft.esql.designer.ModelCheck;
+import nl.errorsoft.esql.designer.control.GenerateController;
+import nl.errorsoft.esql.designer.model.Model;
+import nl.errorsoft.esql.ui.util.Forms;
+
+/** Checks the designer model step by step and generates it on the server of the connection. */
 public class GenerateDialog extends JDialog {
 	private static final Logger log = LogManager.getLogger(GenerateDialog.class);
-	private static final String[] STEPS = {"Checking Databases", "Checking Tables", "Checking Columns", "Checking Relations", "Checking Model"};
+	private static final ModelCheck[] STEPS = ModelCheck.values();
 
-	private final ConnectionWindow connectionWindow;
-	private final Model m;
+	private final GenerateController controller;
+	/** The model as it was when the dialog opened, read on the event thread; checking and generating use only this. */
+	private final DesignedModel snapshot;
 	private final JLabel[] checks = new JLabel[STEPS.length];
 	private final JTextArea problems = new JTextArea(6, 36);
 	private final JProgressBar progress = new JProgressBar();
@@ -45,16 +37,15 @@ public class GenerateDialog extends JDialog {
 	private boolean busy;
 
 	public GenerateDialog(MainWindow mainWindow, ConnectionWindow connectionWindow, Model m) {
-		super((JFrame) mainWindow, "Analyze / Generate model", true);
-		this.connectionWindow = connectionWindow;
-		this.m = m;
+		super((JFrame) mainWindow, "Analyze / generate model", true);
+		this.controller = new GenerateController(connectionWindow.getController());
+		this.snapshot = controller.snapshot(m);
 
 		initComponents();
 		setLocationRelativeTo(mainWindow);
 		startChecking();
 		setVisible(true);
 	}
-
 	private void initComponents() {
 		setResizable(false);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -70,14 +61,14 @@ public class GenerateDialog extends JDialog {
 		JPanel steps = new JPanel();
 		steps.setLayout(new BoxLayout(steps, BoxLayout.Y_AXIS));
 		for (int i = 0; i < STEPS.length; i++) {
-			checks[i] = new JLabel(STEPS[i], ApplicationContext.get().imageLoader().getIcon("check_pending"), SwingConstants.LEADING);
+			checks[i] = new JLabel(STEPS[i].label(), ApplicationContext.get().imageLoader().getIcon("check_pending"), SwingConstants.LEADING);
 			checks[i].setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
 			steps.add(checks[i]);
 		}
 		steps.add(Box.createVerticalStrut(Forms.GAP));
 		progress.setAlignmentX(LEFT_ALIGNMENT);
 		steps.add(progress);
-		Forms.titled(steps, "Checking Model");
+		Forms.titled(steps, "Checking the model");
 
 		problems.setEditable(false);
 		problems.setLineWrap(true);
@@ -106,7 +97,7 @@ public class GenerateDialog extends JDialog {
 		Thread.ofVirtual().name("generate-check").start(() -> {
 			List<List<String>> found = new ArrayList<>();
 			for (int step = 0; step < STEPS.length; step++) {
-				found.add(check(step));
+				found.add(controller.problems(STEPS[step], snapshot));
 				int done = step;
 				List<String> stepProblems = found.get(step);
 				SwingUtilities.invokeLater(() -> {
@@ -124,106 +115,22 @@ public class GenerateDialog extends JDialog {
 		});
 	}
 
-	/** The problems of one step of the check, empty when it passed. */
-	private List<String> check(int step) {
-		List<ModelObject> objects = m.getObjects();
-		List<DatabaseObject> databases = objects.stream().filter(DatabaseObject.class::isInstance).map(DatabaseObject.class::cast).toList();
-		List<TableObject> tables = objects.stream().filter(TableObject.class::isInstance).map(TableObject.class::cast).toList();
-		List<String> found = new ArrayList<>();
-
-		switch (step) {
-			case 0 -> {
-				for (int i = 0; i < databases.size(); i++) {
-					for (int j = i + 1; j < databases.size(); j++) {
-						if (databases.get(i).getName().equalsIgnoreCase(databases.get(j).getName())) {
-							found.add("The model has two databases named '" + databases.get(i).getName() + "'.");
-						}
-					}
-				}
-			}
-			case 1 -> {
-				for (DatabaseObject database : databases) {
-					List<ModelObject> own = m.getReferences(database);
-					for (int i = 0; i < own.size(); i++) {
-						for (int j = i + 1; j < own.size(); j++) {
-							if (own.get(i) instanceof TableObject a && own.get(j) instanceof TableObject b && a.getName().equalsIgnoreCase(b.getName())) {
-								found.add("Database '" + database.getName() + "' has two tables named '" + a.getName() + "'.");
-							}
-						}
-					}
-				}
-			}
-			case 2 -> {
-				for (TableObject table : tables) {
-					DesignerColumn[] fields = table.getFields();
-					if (fields.length == 0) {
-						found.add("Table '" + table.getName() + "' has no columns.");
-					}
-					for (int k = 0; k < fields.length; k++) {
-						for (int l = k + 1; l < fields.length; l++) {
-							if (fields[k].getName().equalsIgnoreCase(fields[l].getName())) {
-								found.add("Table '" + table.getName() + "' has two columns named '" + fields[k].getName() + "'.");
-							}
-						}
-					}
-				}
-			}
-			case 3 -> {
-				for (TableObject table : tables) {
-					boolean inDatabase = databases.stream().anyMatch(d -> m.getReferences(d).contains(table));
-					if (!inDatabase) {
-						found.add("Table '" + table.getName() + "' is not linked to a database.");
-					}
-				}
-			}
-			default -> {
-				if (databases.isEmpty()) {
-					found.add("The model has no database.");
-				}
-			}
-		}
-		return found;
-	}
-
 	private void setBusy(boolean busy) {
 		this.busy = busy;
 		close.setEnabled(!busy);
 	}
 
-	/** Reads the model on the event thread, creates the databases and tables on a virtual thread. */
+	/** Creates the databases and tables of the snapshot on a virtual thread. */
 	private void generateModel() {
-		List<DesignedDatabase> model = new ArrayList<>();
-		int count = 0;
-
-		for (ModelObject object : m.getObjects()) {
-			if (object instanceof DatabaseObject d) {
-				List<DesignedTable> designedTables = new ArrayList<>();
-				count++;
-
-				for (ModelObject reference : m.getReferences(d)) {
-					TableObject table = (TableObject) reference;
-					List<CreateColumn> columns = new ArrayList<>();
-
-					for (DesignerColumn field : table.getFields()) {
-						columns.add(toCreateColumn(field));
-					}
-					count += 1 + columns.size();
-					designedTables.add(new DesignedTable(table.getName(), table.getType(), table.getComment(), columns, foreignKeysOf(table)));
-				}
-				model.add(new DesignedDatabase(d.getName(), designedTables));
-			}
-		}
-
 		progress.setValue(0);
-		progress.setMaximum(count);
+		progress.setMaximum(snapshot.generationSteps());
 		generate.setEnabled(false);
 		setBusy(true);
 
 		Thread.ofVirtual().name("generate-model").start(() -> {
 			Exception failure = null;
 			try {
-				connectionWindow.getController().getContext().designer().generate(model,
-					() -> SwingUtilities.invokeLater(() -> progress.setValue(progress.getValue() + 1)));
+				controller.generate(snapshot, () -> SwingUtilities.invokeLater(() -> progress.setValue(progress.getValue() + 1)));
 			} catch (Exception e) {
 				log.debug("Model generation failed", e);
 				failure = e;
@@ -231,7 +138,7 @@ public class GenerateDialog extends JDialog {
 			Exception error = failure;
 			SwingUtilities.invokeLater(() -> {
 				setBusy(false);
-				connectionWindow.getController().showDatabaseTree();
+				controller.reloadTree();
 				if (error == null) {
 					dispose();
 				} else {
@@ -240,33 +147,5 @@ public class GenerateDialog extends JDialog {
 				}
 			});
 		});
-	}
-
-	/** The keys the table has on other tables; the keys other tables have on it are generated with those tables. */
-	private List<DesignedForeignKey> foreignKeysOf(TableObject table) {
-		List<DesignedForeignKey> keys = new ArrayList<>();
-
-		for (DesignerForeignKey key : m.foreignKeysOf(table)) {
-			if (key.from() == table) {
-				keys.add(new DesignedForeignKey(key.name(), key.fromColumns(), key.to().getName(), key.toColumns(), key.onDelete(), key.onUpdate()));
-			}
-		}
-		return keys;
-	}
-
-	private CreateColumn toCreateColumn(DesignerColumn f) {
-		CreateColumn column = new CreateColumn(f.getName());
-		column.type = f.getType();
-		column.length = f.getLength();
-		column.defaultval = f.getDefault();
-		column.primary = f.primary;
-		column.index = f.index;
-		column.unique = f.unique;
-		column.binary = f.binary;
-		column.notnull = f.notnull;
-		column.unsigned = f.unsigned;
-		column.autoincrement = f.autoincrement;
-		column.zerofill = f.zerofill;
-		return column;
 	}
 }

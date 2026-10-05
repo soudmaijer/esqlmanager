@@ -40,18 +40,22 @@ public class CreateTableController {
 		window().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditorTab(this, NEW_TABLE, database, null));
 	}
 
-	public void startEditTable(Database database, Table table) throws Exception {
+	/** Opens the editor of an existing table, after loading its columns in the background when they are not known yet. */
+	public void startEditTable(Database database, Table table) {
 		String key = "edit:" + table.getDatabase().getName() + "." + table.getName();
 
 		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(key)) {
 			return;
 		}
 
-		if (table.getColumns() == null) {
-			connectionWindowController.getContext().tables().loadColumns(table);
-		}
 		String title = "Edit " + table.getName();
-		window().showEditorTab(key, title, new TableEditorTab(this, title, database, table));
+		connectionWindowController.inBackground("Modify table", "Loading columns...",
+			() -> table.getColumns() != null ? table.getColumns() : connectionWindowController.getContext().tables().loadColumns(table), columns -> {
+				// Opened twice while loading: the first tab stays.
+				if (!window().selectEditorTab(key)) {
+					window().showEditorTab(key, title, new TableEditorTab(this, title, database, table));
+				}
+			});
 	}
 
 	/*

@@ -1,17 +1,23 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedForeignKey;
+import nl.errorsoft.esql.designer.DesignedModel;
 import nl.errorsoft.esql.designer.DesignedTable;
 import nl.errorsoft.esql.designer.model.DesignerForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.table.CreateColumn;
 import nl.errorsoft.esql.table.DataType;
 
-/** Draws a database that was read from the server as a designer model: a database card attached to a card per table, and the foreign keys. */
+/**
+ * Draws a database that was read from the server as a designer model (a database card attached to a card per table, and the foreign keys), and turns
+ * a model back into the plain records the check and the generation use.
+ */
 public final class ModelFactory {
 	private ModelFactory() {
 	}
@@ -46,6 +52,68 @@ public final class ModelFactory {
 			}
 		}
 		return model;
+	}
+
+	/**
+	 * A snapshot of the model as plain records, for the check and the generation; read it on the event thread, the records can then be used on any
+	 * thread. A table linked to no database is listed apart.
+	 */
+	public static DesignedModel toDesigned(Model model) {
+		List<DesignedDatabase> databases = new ArrayList<>();
+		List<TableObject> linked = new ArrayList<>();
+
+		for (ModelObject object : model.getObjects()) {
+			if (object instanceof DatabaseObject database) {
+				List<DesignedTable> tables = new ArrayList<>();
+				for (ModelObject reference : model.getReferences(database)) {
+					if (reference instanceof TableObject table) {
+						linked.add(table);
+						tables.add(designed(model, table));
+					}
+				}
+				databases.add(new DesignedDatabase(database.getName(), tables));
+			}
+		}
+
+		List<DesignedTable> unlinked = new ArrayList<>();
+		for (ModelObject object : model.getObjects()) {
+			if (object instanceof TableObject table && !linked.contains(table)) {
+				unlinked.add(designed(model, table));
+			}
+		}
+		return new DesignedModel(databases, unlinked);
+	}
+
+	private static DesignedTable designed(Model model, TableObject table) {
+		List<CreateColumn> columns = new ArrayList<>();
+		for (DesignerColumn field : table.getFields()) {
+			columns.add(column(field));
+		}
+
+		// The keys the table has on other tables; the keys other tables have on it are generated with those tables.
+		List<DesignedForeignKey> keys = new ArrayList<>();
+		for (DesignerForeignKey key : model.foreignKeysOf(table)) {
+			if (key.from() == table) {
+				keys.add(new DesignedForeignKey(key.name(), key.fromColumns(), key.to().getName(), key.toColumns(), key.onDelete(), key.onUpdate()));
+			}
+		}
+		return new DesignedTable(table.getName(), table.getType(), table.getComment(), columns, keys);
+	}
+
+	private static CreateColumn column(DesignerColumn field) {
+		CreateColumn column = new CreateColumn(field.getName());
+		column.type = field.getType();
+		column.length = field.getLength();
+		column.defaultval = field.getDefault();
+		column.primary = field.primary;
+		column.index = field.index;
+		column.unique = field.unique;
+		column.binary = field.binary;
+		column.notnull = field.notnull;
+		column.unsigned = field.unsigned;
+		column.autoincrement = field.autoincrement;
+		column.zerofill = field.zerofill;
+		return column;
 	}
 
 	private static DesignerColumn field(CreateColumn column, DataType[] dataTypes) {

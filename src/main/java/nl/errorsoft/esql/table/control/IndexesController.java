@@ -31,8 +31,8 @@ public class IndexesController {
 		this.t = t;
 	}
 
-	/** Opens the indexes of the table in a tab ("Indexes orders"), or puts its open tab in front. */
-	public void showTab() throws Exception {
+	/** Opens the indexes of the table in a tab ("Indexes orders"), or puts its open tab in front. The columns and indexes load in the background. */
+	public void showTab() {
 		String key = "indexes:" + t.getDatabase().getName() + "." + t.getName();
 
 		if (!connectionWindowController.requireFeature(Dialect.Feature.INDEXES, "The index manager")
@@ -41,11 +41,18 @@ public class IndexesController {
 		}
 
 		String title = "Indexes " + t.getName();
-		indexesTab = new IndexesTab(this, title, connectionWindowController.getConnectionProfile().getServerType().getDialect().indexTypes());
-		service().loadColumns(t);
-		service().loadIndexes(t);
-		indexesTab.loadIndexes(t.getIndexes());
-		connectionWindowController.getWindow().showEditorTab(key, title, indexesTab);
+		connectionWindowController.inBackground("Load indexes", "Loading indexes...", () -> {
+			service().loadColumns(t);
+			return service().loadIndexes(t);
+		}, indexes -> {
+			// Opened twice while loading: the first tab stays.
+			if (connectionWindowController.getWindow().selectEditorTab(key)) {
+				return;
+			}
+			indexesTab = new IndexesTab(this, title, connectionWindowController.getConnectionProfile().getServerType().getDialect().indexTypes());
+			indexesTab.loadIndexes(t.getIndexes());
+			connectionWindowController.getWindow().showEditorTab(key, title, indexesTab);
+		});
 	}
 
 	/** Close: closes the tab, asking first when something has not been saved. */

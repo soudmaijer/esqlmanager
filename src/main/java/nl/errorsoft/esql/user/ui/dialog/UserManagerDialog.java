@@ -29,7 +29,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import nl.errorsoft.esql.user.control.UserManagerController;
 import nl.errorsoft.esql.user.DatabaseUser;
-import nl.errorsoft.esql.user.GrantChange;
 import nl.errorsoft.esql.user.GrantTarget;
 import nl.errorsoft.esql.user.PrivilegeGroup;
 
@@ -61,8 +60,13 @@ public class UserManagerDialog extends JDialog {
 	private Set<String> shownGrants = Set.of();
 	/** True while the code changes the selection back, so that the listeners ignore it. */
 	private boolean reverting;
+	/** Background loads that have not finished; the controls are disabled while there are any. */
+	private int loading;
+	/** Counts the requests for the privilege panel, so that an answer for an earlier selection is dropped. */
+	private int grantsRequest;
+	private final List<JComponent> busyControls = new ArrayList<>();
 
-	public UserManagerDialog(MainWindow owner, UserManagerController userManagerController) throws Exception {
+	public UserManagerDialog(MainWindow owner, UserManagerController userManagerController) {
 		super(owner, "User manager", false);
 		this.userManagerController = userManagerController;
 
@@ -101,6 +105,7 @@ public class UserManagerDialog extends JDialog {
 		getContentPane().add(main, BorderLayout.CENTER);
 		getContentPane().add(message, BorderLayout.SOUTH);
 
+		busyControls.addAll(List.of(users, tree, search, apply, selectAll, selectNone, changePassword, delete));
 		initTree();
 		users.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		users.addListSelectionListener(e -> {
@@ -142,8 +147,7 @@ public class UserManagerDialog extends JDialog {
 		apply.addActionListener(e -> applyGrants());
 		selectAll.addActionListener(e -> setAllPrivileges(true));
 		selectNone.addActionListener(e -> setAllPrivileges(false));
-		loadUsers();
-		showGrants();
+		loadUsers(null, null);
 
 		setSize(900, 480);
 		main.setDividerLocation(270);
@@ -154,6 +158,7 @@ public class UserManagerDialog extends JDialog {
 	private JPanel userButtons() {
 		JButton add = Forms.button("&Add...");
 		add.addActionListener(e -> addUser());
+		busyControls.add(add);
 		changePassword.addActionListener(e -> changePassword());
 		delete.addActionListener(e -> deleteUser());
 
@@ -164,19 +169,71 @@ public class UserManagerDialog extends JDialog {
 		return buttons;
 	}
 
-	/** The root is the server, databases are added below it and load their tables when they are opened. */
-	private void initTree() throws Exception {
-		DefaultMutableTreeNode root = (DefaultMutableTreeNode) treeModel.getRoot();
+	/** The work of the dialog that talks to the server, run off the event thread. */
+	private interface Work<T> {
+		T run() throws Exception;
+	}
 
-		for (String database : userManagerController.getDatabaseNames()) {
-			DefaultMutableTreeNode node = new DefaultMutableTreeNode(GrantTarget.database(database));
-			node.add(new DefaultMutableTreeNode(LOADING));
-			root.add(node);
+	/**
+	 * Runs database work on a virtual thread with the controls disabled, then hands the result to {@code done} on the event thread; a failure is
+	 * reported as the action.
+	 */
+	private <T> void inBackground(String action, Work<T> work, java.util.function.Consumer<T> done) {
+		setLoading(true);
+		Thread.ofVirtual().name("user-manager").start(() -> {
+			try {
+				T result = work.run();
+				SwingUtilities.invokeLater(() -> {
+					setLoading(false);
+					done.accept(result);
+				});
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(() -> {
+					setLoading(false);
+					showError(action, e);
+				});
+			}
+		});
+	}
+
+	/** Disables the controls while the server is asked something, so that the dialog stays responsive but cannot start a second change. */
+	private void setLoading(boolean started) {
+		loading += started ? 1 : -1;
+		boolean idle = loading == 0;
+		for (JComponent control : busyControls) {
+			control.setEnabled(idle);
 		}
+		setCursor(idle ? null : Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		if (!idle) {
+			message.setText(LOADING);
+		} else {
+			message.setText(" ");
+			// Puts back what depends on the selection and the checkboxes.
+			boolean selected = users.getSelectedValue() != null;
+			changePassword.setEnabled(selected);
+			delete.setEnabled(selected);
+			selectAll.setEnabled(selected && shownTarget != null);
+			selectNone.setEnabled(selected && shownTarget != null);
+			updateChanged();
+		}
+	}
 
+	/** The root is the server, databases are added below it (loaded in the background) and load their tables when they are opened. */
+	private void initTree() {
 		tree.setRootVisible(true);
-		tree.expandRow(0);
 		tree.setSelectionRow(0);
+		inBackground("Load databases", userManagerController::getDatabaseNames, names -> {
+			DefaultMutableTreeNode root = (DefaultMutableTreeNode) treeModel.getRoot();
+
+			for (String database : names) {
+				DefaultMutableTreeNode node = new DefaultMutableTreeNode(GrantTarget.database(database));
+				node.add(new DefaultMutableTreeNode(LOADING));
+				root.add(node);
+			}
+			treeModel.nodeStructureChanged(root);
+			tree.expandRow(0);
+			tree.setSelectionRow(0);
+		});
 		tree.addTreeWillExpandListener(new TreeWillExpandListener() {
 			public void treeWillExpand(TreeExpansionEvent event) {
 				loadTables((DefaultMutableTreeNode) event.getPath().getLastPathComponent());
@@ -192,34 +249,32 @@ public class UserManagerDialog extends JDialog {
 			return;
 		}
 
-		try {
-			String database = ((GrantTarget) databaseNode.getUserObject()).database();
+		String database = ((GrantTarget) databaseNode.getUserObject()).database();
+		inBackground("Load tables", () -> userManagerController.getTableNames(database), tables -> {
 			databaseNode.removeAllChildren();
 
-			for (String table : userManagerController.getTableNames(database)) {
+			for (String table : tables) {
 				databaseNode.add(new DefaultMutableTreeNode(GrantTarget.table(database, table)));
 			}
 
 			treeModel.nodeStructureChanged(databaseNode);
-		} catch (Exception e) {
-			showError("Load tables", e);
-		}
+			tree.expandPath(new TreePath(databaseNode.getPath()));
+		});
 	}
 
-	private void loadUsers() {
-		DatabaseUser selected = users.getSelectedValue();
-		allUsers.clear();
-
-		try {
-			allUsers.addAll(userManagerController.listUsers());
-		} catch (Exception e) {
-			showError("Load users", e);
-		}
-
-		reverting = true;
-		fillUserList(selected);
-		reverting = false;
-		userSelected();
+	/** Loads the users in the background and then shows them, keeping the selected one (or the given one, after Add). */
+	private void loadUsers(DatabaseUser select, String done) {
+		inBackground("Load users", userManagerController::listUsers, loaded -> {
+			allUsers.clear();
+			allUsers.addAll(loaded);
+			reverting = true;
+			fillUserList(select != null ? select : users.getSelectedValue());
+			reverting = false;
+			userSelected();
+			if (done != null) {
+				message.setText(done);
+			}
+		});
 	}
 
 	/** Shows the users that contain the search text; the selected user stays in the list so that typing never changes the selection. */
@@ -262,6 +317,7 @@ public class UserManagerDialog extends JDialog {
 		return object instanceof GrantTarget gt ? gt : null;
 	}
 
+	/** Shows the privileges of the selected user on the selected target; they are read in the background. */
 	private void showGrants() {
 		privilegePanel.removeAll();
 		privilegeBoxes.clear();
@@ -273,31 +329,39 @@ public class UserManagerDialog extends JDialog {
 		shownGrants = Set.of();
 		selectAll.setEnabled(user != null && target != null);
 		selectNone.setEnabled(user != null && target != null);
+		int request = ++grantsRequest;
 
 		if (user != null && target != null) {
-			try {
-				shownGrants = userManagerController.getGrants(user, target);
-
-				Map<PrivilegeGroup, JPanel> groups = new EnumMap<>(PrivilegeGroup.class);
-				for (String privilege : userManagerController.getPrivileges(target.scope())) {
-					JCheckBox box = new JCheckBox(privilege, shownGrants.contains(privilege));
-					box.addActionListener(e -> updateChanged());
-					privilegeBoxes.add(box);
-					groups.computeIfAbsent(PrivilegeGroup.of(privilege), group -> Forms.titled(new JPanel(new GridLayout(0, 2, 8, 4)), group.title())).add(box);
+			inBackground("Read privileges", () -> userManagerController.getGrants(user, target), granted -> {
+				// Another user or target was selected meanwhile, its own request fills the panel.
+				if (request == grantsRequest) {
+					showGrants(user, target, granted);
 				}
-				// One group needs no heading of its own, the box around all privileges says enough.
-				for (JPanel group : groups.values()) {
-					if (groups.size() == 1) {
-						group.setBorder(BorderFactory.createEmptyBorder());
-					}
-					privilegePanel.add(group);
-				}
-
-				message.setText(user + " on " + describe(target));
-			} catch (Exception e) {
-				showError("Read privileges", e);
-			}
+			});
 		}
+		updateChanged();
+		privilegePanel.revalidate();
+		privilegePanel.repaint();
+	}
+
+	private void showGrants(DatabaseUser user, GrantTarget target, Set<String> granted) {
+		shownGrants = granted;
+		Map<PrivilegeGroup, JPanel> groups = new EnumMap<>(PrivilegeGroup.class);
+		for (String privilege : userManagerController.getPrivileges(target.scope())) {
+			JCheckBox box = new JCheckBox(privilege, shownGrants.contains(privilege));
+			box.addActionListener(e -> updateChanged());
+			privilegeBoxes.add(box);
+			groups.computeIfAbsent(PrivilegeGroup.of(privilege), group -> Forms.titled(new JPanel(new GridLayout(0, 2, 8, 4)), group.title())).add(box);
+		}
+		// One group needs no heading of its own, the box around all privileges says enough.
+		for (JPanel group : groups.values()) {
+			if (groups.size() == 1) {
+				group.setBorder(BorderFactory.createEmptyBorder());
+			}
+			privilegePanel.add(group);
+		}
+
+		message.setText(user + " on " + describe(target));
 		updateChanged();
 		privilegePanel.revalidate();
 		privilegePanel.repaint();
@@ -342,25 +406,27 @@ public class UserManagerDialog extends JDialog {
 			"Discard");
 	}
 
+	/** Plans the change in the background, asks before revoking what that plan revokes, then runs exactly that plan. */
 	private void applyGrants() {
 		Set<String> selected = selectedPrivileges();
+		DatabaseUser user = users.getSelectedValue();
+		GrantTarget target = selectedTarget();
 
-		try {
-			DatabaseUser user = users.getSelectedValue();
-			// The confirmation shows the plan that runs, read from the server once.
-			GrantChange change = userManagerController.planGrants(user, selectedTarget(), selected);
+		inBackground("Save privileges", () -> userManagerController.planGrants(user, target, selected), change -> {
 			Set<String> revoked = change.revoked();
 
 			if (!revoked.isEmpty() && !Dialogs.confirmDestructive(this, "Revoke privileges",
-				"Revoke " + String.join(", ", revoked) + " from '" + user + "' on " + describe(selectedTarget()) + "?", "Revoke")) {
+				"Revoke " + String.join(", ", revoked) + " from '" + user + "' on " + describe(target) + "?", "Revoke")) {
 				return;
 			}
-			userManagerController.applyGrants(change);
-			showGrants();
-			message.setText("Privileges saved for " + users.getSelectedValue() + " on " + describe(selectedTarget()));
-		} catch (Exception e) {
-			showError("Save privileges", e);
-		}
+			inBackground("Save privileges", () -> {
+				userManagerController.applyGrants(change);
+				return change;
+			}, applied -> {
+				showGrants();
+				message.setText("Privileges saved for " + user + " on " + describe(target));
+			});
+		});
 	}
 
 	private void addUser() {
@@ -382,14 +448,12 @@ public class UserManagerDialog extends JDialog {
 			return;
 		}
 
-		try {
-			DatabaseUser user = new DatabaseUser(name.getText().trim(), userManagerController.usesHost() ? host.getText().trim() : null);
-			userManagerController.createUser(user, new String(password.getPassword()));
-			loadUsers();
-			message.setText("Created user " + user);
-		} catch (Exception e) {
-			showError("Add user", e);
-		}
+		DatabaseUser user = new DatabaseUser(name.getText().trim(), userManagerController.usesHost() ? host.getText().trim() : null);
+		String secret = new String(password.getPassword());
+		inBackground("Add user", () -> {
+			userManagerController.createUser(user, secret);
+			return user;
+		}, added -> loadUsers(added, "Created user " + added));
 	}
 
 	private void changePassword() {
@@ -402,12 +466,12 @@ public class UserManagerDialog extends JDialog {
 			return;
 		}
 
-		try {
-			userManagerController.changePassword(users.getSelectedValue(), new String(password.getPassword()));
-			message.setText("Changed the password of " + users.getSelectedValue());
-		} catch (Exception e) {
-			showError("Change password", e);
-		}
+		DatabaseUser user = users.getSelectedValue();
+		String secret = new String(password.getPassword());
+		inBackground("Change password", () -> {
+			userManagerController.changePassword(user, secret);
+			return user;
+		}, changed -> message.setText("Changed the password of " + changed));
 	}
 
 	private void deleteUser() {
@@ -417,13 +481,10 @@ public class UserManagerDialog extends JDialog {
 			return;
 		}
 
-		try {
+		inBackground("Drop user", () -> {
 			userManagerController.dropUser(user);
-			loadUsers();
-			message.setText("Dropped user " + user);
-		} catch (Exception e) {
-			showError("Drop user", e);
-		}
+			return user;
+		}, dropped -> loadUsers(null, "Dropped user " + dropped));
 	}
 
 	private String describe(GrantTarget target) {

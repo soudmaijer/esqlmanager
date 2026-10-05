@@ -39,10 +39,15 @@ public class TableController {
 		blobTransferController.showUploadDialog(connectionWindowController.getMainWindow(), table, rowData, cellData);
 	}
 
-	public TableDataTab getTableDataTab(Table table, int skip, int show) throws Exception {
-		TableData[][] tdata = service().loadPage(table, skip, show);
+	/** Reads a page of rows; database work, not for the event thread. */
+	public TableData[][] loadPage(Table table, int skip, int show) throws Exception {
+		return service().loadPage(table, skip, show);
+	}
+
+	/** The tab with the rows of a page read by {@link #loadPage}, on the event thread. */
+	public TableDataTab newTableDataTab(Table table, TableData[][] rows) {
 		tableDataTab = new TableDataTab(this);
-		tableDataTab.loadData(table, table.getColumns(), tdata);
+		tableDataTab.loadData(table, table.getColumns(), rows);
 		return tableDataTab;
 	}
 
@@ -50,9 +55,11 @@ public class TableController {
 		return service().loadColumns(table);
 	}
 
-	public void showTableData(Table table, int skip, int show) throws Exception {
-		TableData[][] tdata = service().loadPage(table, skip, show);
-		tableDataTab.loadData(table, table.getColumns(), tdata);
+	/** Reads another page in the background and shows it in the tab. */
+	public void showTableData(Table table, int skip, int show) {
+		TableDataTab tab = tableDataTab;
+		connectionWindowController.inBackground("Show data", "Loading table data...", () -> loadPage(table, skip, show),
+			rows -> tab.loadData(table, table.getColumns(), rows));
 	}
 
 	public TableDataTab executeQuery(String query) throws Exception {

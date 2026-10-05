@@ -136,6 +136,42 @@ public class ConnectionWindowController {
 		return (System.nanoTime() - startNanos) / 1000000;
 	}
 
+	/** Database work started by a user action, run off the event thread. */
+	public interface Work<T> {
+		T run() throws Exception;
+	}
+
+	/** What is done with the result of {@link Work} on the event thread. */
+	public interface Outcome<T> {
+		void accept(T result) throws Exception;
+	}
+
+	/**
+	 * Runs the work of a user action on a virtual thread while the status light says what is loading, then hands the result to {@code done} on the event
+	 * thread. A failure of either is reported once as the action, with this connection window as the parent.
+	 */
+	public <T> void inBackground(String action, String status, Work<T> work, Outcome<T> done) {
+		mainController.updateStatus(status, true);
+		Thread.ofVirtual().name(action).start(() -> {
+			try {
+				T result = work.run();
+				SwingUtilities.invokeLater(() -> {
+					mainController.showConnectionState();
+					try {
+						done.accept(result);
+					} catch (Exception e) {
+						ApplicationContext.get().errors().report(connectionWindow, action, e);
+					}
+				});
+			} catch (Exception e) {
+				SwingUtilities.invokeLater(() -> {
+					mainController.showConnectionState();
+					ApplicationContext.get().errors().report(connectionWindow, action, e);
+				});
+			}
+		});
+	}
+
 	/** Closes the designers opened from this connection; false when the user keeps one open. */
 	public boolean closeDesigners() {
 		return mainController.getMainWindow().closeDesigners(connectionWindow);
@@ -702,23 +738,19 @@ public class ConnectionWindowController {
 		connectionWindow.getDatabaseTree().selectTableInTree(table);
 	}
 
+	/** Loads the first page of the table in the background and shows it in the view tab. */
 	public void showTableData(Table table) {
-		try {
-			// Load the tables from the database.
-			mainController.updateStatus("Loading table data...", true);
-			long start = System.nanoTime();
+		long start = System.nanoTime();
+		TableController controller = new TableController(this);
+		String place = table.getSchema() != null && hasSchemas()
+			? table.getDatabase().getName() + "." + table.getSchema().getName()
+			: table.getDatabase().getName();
 
-			// Let the Table control class handle the data display creation.
-			tableController = new TableController(this);
-			String place = table.getSchema() != null && hasSchemas()
-				? table.getDatabase().getName() + "." + table.getSchema().getName()
-				: table.getDatabase().getName();
-			connectionWindow.showTableDataTab(place + " : " + table.getName(), tableController.getTableDataTab(table, 0, 50));
+		inBackground("Load table data", "Loading table data...", () -> controller.loadPage(table, 0, 50), rows -> {
+			tableController = controller;
+			connectionWindow.showTableDataTab(place + " : " + table.getName(), controller.newTableDataTab(table, rows));
 			setViewStatus(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load table data", e);
-		}
+		});
 	}
 
 	/*
@@ -910,17 +942,15 @@ public class ConnectionWindowController {
 		String run(TableController controller, Table table) throws Exception;
 	}
 
-	/** Runs a maintenance command on the selected table and shows the server's report. */
+	/** Runs a maintenance command on the selected table in the background and shows the server's report. */
 	private void maintainSelectedTable(String action, Maintenance maintenance) {
 		Table table = selectedTable(action);
 		if (table == null) {
 			return;
 		}
 
-		try {
-			Dialogs.info(connectionWindow, action + ": " + table.getName(), maintenance.run(new TableController(this), table));
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, action, e);
-		}
+		TableController controller = new TableController(this);
+		inBackground(action, action + "...", () -> maintenance.run(controller, table),
+			report -> Dialogs.info(connectionWindow, action + ": " + table.getName(), report));
 	}
 }
