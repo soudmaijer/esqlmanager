@@ -3,9 +3,11 @@ package nl.errorsoft.esql.domain.dialect;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
+import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
 import nl.errorsoft.esql.domain.ServerType;
 import nl.errorsoft.esql.domain.Table;
@@ -31,6 +33,151 @@ public class MySqlDialect extends AbstractDialect
 	public boolean supports( Feature feature )
 	{
 		return true;
+	}
+
+	public String maintain( DatabaseConnection dbc, Maintenance command, String table ) throws SQLException
+	{
+		ResultSet rs = dbc.executeQuery( command + " TABLE " + quote( table ) );
+		String message = "";
+
+		if( rs.first() )
+			message = rs.getString( "Msg_Text" );
+
+		rs.close();
+		return message;
+	}
+
+	public String createDatabaseSql( String database )
+	{
+		return "CREATE DATABASE IF NOT EXISTS " + quote( database );
+	}
+
+	public String useDatabaseSql( String database )
+	{
+		return "USE " + quote( database );
+	}
+
+	public String createTableDdl( DatabaseConnection dbc, String table ) throws SQLException
+	{
+		ResultSet rs = dbc.executeQuery( "SHOW CREATE TABLE " + quote( table ) );
+		rs.first();
+		String ddl = rs.getString( 2 );
+		rs.close();
+		return ddl;
+	}
+
+	public String quote( String identifier )
+	{
+		return "`" + identifier.replace( "`", "``" ) + "`";
+	}
+
+	public String [] getTableTypes()
+	{
+		return new String[] { "InnoDB", "MyISAM", "MEMORY", "ARCHIVE", "CSV" };
+	}
+
+	public List<String> createTableSql( String table, List<CreateColumn> columns, String tableType, String comment )
+	{
+		List<String> definitions = new ArrayList<String>();
+		List<String> primary = new ArrayList<String>();
+
+		for( CreateColumn column : columns )
+		{
+			definitions.add( quote( column.name ) + " " + columnDefinition( column ) );
+
+			if( column.primary )
+				primary.add( quote( column.name ) );
+			if( column.unique )
+				definitions.add( "UNIQUE (" + quote( column.name ) + ")" );
+			if( column.index )
+				definitions.add( "INDEX (" + quote( column.name ) + ")" );
+		}
+
+		if( !primary.isEmpty() )
+			definitions.add( "PRIMARY KEY (" + String.join( ", ", primary ) + ")" );
+
+		String statement = "CREATE TABLE " + quote( table ) + " (" + String.join( ", ", definitions ) + ")";
+
+		if( tableType != null && tableType.length() > 0 )
+			statement += " ENGINE=" + tableType;
+		if( comment.trim().length() > 0 )
+			statement += " COMMENT=" + literal( comment );
+
+		return Arrays.asList( statement );
+	}
+
+	public List<String> setTableTypeSql( String table, String tableType )
+	{
+		return Arrays.asList( "ALTER TABLE " + quote( table ) + " ENGINE=" + tableType );
+	}
+
+	public List<String> setTableCommentSql( String table, String comment )
+	{
+		return Arrays.asList( "ALTER TABLE " + quote( table ) + " COMMENT=" + literal( comment ) );
+	}
+
+	public List<String> modifyColumnSql( String table, String oldName, CreateColumn column )
+	{
+		return Arrays.asList( "ALTER TABLE " + quote( table ) + " CHANGE " + quote( oldName ) + " " + quote( column.name ) + " " + columnDefinition( column ) );
+	}
+
+	public List<String> addIndexSql( String table, String name, String type, List<String> columns )
+	{
+		List<String> quoted = new ArrayList<String>();
+
+		for( String column : columns )
+			quoted.add( quote( column ) );
+
+		String cols = "(" + String.join( ", ", quoted ) + ")";
+
+		if( name.equals( "PRIMARY" ) )
+			return Arrays.asList( "ALTER TABLE " + quote( table ) + " ADD PRIMARY KEY " + cols );
+
+		return Arrays.asList( "ALTER TABLE " + quote( table ) + " ADD " + type + " " + quote( name ) + " " + cols );
+	}
+
+	public List<String> dropIndexSql( DatabaseConnection dbc, String table, String name )
+	{
+		if( name.equals( "PRIMARY" ) )
+			return Arrays.asList( "ALTER TABLE " + quote( table ) + " DROP PRIMARY KEY" );
+
+		return Arrays.asList( "ALTER TABLE " + quote( table ) + " DROP INDEX " + quote( name ) );
+	}
+
+	/** Dropping and adding in one statement keeps an AUTO_INCREMENT primary key valid in between. */
+	public List<String> modifyIndexSql( DatabaseConnection dbc, String table, String name, String type, List<String> columns )
+	{
+		String drop = name.equals( "PRIMARY" ) ? "DROP PRIMARY KEY" : "DROP INDEX " + quote( name );
+		String add = addIndexSql( table, name, type, columns ).get( 0 ).substring( ( "ALTER TABLE " + quote( table ) + " " ).length() );
+
+		return Arrays.asList( "ALTER TABLE " + quote( table ) + " " + drop + ", " + add );
+	}
+
+	protected String columnDefinition( CreateColumn column )
+	{
+		String definition = column.type.getName();
+
+		if( column.length.trim().length() > 0 )
+			definition += " (" + column.length + ")";
+		if( column.unsigned )
+			definition += " UNSIGNED";
+		if( column.zerofill )
+			definition += " ZEROFILL";
+		if( column.binary )
+			definition += " BINARY";
+		if( column.defaultval.trim().length() > 0 )
+			definition += " DEFAULT " + literal( column.defaultval );
+		if( column.notnull )
+			definition += " NOT NULL";
+		if( column.autoincrement )
+			definition += " AUTO_INCREMENT";
+
+		return definition;
+	}
+
+	public String literal( String value )
+	{
+		return "'" + value.replace( "\\", "\\\\" ).replace( "'", "''" ) + "'";
 	}
 
 	public List<String> listDatabases( DatabaseConnection dbc ) throws SQLException

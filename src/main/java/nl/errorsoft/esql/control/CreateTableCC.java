@@ -44,11 +44,10 @@ public class CreateTableCC
 	}
 	
 	/* 
-	 	List all tabletypes
-	 	TODO make this work for every DBMS
+	 	List all tabletypes, empty when the server has no such choice
     */
 	public String [] getTableTypes ()
-	{	return cwcc.getConnectionProfile().getServerType().getMySQLTableTypes();
+	{	return cwcc.getConnectionProfile().getServerType().getDialect().getTableTypes();
 	}
 	
 	/* 
@@ -70,31 +69,15 @@ public class CreateTableCC
 		{	ct.showErrorMessage("You didn't add any columns to the table. Please add some fields to the table prior to generating it.");
 			return;
 		}
-		String query = "CREATE TABLE `" + name + "` ";
-		query = query + " (";
-		for(int i = 0; i < columns.size(); i++)
-		{	if(i != 0)	{	query = query + ", ";	}
-			CreateColumn f = (CreateColumn)columns.get(i);
-			query = query + " `" + f.name + "` " ;
-			query = query + f.type;
-			if(!f.length.trim().equals("")) { query = query + " (" + f.length + ")";  }
-			if(f.unsigned){ query = query + " UNSIGNED"; }
-			if(!f.defaultval.trim().equals("")) {query = query + " DEFAULT '" + f.defaultval + "'"; }
-			if(f.notnull){ query = query + " NOT NULL"; }
-			if(f.zerofill){ query = query + " ZEROFILL"; }
-			if(f.binary){ query = query + " BINARY"; }
-			if(f.autoincrement){ query = query + " AUTO_INCREMENT"; }
-			if(f.primary){ query = query + ", PRIMARY KEY(`" + f.name + "`)"; }
-			if(f.unique){ query = query + ", UNIQUE(`" + f.name + "`)"; }
-			if(f.index){ query = query + ", INDEX(`" + f.name + "`)"; }
-		}	
-		query = query + ") TYPE=" + type;
-		if(!comment.trim().equals(""))
-		{	query = query + " COMMENT='" + comment + "'";
-		}	
-		
 		try
-		{	cwcc.getDatabaseConnection().executeUpdate(query);
+		{	cwcc.getDatabaseConnection().useDatabase( database );
+			java.util.List<CreateColumn> list = new java.util.ArrayList<CreateColumn>();
+			for(int i = 0; i < columns.size(); i++)
+			{	list.add((CreateColumn)columns.get(i));
+			}
+			for( String query : cwcc.getConnectionProfile().getServerType().getDialect().createTableSql( name, list, type, comment ) )
+			{	cwcc.getDatabaseConnection().executeUpdate(query);
+			}
 			ct.dispose();
 			cwcc.reloadSelectedDatabase();
 		}

@@ -41,7 +41,7 @@ public class Database
 	
 	public Database createDatabase( String name ) throws Exception
 	{
-		dbc.executeUpdate( "CREATE DATABASE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + name + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		dbc.executeUpdate( "CREATE DATABASE "+ quote( name ) );
 		Database temp = new Database( dbc );
 		temp.setName( name );
 		return temp;
@@ -49,7 +49,7 @@ public class Database
 
 	public void dropDatabase( Database db ) throws Exception
 	{
-		dbc.executeUpdate( "DROP DATABASE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + db.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		dbc.executeUpdate( "DROP DATABASE "+ quote( db.getName() ) );
 	}	
 	
 	public Vector getDatabases() throws Exception
@@ -108,5 +108,10 @@ public class Database
 	public String toString()
 	{
 		return name;
+	}
+
+	private String quote( String identifier )
+	{
+		return dbc.getConnectionProfile().getServerType().getDialect().quote( identifier );
 	}
 }

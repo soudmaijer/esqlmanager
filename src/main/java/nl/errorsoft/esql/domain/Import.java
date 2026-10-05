@@ -32,18 +32,27 @@ public class Import extends Observable implements Runnable
 				dbc.useDatabase( db );
 			}
 				
-			BufferedReader f = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ) );
-			String s = "";
-			String sql = "";
-			
-			while( ( s = f.readLine() ) != null )
+			try( BufferedReader f = new BufferedReader( new InputStreamReader( new FileInputStream( file ), java.nio.charset.StandardCharsets.UTF_8 ) ) )
 			{
-				sql += s;
+				String s = "";
+				String sql = "";
 				
-				if( s.endsWith(";") )
-				{	
-					dbc.executeUpdate( sql );
-					sql = "";
+				while( ( s = f.readLine() ) != null )
+				{
+					// A script switches database with the psql meta command, it is not SQL a server understands.
+					if( sql.length() == 0 && s.startsWith( "\\connect " ) )
+					{
+						dbc.useDatabase( s.substring( "\\connect ".length() ).replaceAll( "^[\"`]|[\"`];?$", "" ) );
+						continue;
+					}
+					
+					sql += s +"\n";
+					
+					if( s.endsWith(";") )
+					{	
+						dbc.executeUpdate( sql );
+						sql = "";
+					}
 				}
 			}
 	

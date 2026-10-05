@@ -58,7 +58,7 @@ public class UDData extends Observable
 		ByteArrayInputStream bai = new ByteArrayInputStream( temp );
 
 		dbc.useDatabase( tb.getDatabase().getName() );
-		java.sql.PreparedStatement pstmt = dbc.getConnection().prepareStatement("UPDATE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" SET "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tc.getTableColumn().getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" = ? WHERE "+ sqlWhere );
+		java.sql.PreparedStatement pstmt = dbc.getConnection().prepareStatement("UPDATE "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tb.getName() ) +" SET "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tc.getTableColumn().getName() ) +" = ? WHERE "+ sqlWhere );
 		pstmt.setBinaryStream(1, bai, temp.length);
 		pstmt.execute();
 		pstmt.close();
@@ -95,7 +95,7 @@ public class UDData extends Observable
 		}
 
 		dbc.useDatabase( tb.getDatabase().getName() );
-		java.sql.ResultSet rs = dbc.executeQuery("SELECT * FROM "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" WHERE "+ sqlWhere );
+		java.sql.ResultSet rs = dbc.executeQuery("SELECT * FROM "+ dbc.getConnectionProfile().getServerType().getDialect().quote( tb.getName() ) +" WHERE "+ sqlWhere );
 		BufferedInputStream bis = null;
 		
 		if( rs.first() )

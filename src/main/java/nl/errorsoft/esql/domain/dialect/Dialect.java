@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Vector;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.ConnectionProfile;
+import nl.errorsoft.esql.domain.CreateColumn;
 import nl.errorsoft.esql.domain.Database;
 import nl.errorsoft.esql.domain.Table;
 
@@ -14,6 +15,12 @@ import nl.errorsoft.esql.domain.Table;
  */
 public interface Dialect
 {
+	/** Table maintenance commands, named after the MySQL ones. */
+	enum Maintenance
+	{
+		OPTIMIZE, ANALYZE, CHECK, REPAIR
+	}
+
 	/** Optional functionality that not every database has an implementation for. */
 	enum Feature
 	{
@@ -48,4 +55,53 @@ public interface Dialect
 
 	/** A query returning one page of a table, or null when the server cannot page in SQL. */
 	String selectPage( String quotedTable, int skip, int show );
+
+	/** Quotes a table, column or index name. */
+	String quote( String identifier );
+
+	/** Storage engines a table can be created with, empty when the server has no such choice. */
+	String [] getTableTypes();
+
+	/** The statements that create a table, including its indexes and comment. */
+	List<String> createTableSql( String table, List<CreateColumn> columns, String tableType, String comment );
+
+	List<String> renameTableSql( String table, String newName );
+
+	List<String> setTableTypeSql( String table, String tableType );
+
+	List<String> setTableCommentSql( String table, String comment );
+
+	List<String> addColumnSql( String table, CreateColumn column );
+
+	/** Changes an existing column to the given definition, renaming it when the name differs. */
+	List<String> modifyColumnSql( String table, String oldName, CreateColumn column );
+
+	/**
+	 * Adds an index on the given columns.
+	 * @param name the index name, "PRIMARY" for the primary key.
+	 * @param type INDEX, UNIQUE or FULLTEXT.
+	 */
+	List<String> addIndexSql( String table, String name, String type, List<String> columns );
+
+	List<String> dropIndexSql( DatabaseConnection dbc, String table, String name ) throws SQLException;
+
+	List<String> modifyIndexSql( DatabaseConnection dbc, String table, String name, String type, List<String> columns ) throws SQLException;
+
+	/**
+	 * Runs a maintenance command on a table.
+	 * @return the message to show the user.
+	 * @throws UnsupportedOperationException when the server has no such command.
+	 */
+	String maintain( DatabaseConnection dbc, Maintenance command, String table ) throws SQLException;
+
+	/** A text value as an SQL literal. */
+	String literal( String value );
+
+	String createDatabaseSql( String database );
+
+	/** The statement that makes a database the active one in a script, understood by {@link #useDatabaseSql} consumers such as Import. */
+	String useDatabaseSql( String database );
+
+	/** The CREATE TABLE statement of an existing table. */
+	String createTableDdl( DatabaseConnection dbc, String table ) throws SQLException;
 }

@@ -2,8 +2,10 @@ package nl.errorsoft.esql.domain;
 
 import java.sql.*;
 import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.domain.dialect.Dialect;
 import java.util.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class Export extends Observable implements Runnable
 {
@@ -30,127 +32,51 @@ public class Export extends Observable implements Runnable
 	
 	public void run()
 	{
-		try
+		try( PrintWriter pw = new PrintWriter( file, StandardCharsets.UTF_8 ) )
 		{
 			setChanged();
 			notifyObservers( new Integer(10) );
-			PrintWriter pw = new PrintWriter( new FileOutputStream( new File( file ) ) );
 		
 			for( int i=0; i<exportObject.length; i++ )
 			{
+				String database;
+				List<String> tables = new ArrayList<String>();
+				
 				if( exportObject[i] instanceof Database )
 				{
 					Database to = (Database)exportObject[i];
+					database = to.getName();
+					dbc.useDatabase( database );
 					
-					if( createDatabase )
-						pw.println( "CREATE DATABASE IF NOT EXISTS `"+ to.getName() +"`;\n" );
-					
-					if( useDatabase )
-						pw.println( "USE `"+ to.getName() +"`;\n" );
-	
-					dbc.useDatabase( to.getName() );
-					ResultSet rs = dbc.executeQuery("SHOW TABLES FROM `"+ to.getName() +"`");
-					
-					while( rs.next() )
+					for( Table table : getDialect().listTables( dbc, to ) )
 					{
-						if( dropTable )
-							pw.println( "DROP TABLE IF EXISTS `"+ rs.getString(1) +"`;\n" );
-					
-						if( dumpStructure )
-						{
-							ResultSet show =  dbc.executeQuery("SHOW CREATE TABLE `"+ rs.getString(1) +"`");
-							show.first();
-							pw.println( show.getString(2) +";\n" );
-							show.close();
-						}
-					
-						if( dumpData )
-						{
-							ResultSet show = dbc.executeQuery("SELECT * FROM `"+ rs.getString(1) +"`" );
-	
-							while( show.next() )
-							{
-								ResultSetMetaData rsm = show.getMetaData();
-								pw.print( "INSERT INTO `"+ rs.getString(1) +"` VALUES(" );
-								
-								for( int d=1; d<rsm.getColumnCount()+1; d++ )
-								{	
-									TableColumn temp = new TableColumn(null);
-									temp.setType( rsm.getColumnType(d) );
-								
-									if( temp.isBinary() )
-										pw.print("\"\"");
-									else if( show.getString(d) != null )
-										pw.print( "\""+ show.getString(d).replaceAll("\\\\", "\\\\\\\\").replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r").replaceAll("\"", "\\\\\"") +"\"" );
-									else
-										pw.print( "\"null\"" );
-	
-									if( d < rsm.getColumnCount() )
-										pw.print(",");
-								}	
-								
-								pw.println( ");" );
-							}
-						}		
+						// A view has no structure or data of its own to dump.
+						if( !"VIEW".equalsIgnoreCase( table.getType() ) )
+							tables.add( table.getName() );
 					}
 				}
 				else if( exportObject[i] instanceof Table )
 				{
 					Table to = (Table)exportObject[i];
-					String db = to.getDatabase().getName();
-					dbc.useDatabase( db );
-	
-					if( createDatabase )
-						pw.println( "CREATE DATABASE IF NOT EXISTS `"+ db +"`;\n" );
-					
-					if( useDatabase )
-						pw.println( "USE `"+ db +"`;\n" );
-					
-					if( dropTable )
-						pw.println( "DROP TABLE IF EXISTS `"+ to.getName() +"`;\n" );
-	
-					if( dumpStructure )
-					{
-						ResultSet show = dbc.executeQuery("SHOW CREATE TABLE `"+ to.getName() +"`");
-						show.first();
-						pw.println( show.getString(2) +";\n" );
-						show.close();
-					}
-	
-					if( dumpData )
-					{
-						ResultSet show = dbc.executeQuery("SELECT * FROM `"+ to.getName() +"`" );
-	
-						while( show.next() )
-						{
-							ResultSetMetaData rsm = show.getMetaData();
-							pw.print( "INSERT INTO `"+ to.getName() +"` VALUES(" );
-							
-							for( int d=1; d<rsm.getColumnCount()+1; d++ )
-							{	
-								TableColumn temp = new TableColumn(null);
-								temp.setType( rsm.getColumnType(d) );
-								
-								if( temp.isBinary() )
-									pw.print("\"\"");
-								else if( show.getString(d) != null )
-									pw.print( "\""+ show.getString(d).replaceAll("\n", "\\\\n").replaceAll("\r", "\\\\r").replaceAll("\"", "\\\\\"") +"\"" );
-								else
-									pw.print( "\"null\"" );
-								
-								if( d < rsm.getColumnCount() )
-									pw.print(",");
-							}	
-							
-							pw.println( ");" );
-						}
-					}								
+					database = to.getDatabase().getName();
+					dbc.useDatabase( database );
+					tables.add( to.getName() );
 				}
+				else
+					continue;
+				
+				if( createDatabase )
+					pw.println( getDialect().createDatabaseSql( database ) +";\n" );
+				
+				if( useDatabase )
+					pw.println( getDialect().useDatabaseSql( database ) +";\n" );
+
+				for( String table : tables )
+					dumpTable( pw, table );
 				
 				setChanged();
 	 			notifyObservers( new Integer( ((100/exportObject.length)*(i+1))-1 ) );
 			}
-			pw.close();
 			setChanged();
 			notifyObservers( new Integer(100) );		
 		}
@@ -159,6 +85,52 @@ public class Export extends Observable implements Runnable
 			setChanged();
 			notifyObservers( e );		
 		}
+	}
+	
+	private void dumpTable( PrintWriter pw, String table ) throws SQLException
+	{
+		Dialect dialect = getDialect();
+		
+		if( dropTable )
+			pw.println( "DROP TABLE IF EXISTS "+ dialect.quote( table ) +";\n" );
+		
+		if( dumpStructure )
+			pw.println( dialect.createTableDdl( dbc, table ) +";\n" );
+		
+		if( dumpData )
+		{
+			ResultSet rs = dbc.executeQuery( "SELECT * FROM "+ dialect.quote( table ) );
+			ResultSetMetaData rsm = rs.getMetaData();
+			
+			while( rs.next() )
+			{
+				pw.print( "INSERT INTO "+ dialect.quote( table ) +" VALUES(" );
+				
+				for( int d=1; d<=rsm.getColumnCount(); d++ )
+				{	
+					TableColumn temp = new TableColumn(null);
+					temp.setType( rsm.getColumnType(d) );
+					
+					if( temp.isBinary() )
+						pw.print( "''" );
+					else if( rs.getString(d) != null )
+						pw.print( dialect.literal( rs.getString(d) ) );
+					else
+						pw.print( "NULL" );
+					
+					if( d < rsm.getColumnCount() )
+						pw.print(",");
+				}	
+				
+				pw.println( ");" );
+			}
+			rs.close();
+		}
+	}
+	
+	private Dialect getDialect()
+	{
+		return dbc.getConnectionProfile().getServerType().getDialect();
 	}
 	
 	public void start()

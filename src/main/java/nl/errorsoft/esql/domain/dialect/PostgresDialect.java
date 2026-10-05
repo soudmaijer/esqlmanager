@@ -34,6 +34,26 @@ public class PostgresDialect extends AbstractDialect
 		return "postgres";
 	}
 
+	public String maintain( DatabaseConnection dbc, Maintenance command, String table ) throws SQLException
+	{
+		switch( command )
+		{
+			case OPTIMIZE:
+				dbc.executeUpdate( "VACUUM " + quote( table ) );
+				return "Vacuumed " + table;
+			case ANALYZE:
+				dbc.executeUpdate( "ANALYZE " + quote( table ) );
+				return "Analyzed " + table;
+			default:
+				return super.maintain( dbc, command, table );
+		}
+	}
+
+	public boolean supports( Feature feature )
+	{
+		return feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT || feature == Feature.EXPORT;
+	}
+
 	/** The profile's database list is a filter, so the first entry is where we connect to. */
 	public String getConnectionDatabase( ConnectionProfile cp, String requested )
 	{

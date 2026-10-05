@@ -145,6 +145,9 @@ public class CreateTable extends JDialog implements ActionListener, ListSelectio
 		}
 		tabletypes = new JComboBox(ttmodel);
 		tabletypes.setBounds(395,48,200,22);
+		// Servers without storage engines have nothing to choose here.
+		tt.setVisible( tbt.length > 0 );
+		tabletypes.setVisible( tbt.length > 0 );
 		tabletypes.setFont(font);
 		p.add(tabletypes);
 
@@ -311,6 +314,11 @@ public class CreateTable extends JDialog implements ActionListener, ListSelectio
 	}
 	
 	// Actionlistener
+	private String selectedTableType()
+	{	Object type = tabletypes.getSelectedItem();
+		return type == null ? null : type.toString();
+	}
+
 	public void actionPerformed(ActionEvent e)
 	{	Object source = e.getSource();
 
@@ -410,12 +418,12 @@ public class CreateTable extends JDialog implements ActionListener, ListSelectio
 				for( int i = 0 ; i < fieldlist.getModel().getSize(); i++ )
 				{	cols.add((CreateColumn)fieldlist.getModel().getElementAt(i));
 				}
-				ctcc.createTable( tablename.getText(), dbs.getSelectedItem().toString(), comment.getText(), tabletypes.getSelectedItem().toString(), this, cols);	
+				ctcc.createTable( tablename.getText(), dbs.getSelectedItem().toString(), comment.getText(), selectedTableType(), this, cols);	
 			}
 			// Existing table.
 			else if( table != null )
 			{
-				ctcc.modifyTable( this, table, tablename.getText(), tabletypes.getSelectedItem().toString(), comment.getText() );
+				ctcc.modifyTable( this, table, tablename.getText(), selectedTableType(), comment.getText() );
 			}
 		}
 		if( source == moveup && fieldlist.getSelectedIndex() != -1 && fieldlist.getSelectedIndex() != 0 )

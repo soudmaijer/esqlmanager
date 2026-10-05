@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import java.sql.*;
 import java.util.Vector;
 import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.domain.dialect.Dialect;
 
 public class Table 
 {
@@ -128,12 +129,19 @@ public class Table
 			dbc.useDatabase( tb.getDatabase().getName() );
 			
 			DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-			ResultSet rs = dmd.getIndexInfo( dbc.getConnection().getCatalog(), dbc.getSchema(), tb.getName(), true, false );
+			String primaryKeyName = primaryKeyName( dmd, tb );
+			ResultSet rs = dmd.getIndexInfo( dbc.getConnection().getCatalog(), dbc.getSchema(), tb.getName(), false, false );
 	
 			while( rs.next() )
 			{
+				// Some drivers add a statistics row without an index name.
+				if( rs.getString("INDEX_NAME") == null )
+					continue;
+
 				TableIndex ti = new TableIndex(tb);
-				ti.setName( rs.getString("INDEX_NAME") );
+				// The primary key is always shown as PRIMARY, whatever name the server gave it.
+				String indexName = rs.getString("INDEX_NAME");
+				ti.setName( indexName != null && indexName.equals( primaryKeyName ) ? "PRIMARY" : indexName );
 	
 				if( !rs.getBoolean("NON_UNIQUE") )
 					ti.setUnique( true );
@@ -173,6 +181,20 @@ public class Table
 		return new TableIndex[0];
 	}	
 	
+	private String primaryKeyName( DatabaseMetaData dmd, Table tb ) throws SQLException
+	{
+		ResultSet rs = dmd.getPrimaryKeys( dbc.getConnection().getCatalog(), dbc.getSchema(), tb.getName() );
+
+		try
+		{
+			return rs.next() ? rs.getString("PK_NAME") : null;
+		}
+		finally
+		{
+			rs.close();
+		}
+	}
+
 	public TableData [][] getData( Table tb, int skip, int show ) throws Exception
 	{
 		Vector rows = new Vector();
@@ -185,7 +207,7 @@ public class Table
 		dbc.useDatabase( tb.getDatabase().getName() );
 		
 		// Count the total number of records.
-		ResultSet rs = dbc.executeQuery("SELECT count(*) FROM "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		ResultSet rs = dbc.executeQuery("SELECT count(*) FROM "+ quote( tb.getName() ) );
 		
 		if( rs.first() )
 			tb.setRowCount( rs.getInt(1) );
@@ -193,7 +215,7 @@ public class Table
 		rs.close();
 		
 		// Let the server do the paging when the dialect can, otherwise skip rows in the result set.
-		String quotedTable = dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar();
+		String quotedTable = quote( tb.getName() );
 		String pageQuery = dbc.getConnectionProfile().getServerType().getDialect().selectPage( quotedTable, skip, show );
 		
 		if( pageQuery != null )
@@ -257,36 +279,31 @@ public class Table
 
 	public void dropTable( Table tb ) throws Exception
 	{
-		dbc.executeUpdate("DROP TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		dbc.executeUpdate("DROP TABLE "+ quote( tb.getName() ) );
 	}		
 
 	public void flushTable( Table tb ) throws Exception
 	{
-		dbc.executeUpdate("DELETE FROM "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		dbc.executeUpdate("DELETE FROM "+ quote( tb.getName() ) );
 	}	
 
 	public void dropTableColumn( TableColumn tb ) throws Exception
 	{
-		dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getTable().getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" DROP "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		dbc.executeUpdate("ALTER TABLE "+ quote( tb.getTable().getName() ) +" DROP "+ quote( tb.getName() ) );
 	}
 
 	public void modifyTable( Table tb, String tableName, String tableType, String tableComment ) throws Exception
 	{
-		String newtype = "";
-		String newname = "";
-		String newcomment = "";
-		
 		if( !tb.getName().equalsIgnoreCase( tableName ) )
-		{	dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" RENAME "+ tableName );
+		{	executeAll( getDialect().renameTableSql( tb.getName(), tableName ) );
 			tb.setName( tableName );
 		}
-		if( !tb.getType().equalsIgnoreCase( tableType ) )
-		{	dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" TYPE="+ tableType );
+		if( tableType != null && !tableType.equalsIgnoreCase( tb.getType() ) )
+		{	executeAll( getDialect().setTableTypeSql( tb.getName(), tableType ) );
 			tb.setType( tableType );
 		}
-		if( !tb.getComment().equalsIgnoreCase( tableComment ) );
-		{
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" COMMENT ="+ dbc.getConnectionProfile().getServerType().getDataOpenChar() + tableComment + dbc.getConnectionProfile().getServerType().getDataCloseChar() );
+		if( !tableComment.equals( tb.getComment() == null ? "" : tb.getComment() ) )
+		{	executeAll( getDialect().setTableCommentSql( tb.getName(), tableComment ) );
 			tb.setComment( tableComment );
 		}
 	}
@@ -356,7 +373,7 @@ public class Table
 		
 		for( int i=0; i<rowData.length; i++ )
 		{
-			sqlColumnName += dbc.getConnectionProfile().getServerType().getFieldOpenChar() + rowData[i].getTableColumn().getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar();
+			sqlColumnName += quote( rowData[i].getTableColumn().getName() );
 			sqlColumnData += dbc.formatFieldValue( rowData[i].getData() );
 
 			if( i<rowData.length-1 )
@@ -367,7 +384,7 @@ public class Table
 		}
 		
 		dbc.useDatabase( tb.getDatabase().getName() );
-		int i = dbc.executeUpdate("INSERT INTO "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() 
+		int i = dbc.executeUpdate("INSERT INTO "+ quote( tb.getName() ) 
 										+ " ("+  sqlColumnName +")"
 										+ " VALUES ("+ sqlColumnData +")");
 		
@@ -409,8 +426,8 @@ public class Table
 			}
 		}
 		dbc.useDatabase( tb.getDatabase().getName() );
-		int i = dbc.executeUpdate("UPDATE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() 
-										+" SET "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + cellData.getTableColumn().getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +"="+ dbc.formatFieldValue( newValue.toString() )
+		int i = dbc.executeUpdate("UPDATE "+ quote( tb.getName() ) 
+										+" SET "+ quote( cellData.getTableColumn().getName() ) +"="+ dbc.formatFieldValue( newValue.toString() )
 										+" WHERE "+ sqlWhere );
 		return i;
 	}
@@ -442,7 +459,7 @@ public class Table
 		}
 
 		dbc.useDatabase( tb.getDatabase().getName() );
-		int i = dbc.executeUpdate("DELETE FROM "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" WHERE "+ sqlWhere );
+		int i = dbc.executeUpdate("DELETE FROM "+ quote( tb.getName() ) +" WHERE "+ sqlWhere );
 		tb.setRowCount( tb.getRowCount() - 1 );
 	}
 	
@@ -451,24 +468,10 @@ public class Table
 	 */
 	public void addTableColumn( Table tb, String name, String length, String defaultValue, DataType dt, boolean primary, boolean auto, boolean unsigned, boolean nullable ) throws Exception
 	{
-		String def = "";
-		
-		def = dt.getName();
-		
-		if( length.trim().length() > 0 )
-			def += "("+ length +")";
-		if( dt.unsigned && unsigned )
-			def += " UNSIGNED";
-		if( defaultValue.trim().length() > 0 )
-			def += " DEFAULT "+ dbc.getConnectionProfile().getServerType().getDataOpenChar()+ defaultValue + dbc.getConnectionProfile().getServerType().getDataCloseChar();
-		if( dt.notnull && !nullable )
-			def += " NOT NULL";
-		if( auto )
-			def += " AUTO_INCREMENT";
-		if( primary )
-			def += " PRIMARY KEY";
-			
-		dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" ADD "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + name + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" "+ def  );
+		CreateColumn column = createColumn( name, length, defaultValue, dt, auto, unsigned, nullable );
+		column.primary = primary;
+
+		executeAll( getDialect().addColumnSql( tb.getName(), column ) );
 	}
 
 	/*
@@ -476,104 +479,87 @@ public class Table
 	 */
 	public void editTableColumn( TableColumn tc, String name, String length, String defaultValue, DataType dt, boolean primary, boolean auto, boolean unsigned, boolean nullable ) throws Exception
 	{
-		String def = "";
-		String query = "";
-		
-		def = dt.getName();
-		
-		if( length.trim().length() > 0 )
-			def += "("+ length +")";
-		if( dt.unsigned && unsigned )
-			def += " UNSIGNED";
-		if( defaultValue.trim().length() > 0 )
-			def += " DEFAULT "+ dbc.getConnectionProfile().getServerType().getDataOpenChar()+ defaultValue + dbc.getConnectionProfile().getServerType().getDataCloseChar();
-		if( dt.notnull && !nullable )
-			def += " NOT NULL";
-		if( auto )
-			def += " AUTO_INCREMENT";
-			
-		query = "ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tc.getTable().getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() 
-				+ " CHANGE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tc.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar()
-				+ " "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + name + dbc.getConnectionProfile().getServerType().getFieldCloseChar()
-				+ " "+ def;
-		
+		String table = tc.getTable().getName();
+		CreateColumn column = createColumn( name, length, defaultValue, dt, auto, unsigned, nullable );
+
+		executeAll( getDialect().modifyColumnSql( table, tc.getName(), column ) );
+
 		if( tc.isPrimary() && !primary )
-			query += ", DROP PRIMARY KEY";
+			executeAll( getDialect().dropIndexSql( dbc, table, "PRIMARY" ) );
 		if( !tc.isPrimary() && primary )
-			query += ", ADD PRIMARY KEY ("+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + name + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +")";
-	
-		dbc.executeUpdate( query );
-	}	
-	
+			executeAll( getDialect().addIndexSql( table, "PRIMARY", "INDEX", java.util.Arrays.asList( name ) ) );
+	}
+
+	private CreateColumn createColumn( String name, String length, String defaultValue, DataType dt, boolean auto, boolean unsigned, boolean nullable )
+	{
+		CreateColumn column = new CreateColumn( name );
+		column.type = dt;
+		column.length = length;
+		column.defaultval = defaultValue;
+		column.unsigned = dt.unsigned && unsigned;
+		column.notnull = dt.notnull && !nullable;
+		column.autoincrement = auto;
+		return column;
+	}
+
 	public void addIndex( Table tb, TableIndex ti, TableColumn tc[], String type ) throws Exception
 	{
 		if( tc == null || tc.length <=0 )
 			return;
 
-		if( type == null || type.length() <= 0 )
-			type = "INDEX";
-		
-		String cols = "(";
-			
-		for( int i=0; i<tc.length; i++ )
-		{
-			cols += tc[i].getName();
-			
-			if( i < tc.length-1 )
-				cols += ",";
-		}
-		
-		cols = cols + ")";
 		dbc.useDatabase( tb.getDatabase().getName() );
-		
-		if( ti.getName().equals("PRIMARY") )
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" ADD PRIMARY KEY "+ cols );
-		else
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" ADD "+ type +" "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + ti.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" "+ cols );
-			
-		tb.setIndexes( tb.getIndexes( tb ) );		
-	}	
+		executeAll( getDialect().addIndexSql( tb.getName(), ti.getName(), indexType( type ), columnNames( tc ) ) );
+		tb.setIndexes( tb.getIndexes( tb ) );
+	}
 
 	public void modifyIndex( Table tb, TableIndex ti, TableColumn tc[], String type ) throws Exception
 	{
 		if( tc == null || tc.length <=0 )
 			return;
 
-		if( type == null || type.length() <= 0 )
-			type = "INDEX";
-		
-		String cols = "(";
-			
-		for( int i=0; i<tc.length; i++ )
-		{
-			cols += tc[i].getName();
-			
-			if( i < tc.length-1 )
-				cols += ",";
-		}
-		
-		cols = cols + ")";
 		dbc.useDatabase( tb.getDatabase().getName() );
-		
-		if( ti.getName().equals("PRIMARY") )
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" DROP PRIMARY KEY, ADD PRIMARY KEY " + cols );
-		else
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" DROP INDEX "+ ti.getName() +", ADD "+ type +" "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + ti.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" "+ cols );
-			
-		tb.setIndexes( tb.getIndexes( tb ) );		
-	}	
+		executeAll( getDialect().modifyIndexSql( dbc, tb.getName(), ti.getName(), indexType( type ), columnNames( tc ) ) );
+		tb.setIndexes( tb.getIndexes( tb ) );
+	}
 
 	public void dropIndex( Table tb, TableIndex ti ) throws Exception
 	{
 		dbc.useDatabase( tb.getDatabase().getName() );
-
-		if( ti.getName().equals("PRIMARY") )
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" DROP PRIMARY KEY" );
-		else
-			dbc.executeUpdate("ALTER TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + tb.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() +" DROP INDEX "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + ti.getName() + dbc.getConnectionProfile().getServerType().getFieldCloseChar() );
+		executeAll( getDialect().dropIndexSql( dbc, tb.getName(), ti.getName() ) );
 		tb.setIndexes( tb.getIndexes( tb ) );
-	}	
-	
+	}
+
+	private String indexType( String type )
+	{
+		return type == null || type.length() <= 0 ? "INDEX" : type;
+	}
+
+	private java.util.List<String> columnNames( TableColumn tc[] )
+	{
+		java.util.List<String> names = new java.util.ArrayList<String>();
+
+		for( TableColumn column : tc )
+			names.add( column.getName() );
+
+		return names;
+	}
+
+	private String quote( String identifier )
+	{
+		return getDialect().quote( identifier );
+	}
+
+	private nl.errorsoft.esql.domain.dialect.Dialect getDialect()
+	{
+		return dbc.getConnectionProfile().getServerType().getDialect();
+	}
+
+	private void executeAll( java.util.List<String> statements ) throws Exception
+	{
+		for( String statement : statements )
+			dbc.executeUpdate( statement );
+	}
+
 	public TableData [][] runMySQLCommand( String query ) throws Exception
 	{
 		ResultSet rs = dbc.executeQuery( query );
@@ -680,53 +666,25 @@ public class Table
 	}
 	
 	/*
-	 * MySQL specific options
+	 * Maintenance, what each command does depends on the database.
 	 */
 	public String optimizeTable( Table table ) throws Exception
 	{
-		ResultSet rs = dbc.executeQuery( "OPTIMIZE TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + table.getName() + dbc.getConnectionProfile().getServerType().getFieldOpenChar() );
-		String message = "";
-		
-		if( rs.first() )
-			message = rs.getString("Msg_Text");
-		
-		rs.close();
-		return message;
-	}	 
+		return getDialect().maintain( dbc, Dialect.Maintenance.OPTIMIZE, table.getName() );
+	}
 
 	public String analyseTable( Table table ) throws Exception
 	{
-		ResultSet rs = dbc.executeQuery( "ANALYZE TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + table.getName() + dbc.getConnectionProfile().getServerType().getFieldOpenChar() );
-		String message = "";
-		
-		if( rs.first() )
-			message = rs.getString("Msg_Text");
-		
-		rs.close();
-		return message;
-	}	 	
-	
+		return getDialect().maintain( dbc, Dialect.Maintenance.ANALYZE, table.getName() );
+	}
+
 	public String checkTable( Table table ) throws Exception
 	{
-		ResultSet rs = dbc.executeQuery( "CHECK TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + table.getName() + dbc.getConnectionProfile().getServerType().getFieldOpenChar() );
-		String message = "";
-		
-		if( rs.first() )
-			message = rs.getString("Msg_Text");
-		
-		rs.close();
-		return message;
-	}	 	
+		return getDialect().maintain( dbc, Dialect.Maintenance.CHECK, table.getName() );
+	}
 
 	public String repairTable( Table table ) throws Exception
 	{
-		ResultSet rs = dbc.executeQuery( "REPAIR TABLE "+ dbc.getConnectionProfile().getServerType().getFieldOpenChar() + table.getName() + dbc.getConnectionProfile().getServerType().getFieldOpenChar() );
-		String message = "";
-		
-		if( rs.first() )
-			message = rs.getString("Msg_Text");
-		
-		rs.close();
-		return message;
+		return getDialect().maintain( dbc, Dialect.Maintenance.REPAIR, table.getName() );
 	}	 		
 }

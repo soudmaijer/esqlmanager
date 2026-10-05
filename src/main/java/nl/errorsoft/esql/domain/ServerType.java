@@ -28,7 +28,6 @@ public class ServerType
 	private String dataOpenChar = "";
 	private String dataCloseChar = "";
 	private DataType [] dt;
-	String [] mysqlTableTypes;
 
 	public ServerType( int type )
 	{
@@ -153,50 +152,35 @@ public class ServerType
 		try
 		{	SAXBuilder builder = new SAXBuilder();
 			org.jdom.Document sdata = builder.build( new File("conf/datatypes.xml") );
-				
-			if( sdata.hasRootElement() )
+			
+			// The file holds the datatypes of every server, pick the section of this one.
+			for( Object driver : sdata.getRootElement().getChildren("driver") )
 			{
-			 	Element fieldtypes = sdata.getRootElement().getChild( "driver" );
-			 	java.util.List types = fieldtypes.getChildren("type");
-			 	
-			 	if( types != null )
-			 	{
-			 		int typeid = 0;
-			 		
-			 		try
-			 		{
-			 			typeid = Integer.parseInt( fieldtypes.getAttributeValue("id") );
-			 		}
-			 		catch( Exception e )
-			 		{
-			 			log.warn( "Warning: no datatype specified for this servertype!" );
-			 		}
-			 		
-				 	if( typeid == this.getType() )
-				 	{
-					 	this.dt = new DataType [types.size()];
-					 	
-					 	for( int i=0; i<types.size(); i++ )
-					 	{	boolean pri = ( ((Element)types.get(i)).getChild("primary").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean ind = ( ((Element)types.get(i)).getChild("index").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean uni = ( ((Element)types.get(i)).getChild("unique").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean bin = ( ((Element)types.get(i)).getChild("binary").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean not = ( ((Element)types.get(i)).getChild("notnull").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean uns = ( ((Element)types.get(i)).getChild("unsigned").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean aut = ( ((Element)types.get(i)).getChild("autoincrement").getText().equalsIgnoreCase("true") )? true : false;
-					 		boolean zer = ( ((Element)types.get(i)).getChild("zerofill").getText().equalsIgnoreCase("true") )? true : false;
-					 		this.dt[i] = new DataType( ((Element)types.get(i)).getChild("name").getText(), pri, ind, uni, bin, not, uns, aut, zer);
-					 	}	
-					 	return this.dt;
-					 }
-				 }
+				if( Integer.parseInt( ((Element)driver).getAttributeValue("id") ) != this.getType() )
+					continue;
+				
+				java.util.List types = ((Element)driver).getChildren("type");
+				this.dt = new DataType [types.size()];
+				
+				for( int i=0; i<types.size(); i++ )
+				{	Element type = (Element)types.get(i);
+					this.dt[i] = new DataType( type.getChildText("name"), flag( type, "primary" ), flag( type, "index" ), flag( type, "unique" ), flag( type, "binary" ),
+						flag( type, "notnull" ), flag( type, "unsigned" ), flag( type, "autoincrement" ), flag( type, "zerofill" ) );
+				}
+				return this.dt;
 			}
+			log.warn( "No datatypes specified for server type {}", this.getType() );
 		}
 		catch(Exception e)
 		{	log.error( e.getMessage(), e );
 		}	
 		return new DataType[0];
 	}	
+
+	private boolean flag( Element type, String name )
+	{
+		return "true".equalsIgnoreCase( type.getChildText( name ) );
+	}
 
 	public static ServerType [] getServerTypes()
 	{
@@ -208,33 +192,5 @@ public class ServerType
 		st[3] = new ServerType( ServerType.ORACLE );
 		
 		return st;
-	} 	
-
-	public String [] getMySQLTableTypes()
-	{	
-		if( mysqlTableTypes != null && mysqlTableTypes.length != 0)
-		{	return mysqlTableTypes;
-		}
-		try
-		{	SAXBuilder builder = new SAXBuilder();
-			org.jdom.Document sdata = builder.build( new File("conf/mysql.xml") );
-				
-			if( sdata.hasRootElement() )
-			{
-			 	Element tabletypes = sdata.getRootElement().getChild("table");
-			 	java.util.List types = tabletypes.getChildren("type");
-			 	
-			 	this.mysqlTableTypes = new String [types.size()];
-			 	for( int i=0; i<types.size(); i++ )
-			 	{	this.mysqlTableTypes[i] = ((Element)types.get(i)).getText();
-			 	}
-			 	
-			 	return this.mysqlTableTypes;
-			}
-		}
-		catch(Exception e)
-		{	log.error( e.getMessage(), e );
-		}	
-		return mysqlTableTypes;
-	}	
+	}
 }
