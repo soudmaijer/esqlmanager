@@ -4,6 +4,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.error.Dialogs;
@@ -20,12 +21,16 @@ public class CreateTableCC {
 	private static final String NEW_TABLE = "New table";
 
 	private ConnectionWindowCC cwcc;
+	/** The schema a new table goes in, null for the current schema of the chosen database. */
+	private Schema schema;
 
 	public CreateTableCC(ConnectionWindowCC cwcc) {
 		this.cwcc = cwcc;
 	}
 
-	public void startCreateTable(Database database) {
+	/** @param schema the schema to create the table in, null for the current one. */
+	public void startCreateTable(Database database, Schema schema) {
+		this.schema = schema;
 		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(NEW_TABLE)) {
 			return;
 		}
@@ -84,7 +89,11 @@ public class CreateTableCC {
 			return;
 		}
 		try {
-			cwcc.getContext().tables().createTable(new Database(database), name, new ArrayList<>(columns), type, comment);
+			if (schema != null && schema.getDatabase().getName().equals(database)) {
+				cwcc.getContext().tables().createTable(schema, name, new ArrayList<>(columns), type, comment);
+			} else {
+				cwcc.getContext().tables().createTable(new Database(database), name, new ArrayList<>(columns), type, comment);
+			}
 			window().removeTab(editor);
 			cwcc.reloadSelectedDatabase();
 		} catch (Exception e) {

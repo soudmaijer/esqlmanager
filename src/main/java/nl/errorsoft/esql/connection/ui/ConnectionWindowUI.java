@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
+import nl.errorsoft.esql.dialect.Dialect;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.TreeMenu;
@@ -329,6 +331,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 					cwcc.databaseSelected((Database) selectedNode.getUserObject());
 
 				}
+			} else if (selectedNode.getUserObject() instanceof Schema schema) {
+				if (e.isAddedPath()) {
+					cwcc.schemaSelected(schema);
+				}
 			} else if (selectedNode.getUserObject() instanceof Table) {
 				if (e.isAddedPath()) {
 					if (((DefaultMutableTreeNode) e.getPath().getLastPathComponent()).getChildCount() > 0) {
@@ -608,6 +614,10 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			kind = TreeMenu.Node.DATABASE;
 			title = database.getName();
 			icon = "db_select_20x20";
+		} else if (node instanceof Schema schema) {
+			kind = TreeMenu.Node.SCHEMA;
+			title = schema.getName();
+			icon = "sc_select_20x20";
 		} else if (node instanceof Table table) {
 			kind = TreeMenu.Node.TABLE;
 			title = table.getName();
@@ -628,11 +638,11 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		menu.add(label);
 		menu.addSeparator();
 
-		for (TreeMenu.Item item : TreeMenu.itemsFor(kind, cwcc.getConnectionProfile().getServerType().getDialect())) {
+		for (TreeMenu.Item item : TreeMenu.itemsFor(kind, dialect())) {
 			if (item == TreeMenu.Item.SEPARATOR) {
 				menu.addSeparator();
 			} else {
-				JMenuItem menuItem = new JMenuItem(item.label());
+				JMenuItem menuItem = new JMenuItem(item.label(dialect()));
 				String itemIcon = menuIcon(item);
 
 				if (itemIcon != null) {
@@ -661,14 +671,22 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			case DROP_FIELD -> "imgDeleteField";
 			case EDIT_TABLE, EDIT_FIELD -> "des_properties";
 			case EXPORT, IMPORT -> "imgSave";
-			case RELOAD_DATABASES, RELOAD_TABLES, RELOAD_COLUMNS -> "imgRun";
+			case RELOAD_DATABASES, RELOAD_SCHEMAS, RELOAD_TABLES, RELOAD_COLUMNS -> "imgRun";
 			default -> null;
 		};
 	}
 
-	/** 'database.table' for the questions before a table is changed. */
+	/** 'database.table' (or 'database.schema.table') for the questions before a table is changed. */
 	private static String tableName(Table table) {
-		return table != null ? "'" + table.getDatabase().getName() + "." + table.getName() + "'" : "the selected table";
+		if (table == null) {
+			return "the selected table";
+		}
+		String schema = table.getSchema() != null ? table.getSchema().getName() + "." : "";
+		return "'" + table.getDatabase().getName() + "." + schema + table.getName() + "'";
+	}
+
+	private Dialect dialect() {
+		return cwcc.getConnectionProfile().getServerType().getDialect();
 	}
 	/******************************************************************
 	 *
@@ -728,6 +746,9 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		if (selected instanceof Database database) {
 			return database;
 		}
+		if (selected instanceof Schema schema) {
+			return schema.getDatabase();
+		}
 		if (selected instanceof Table table) {
 			return table.getDatabase();
 		}
@@ -735,6 +756,17 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			return column.getTable().getDatabase();
 		}
 		return null;
+	}
+
+	/** The selected schema, or the schema of the selected table or column; null when there is none. */
+	public Schema getSchema() {
+		Object selected = selectedNode == null ? null : selectedNode.getUserObject();
+
+		if (selected == null || selected instanceof Schema) {
+			return (Schema) selected;
+		}
+		Table table = getTable();
+		return table != null ? table.getSchema() : null;
 	}
 
 	public TableColumn getTableColumn() {

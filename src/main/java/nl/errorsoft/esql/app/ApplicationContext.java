@@ -81,6 +81,9 @@ public final class ApplicationContext {
 			images.addIcon("check_error", "check-error", 16, false);
 			images.addIcon("dbimg", "database", 16, false);
 			images.addIcon("dbimgsel", "database", 16, true);
+			images.addIcon("schemaimg", "folder-tree", 16, false);
+			images.addIcon("schemaimgsel", "folder-tree", 16, true);
+			images.addIcon("sc_select_20x20", "folder-tree", 20, false);
 			images.addIcon("tbimg", "table", 16, false);
 			images.addIcon("tbimgsel", "table", 16, true);
 			images.addIcon("fldimg", "field", 16, false);

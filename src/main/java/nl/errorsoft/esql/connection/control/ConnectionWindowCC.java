@@ -20,6 +20,7 @@ import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.query.control.QueryCC;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -169,7 +170,11 @@ public class ConnectionWindowCC extends Thread {
 			dbcc.dropTable(tb);
 			cwui.getDatabaseTreeView().deleteTable(tb);
 			jmcc.showConnectionState();
-			this.databaseSelected(tb.getDatabase());
+			if (tb.getSchema() != null && hasSchemas()) {
+				this.schemaSelected(tb.getSchema());
+			} else {
+				this.databaseSelected(tb.getDatabase());
+			}
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Drop table", e);
 		}
@@ -219,8 +224,50 @@ public class ConnectionWindowCC extends Thread {
 		this.tableSelected(cwui.getTable(), true);
 	}
 
+	/** Reloads the tables of the selected schema (or of the schema of the selected table), otherwise the content of the selected database. */
 	public void reloadSelectedDatabase() {
-		this.databaseSelected(cwui.getDatabase());
+		Schema schema = cwui.getSchema();
+
+		if (schema != null && hasSchemas()) {
+			this.schemaSelected(schema);
+		} else {
+			this.databaseSelected(cwui.getDatabase());
+		}
+	}
+
+	/** Whether a database of this server holds schemas, which hold the tables. */
+	private boolean hasSchemas() {
+		return dialect().supports(Dialect.Feature.SCHEMAS);
+	}
+
+	private Dialect dialect() {
+		return cw.getConnectionProfile().getServerType().getDialect();
+	}
+
+	public void createSchema(String name) {
+		try {
+			Database database = cwui.getDatabase();
+			jmcc.updateStatus("Creating " + dialect().schemaTerm() + "...", true);
+			Schema schema = new DatabaseCC(this).createSchema(database, name);
+			databaseSelected(database);
+			setStatusDetail(database.getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " created");
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Create " + dialect().schemaTerm(), e);
+		}
+	}
+
+	public void dropSchema() {
+		try {
+			Schema schema = cwui.getSchema();
+			jmcc.updateStatus("Dropping " + dialect().schemaTerm() + "...", true);
+			new DatabaseCC(this).dropSchema(schema);
+			cwui.getDatabaseTreeView().deleteSchema(schema);
+			cwui.removeDataTab();
+			setStatusDetail(schema.getDatabase().getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " dropped");
+			jmcc.showConnectionState();
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Drop " + dialect().schemaTerm(), e);
+		}
 	}
 
 	/*
@@ -242,6 +289,11 @@ public class ConnectionWindowCC extends Thread {
 	 * @description: shows the tables of the selected database in the tree. The tab with the table list opens on a double click, see openDatabase.
 	 */
 	public void databaseSelected(Database database) {
+		if (hasSchemas()) {
+			loadSchemas(database);
+			return;
+		}
+
 		try {
 			jmcc.updateStatus("Loading tables...", true);
 
@@ -250,6 +302,36 @@ public class ConnectionWindowCC extends Thread {
 			cwui.getDatabaseTreeView().loadTables(database, tables);
 			cwui.databaseSelected();
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
+			jmcc.showConnectionState();
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Load tables", e);
+		}
+	}
+
+	/** Shows the schemas of a database in the tree; on PostgreSQL this connects to that database. */
+	private void loadSchemas(Database database) {
+		String schemas = dialect().schemaTerm() + "s";
+
+		try {
+			jmcc.updateStatus("Loading " + schemas + "...", true);
+			java.util.List<Schema> list = new DatabaseCC(this).getSchemas(database);
+			cwui.getDatabaseTreeView().loadSchemas(database, list);
+			cwui.databaseSelected();
+			setStatusDetail(database.getName() + ": " + list.size() + " " + dialect().schemaTerm() + "(s)");
+			jmcc.showConnectionState();
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(cwui, "Load " + schemas, e);
+		}
+	}
+
+	/** Shows the tables of a schema in the tree. */
+	public void schemaSelected(Schema schema) {
+		try {
+			jmcc.updateStatus("Loading tables...", true);
+			java.util.List<Table> tables = new DatabaseCC(this).getTables(schema);
+			cwui.getDatabaseTreeView().loadTables(schema, tables);
+			cwui.databaseSelected();
+			setStatusDetail(schema.getDatabase().getName() + "." + schema.getName() + ": " + tables.size() + " table(s)");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Load tables", e);
@@ -350,9 +432,11 @@ public class ConnectionWindowCC extends Thread {
 
 			// Let the Table control class handle the data display creation.
 			tbcc = new TableCC(this);
-			cwui.showTableDataView(table.getDatabase().getName() + " : " + table.getName(), tbcc.getTableDataView(table, 0, 50));
-			setStatusDetail(
-				table.getDatabase().getName() + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
+			String place = table.getSchema() != null && hasSchemas()
+				? table.getDatabase().getName() + "." + table.getSchema().getName()
+				: table.getDatabase().getName();
+			cwui.showTableDataView(place + " : " + table.getName(), tbcc.getTableDataView(table, 0, 50));
+			setStatusDetail(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 			jmcc.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Load table data", e);
@@ -408,13 +492,13 @@ public class ConnectionWindowCC extends Thread {
 
 	public void dispatchCreateTableUI() {
 		try {
-			new CreateTableCC(this).startCreateTable(cwui.getDatabase());
+			new CreateTableCC(this).startCreateTable(cwui.getDatabase(), hasSchemas() ? cwui.getSchema() : null);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(cwui, "Create table", e);
 		}
 	}
 
-	/** Reads the tables and foreign keys of the selected database and opens them in the designer, arranged automatically. */
+	/** Reads the tables and foreign keys of the selected database (the selected schema, or the current one) and opens them in the designer, arranged automatically. */
 	public void openDatabaseInDesigner() {
 		if (!requireFeature(Dialect.Feature.DESIGNER, "The designer")) {
 			return;
@@ -422,10 +506,12 @@ public class ConnectionWindowCC extends Thread {
 
 		try {
 			Database database = cwui.getDatabase();
+			Schema schema = hasSchemas() && cwui.getSelectedNode().getUserObject() instanceof Schema selected ? selected : null;
 			jmcc.updateStatus("Reading database structure...", true);
-			DesignedDatabase designed = getContext().designer().reverseEngineer(database);
+			DesignedDatabase designed = schema != null ? getContext().designer().reverseEngineer(schema) : getContext().designer().reverseEngineer(database);
 			Model model = ModelFactory.fromDatabase(designed, cw.getConnectionProfile().getServerType().getDataTypes());
-			setStatusDetail(database.getName() + ": " + designed.tables().size() + " table(s) opened in the designer");
+			setStatusDetail((schema != null ? database.getName() + "." + schema.getName() : database.getName()) + ": " + designed.tables().size()
+				+ " table(s) opened in the designer");
 			jmcc.showConnectionState();
 			new DBCreator(jmcc.getUI(), cwui, model);
 		} catch (Exception e) {

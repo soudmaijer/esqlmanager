@@ -47,6 +47,25 @@ class TreeMenuTest {
 	}
 
 	@Test
+	void postgresDatabaseHoldsSchemasAndTheLabelsSaySo() {
+		List<Item> database = TreeMenu.itemsFor(Node.DATABASE, POSTGRES);
+		assertTrue(database.containsAll(List.of(Item.CREATE_SCHEMA, Item.RELOAD_SCHEMAS)));
+		assertFalse(database.contains(Item.RELOAD_TABLES));
+		assertEquals("Reload schemas", Item.RELOAD_SCHEMAS.label(POSTGRES));
+		assertEquals("Reload databases", Item.RELOAD_DATABASES.label(POSTGRES));
+		assertEquals(List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.DROP_SCHEMA,
+			Item.SEPARATOR, Item.RELOAD_TABLES), TreeMenu.itemsFor(Node.SCHEMA, POSTGRES));
+	}
+
+	@Test
+	void mySqlDatabaseHoldsTables() {
+		List<Item> database = TreeMenu.itemsFor(Node.DATABASE, MY_SQL);
+		assertTrue(database.contains(Item.RELOAD_TABLES));
+		assertFalse(database.contains(Item.CREATE_SCHEMA) || database.contains(Item.RELOAD_SCHEMAS));
+		assertEquals("Reload databases", Item.RELOAD_DATABASES.label(MY_SQL));
+	}
+
+	@Test
 	void noMenuStartsOrEndsWithASeparatorOrHasTwoInARow() {
 		for (Dialect dialect : List.of(MY_SQL, POSTGRES, SQL_SERVER, Dialects.forType(ServerType.ORACLE))) {
 			for (Node node : Node.values()) {

@@ -3,6 +3,7 @@
 package nl.errorsoft.esql.database.control;
 
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.ui.TableListView;
@@ -35,6 +36,22 @@ public class DatabaseCC {
 
 	public java.util.List<Table> getTables(Database database) throws Exception {
 		return service().getTables(database);
+	}
+
+	public java.util.List<Schema> getSchemas(Database database) throws Exception {
+		return service().getSchemas(database);
+	}
+
+	public java.util.List<Table> getTables(Schema schema) throws Exception {
+		return service().getTables(schema);
+	}
+
+	public Schema createSchema(Database database, String name) throws Exception {
+		return service().createSchema(database, name);
+	}
+
+	public void dropSchema(Schema schema) throws Exception {
+		service().dropSchema(schema);
 	}
 
 	private DatabaseService service() throws Exception {

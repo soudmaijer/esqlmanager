@@ -14,16 +14,18 @@ import nl.errorsoft.esql.dialect.Dialect.Maintenance;
 public final class TreeMenu {
 	/** What kind of node was clicked. */
 	public enum Node {
-		SERVER, DATABASE, TABLE, COLUMN
+		SERVER, DATABASE, SCHEMA, TABLE, COLUMN
 	}
 
 	public enum Item {
 		// Server.
-		CREATE_DATABASE("Create database..."), NEW_QUERY("New query"), USERS("Users..."), PROCESS_LIST("Process list"), SERVER_STATUS(
-			"Show status"), SERVER_VARIABLES("Show variables"), EXPORT("Export..."), IMPORT("Import..."), RELOAD_DATABASES("Reload databases"),
+		CREATE_DATABASE("Create {database}..."), NEW_QUERY("New query"), USERS("Users..."), PROCESS_LIST("Process list"), SERVER_STATUS(
+			"Show status"), SERVER_VARIABLES("Show variables"), EXPORT("Export..."), IMPORT("Import..."), RELOAD_DATABASES("Reload {database}s"),
 		// Database.
-		OPEN_DATABASE("Open"), CREATE_TABLE("Create table..."), OPEN_IN_DESIGNER("Open in designer"), DROP_DATABASE("Drop database..."), RELOAD_TABLES(
-			"Reload tables"),
+		OPEN_DATABASE("Open"), CREATE_TABLE("Create table..."), OPEN_IN_DESIGNER("Open in designer"), DROP_DATABASE("Drop {database}..."), RELOAD_TABLES(
+			"Reload tables"), CREATE_SCHEMA("Create {schema}..."), RELOAD_SCHEMAS("Reload {schema}s"),
+		// Schema.
+		DROP_SCHEMA("Drop {schema}..."),
 		// Table.
 		OPEN_TABLE("Open"), EDIT_TABLE("Edit table..."), INDEXES("Indexes..."), ADD_FIELD("Add field..."), EMPTY_TABLE("Empty table..."), DROP_TABLE(
 			"Drop table..."), OPTIMIZE(
@@ -37,8 +39,9 @@ public final class TreeMenu {
 			this.label = label;
 		}
 
-		public String label() {
-			return label;
+		/** The text of the item, in the words of the server: "Reload schemas" on PostgreSQL. */
+		public String label(Dialect dialect) {
+			return label.replace("{database}", dialect.databaseTerm()).replace("{schema}", dialect.schemaTerm());
 		}
 	}
 
@@ -62,14 +65,27 @@ public final class TreeMenu {
 				items.add(Item.RELOAD_DATABASES);
 			}
 			case DATABASE -> {
+				boolean schemas = dialect.supports(Feature.SCHEMAS);
 				items.add(Item.OPEN_DATABASE);
 				items.add(Item.NEW_QUERY);
 				items.add(Item.SEPARATOR);
+				addIf(items, schemas, Item.CREATE_SCHEMA);
 				addIf(items, dialect.supports(Feature.CREATE_TABLE), Item.CREATE_TABLE);
 				addIf(items, dialect.supports(Feature.DESIGNER), Item.OPEN_IN_DESIGNER);
 				items.add(Item.SEPARATOR);
 				addImportExport(items, dialect);
 				addIf(items, dialect.supports(Feature.CREATE_DATABASE), Item.DROP_DATABASE);
+				items.add(Item.SEPARATOR);
+				items.add(schemas ? Item.RELOAD_SCHEMAS : Item.RELOAD_TABLES);
+			}
+			case SCHEMA -> {
+				items.add(Item.NEW_QUERY);
+				items.add(Item.SEPARATOR);
+				addIf(items, dialect.supports(Feature.CREATE_TABLE), Item.CREATE_TABLE);
+				addIf(items, dialect.supports(Feature.DESIGNER), Item.OPEN_IN_DESIGNER);
+				items.add(Item.SEPARATOR);
+				addIf(items, dialect.supports(Feature.EXPORT), Item.EXPORT);
+				addIf(items, dialect.supports(Feature.SCHEMAS), Item.DROP_SCHEMA);
 				items.add(Item.SEPARATOR);
 				items.add(Item.RELOAD_TABLES);
 			}

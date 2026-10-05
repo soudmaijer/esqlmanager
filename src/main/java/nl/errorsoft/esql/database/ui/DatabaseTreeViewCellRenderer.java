@@ -4,6 +4,7 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.database.Schema;
 
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 
@@ -30,6 +31,8 @@ class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer {
 			} else {
 				setIcon(imgldr.getIcon("dbimg"));
 			}
+		} else if (node.getUserObject() instanceof Schema) {
+			setIcon(imgldr.getIcon(hasFocus ? "schemaimgsel" : "schemaimg"));
 		} else if (node.getUserObject() instanceof Table) {
 			if (hasFocus) {
 				setIcon(imgldr.getIcon("tbimgsel"));
