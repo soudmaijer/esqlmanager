@@ -109,14 +109,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 	}
 
 	public void initComponents() {
-		// FlatLaf paints much faster than the native macOS look and feel, especially while resizing.
-		if (!com.formdev.flatlaf.FlatLightLaf.setup()) {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception e) {
-				log.warn("Could not set the look and feel", e);
-			}
-		}
+		ApplicationContext.get().settings().getAppearance().apply();
 
 		/*
 		 * Menubar

@@ -16,6 +16,8 @@ public class Settings {
 	private boolean updater_enabled = false;
 	private String update_server = "";
 
+	private Appearance appearance = Appearance.SYSTEM;
+
 	// Table types & field types
 	private String[] tabletypes = new String[0];
 
@@ -39,6 +41,14 @@ public class Settings {
 		return update_server;
 	}
 
+	public Appearance getAppearance() {
+		return appearance;
+	}
+
+	public void setAppearance(Appearance appearance) {
+		this.appearance = appearance;
+	}
+
 	public void loadSettings() {
 		try {
 			SAXBuilder builder = new SAXBuilder();
@@ -49,6 +59,7 @@ public class Settings {
 					updater_enabled = true;
 				}
 				update_server = sdata.getRootElement().getChild("update_server").getText();
+				appearance = Appearance.of(sdata.getRootElement().getChildText("appearance"));
 			}
 
 			sdata = null;
@@ -63,6 +74,7 @@ public class Settings {
 		set = set + "<config>" + '\n';
 		set = set + "	<updater_enabled>" + updater_enabled + "</updater_enabled>" + '\n';
 		set = set + "	<update_server>" + update_server + "</update_server>" + '\n';
+		set = set + "	<appearance>" + appearance.name() + "</appearance>" + '\n';
 		set = set + "</config>" + '\n';
 
 		try {

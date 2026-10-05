@@ -31,7 +31,7 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 
 ### UI
 
-* Look and feel is FlatLaf (`FlatLightLaf`), with the system look and feel as fallback. The native macOS look was far too slow when resizing.
+* Look and feel is FlatLaf, chosen through `app.Appearance` (Follow the system, Light, Dark, Native) and stored in `conf/settings.xml` (`<appearance>`), changed in Settings > Preferences and applied at once. On macOS FlatLaf uses its Mac themes, `Main` sets the screen menu bar and system appearance properties before the first window (`Appearance.prepareDesktop`). The native macOS look was far too slow when resizing, so it is only used when the user picks Native.
 * Use Swing only, no AWT widgets (`Label`, `Button`, ...). New dialogs use layout managers, not null layouts with absolute bounds.
 * Do not hardcode `Color.white` or `Color.gray`. Take colours from `UIManager`. A read-only `JTextPane` is painted grey by FlatLaf, set its background explicitly.
 * Swing is touched on the event thread. `ESQLManagerUI.print` and `setStatusInfo` marshal themselves with `invokeLater`.

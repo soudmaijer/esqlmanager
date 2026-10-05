@@ -4,6 +4,8 @@ A graphical database manager written in Java Swing. It started in 2002 as a grad
 
 ![eSQLManager showing the products table of a PostgreSQL database](docs/screenshot.png)
 
+![The model designer with a shop database and its tables](docs/designer.png)
+
 ## Features
 
 Each database has its own dialect (`nl.errorsoft.esql.domain.dialect`) that decides how a feature is carried out, so the same feature works on MySQL and PostgreSQL. SQL Server and Oracle only have the features that work through plain JDBC; they have not been tested against a live server recently.

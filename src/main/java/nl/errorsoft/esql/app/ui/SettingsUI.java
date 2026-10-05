@@ -2,6 +2,7 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
+import nl.errorsoft.esql.app.Appearance;
 import nl.errorsoft.esql.app.Settings;
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 
@@ -17,6 +18,7 @@ public class SettingsUI extends JDialog implements ActionListener {
 
 	private JCheckBox update;
 	private JTextField updateServer;
+	private JComboBox<Appearance> appearance;
 	private ESQLManagerCC jmcc;
 
 	public SettingsUI(ESQLManagerCC jmcc, JFrame parent) {
@@ -24,11 +26,11 @@ public class SettingsUI extends JDialog implements ActionListener {
 		this.jmcc = jmcc;
 
 		JPanel p = new JPanel();
-		p.setPreferredSize(new Dimension(300, 145));
+		p.setPreferredSize(new Dimension(300, 175));
 		p.setLayout(null);
 
 		jtp = new JTabbedPane();
-		jtp.setBounds(5, 5, 290, 110);
+		jtp.setBounds(5, 5, 290, 140);
 
 		p.add(jtp);
 
@@ -51,11 +53,20 @@ public class SettingsUI extends JDialog implements ActionListener {
 		updateServer.setBounds(110, 15, 150, 19);
 		jp2.add(updateServer);
 
-		btnOk.setBounds(130, 120, 80, 23);
+		JLabel look = new JLabel("Appearance");
+		look.setBounds(10, 70, 110, 15);
+		jp2.add(look);
+
+		appearance = new JComboBox<>(Appearance.values());
+		appearance.setSelectedItem(ApplicationContext.get().settings().getAppearance());
+		appearance.setBounds(110, 67, 150, 22);
+		jp2.add(appearance);
+
+		btnOk.setBounds(130, 150, 80, 23);
 		p.add(btnOk);
 		btnOk.addActionListener(this);
 
-		btnCancel.setBounds(215, 120, 80, 23);
+		btnCancel.setBounds(215, 150, 80, 23);
 		p.add(btnCancel);
 		btnCancel.addActionListener(this);
 
@@ -72,7 +83,9 @@ public class SettingsUI extends JDialog implements ActionListener {
 		if (e.getSource() == btnOk) {
 			ApplicationContext.get().settings().setUpdaterEnabled(update.isSelected());
 			ApplicationContext.get().settings().setUpdateServer(updateServer.getText());
+			ApplicationContext.get().settings().setAppearance((Appearance) appearance.getSelectedItem());
 			ApplicationContext.get().settings().saveSettings();
+			ApplicationContext.get().settings().getAppearance().apply();
 			this.dispose();
 		} else if (e.getSource() == btnCancel) {
 			this.dispose();
