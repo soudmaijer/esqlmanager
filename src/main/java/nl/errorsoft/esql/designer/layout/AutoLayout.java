@@ -10,6 +10,7 @@ import java.util.Set;
 import org.eclipse.elk.alg.layered.LayeredLayoutProvider;
 import org.eclipse.elk.alg.layered.options.LayeredMetaDataProvider;
 import org.eclipse.elk.alg.layered.options.LayeredOptions;
+import org.eclipse.elk.alg.layered.options.OrderingStrategy;
 import org.eclipse.elk.core.data.LayoutMetaDataService;
 import org.eclipse.elk.core.options.Direction;
 import org.eclipse.elk.core.options.EdgeRouting;
@@ -86,6 +87,8 @@ public final class AutoLayout {
 		graph.setProperty(LayeredOptions.SPACING_NODE_NODE, (double) SPACING);
 		graph.setProperty(LayeredOptions.SPACING_NODE_NODE_BETWEEN_LAYERS, (double) LAYER_SPACING);
 		graph.setProperty(LayeredOptions.SPACING_COMPONENT_COMPONENT, (double) SPACING);
+		// Keep the order of the tables and keys within a layer where possible, so the referenced tables line up with the key columns.
+		graph.setProperty(LayeredOptions.CONSIDER_MODEL_ORDER_STRATEGY, OrderingStrategy.NODES_AND_EDGES);
 
 		Map<String, ElkNode> elkNodes = new LinkedHashMap<>();
 		for (Node node : byId.values()) {
