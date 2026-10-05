@@ -111,13 +111,18 @@ public class ConnectionProfile {
 	}
 
 	public void editProfile(ConnectionProfile profile) throws Exception {
+		editProfile(profile.getName(), profile);
+	}
+
+	/** Writes the settings over the saved profile that is called {@code previousName}, which renames it when the name of {@code profile} is another. */
+	public void editProfile(String previousName, ConnectionProfile profile) throws Exception {
 		if (profileData.hasRootElement()) {
 			java.util.List<?> l = profileData.getRootElement().getChildren("profile");
 
 			for (int i = 0; i < l.size(); i++) {
 				org.jdom.Element element = (org.jdom.Element) l.get(i);
 
-				if (profile.getName().equalsIgnoreCase(element.getChildText("name"))) {
+				if (previousName.equalsIgnoreCase(element.getChildText("name"))) {
 					ProfileXml.write(element, profile);
 				} else if (profile.isAutoConnect() && element.getChild("autoConnect") != null) {
 					element.getChild("autoConnect").setText("false");
@@ -139,6 +144,23 @@ public class ConnectionProfile {
 		copy.setSelection(selection);
 		copy.setServerType(st);
 		return copy;
+	}
+
+	/** Whether both hold the same name and connection settings (the last used flag is not a setting). */
+	public boolean sameSettings(ConnectionProfile other) {
+		return getName().equals(other.getName()) && getHost().equals(other.getHost()) && getPort().equals(other.getPort())
+			&& getUsername().equals(other.getUsername()) && getPassword().equals(other.getPassword())
+			&& (st == null ? other.st == null : other.st != null && st.getType() == other.st.getType()) && selection.equals(other.selection)
+			&& autoConnect == other.autoConnect && savePassword == other.savePassword;
+	}
+
+	/** {@code baseName} when no profile has it, else the first of "baseName 2", "baseName 3", ... that no profile has. */
+	public String uniqueName(String baseName) throws Exception {
+		String candidate = baseName;
+		for (int n = 2; profileExists(candidate); n++) {
+			candidate = baseName + " " + n;
+		}
+		return candidate;
 	}
 
 	/** The first of "name copy", "name copy 2", ... that no profile has. */

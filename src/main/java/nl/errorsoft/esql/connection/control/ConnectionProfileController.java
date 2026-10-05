@@ -56,7 +56,7 @@ public class ConnectionProfileController {
 		}
 		if (!conLastUsed) {
 			profileDialog = new ConnectionProfileDialog(mainWindow, this);
-			profileDialog.loadProfiles(cp.getProfiles());
+			profileDialog.loadProfiles(cp.getProfiles(), null);
 			mainController.showConnectionState();
 			profileDialog.setVisible(true);
 		}
@@ -92,38 +92,50 @@ public class ConnectionProfileController {
 		return accepted ? new String(field.getPassword()) : null;
 	}
 
-	public void addProfile(ConnectionProfile typed) {
+	/** The first free "New profile", "New profile 2", ... for a profile that is not saved yet. */
+	public String newProfileName() {
 		try {
-			mainController.updateStatus("Adding profile...", true);
-
-			if (!cp.profileExists(typed.getName())) {
-				cp.addProfile(typed);
-				profileDialog.loadProfiles(cp.getProfiles());
-				profileDialog.setSelectedProfile(typed);
-				mainController.showConnectionState();
-			}
+			return cp.uniqueName("New profile");
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(profileDialog, "Add profile", e);
+			ApplicationContext.get().errors().report(profileDialog, "New profile", e);
+			return "New profile";
 		}
 	}
 
-	/** Saves what is typed in the form over a saved profile. */
-	public void editProfile(ConnectionProfile saved, ConnectionProfile typed) {
+	/** Saves a new profile and selects it in the dialog. False (after a message) when the name is taken or saving failed. */
+	public boolean addProfile(ConnectionProfile typed) {
 		try {
-			mainController.updateStatus("Saving profile...", true);
-			saved.setName(typed.getName());
-			saved.setHost(typed.getHost());
-			saved.setPort(typed.getPort());
-			saved.setUsername(typed.getUsername());
-			saved.setPassword(typed.getPassword());
-			saved.setSavePassword(typed.isSavePassword());
-			saved.setSelection(typed.getSelection());
-			saved.setServerType(typed.getServerType());
-			saved.setAutoConnect(typed.isAutoConnect());
-			cp.editProfile(saved);
+			if (cp.profileExists(typed.getName())) {
+				Dialogs.warn(profileDialog, "Save profile", "A profile named '" + typed.getName() + "' exists already.");
+				return false;
+			}
+			mainController.updateStatus("Adding profile...", true);
+			cp.addProfile(typed);
+			profileDialog.loadProfiles(cp.getProfiles(), typed.getName());
 			mainController.showConnectionState();
+			return true;
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(profileDialog, "Add profile", e);
+			return false;
+		}
+	}
+
+	/** Saves what is typed in the form over the saved profile called {@code previousName}, also when it is renamed. False when the name is taken or saving failed. */
+	public boolean editProfile(String previousName, ConnectionProfile typed) {
+		try {
+			boolean renamed = !previousName.equalsIgnoreCase(typed.getName());
+			if (renamed && cp.profileExists(typed.getName())) {
+				Dialogs.warn(profileDialog, "Save profile", "A profile named '" + typed.getName() + "' exists already.");
+				return false;
+			}
+			mainController.updateStatus("Saving profile...", true);
+			cp.editProfile(previousName, typed);
+			profileDialog.loadProfiles(cp.getProfiles(), typed.getName());
+			mainController.showConnectionState();
+			return true;
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Edit profile", e);
+			return false;
 		}
 	}
 
@@ -132,8 +144,7 @@ public class ConnectionProfileController {
 		try {
 			ConnectionProfile copy = saved.copyAs(cp.uniqueCopyName(saved.getName()));
 			cp.addProfile(copy);
-			profileDialog.loadProfiles(cp.getProfiles());
-			profileDialog.setSelectedProfile(copy);
+			profileDialog.loadProfiles(cp.getProfiles(), copy.getName());
 			log.info("Profile '{}' duplicated as '{}'", saved.getName(), copy.getName());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Duplicate profile", e);
@@ -257,7 +268,7 @@ public class ConnectionProfileController {
 		try {
 			mainController.updateStatus("Deleting profile...", true);
 			this.cp.deleteProfile(cp);
-			profileDialog.loadProfiles(this.cp.getProfiles());
+			profileDialog.loadProfiles(this.cp.getProfiles(), null);
 			mainController.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Delete profile", e);

@@ -163,6 +163,17 @@ public final class Forms {
 		return row;
 	}
 
+	/** A line that takes the width left of the buttons at the right, for example a button with its result. */
+	public static JPanel buttonRowWithLeadingLine(Component line, Component... buttons) {
+		JPanel row = new JPanel(new BorderLayout(PADDING, 0));
+		JPanel left = new JPanel(new BorderLayout());
+		left.setBorder(BorderFactory.createEmptyBorder(PADDING, 0, 0, 0));
+		left.add(line, BorderLayout.CENTER);
+		row.add(left, BorderLayout.CENTER);
+		row.add(buttonRow(buttons), BorderLayout.EAST);
+		return row;
+	}
+
 	/** A panel of rows: a label in the first column and a field that takes the rest of the width. */
 	public static final class Grid {
 		private final JPanel panel = new JPanel(new GridBagLayout());

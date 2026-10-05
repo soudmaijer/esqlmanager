@@ -32,6 +32,7 @@ public class FormDialog extends JDialog {
 	};
 	private Component initialFocus;
 	private Component leadingButton;
+	private Component leadingLine;
 	private boolean accepted;
 
 	public FormDialog(Window owner, String title, boolean modal) {
@@ -63,7 +64,7 @@ public class FormDialog extends JDialog {
 		JPanel south = new JPanel(new BorderLayout());
 		error.setBorder(BorderFactory.createEmptyBorder(Forms.GAP, 0, 0, 0));
 		south.add(error, BorderLayout.NORTH);
-		south.add(leadingButton == null ? Forms.buttonRow(buttons) : Forms.buttonRowWithLeading(leadingButton, buttons), BorderLayout.CENTER);
+		south.add(buttonRow(buttons), BorderLayout.CENTER);
 
 		JPanel root = Forms.padded(new JPanel(new BorderLayout()));
 		root.add(content, BorderLayout.CENTER);
@@ -72,6 +73,18 @@ public class FormDialog extends JDialog {
 		if (buttons.length > 0) {
 			getRootPane().setDefaultButton(buttons[0]);
 		}
+	}
+
+	private JPanel buttonRow(JButton... buttons) {
+		if (leadingLine != null) {
+			return Forms.buttonRowWithLeadingLine(leadingLine, buttons);
+		}
+		return leadingButton == null ? Forms.buttonRow(buttons) : Forms.buttonRowWithLeading(leadingButton, buttons);
+	}
+
+	/** A line at the bottom left that takes the width left of the buttons, such as a button with its result. Set it before {@link #layoutDialog}. */
+	public void setLeadingLine(Component line) {
+		this.leadingLine = line;
 	}
 
 	/** A button apart from the others at the bottom left, for example Delete. Set it before {@link #layoutDialog}. */
