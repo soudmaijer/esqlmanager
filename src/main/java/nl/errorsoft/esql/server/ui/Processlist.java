@@ -28,7 +28,7 @@ public class Processlist extends JDialog {
 
 	private final JTable jtable;
 	private final JLabel lblInterval = new JLabel();
-	private final JButton kill = new JButton("Kill process");
+	private final JButton kill = Forms.button("&Kill");
 
 	public Processlist(ProcesslistCC controller, JFrame parent, String title) {
 		super(parent, title, false);

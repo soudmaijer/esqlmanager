@@ -8,18 +8,20 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.event.*;
 
-public class ModelProperties extends JTabbedPane implements PropertiesInterface {
+public class ModelProperties extends JPanel implements PropertiesInterface {
 	private Model m;
 
-	private JLabel lbl_name = new JLabel("Name");
-	private JLabel lbl_comm = new JLabel("Description");
-	private JLabel lbl_author = new JLabel("Author");
+	private JLabel lbl_name = new JLabel("Name:");
+	private JLabel lbl_comm = new JLabel("Description:");
+	private JLabel lbl_author = new JLabel("Author:");
 
 	private JTextField txt_name = new JTextField();
 	private JTextField txt_author = new JTextField();
 	private JTextArea txt_comm = new JTextArea();
 
 	public ModelProperties(Model m) {
+		lbl_name.setLabelFor(txt_name);
+		lbl_name.setDisplayedMnemonic('N');
 		this.m = m;
 
 		txt_name.setText(m.getName());
@@ -36,7 +38,8 @@ public class ModelProperties extends JTabbedPane implements PropertiesInterface 
 
 		JPanel general = Forms.padded(new Forms.Grid().row(lbl_name, txt_name).row(lbl_author, txt_author).area(lbl_comm, jsp).panel());
 
-		this.addTab("General", general);
+		setLayout(new BorderLayout());
+		add(general, BorderLayout.CENTER);
 	}
 
 	public void saveProperties() {

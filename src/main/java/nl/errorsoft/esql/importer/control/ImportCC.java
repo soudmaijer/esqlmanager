@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ApplicationContext;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.*;
 
 public class ImportCC implements ProgressListener {
@@ -45,7 +46,7 @@ public class ImportCC implements ProgressListener {
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
 			dbcc.selectInTree(iasu.getDatabaseTreeView(), cwcc.selectedObject());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Import as SQL", e);
+			ApplicationContext.get().errors().report("Import data", e);
 		}
 	}
 
@@ -72,8 +73,6 @@ public class ImportCC implements ProgressListener {
 			return;
 		}
 
-		ies = new ImportExportProgressUI(iasu);
-
 		try {
 			Object node = null;
 
@@ -81,11 +80,12 @@ public class ImportCC implements ProgressListener {
 				node = ((DefaultMutableTreeNode) tpa.getLastPathComponent()).getUserObject();
 			}
 
+			ies = new ImportExportProgressUI(iasu, "Import data", file + " into " + target);
 			ImportService ie = cwcc.getContext().newImport(node, file);
 			ie.setListener(this);
 			ie.start();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iasu, "Import as SQL", e);
+			ApplicationContext.get().errors().report(iasu, "Import data", e);
 		}
 	}
 
@@ -96,8 +96,10 @@ public class ImportCC implements ProgressListener {
 
 	@Override
 	public void failed(Exception error) {
-		ApplicationContext.get().errors().report(ies, "Import as SQL", error);
-		ies.dispose();
+		SwingUtilities.invokeLater(() -> {
+			ApplicationContext.get().errors().report(ies, "Import data", error);
+			ies.dispose();
+		});
 	}
 
 }

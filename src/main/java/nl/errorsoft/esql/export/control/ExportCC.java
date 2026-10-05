@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.app.ApplicationContext;
 import java.io.File;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.*;
 
 public class ExportCC implements ProgressListener {
@@ -45,7 +46,7 @@ public class ExportCC implements ProgressListener {
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
 			dbcc.selectInTree(iasu.getDatabaseTreeView(), cwcc.selectedObject());
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Export as SQL", e);
+			ApplicationContext.get().errors().report("Export data", e);
 		}
 	}
 
@@ -66,14 +67,12 @@ public class ExportCC implements ProgressListener {
 			return;
 		}
 		if (!dumpStructure && !dumpData) {
-			Dialogs.warn(iasu, title, "Select at least one of 'Dump table structure' and 'Dump table data'.");
+			Dialogs.warn(iasu, title, "Select at least one of 'Structure' and 'Data'.");
 			return;
 		}
 		if (new File(file).exists() && !Dialogs.confirmDestructive(iasu, title, "Overwrite the existing file '" + file + "'?", "Overwrite")) {
 			return;
 		}
-
-		ies = new ImportExportProgressUI(iasu);
 
 		try {
 			Object[] export = new Object[tpa.length];
@@ -82,12 +81,18 @@ public class ExportCC implements ProgressListener {
 				export[i] = ((DefaultMutableTreeNode) tpa[i].getLastPathComponent()).getUserObject();
 			}
 
+			ies = new ImportExportProgressUI(iasu, "Export data", describe(export) + " to " + file);
 			ExportService exp = cwcc.getContext().newExport(export, file, new ExportOptions(dumpStructure, dumpData, createDatabase, dropTable, useDatabase));
 			exp.setListener(this);
 			exp.start();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(iasu, "Export as SQL", e);
+			ApplicationContext.get().errors().report(iasu, "Export data", e);
 		}
+	}
+
+	/** The objects that are exported, for the progress window: the name of one, or the count. */
+	private static String describe(Object[] export) {
+		return export.length == 1 ? String.valueOf(export[0]) : export.length + " objects";
 	}
 
 	@Override
@@ -97,7 +102,9 @@ public class ExportCC implements ProgressListener {
 
 	@Override
 	public void failed(Exception error) {
-		ApplicationContext.get().errors().report(ies, "Export as SQL", error);
-		ies.dispose();
+		SwingUtilities.invokeLater(() -> {
+			ApplicationContext.get().errors().report(ies, "Export data", error);
+			ies.dispose();
+		});
 	}
 }

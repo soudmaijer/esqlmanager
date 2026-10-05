@@ -578,7 +578,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	private void perform(TreeMenu.Item item) {
 		switch (item) {
 			case CREATE_DATABASE -> {
-				String input = Dialogs.input(this, "Create database", "Name of the new database:");
+				String input = Dialogs.input(this, "Create database", "&Name:", "Create");
 
 				if (input != null) {
 					cwcc.createDatabase(input);

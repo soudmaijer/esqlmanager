@@ -18,10 +18,10 @@ import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 
 public class TableProperties extends JTabbedPane implements PropertiesInterface, ActionListener, ListSelectionListener, CaretListener { // General tab
-	private JLabel lbl_name = new JLabel("Name");
-	private JLabel lbl_comm = new JLabel("Comment");
-	private JLabel lbl_type = new JLabel("Type");
-	private JLabel lbl_desc = new JLabel("Description");
+	private JLabel lbl_name = new JLabel("Name:");
+	private JLabel lbl_comm = new JLabel("Comment:");
+	private JLabel lbl_type = new JLabel("Type:");
+	private JLabel lbl_desc = new JLabel("Description:");
 
 	private JTextField txt_name = new JTextField();
 	private JTextArea txt_desc = new JTextArea();
@@ -29,22 +29,22 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	private JComboBox<String> cmb_type = new JComboBox<>();
 
 	// Field tab
-	private JLabel lbl_fields = new JLabel("Fields");
+	private JLabel lbl_fields = new JLabel("Fields:");
 	private JTabbedPane tab_field = new JTabbedPane();
 	private JList<Field> lst_fields = new JList<>(new DefaultListModel<>());
 
 	// FieldTab 1
-	private JLabel lbl_fieldname = new JLabel("Fieldname");
-	private JLabel lbl_fieldcomm = new JLabel("Comment");
+	private JLabel lbl_fieldname = new JLabel("Field name:");
+	private JLabel lbl_fieldcomm = new JLabel("Comment:");
 	private JTextField txt_fieldname = new JTextField();
 	private JTextArea txt_fieldcomm = new JTextArea();
 	private JButton btn_new = new JButton("New");
 	private JButton btn_rem = new JButton("Remove");
 
 	// FieldTab 2
-	private JLabel lbl_types = new JLabel("Type");
-	private JLabel lbl_length = new JLabel("Length");
-	private JLabel lbl_default = new JLabel("Default");
+	private JLabel lbl_types = new JLabel("Type:");
+	private JLabel lbl_length = new JLabel("Length:");
+	private JLabel lbl_default = new JLabel("Default:");
 	private JComboBox<nl.errorsoft.esql.table.DataType> cmb_types = new JComboBox<>();
 	private JTextField txt_length = new JTextField();
 	private JTextField txt_default = new JTextField();
@@ -54,7 +54,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	private JCheckBox index = new JCheckBox("Index");
 	private JCheckBox unique = new JCheckBox("Unique");
 	private JCheckBox notnull = new JCheckBox("Not null");
-	private JCheckBox autoincrement = new JCheckBox("AutoIncrement");
+	private JCheckBox autoincrement = new JCheckBox("Auto increment");
 	private JCheckBox binary = new JCheckBox("Binary");
 	private JCheckBox unsigned = new JCheckBox("Unsigned");
 	private JCheckBox zerofill = new JCheckBox("Zerofill");
@@ -73,6 +73,8 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 	private final Map<Field, String> namesBefore = new IdentityHashMap<>();
 
 	public TableProperties(TableObject tb, nl.errorsoft.esql.connection.ServerType serverType, Model model) {
+		lbl_name.setLabelFor(txt_name);
+		lbl_name.setDisplayedMnemonic('N');
 		this.model = model;
 		this.serverType = serverType;
 
@@ -126,7 +128,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		flags.add(unique);
 		properties = Forms.padded(new Forms.Grid().row(lbl_types, cmb_types).row(lbl_length, txt_length).row(lbl_default, txt_default).full(flags).done());
 
-		tab_field.addTab("Create/Edit", first);
+		tab_field.addTab("Create or edit", first);
 		tab_field.addTab("Properties", properties);
 
 		this.addTab("Fields", fields);
@@ -134,7 +136,7 @@ public class TableProperties extends JTabbedPane implements PropertiesInterface,
 		this.tb = tb;
 
 		if (model != null) {
-			this.addTab("Foreign Keys", foreignKeysTab());
+			this.addTab("Foreign keys", foreignKeysTab());
 		}
 
 		cmb_types.addActionListener(this);

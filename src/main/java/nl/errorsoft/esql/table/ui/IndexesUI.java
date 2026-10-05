@@ -201,7 +201,7 @@ public class IndexesUI extends JPanel implements ActionListener, EditorTab {
 			if (modified && !confirmDiscard()) {
 				return;
 			}
-			String input = Dialogs.input(this, "New index", "Name of the new index:");
+			String input = Dialogs.input(this, "New index", "&Name:", "Create");
 
 			if (input != null) {
 				tcc.addNew(input);

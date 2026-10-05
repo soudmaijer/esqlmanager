@@ -7,9 +7,9 @@ import javax.swing.*;
 import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 
-public class DatabaseProperties extends JTabbedPane implements PropertiesInterface { // General tab
-	private JLabel lbl_name = new JLabel("Name");
-	private JLabel lbl_comm = new JLabel("Description");
+public class DatabaseProperties extends JPanel implements PropertiesInterface {
+	private JLabel lbl_name = new JLabel("Name:");
+	private JLabel lbl_comm = new JLabel("Description:");
 	private JTextField txt_name = new JTextField();
 	private JTextArea txt_comm = new JTextArea();
 
@@ -17,6 +17,8 @@ public class DatabaseProperties extends JTabbedPane implements PropertiesInterfa
 	private DatabaseObject db;
 
 	public DatabaseProperties(DatabaseObject db) {
+		lbl_name.setLabelFor(txt_name);
+		lbl_name.setDisplayedMnemonic('N');
 		txt_name.setText(db.getName());
 		txt_comm.setFont(txt_name.getFont());
 		txt_comm.setLineWrap(true);
@@ -27,7 +29,8 @@ public class DatabaseProperties extends JTabbedPane implements PropertiesInterfa
 
 		JPanel general = Forms.padded(new Forms.Grid().row(lbl_name, txt_name).area(lbl_comm, jsp).panel());
 
-		this.addTab("General", general);
+		setLayout(new BorderLayout());
+		add(general, BorderLayout.CENTER);
 
 		this.db = db;
 	}

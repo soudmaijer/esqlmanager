@@ -11,12 +11,13 @@ import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
 
 import javax.swing.*;
 
+import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 import java.awt.event.*;
 import nl.errorsoft.esql.dialect.Dialect;
 
-public class ConnectionProfileUI extends JDialog implements ItemListener, ActionListener {
+public class ConnectionProfileUI extends FormDialog implements ItemListener, ActionListener {
 	private JButton btnConnect;
 	private JButton btnSave;
 	private JButton btnDelete;
@@ -38,12 +39,10 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 	private boolean loadingProfile = false;
 
 	public ConnectionProfileUI(ESQLManagerUI jm, ConnectionProfileCC cpcc) {
-		super((JFrame) jm, false);
+		super(jm, "Connect to server", false);
 
 		this.jm = jm;
 		this.cpcc = cpcc;
-		this.setTitle("Connect to SQL server...");
-		this.setResizable(false);
 		sta = ServerType.getServerTypes();
 
 		jc = new JComboBox<>(new DefaultComboBoxModel<>());
@@ -57,23 +56,20 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 		pw = new JPasswordField();
 		pt = new JTextField("");
 		dbs = new JTextField("");
-		chkAutoConnect = new JCheckBox("Auto-connect to this server on startup");
+		chkAutoConnect = Forms.mnemonic(new JCheckBox(), "&Auto-connect to this server on startup");
 
-		Forms.Grid form = new Forms.Grid().row(new JLabel("Profile: "), jc).row(new JLabel("Server type: "), jcServer).row(new JLabel("Host: "), ip)
-			.row(new JLabel("Port: "), pt).row(new JLabel("Username: "), un).row(new JLabel("Password: "), pw).row(new JLabel("Database(s): "), dbs)
-			.full(chkAutoConnect);
+		Forms.Grid form = new Forms.Grid().row("&Profile:", jc).row("Server &type:", jcServer).row("&Host:", ip).row("P&ort:", pt)
+			.row("&Username:", un).row("Pass&word:", pw).row("&Database(s):", dbs).full(chkAutoConnect);
 		dbs.setToolTipText("Comma separated, for example db1,db2,db3. The first one is connected to.");
 
-		btnConnect = new JButton("Connect");
-		btnSave = new JButton("Save");
-		btnDelete = new JButton("Delete");
-		btnClose = new JButton("Close");
+		btnConnect = Forms.button("&Connect");
+		btnSave = Forms.button("&Save");
+		btnDelete = Forms.button("De&lete");
+		btnClose = Forms.button("Close");
 
-		JPanel root = Forms.padded(new JPanel(new BorderLayout()));
-		root.add(form.done(), BorderLayout.CENTER);
-		root.add(Forms.buttonRow(btnConnect, btnSave, btnDelete, btnClose), BorderLayout.SOUTH);
-		setContentPane(root);
-		getRootPane().setDefaultButton(btnConnect);
+		setLeadingButton(btnDelete);
+		layoutDialog(form.done(), btnConnect, btnSave, btnClose);
+		setInitialFocus(btnConnect);
 
 		btnSave.addActionListener(this);
 		btnConnect.addActionListener(this);
@@ -86,8 +82,8 @@ public class ConnectionProfileUI extends JDialog implements ItemListener, Action
 
 		previousServerType = (ServerType) jcServer.getSelectedItem();
 
-		this.pack();
-		this.setLocationRelativeTo(jm);
+		pack();
+		setLocationRelativeTo(jm);
 
 		jc.addItemListener(this);
 		jcServer.addItemListener(this);

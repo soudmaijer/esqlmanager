@@ -1,49 +1,53 @@
 package nl.errorsoft.esql.export.ui;
 
-import nl.errorsoft.esql.error.Dialogs;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-
+import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
-
-import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
 import nl.errorsoft.esql.export.control.ExportCC;
-
 import nl.errorsoft.esql.table.Table;
-/*
- * ExportAsSQLUI.java
- *
- * Created on 29 april 2003, 11:50
- */
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-
+import nl.errorsoft.esql.ui.util.FormDialog;
 import nl.errorsoft.esql.ui.util.Forms;
-import javax.swing.tree.TreePath;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-/**
- *
- * @author  CoolKillaH
- */
-public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener {
-	private ESQLManagerUI jm;
-	private ExportCC ecc;
+import nl.errorsoft.esql.ui.util.Validation;
+
+/** Exports databases, schemas or tables as SQL statements to a file: the tree to choose from on the left, the options and the file on the right. */
+public class ExportAsSQLUI extends FormDialog {
+	private final ExportCC ecc;
+	private final JScrollPane treeScroll = new JScrollPane();
+	private final JTextField file = new JTextField(24);
+
+	private final JCheckBox structure = Forms.mnemonic(new JCheckBox("", true), "&Structure");
+	private final JCheckBox data = Forms.mnemonic(new JCheckBox("", true), "&Data");
+	private final JCheckBox createDatabase = Forms.mnemonic(new JCheckBox("", true), "&Create database");
+	private final JCheckBox dropTable = Forms.mnemonic(new JCheckBox("", true), "Dr&op table");
+	private final JCheckBox useDatabase = Forms.mnemonic(new JCheckBox("", true), "&Use database");
+
 	private DatabaseTreeView dtv;
 
 	public ExportAsSQLUI(ESQLManagerUI jm, ExportCC ecc) {
-		super((JFrame) jm, false);
-		this.jm = jm;
+		super(jm, "Export data", false);
 		this.ecc = ecc;
-		this.initComponents();
-		this.setTitle("Export as SQL");
-		this.setResizable(false);
-		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		this.setLocationRelativeTo(jm);
-		this.setVisible(true);
-		this.toFront();
+		initComponents();
+		setResizable(true);
+		showDialog();
+		toFront();
 	}
 
 	public DatabaseTreeView getDatabaseTreeView() {
@@ -53,7 +57,7 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 	// Shows the database tree.
 	public void showDatabaseTreeView(final DatabaseTreeView tv) {
 		dtv = tv;
-		jScrollPane1.getViewport().add(dtv);
+		treeScroll.getViewport().add(dtv);
 		dtv.addTreeSelectionListener(e -> {
 			if (e.isAddedPath()) {
 				final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
@@ -74,119 +78,92 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		});
 	}
 
-	public void actionPerformed(ActionEvent e) {
-		Object src = e.getSource();
+	private void initComponents() {
+		JPanel content = Forms.titled(box(structure, data), "Content");
+		JPanel statements = Forms.titled(box(createDatabase, dropTable, useDatabase), "Statements");
 
-		if (src == jButton3) {
-			this.dispose();
-		} else if (src == jButton1) {
-			JFileChooser chooser = new JFileChooser();
-			chooser.setAcceptAllFileFilterUsed(true);
-			chooser.setDialogTitle("Select a (new) file...");
+		JButton browse = Forms.button("&Browse...");
+		browse.addActionListener(e -> chooseFile());
+		JPanel fileRow = new JPanel(new BorderLayout(Forms.GAP, 0));
+		fileRow.add(file, BorderLayout.CENTER);
+		fileRow.add(browse, BorderLayout.EAST);
+		// The label belongs to the text field, the row only adds the Browse button next to it.
+		JPanel target = Forms.titled(new Forms.Grid().row(Forms.label("&File:", file), fileRow).panel(), "Save as");
 
-			try {
-				if (chooser.showSaveDialog(jm) == JFileChooser.APPROVE_OPTION) {
-					this.jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
-				}
-			} catch (Exception err) {
-				ApplicationContext.get().errors().report(this, "Choose file", err);
+		JButton export = Forms.button("&Export");
+		JButton close = Forms.button("Close");
+		export.addActionListener(e -> export());
+		close.addActionListener(e -> dispose());
+
+		JPanel options = new Forms.Grid().full(content).full(statements).full(target).done();
+
+		JButton selectAll = Forms.button("Select a&ll");
+		JButton clear = Forms.button("Clea&r");
+		selectAll.addActionListener(e -> selectAll());
+		clear.addActionListener(e -> {
+			if (dtv != null) {
+				dtv.clearSelection();
 			}
-		} else if (src == jButton2) {
-			if (jTextField1.getText().trim().length() <= 0) {
-				Dialogs.error(this, getTitle(), "Select a file first.");
-			} else {
-				ecc.exportNodesAsSQL(this, dtv.getSelectionPaths(), jTextField1.getText(), jCheckBox1.isSelected(), jCheckBox2.isSelected(),
-					jCheckBox3.isSelected(), jCheckBox5.isSelected(), jCheckBox4.isSelected());
+		});
+		JPanel treeButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
+		treeButtons.add(selectAll);
+		treeButtons.add(clear);
+
+		JPanel tree = new JPanel(new BorderLayout(0, Forms.GAP));
+		tree.add(new JLabel("Select the databases, schemas or tables to export:"), BorderLayout.NORTH);
+		tree.add(treeScroll, BorderLayout.CENTER);
+		tree.add(treeButtons, BorderLayout.SOUTH);
+		treeScroll.setPreferredSize(new Dimension(240, 320));
+
+		JPanel main = new JPanel(new BorderLayout(Forms.PADDING, 0));
+		main.add(tree, BorderLayout.CENTER);
+		main.add(options, BorderLayout.EAST);
+		layoutDialog(main, export, close);
+		setInitialFocus(file);
+	}
+
+	private static JPanel box(JCheckBox... boxes) {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		for (JCheckBox box : boxes) {
+			panel.add(box);
+		}
+		return panel;
+	}
+
+	/** Selects every database of the server, which takes everything in them. */
+	private void selectAll() {
+		if (dtv == null) {
+			return;
+		}
+		DefaultMutableTreeNode root = (DefaultMutableTreeNode) dtv.getModel().getRoot();
+		List<TreePath> paths = new ArrayList<>();
+		for (int i = 0; i < root.getChildCount(); i++) {
+			paths.add(new TreePath(((DefaultMutableTreeNode) root.getChildAt(i)).getPath()));
+		}
+		dtv.setSelectionPaths(paths.toArray(new TreePath[0]));
+	}
+
+	private void chooseFile() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setAcceptAllFileFilterUsed(true);
+		chooser.setDialogTitle("Save as");
+
+		try {
+			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+				file.setText(chooser.getSelectedFile().getAbsolutePath());
 			}
+		} catch (Exception err) {
+			ApplicationContext.get().errors().report(this, "Choose file", err);
 		}
 	}
 
-	/** This method is called from within the constructor to
-	 * initialize the form.
-	 * WARNING: Do NOT modify this code. The content of this method is
-	 * always regenerated by the Form Editor.
-	 */
-	private void initComponents() {
-		jPanel1 = new javax.swing.JPanel();
-		jPanel2 = new javax.swing.JPanel();
-		jLabel1 = new javax.swing.JLabel();
-		jPanel3 = new javax.swing.JPanel();
-		jCheckBox1 = new javax.swing.JCheckBox("Dump table structure", true);
-		jCheckBox2 = new javax.swing.JCheckBox("Dump table data", true);
-		jCheckBox3 = new javax.swing.JCheckBox("Include `CREATE DATABASE` statements", true);
-		jCheckBox4 = new javax.swing.JCheckBox("Include `USE DATABASE` statements", true);
-		jCheckBox5 = new javax.swing.JCheckBox("Include `DROP TABLE` statements", true);
-		jPanel4 = new javax.swing.JPanel();
-		jTextField1 = new javax.swing.JTextField();
-		jButton1 = new javax.swing.JButton();
-		jButton2 = new javax.swing.JButton();
-		jButton3 = new javax.swing.JButton();
-		jScrollPane1 = new javax.swing.JScrollPane();
-
-		addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent evt) {
-				closeDialog(evt);
-			}
-		});
-
-		jLabel1.setText("Select the database(s), schema(s) or table(s) you would like to export on the left");
-		jPanel2.setLayout(new java.awt.BorderLayout());
-		jPanel2.add(jLabel1);
-		Forms.titled(jPanel2, "Info");
-
-		jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.Y_AXIS));
-		jPanel3.add(jCheckBox1);
-		jPanel3.add(jCheckBox2);
-		jPanel3.add(jCheckBox3);
-		jPanel3.add(jCheckBox5);
-		jPanel3.add(jCheckBox4);
-		Forms.titled(jPanel3, "Export options");
-
-		jTextField1.setEditable(false);
-		jTextField1.setColumns(20);
-		jButton1.setText("Browse...");
-		jButton1.addActionListener(this);
-		jPanel4.setLayout(new java.awt.BorderLayout(Forms.GAP, 0));
-		jPanel4.add(jTextField1, java.awt.BorderLayout.CENTER);
-		jPanel4.add(jButton1, java.awt.BorderLayout.EAST);
-		Forms.titled(jPanel4, "Save as");
-
-		jButton2.setText("Export");
-		jButton2.addActionListener(this);
-		jButton3.setText("Close");
-		jButton3.addActionListener(this);
-
-		jPanel1 = new Forms.Grid().full(jPanel2).full(jPanel3).full(jPanel4).full(Forms.buttonRow(jButton2, jButton3)).done();
-		jScrollPane1.setPreferredSize(new java.awt.Dimension(180, 320));
-		javax.swing.JPanel root = Forms.padded(new javax.swing.JPanel(new java.awt.BorderLayout(Forms.PADDING, 0)));
-		root.add(jScrollPane1, java.awt.BorderLayout.WEST);
-		root.add(jPanel1, java.awt.BorderLayout.CENTER);
-		setContentPane(root);
-		pack();
+	private void export() {
+		String problem = Validation.required("the file to save to", file.getText());
+		showError(problem);
+		if (problem == null) {
+			ecc.exportNodesAsSQL(this, dtv.getSelectionPaths(), file.getText().trim(), structure.isSelected(), data.isSelected(),
+				createDatabase.isSelected(), dropTable.isSelected(), useDatabase.isSelected());
+		}
 	}
-
-	/** Closes the dialog */
-	private void closeDialog(java.awt.event.WindowEvent evt) {
-		setVisible(false);
-		dispose();
-	}
-
-	// Variables declaration - do not modify
-	private javax.swing.JButton jButton2;
-	private javax.swing.JPanel jPanel4;
-	private javax.swing.JScrollPane jScrollPane1;
-	private javax.swing.JLabel jLabel1;
-	private javax.swing.JCheckBox jCheckBox3;
-	private javax.swing.JPanel jPanel3;
-	private javax.swing.JButton jButton1;
-	private javax.swing.JPanel jPanel2;
-	private javax.swing.JButton jButton3;
-	private javax.swing.JCheckBox jCheckBox5;
-	private javax.swing.JCheckBox jCheckBox4;
-	private javax.swing.JPanel jPanel1;
-	private javax.swing.JCheckBox jCheckBox2;
-	private javax.swing.JTextField jTextField1;
-	private javax.swing.JCheckBox jCheckBox1;
-	// End of variables declaration
-
 }

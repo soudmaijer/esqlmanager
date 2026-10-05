@@ -27,13 +27,14 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.designer.model.ForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.ui.util.FormDialog;
+import nl.errorsoft.esql.ui.util.Forms;
 
 /** Edits a foreign key of the designer: the referenced table, the column pairs, the name and the actions. */
-public class ForeignKeyDialog extends JDialog {
+public class ForeignKeyDialog extends FormDialog {
 	private final TableObject from;
 
 	private final JComboBox<TableObject> referenced = new JComboBox<>();
@@ -45,9 +46,10 @@ public class ForeignKeyDialog extends JDialog {
 
 	private String suggestedName;
 	private ForeignKey result;
+	private ForeignKey candidate;
 
 	private ForeignKeyDialog(Window owner, Model model, ForeignKey initial) {
-		super(owner, initial.name().isEmpty() ? "Add foreign key" : "Edit foreign key", ModalityType.APPLICATION_MODAL);
+		super(owner, initial.name().isEmpty() ? "Add foreign key" : "Edit foreign key", true);
 		this.from = initial.from();
 
 		for (Object object : model.getObjects()) {
@@ -82,9 +84,11 @@ public class ForeignKeyDialog extends JDialog {
 		referenced.addActionListener(e -> referencedChanged());
 		pairs.addTableModelListener(e -> renameIfSuggested());
 
-		setContentPane(content());
-		pack();
-		setLocationRelativeTo(owner);
+		setOkCancel(content(), initial.name().isEmpty() ? "&Add" : "&Save", "Cancel");
+		setValidator(this::check);
+		setOnAccept(() -> result = candidate);
+		setInitialFocus(referenced);
+		setResizable(true);
 	}
 
 	/**
@@ -93,72 +97,29 @@ public class ForeignKeyDialog extends JDialog {
 	 */
 	public static ForeignKey edit(Component parent, Model model, ForeignKey initial) {
 		ForeignKeyDialog dialog = new ForeignKeyDialog(SwingUtilities.getWindowAncestor(parent), model, initial);
-		dialog.setVisible(true);
-		return dialog.result;
+		return dialog.showDialog() ? dialog.result : null;
 	}
 
 	private JComponent content() {
-		JPanel form = new JPanel(new GridBagLayout());
-		form.setBorder(BorderFactory.createEmptyBorder(12, 12, 6, 12));
-		int row = 0;
-		row = addRow(form, row, "Table", new JLabel(from.getName()));
-		row = addRow(form, row, "References", referenced);
-		row = addRow(form, row, "Name", name);
-
 		JScrollPane scroll = new JScrollPane(pairTable);
 		scroll.setPreferredSize(new java.awt.Dimension(360, 110));
-		JButton add = new JButton("Add pair");
-		JButton remove = new JButton("Remove pair");
+		JButton add = Forms.button("Add &pair");
+		JButton remove = Forms.button("Re&move pair");
 		add.addActionListener(e -> pairs.addRow(new Object[]{firstColumn(from), primaryColumn(selectedTable())}));
 		remove.addActionListener(e -> removeSelectedPair());
-		JPanel pairButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		JPanel pairButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, Forms.GAP, 0));
 		pairButtons.add(add);
-		pairButtons.add(javax.swing.Box.createHorizontalStrut(6));
 		pairButtons.add(remove);
-		JPanel columns = new JPanel(new BorderLayout(0, 6));
+		JPanel columns = new JPanel(new BorderLayout(0, Forms.GAP));
 		columns.add(scroll, BorderLayout.CENTER);
 		columns.add(pairButtons, BorderLayout.SOUTH);
-		row = addRow(form, row, "Columns", columns);
 
-		row = addRow(form, row, "On delete", onDelete);
-		addRow(form, row, "On update", onUpdate);
-
-		JButton ok = new JButton("OK");
-		JButton cancel = new JButton("Cancel");
-		ok.addActionListener(e -> accept());
-		cancel.addActionListener(e -> dispose());
-		getRootPane().setDefaultButton(ok);
-		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		buttons.add(ok);
-		buttons.add(cancel);
-
-		JPanel content = new JPanel(new BorderLayout());
-		content.add(form, BorderLayout.CENTER);
-		content.add(buttons, BorderLayout.SOUTH);
-		return content;
+		return new Forms.Grid().row(new JLabel("Table:"), new JLabel(from.getName())).row("&References:", referenced).row("&Name:", name)
+			.area(Forms.label("Co&lumns:", pairTable), columns).row("On &delete:", onDelete).row("On &update:", onUpdate).panel();
 	}
 
-	private static int addRow(JPanel form, int row, String label, JComponent field) {
-		GridBagConstraints left = new GridBagConstraints();
-		left.gridx = 0;
-		left.gridy = row;
-		// A label sits in the middle of a one line field and at the top of the column table.
-		boolean tall = field.getPreferredSize().height > 40;
-		left.anchor = tall ? GridBagConstraints.NORTHWEST : GridBagConstraints.WEST;
-		left.insets = new Insets(tall ? 8 : 4, 0, 4, 10);
-		form.add(new JLabel(label), left);
-
-		GridBagConstraints right = new GridBagConstraints();
-		right.gridx = 1;
-		right.gridy = row;
-		right.weightx = 1;
-		right.fill = GridBagConstraints.HORIZONTAL;
-		right.insets = new Insets(4, 0, 4, 0);
-		form.add(field, right);
-		return row + 1;
-	}
-
-	private void accept() {
+	/** Builds the key from the dialog and checks it; the message to show, null when the key is valid. */
+	private String check() {
 		if (pairTable.isEditing()) {
 			pairTable.getCellEditor().stopCellEditing();
 		}
@@ -174,10 +135,10 @@ public class ForeignKeyDialog extends JDialog {
 			text(onUpdate.getSelectedItem()));
 		try {
 			key.validate();
-			result = key;
-			dispose();
+			candidate = key;
+			return null;
 		} catch (RuntimeException e) {
-			ApplicationContext.get().errors().report(this, "Foreign key", e);
+			return e.getMessage();
 		}
 	}
 

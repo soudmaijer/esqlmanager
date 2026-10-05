@@ -6,8 +6,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /** Small helpers for dialogs built with layout managers: the padding, a row of buttons and a label/field form. */
@@ -32,6 +35,65 @@ public final class Forms {
 		return component;
 	}
 
+	/** A text with an optional mnemonic: "&Name" underlines the N. A literal ampersand is written "&&". */
+	public record MnemonicText(String text, char mnemonic, int index) {
+		public static final MnemonicText NONE = new MnemonicText("", '\0', -1);
+
+		/** Splits "&Name" into the text "Name", the mnemonic 'N' and its index 0. Without an ampersand there is no mnemonic (index -1). */
+		public static MnemonicText parse(String source) {
+			StringBuilder text = new StringBuilder();
+			char mnemonic = '\0';
+			int index = -1;
+
+			for (int i = 0; i < source.length(); i++) {
+				char c = source.charAt(i);
+				if (c == '&' && i + 1 < source.length()) {
+					char next = source.charAt(++i);
+					if (next != '&' && index < 0) {
+						mnemonic = next;
+						index = text.length();
+					}
+					text.append(next);
+				} else {
+					text.append(c);
+				}
+			}
+			return new MnemonicText(text.toString(), mnemonic, index);
+		}
+	}
+
+	/** A button with the text of "&Create" and its mnemonic. */
+	public static JButton button(String source) {
+		JButton button = new JButton();
+		mnemonic(button, source);
+		return button;
+	}
+
+	/** Sets the text and the mnemonic of a button or checkbox from "&Text". */
+	public static <T extends AbstractButton> T mnemonic(T button, String source) {
+		MnemonicText parsed = MnemonicText.parse(source);
+		button.setText(parsed.text());
+		if (parsed.index() >= 0) {
+			button.setMnemonic(Character.toUpperCase(parsed.mnemonic()));
+			button.setDisplayedMnemonicIndex(parsed.index());
+		}
+		return button;
+	}
+
+	/** A label from "&Name:" that focuses the field when its mnemonic is pressed. The field may be null. */
+	public static JLabel label(String source, Component field) {
+		MnemonicText parsed = MnemonicText.parse(source);
+		JLabel label = new JLabel(parsed.text());
+		if (parsed.index() >= 0) {
+			label.setDisplayedMnemonic(Character.toUpperCase(parsed.mnemonic()));
+			label.setDisplayedMnemonicIndex(parsed.index());
+		}
+		if (field != null) {
+			label.setLabelFor(field);
+		}
+		return label;
+	}
+
 	/** A right aligned row of buttons, for the bottom of a dialog. */
 	public static JPanel buttonRow(Component... buttons) {
 		JPanel row = new JPanel(new FlowLayout(FlowLayout.RIGHT, GAP, 0));
@@ -39,6 +101,17 @@ public final class Forms {
 		for (Component b : buttons) {
 			row.add(b);
 		}
+		return row;
+	}
+
+	/** Buttons at the right and one apart at the left, for example a destructive Delete away from Save. */
+	public static JPanel buttonRowWithLeading(Component leading, Component... buttons) {
+		JPanel row = new JPanel(new java.awt.BorderLayout());
+		JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		left.setBorder(BorderFactory.createEmptyBorder(PADDING, 0, 0, 0));
+		left.add(leading);
+		row.add(left, java.awt.BorderLayout.WEST);
+		row.add(buttonRow(buttons), java.awt.BorderLayout.EAST);
 		return row;
 	}
 
@@ -57,6 +130,16 @@ public final class Forms {
 			panel.add(field, constraints(1, 1, 1));
 			row++;
 			return this;
+		}
+
+		/** Adds a label from "&Name:" (mnemonic focuses the field) and a field on one row. */
+		public Grid row(String label, Component field) {
+			return row(label(label, field), field);
+		}
+
+		/** Adds a label from "&Name:" and a field that takes the remaining height. */
+		public Grid area(String label, Component field) {
+			return area(label(label, field instanceof javax.swing.JScrollPane scroll ? scroll.getViewport().getView() : field), field);
 		}
 
 		/** Adds a label and a field that takes the remaining height, such as a text area. */

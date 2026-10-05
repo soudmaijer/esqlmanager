@@ -2,24 +2,24 @@ package nl.errorsoft.esql.connection.ui;
 
 import nl.errorsoft.esql.connection.DatabaseDriver;
 import nl.errorsoft.esql.connection.control.DatabaseDriverCC;
-import nl.errorsoft.esql.error.Dialogs;
+import nl.errorsoft.esql.ui.util.FormDialog;
+import nl.errorsoft.esql.ui.util.Validation;
 import nl.errorsoft.esql.ui.util.Forms;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Frame;
+import java.awt.Window;
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /** Edits the connection URL, the driver class and the quote characters of a database driver. */
-public class DriverUI extends JDialog {
+public class DriverUI extends FormDialog {
 	private final DatabaseDriverCC dbcc;
 
 	private final JComboBox<DatabaseDriver> type = new JComboBox<>();
@@ -29,20 +29,16 @@ public class DriverUI extends JDialog {
 	private final JTextField identifierClose = new JTextField(3);
 	private final JTextField stringOpen = new JTextField(3);
 	private final JTextField stringClose = new JTextField(3);
-	private final JButton save = new JButton("Save");
-	private final JButton cancel = new JButton("Cancel");
 
-	public DriverUI(DatabaseDriverCC dbcc, Frame parent) {
+	public DriverUI(DatabaseDriverCC dbcc, Window parent) {
 		super(parent, "Driver properties", false);
 		this.dbcc = dbcc;
 		initComponents();
-		setResizable(false);
-		setLocationRelativeTo(parent);
-		setVisible(true);
+		showDialog();
 	}
 
 	private void initComponents() {
-		JPanel properties = Forms.titled(new Forms.Grid().row(new JLabel("Driver class name:"), className).row(new JLabel("Connection URL:"), url)
+		JPanel properties = Forms.titled(new Forms.Grid().row("Driver &class name:", className).row("Connection &URL:", url)
 			.row(new JLabel("Identifier quote:"), pair(identifierOpen, identifierClose)).row(new JLabel("String quote:"), pair(stringOpen, stringClose))
 			.done(), "Driver properties");
 
@@ -50,15 +46,12 @@ public class DriverUI extends JDialog {
 		typePanel.add(type);
 		type.addItemListener(e -> show((DatabaseDriver) type.getSelectedItem()));
 
+		JButton save = Forms.button("&Save");
+		JButton close = Forms.button("Close");
 		save.addActionListener(e -> save());
-		cancel.addActionListener(e -> dispose());
-
-		JPanel root = Forms.padded(new JPanel(new BorderLayout()));
-		root.add(new Forms.Grid().full(typePanel).full(properties).done(), BorderLayout.CENTER);
-		root.add(Forms.buttonRow(save, cancel), BorderLayout.SOUTH);
-		setContentPane(root);
-		getRootPane().setDefaultButton(save);
-		pack();
+		close.addActionListener(e -> dispose());
+		layoutDialog(new Forms.Grid().full(typePanel).full(properties).done(), save, close);
+		setInitialFocus(type);
 	}
 
 	/** An opening and a closing character on one row. */
@@ -90,8 +83,10 @@ public class DriverUI extends JDialog {
 	}
 
 	private void save() {
-		if (className.getText().isBlank() || url.getText().isBlank()) {
-			Dialogs.warn(this, getTitle(), "Enter the driver class name and the connection URL.");
+		String problem = Validation.first(Validation.required("the driver class name", className.getText()),
+			Validation.required("the connection URL", url.getText()));
+		showError(problem);
+		if (problem != null) {
 			return;
 		}
 		DatabaseDriver driver = (DatabaseDriver) type.getSelectedItem();

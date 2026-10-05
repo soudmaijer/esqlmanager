@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.user.ui;
 
 import nl.errorsoft.esql.ui.util.Forms;
+import nl.errorsoft.esql.ui.util.Validation;
 
 import nl.errorsoft.esql.error.Dialogs;
 
@@ -31,10 +32,10 @@ public class UserManagerUI extends JDialog {
 	private final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(GrantTarget.global()));
 	private final JTree tree = new JTree(treeModel);
 	private final JPanel privilegePanel = new JPanel(new GridLayout(0, 2, 8, 4));
-	private final JButton apply = new JButton("Apply");
+	private final JButton apply = Forms.button("Appl&y");
 	private final JLabel message = new JLabel(" ");
-	private final JButton changePassword = new JButton("Password");
-	private final JButton delete = new JButton("Delete");
+	private final JButton changePassword = Forms.button("&Password...");
+	private final JButton delete = Forms.button("&Delete");
 
 	public UserManagerUI(ESQLManagerUI owner, UserManagerCC cc) throws Exception {
 		super(owner, "User manager", false);
@@ -83,7 +84,7 @@ public class UserManagerUI extends JDialog {
 	}
 
 	private JPanel userButtons() {
-		JButton add = new JButton("Add...");
+		JButton add = Forms.button("&Add...");
 		add.addActionListener(e -> addUser());
 		changePassword.addActionListener(e -> changePassword());
 		delete.addActionListener(e -> deleteUser());
@@ -230,23 +231,18 @@ public class UserManagerUI extends JDialog {
 		JTextField name = new JTextField(16);
 		JTextField host = new JTextField("%", 16);
 		JPasswordField password = new JPasswordField(16);
-		JPanel form = new JPanel(new GridLayout(0, 2, 6, 6));
-		form.add(new JLabel("Name"));
-		form.add(name);
+		JPasswordField repeat = new JPasswordField(16);
+		Forms.Grid grid = new Forms.Grid().row("&Name:", name);
 
 		if (cc.usesHost()) {
-			form.add(new JLabel("Host"));
-			form.add(host);
+			grid.row("&Host:", host);
 		}
-		form.add(new JLabel("Password"));
-		form.add(password);
+		grid.row("&Password:", password).row("&Repeat password:", repeat);
 
-		if (!Dialogs.form(this, "Add user", form)) {
-			return;
-		}
-
-		if (name.getText().trim().length() == 0) {
-			message.setText("A user needs a name");
+		boolean created = Dialogs.form(this, "Add user", grid.panel(), "Create", name, () -> Validation.first(Validation.required("a name", name.getText()),
+			cc.usesHost() ? Validation.required("a host", host.getText()) : null,
+			Validation.same(password.getPassword(), repeat.getPassword(), "The passwords are not the same.")));
+		if (!created) {
 			return;
 		}
 
@@ -262,8 +258,11 @@ public class UserManagerUI extends JDialog {
 
 	private void changePassword() {
 		JPasswordField password = new JPasswordField(16);
+		JPasswordField repeat = new JPasswordField(16);
+		JPanel form = new Forms.Grid().row("&New password:", password).row("&Repeat password:", repeat).panel();
 
-		if (!Dialogs.form(this, "New password for " + users.getSelectedValue(), password)) {
+		if (!Dialogs.form(this, "Change password of " + users.getSelectedValue(), form, "Change", password,
+			() -> Validation.same(password.getPassword(), repeat.getPassword(), "The passwords are not the same."))) {
 			return;
 		}
 

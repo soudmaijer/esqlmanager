@@ -4,6 +4,15 @@ eSQLManager changelog
 
 05-10-2026: Modernisation (Maven, Java 25, PostgreSQL support)
 
+- Dialogs share one base (ui.util.FormDialog): the action button is labelled with the action (Create, Save, Export,
+  Import, Connect), Enter is the default button, Esc cancels, the first field has the focus and a validator shows its
+  message in red inside the dialog, so typed data is kept. Create database, New index, Add user (name checked, password
+  twice) and Change password use it, as do the foreign key, driver, preferences, connection profile, field, designer
+  properties, upload and download dialogs. Labels end with a colon and have mnemonics (Alt+letter), titles are in
+  sentence case. Export and Import are resizable and named "Export data" and "Import data": Export groups its options
+  (Content, Statements), has Select all and Clear for the tree, and both have an editable file field; Import shows its
+  target. The progress window names the operation and target, shows a percentage and keeps a Close button for when the
+  job is done.
 - Dialog fixes from an audit: Export validates the selection, the options and an existing file before it starts, and
   Import checks the file and names its target; both open directly (the format step with only SQL is gone). Cancel in
   the designer's property dialog discards field edits; the Generate dialog checks and generates on a virtual thread and
