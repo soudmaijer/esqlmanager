@@ -5,16 +5,13 @@
  */
 package nl.errorsoft.esql.table.ui;
 
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.control.*;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.TableIndex;
+import nl.errorsoft.esql.table.control.IndexesCC;
 
-import nl.errorsoft.esql.domain.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Dimension;
+import java.awt.event.ActionListener;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
 
 /**
  *
@@ -258,13 +255,11 @@ public class IndexesUI extends javax.swing.JDialog implements ActionListener {
 		}
 
 		this.itemSelected(tia[0]);
-		this.jcmbIndexes.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				if (jcmbIndexes.getSelectedItem() != null && jcmbIndexes.getSelectedItem() instanceof TableIndex) {
-					TableIndex ti = (TableIndex) jcmbIndexes.getSelectedItem();
-					itemSelected(ti);
+		this.jcmbIndexes.addItemListener(e -> {
+			if (jcmbIndexes.getSelectedItem() != null && jcmbIndexes.getSelectedItem() instanceof TableIndex) {
+				TableIndex ti = (TableIndex) jcmbIndexes.getSelectedItem();
+				itemSelected(ti);
 
-				}
 			}
 		});
 	}

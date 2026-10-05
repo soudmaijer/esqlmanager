@@ -38,15 +38,15 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public List<ServerProcess> listProcesses(DatabaseConnection dbc) throws SQLException {
-		List<ServerProcess> processes = new ArrayList<ServerProcess>();
-		ResultSet rs = dbc.executeQuery("SHOW PROCESSLIST");
+		List<ServerProcess> processes = new ArrayList<>();
+		try (ResultSet rs = dbc.executeQuery("SHOW PROCESSLIST")) {
 
-		while (rs.next()) {
-			processes.add(new ServerProcess(rs.getString("Id"), rs.getString("User"), rs.getString("Host"), rs.getString("db"),
-				rs.getString("Command"), rs.getString("Time"), rs.getString("Info")));
+			while (rs.next()) {
+				processes.add(new ServerProcess(rs.getString("Id"), rs.getString("User"), rs.getString("Host"), rs.getString("db"),
+					rs.getString("Command"), rs.getString("Time"), rs.getString("Info")));
+			}
+
 		}
-
-		rs.close();
 		return processes;
 	}
 
@@ -64,14 +64,13 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
-		ResultSet rs = dbc.executeQuery(command + " TABLE " + quote(table));
 		String message = "";
 
-		if (rs.first()) {
-			message = rs.getString("Msg_Text");
+		try (ResultSet rs = dbc.executeQuery(command + " TABLE " + quote(table))) {
+			if (rs.first()) {
+				message = rs.getString("Msg_Text");
+			}
 		}
-
-		rs.close();
 		return message;
 	}
 
@@ -84,11 +83,10 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public String createTableDdl(DatabaseConnection dbc, String table) throws SQLException {
-		ResultSet rs = dbc.executeQuery("SHOW CREATE TABLE " + quote(table));
-		rs.first();
-		String ddl = rs.getString(2);
-		rs.close();
-		return ddl;
+		try (ResultSet rs = dbc.executeQuery("SHOW CREATE TABLE " + quote(table))) {
+			rs.first();
+			return rs.getString(2);
+		}
 	}
 
 	public String quote(String identifier) {
@@ -100,8 +98,8 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public List<String> createTableSql(String table, List<CreateColumn> columns, String tableType, String comment) {
-		List<String> definitions = new ArrayList<String>();
-		List<String> primary = new ArrayList<String>();
+		List<String> definitions = new ArrayList<>();
+		List<String> primary = new ArrayList<>();
 
 		for (CreateColumn column : columns) {
 			definitions.add(quote(column.name) + " " + columnDefinition(column));
@@ -146,7 +144,7 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public List<String> addIndexSql(String table, String name, String type, List<String> columns) {
-		List<String> quoted = new ArrayList<String>();
+		List<String> quoted = new ArrayList<>();
 
 		for (String column : columns) {
 			quoted.add(quote(column));
@@ -210,30 +208,30 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	public List<String> listDatabases(DatabaseConnection dbc) throws SQLException {
-		List<String> names = new ArrayList<String>();
-		ResultSet rs = dbc.executeQuery("SHOW DATABASES");
+		List<String> names = new ArrayList<>();
+		try (ResultSet rs = dbc.executeQuery("SHOW DATABASES")) {
 
-		while (rs.next()) {
-			names.add(rs.getString(1));
+			while (rs.next()) {
+				names.add(rs.getString(1));
+			}
+
 		}
-
-		rs.close();
 		return names;
 	}
 
 	public Vector<Table> listTables(DatabaseConnection dbc, Database db) throws SQLException {
-		Vector<Table> tables = new Vector<Table>();
-		ResultSet rs = dbc.executeQuery("SHOW TABLE STATUS");
+		Vector<Table> tables = new Vector<>();
+		try (ResultSet rs = dbc.executeQuery("SHOW TABLE STATUS")) {
 
-		while (rs.next()) {
-			Table table = new Table(db);
-			table.setName(rs.getString("Name"));
-			table.setType(rs.getString("Engine"));
-			table.setRowCount(rs.getInt("Rows"));
-			table.setComment(rs.getString("Comment"));
-			tables.add(table);
+			while (rs.next()) {
+				Table table = new Table(db);
+				table.setName(rs.getString("Name"));
+				table.setType(rs.getString("Engine"));
+				table.setRowCount(rs.getInt("Rows"));
+				table.setComment(rs.getString("Comment"));
+				tables.add(table);
+			}
 		}
-		rs.close();
 		return tables;
 	}
 

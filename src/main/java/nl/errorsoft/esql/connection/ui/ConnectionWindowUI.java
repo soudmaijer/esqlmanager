@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.ui;
 
+import org.apache.logging.log4j.LogManager;
+
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.database.Database;
@@ -8,19 +10,25 @@ import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
-import nl.errorsoft.esql.designer.ui.Field;
 import nl.errorsoft.esql.ui.HyperLinkListener;
 import nl.errorsoft.esql.ui.ImageLoader;
 
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.ui.*;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
+import nl.errorsoft.esql.table.ui.TableDataView;
+import nl.errorsoft.esql.table.ui.TableListView;
 
-import nl.errorsoft.esql.domain.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.tree.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 public class ConnectionWindowUI extends JInternalFrame implements ActionListener, MouseListener {
 	// Components.
@@ -325,6 +333,7 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 			html.setEditable(false);
 			html.addHyperlinkListener(new HyperLinkListener(cwcc));
 		} catch (Exception e) {
+			LogManager.getLogger(ConnectionWindowUI.class).warn("The help page could not be loaded: {}", e.getMessage());
 		}
 
 		// TabbedPane properties.
@@ -498,34 +507,29 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 		jsp.getViewport().add(dtv);
 
 		dtv.addMouseListener(this);
-		dtv.addTreeSelectionListener(new TreeSelectionListener() {
-			/*
-			 * Tree selection listener implementation.
-			 */
-			public void valueChanged(TreeSelectionEvent e) {
-				TreePath tp = e.getPath();
-				selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
+		dtv.addTreeSelectionListener(e -> {
+			TreePath tp = e.getPath();
+			selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
 
-				if (selectedNode.getUserObject() instanceof Database) {
-					if (e.isAddedPath()) {
-						cwcc.databaseSelected((Database) selectedNode.getUserObject());
+			if (selectedNode.getUserObject() instanceof Database) {
+				if (e.isAddedPath()) {
+					cwcc.databaseSelected((Database) selectedNode.getUserObject());
 
-					}
-				} else if (selectedNode.getUserObject() instanceof Table) {
-					if (e.isAddedPath()) {
-						if (((DefaultMutableTreeNode) e.getPath().getLastPathComponent()).getChildCount() > 0) {
-							cwcc.tableSelected((Table) selectedNode.getUserObject(), false);
-						} else {
-							cwcc.tableSelected((Table) selectedNode.getUserObject(), true);
-						}
-					}
-				} else if (selectedNode.getUserObject() instanceof nl.errorsoft.esql.table.TableColumn) {
-					cwcc.fieldSelected();
 				}
-				// Root?!
-				else {
-					cwcc.rootSelected();
+			} else if (selectedNode.getUserObject() instanceof Table) {
+				if (e.isAddedPath()) {
+					if (((DefaultMutableTreeNode) e.getPath().getLastPathComponent()).getChildCount() > 0) {
+						cwcc.tableSelected((Table) selectedNode.getUserObject(), false);
+					} else {
+						cwcc.tableSelected((Table) selectedNode.getUserObject(), true);
+					}
 				}
+			} else if (selectedNode.getUserObject() instanceof nl.errorsoft.esql.table.TableColumn) {
+				cwcc.fieldSelected();
+			}
+			// Root?!
+			else {
+				cwcc.rootSelected();
 			}
 		});
 	}
@@ -724,14 +728,14 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 				Object selected = selectedNode.getUserObject();
 
 				try {
-					if (selected instanceof Table) {
-						tblabel.setText(((Table) selected).getName());
+					if (selected instanceof Table table) {
+						tblabel.setText(table.getName());
 						tbmenu.show(dtv, e.getX(), e.getY());
-					} else if (selected instanceof Database) {
-						dblabel.setText(((Database) selected).getName());
+					} else if (selected instanceof Database database) {
+						dblabel.setText(database.getName());
 						dbmenu.show(dtv, e.getX(), e.getY());
-					} else if (selected instanceof nl.errorsoft.esql.table.TableColumn) {
-						fdlabel.setText(((nl.errorsoft.esql.table.TableColumn) selected).getName());
+					} else if (selected instanceof nl.errorsoft.esql.table.TableColumn column) {
+						fdlabel.setText(column.getName());
 						fdmenu.show(dtv, e.getX(), e.getY());
 					} else {
 						rtlabel.setText(this.getTitle());
@@ -746,11 +750,11 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public Table getTable() {
 		Object selected = selectedNode.getUserObject();
 
-		if (selected instanceof Table) {
-			return (Table) selected;
+		if (selected instanceof Table table) {
+			return table;
 		}
-		if (selected instanceof TableColumn) {
-			return ((TableColumn) selected).getTable();
+		if (selected instanceof TableColumn column) {
+			return column.getTable();
 		}
 
 		return null;
@@ -765,14 +769,14 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public Database getDatabase() {
 		Object selected = selectedNode.getUserObject();
 
-		if (selected instanceof Database) {
-			return (Database) selected;
+		if (selected instanceof Database database) {
+			return database;
 		}
-		if (selected instanceof Table) {
-			return ((Table) selected).getDatabase();
+		if (selected instanceof Table table) {
+			return table.getDatabase();
 		}
-		if (selected instanceof TableColumn) {
-			return ((TableColumn) selected).getTable().getDatabase();
+		if (selected instanceof TableColumn column) {
+			return column.getTable().getDatabase();
 		}
 		return null;
 	}
@@ -780,8 +784,8 @@ public class ConnectionWindowUI extends JInternalFrame implements ActionListener
 	public TableColumn getTableColumn() {
 		Object selected = selectedNode.getUserObject();
 
-		if (selected instanceof TableColumn) {
-			return (TableColumn) selected;
+		if (selected instanceof TableColumn column) {
+			return column;
 		}
 		return null;
 	}

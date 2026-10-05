@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.blob.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.blob.ui.DownloadFileUI;
 import nl.errorsoft.esql.blob.ui.UDDataIF;
@@ -15,7 +17,7 @@ import nl.errorsoft.esql.domain.*;
 import nl.errorsoft.esql.blob.BlobService;
 import java.util.*;
 
-public class UDDataCC implements Observer {
+public class UDDataCC {
 	private static final Logger log = LogManager.getLogger(UDDataCC.class);
 
 	private ConnectionWindowCC cwcc;
@@ -45,24 +47,20 @@ public class UDDataCC implements Observer {
 	public void downloadFile(String fileLocation) {
 		try {
 			BlobService udd = cwcc.getContext().newBlobTransfer();
-			udd.addObserver(this);
+			udd.setProgress(udif::setProgressValue);
 			udd.download(table, row, cell, fileLocation);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report((java.awt.Component) udif, "Save file", e);
 		}
 	}
 
 	public void uploadFile(String fileLocation) {
 		try {
 			BlobService udd = cwcc.getContext().newBlobTransfer();
-			udd.addObserver(this);
+			udd.setProgress(udif::setProgressValue);
 			udd.upload(table, row, cell, fileLocation);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report((java.awt.Component) udif, "Upload file", e);
 		}
-	}
-
-	public void update(Observable o, Object arg) {
-		udif.setProgressValue(((Integer) arg).intValue());
 	}
 }

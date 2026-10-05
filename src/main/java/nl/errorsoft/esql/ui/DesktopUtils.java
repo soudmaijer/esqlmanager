@@ -175,8 +175,7 @@ public class DesktopUtils {
 
 		for (int i = count - 1; i >= 0; i--) {
 			Component comp = comps[i];
-			if (comp instanceof JInternalFrame && comp.isVisible()) {
-				JInternalFrame jif = (JInternalFrame) comp;
+			if (comp instanceof JInternalFrame jif && comp.isVisible()) {
 				if (jif.isIconifiable()) {
 					try {
 						jif.setIcon(true);

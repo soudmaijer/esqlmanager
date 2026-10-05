@@ -1,4 +1,6 @@
 package nl.errorsoft.esql.table.control;
+
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.ServerService;
 
 import nl.errorsoft.esql.database.Database;
@@ -28,12 +30,8 @@ public class TableCC {
 
 	public void startCreateTableUI(ESQLManagerUI eu, Database d) throws Exception {
 		// Dit stuk code moet naar CreateTableCC!
-		try {
-			if (!cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.CREATE_TABLE)) {
-				cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-				return;
-			}
-		} catch (Exception e) {
+		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables")) {
+			return;
 		}
 
 		eu.updateStatus("Starting create table interface...", true);
@@ -45,12 +43,8 @@ public class TableCC {
 
 	public void startEditTableUI(ESQLManagerUI eu, Database d, Table t) throws Exception {
 		// Dit stuk code moet naar CreateTableCC!
-		try {
-			if (!cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.CREATE_TABLE)) {
-				cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-				return;
-			}
-		} catch (Exception e) {
+		if (!cwcc.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables")) {
+			return;
 		}
 
 		eu.updateStatus("Starting modify table interface...", true);

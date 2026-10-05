@@ -8,7 +8,7 @@ public class ImageLoader {
 	private String imgpath;
 	private Image[] images = new Image[0];
 	private String[] names = new String[0];
-	private java.util.Map<String, Icon> icons = new java.util.HashMap<String, Icon>();
+	private java.util.Map<String, Icon> icons = new java.util.HashMap<>();
 
 	public ImageLoader(String imgpath) {
 		this.imgpath = imgpath;

@@ -1,20 +1,15 @@
 package nl.errorsoft.esql.table.ui;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
-import nl.errorsoft.esql.designer.ui.Field;
-import nl.errorsoft.esql.designer.ui.Properties;
+import nl.errorsoft.esql.table.TableIndex;
 
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.table.*;
-
-import nl.errorsoft.esql.domain.*;
-import java.awt.*;
-import java.awt.event.*;
+import nl.errorsoft.esql.domain.DataType;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-import javax.swing.tree.*;
-import java.sql.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 public class FieldProperties extends JDialog implements ActionListener {
 	// Control class.
@@ -219,15 +214,12 @@ public class FieldProperties extends JDialog implements ActionListener {
 		}
 
 		// Listeners.
-		indexList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent lse) {
-				if (indexList.getSelectedIndex() > -1) {
-					Object obj = dlm.getElementAt(indexList.getSelectedIndex());
+		indexList.addListSelectionListener(lse -> {
+			if (indexList.getSelectedIndex() > -1) {
+				Object obj = dlm.getElementAt(indexList.getSelectedIndex());
 
-					if (obj instanceof TableIndex) {
-						TableIndex temp = (TableIndex) obj;
-						unique.setSelected(temp.isUnique());
-					}
+				if (obj instanceof TableIndex temp) {
+					unique.setSelected(temp.isUnique());
 				}
 			}
 		});

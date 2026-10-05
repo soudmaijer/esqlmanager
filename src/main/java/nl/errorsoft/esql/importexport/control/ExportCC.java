@@ -17,12 +17,11 @@ import org.apache.logging.log4j.Logger;
 
 import nl.errorsoft.esql.domain.dialect.Dialect;
 import nl.errorsoft.esql.data.*;
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.domain.*;
 import javax.swing.tree.*;
-import java.util.Observer;
-import java.util.Observable;
 
-public class ExportCC implements Observer {
+public class ExportCC implements ProgressListener {
 	private static final Logger log = LogManager.getLogger(ExportCC.class);
 
 	private ESQLManagerCC ecc;
@@ -37,12 +36,8 @@ public class ExportCC implements Observer {
 	 * @description: starts the export selection ui
 	 */
 	public void startExportSelectionUI(ConnectionWindowCC cwcc) {
-		try {
-			if (!cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.EXPORT)) {
-				cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-				return;
-			}
-		} catch (Exception e) {
+		if (!cwcc.requireFeature(Dialect.Feature.EXPORT, "Export")) {
+			return;
 		}
 
 		this.cwcc = cwcc;
@@ -58,7 +53,7 @@ public class ExportCC implements Observer {
 			ExportAsSQLUI iasu = new ExportAsSQLUI(ecc.getUI(), this);
 			iasu.showDatabaseTreeView(dbcc.getDatabaseTreeView());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Export sql", e);
 		}
 	}
 
@@ -67,7 +62,7 @@ public class ExportCC implements Observer {
 			DatabaseCC dbcc = new DatabaseCC(cwcc);
 			iasu.getDatabaseTreeView().loadTables(db, dbcc.getTables(db));
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Tables", e);
 		}
 	}
 
@@ -85,22 +80,22 @@ public class ExportCC implements Observer {
 			}
 
 			ExportService exp = cwcc.getContext().newExport(export, file, new ExportOptions(dumpStructure, dumpData, createDatabase, dropTable, useDatabase));
-			exp.addObserver(this);
+			exp.setListener(this);
 			exp.start();
 		} catch (Exception e) {
-			iasu.showErrorMessage("An error occured while importing the data! " + e.getMessage());
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report(iasu, "Export nodes as sql", e);
 		}
 	}
 
-	public void update(Observable o, Object arg) {
-		if (arg instanceof Integer) {
-			ies.setProgressValue(((Integer) arg).intValue());
-		} else if (arg instanceof Exception) {
-			log.error(((Exception) arg).getMessage(), (Exception) arg);
-			ies.showErrorMessage(((Exception) arg).getMessage());
-			ies.dispose();
-		}
+	@Override
+	public void progressed(int percent) {
+		ies.setProgressValue(percent);
+	}
+
+	@Override
+	public void failed(Exception error) {
+		ApplicationContext.get().errors().report(ies, "Export", error);
+		ies.dispose();
 	}
 
 	/*

@@ -25,7 +25,7 @@ public class OracleDialect extends AbstractDialect {
 	}
 
 	public List<String> listDatabases(DatabaseConnection dbc) {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 		names.add(dbc.getConnectionProfile().getDatabases());
 		return names;
 	}

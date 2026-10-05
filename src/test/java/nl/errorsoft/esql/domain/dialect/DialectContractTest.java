@@ -27,6 +27,11 @@ import nl.errorsoft.esql.table.TableService;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableData;
 import nl.errorsoft.esql.table.TableIndex;
+import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicReference;
+import nl.errorsoft.esql.domain.ProgressListener;
+import nl.errorsoft.esql.importexport.ExportService;
+import nl.errorsoft.esql.importexport.ImportService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,9 +120,11 @@ abstract class DialectContractTest {
 		insert(table, "third", null);
 
 		File file = dir.resolve("dump.sql").toFile();
-		runSynchronously(
-			new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(), new ExportOptions(true, true, false, true, true)));
-		runSynchronously(new ConnectionContext(connection).newImport(database, file.getAbsolutePath()));
+		ExportService export = new ConnectionContext(connection).newExport(new Object[]{table}, file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, true));
+		runSynchronously(export::setListener, export);
+		ImportService imported = new ConnectionContext(connection).newImport(database, file.getAbsolutePath());
+		runSynchronously(imported::setListener, imported);
 
 		TableData[][] rows = service().loadPage(table, 0, 100);
 		assertEquals(3, rows.length);
@@ -157,25 +164,25 @@ abstract class DialectContractTest {
 		DatabaseUser user = new DatabaseUser(name, admin.usesHost() ? "%" : null);
 
 		admin.createUser(connection, user, "pass'word");
-		assertTrue(admin.listUsers(connection).stream().anyMatch(u -> u.getName().equals(name)));
+		assertTrue(admin.listUsers(connection).stream().anyMatch(u -> u.name().equals(name)));
 		admin.changePassword(connection, user, "other");
 
 		GrantTarget onTable = GrantTarget.table(DATABASE, tableName);
-		admin.setGrants(connection, user, onTable, new LinkedHashSet<String>(Arrays.asList("SELECT", "INSERT")));
+		admin.setGrants(connection, user, onTable, new LinkedHashSet<>(Arrays.asList("SELECT", "INSERT")));
 		assertEquals(new LinkedHashSet<String>(Arrays.asList("SELECT", "INSERT")), admin.getGrants(connection, user, onTable));
 
-		admin.setGrants(connection, user, onTable, new LinkedHashSet<String>(Arrays.asList("SELECT")));
+		admin.setGrants(connection, user, onTable, new LinkedHashSet<>(Arrays.asList("SELECT")));
 		assertEquals(new LinkedHashSet<String>(Arrays.asList("SELECT")), admin.getGrants(connection, user, onTable));
 
 		GrantTarget onDatabase = GrantTarget.database(DATABASE);
 		String databasePrivilege = admin.getPrivileges(GrantTarget.Scope.DATABASE).get(0);
-		admin.setGrants(connection, user, onDatabase, new LinkedHashSet<String>(Arrays.asList(databasePrivilege)));
+		admin.setGrants(connection, user, onDatabase, new LinkedHashSet<>(Arrays.asList(databasePrivilege)));
 		assertTrue(admin.getGrants(connection, user, onDatabase).contains(databasePrivilege));
 
-		admin.setGrants(connection, user, onTable, new LinkedHashSet<String>());
-		admin.setGrants(connection, user, onDatabase, new LinkedHashSet<String>());
+		admin.setGrants(connection, user, onTable, new LinkedHashSet<>());
+		admin.setGrants(connection, user, onDatabase, new LinkedHashSet<>());
 		admin.dropUser(connection, user);
-		assertFalse(admin.listUsers(connection).stream().anyMatch(u -> u.getName().equals(name)));
+		assertFalse(admin.listUsers(connection).stream().anyMatch(u -> u.name().equals(name)));
 		service().dropTable(table(tableName));
 	}
 
@@ -197,17 +204,17 @@ abstract class DialectContractTest {
 	@Test
 	void showsServerStatusVariablesProcessesAndRunsMaintenance() throws Exception {
 		for (String query : Arrays.asList(dialect.getStatusQuery(), dialect.getVariablesQuery())) {
-			java.sql.ResultSet rs = connection.executeQuery(query);
-			assertTrue(rs.next(), query);
-			rs.close();
+			try (java.sql.ResultSet rs = connection.executeQuery(query)) {
+				assertTrue(rs.next(), query);
+			}
 		}
 
 		// Another connection is active, and can be ended.
-		DatabaseConnection other = new DatabaseConnection();
-		other.connect(profile(), "");
-		List<nl.errorsoft.esql.connection.ServerProcess> processes = dialect.listProcesses(connection);
-		assertFalse(processes.isEmpty());
-		other.close();
+		try (DatabaseConnection other = new DatabaseConnection()) {
+			other.connect(profile(), "");
+			List<nl.errorsoft.esql.connection.ServerProcess> processes = dialect.listProcesses(connection);
+			assertFalse(processes.isEmpty());
+		}
 
 		String name = "maint_" + System.nanoTime();
 		createTable(name, "");
@@ -273,11 +280,16 @@ abstract class DialectContractTest {
 	}
 
 	/** Export and Import are written to run on a thread, a test wants them finished. */
-	private void runSynchronously(Runnable work) {
-		java.util.concurrent.atomic.AtomicReference<Object> failure = new java.util.concurrent.atomic.AtomicReference<Object>();
-		((java.util.Observable) work).addObserver((o, arg) -> {
-			if (arg instanceof Exception) {
-				failure.set(arg);
+	private void runSynchronously(Consumer<ProgressListener> attach, Runnable work) {
+		AtomicReference<Exception> failure = new AtomicReference<>();
+		attach.accept(new ProgressListener() {
+			@Override
+			public void progressed(int percent) {
+			}
+
+			@Override
+			public void failed(Exception error) {
+				failure.set(error);
 			}
 		});
 		work.run();

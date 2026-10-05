@@ -23,7 +23,7 @@ public class DatabaseService {
 
 	/** The databases on the server, limited to the ones named in the profile when it names any. */
 	public List<Database> getDatabases() throws Exception {
-		List<Database> all = new ArrayList<Database>();
+		List<Database> all = new ArrayList<>();
 
 		for (String name : repository.listNames()) {
 			all.add(new Database(name));
@@ -35,7 +35,7 @@ public class DatabaseService {
 			return all;
 		}
 
-		List<Database> shown = new ArrayList<Database>();
+		List<Database> shown = new ArrayList<>();
 
 		for (Database database : all) {
 			for (String wanted : profileFilter) {
@@ -75,7 +75,7 @@ public class DatabaseService {
 	}
 
 	private static String[] splitFilter(String databases) {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 
 		for (String name : databases.split(",")) {
 			if (!name.trim().isEmpty()) {

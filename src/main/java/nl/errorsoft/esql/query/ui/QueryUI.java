@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.query.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
@@ -140,14 +142,10 @@ public class QueryUI extends JDialog implements ActionListener {
 						fileName = chooser.getSelectedFile().getAbsolutePath() + ".sql";
 					}
 
-					java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileOutputStream(new java.io.File(fileName)));
-					pw.println(jt.getText());
-					pw.close();
+					java.nio.file.Files.writeString(java.nio.file.Path.of(fileName), jt.getText() + System.lineSeparator());
 				}
 			} catch (Exception err) {
-				JOptionPane pane = new JOptionPane();
-				pane.setMessageType(JOptionPane.OK_OPTION);
-				pane.showMessageDialog(this, "An error occured while saving query!\n\n" + err.getMessage(), "Save query", JOptionPane.WARNING_MESSAGE);
+				ApplicationContext.get().errors().report(this, "Save query", err);
 			}
 		} else if (src == btnRunQuery) {
 			if (jcb.getSelectedItem() != null && jcb.getSelectedItem() instanceof nl.errorsoft.esql.database.Database) {
@@ -178,7 +176,7 @@ public class QueryUI extends JDialog implements ActionListener {
 						sb = new StringBuffer();
 					}
 				} catch (Exception ex) {
-					log.error(ex.getMessage(), ex);
+					ApplicationContext.get().errors().report(this, "Run query", ex);
 				}
 			}
 

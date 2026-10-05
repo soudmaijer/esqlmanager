@@ -1,22 +1,24 @@
 package nl.errorsoft.esql.importexport.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.database.ui.DatabaseTreeView;
 import nl.errorsoft.esql.importexport.control.ExportCC;
 
-import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.Table;
 /*
  * ExportAsSQLUI.java
  *
  * Created on 29 april 2003, 11:50
  */
-import nl.errorsoft.esql.domain.*;
 import javax.swing.*;
-import javax.swing.tree.*;
-import javax.swing.event.*;
-import java.awt.event.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 /**
  *
  * @author  CoolKillaH
@@ -49,19 +51,17 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 	public void showDatabaseTreeView(final DatabaseTreeView tv) {
 		dtv = tv;
 		jScrollPane1.getViewport().add(dtv);
-		dtv.addTreeSelectionListener(new TreeSelectionListener() {
-			public void valueChanged(TreeSelectionEvent e) {
-				if (e.isAddedPath()) {
-					final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
+		dtv.addTreeSelectionListener(e -> {
+			if (e.isAddedPath()) {
+				final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
 
-					if (selectedNode.getUserObject() instanceof Database) {
-						if (selectedNode.getChildCount() <= 0) {
-							databaseSelected((Database) selectedNode.getUserObject());
-						}
+				if (selectedNode.getUserObject() instanceof Database) {
+					if (selectedNode.getChildCount() <= 0) {
+						databaseSelected((Database) selectedNode.getUserObject());
 					}
-					if (selectedNode.getUserObject() instanceof Table) {
-						tv.removeSelectionPath(new TreePath(((DefaultMutableTreeNode) selectedNode.getParent()).getPath()));
-					}
+				}
+				if (selectedNode.getUserObject() instanceof Table) {
+					tv.removeSelectionPath(new TreePath(((DefaultMutableTreeNode) selectedNode.getParent()).getPath()));
 				}
 			}
 		});
@@ -86,6 +86,7 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 					this.jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
 				}
 			} catch (Exception err) {
+				ApplicationContext.get().errors().report(this, "Select file", err);
 			}
 		} else if (src == jButton2) {
 			if (jTextField1.getText().trim().length() <= 0) {

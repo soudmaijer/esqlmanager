@@ -22,7 +22,7 @@ public class ExportRepository extends AbstractRepository {
 	/** The tables of a database that have structure and data of their own, so no views. */
 	public List<String> tableNames(Database database) throws SQLException {
 		useDatabase(database.getName());
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 
 		for (Table table : dialect().listTables(dbc, database)) {
 			if (!"VIEW".equalsIgnoreCase(table.getType())) {
@@ -55,7 +55,7 @@ public class ExportRepository extends AbstractRepository {
 			ResultSetMetaData rsm = rs.getMetaData();
 
 			while (rs.next()) {
-				List<String> values = new ArrayList<String>();
+				List<String> values = new ArrayList<>();
 
 				for (int d = 1; d <= rsm.getColumnCount(); d++) {
 					TableColumn column = new TableColumn(null);

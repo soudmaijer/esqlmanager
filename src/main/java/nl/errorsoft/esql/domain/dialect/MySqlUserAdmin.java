@@ -30,14 +30,14 @@ public class MySqlUserAdmin implements UserAdmin {
 	}
 
 	public List<DatabaseUser> listUsers(DatabaseConnection dbc) throws SQLException {
-		List<DatabaseUser> users = new ArrayList<DatabaseUser>();
-		ResultSet rs = dbc.executeQuery("SELECT User, Host FROM mysql.user ORDER BY User, Host");
+		List<DatabaseUser> users = new ArrayList<>();
+		try (ResultSet rs = dbc.executeQuery("SELECT User, Host FROM mysql.user ORDER BY User, Host")) {
 
-		while (rs.next()) {
-			users.add(new DatabaseUser(rs.getString(1), rs.getString(2)));
+			while (rs.next()) {
+				users.add(new DatabaseUser(rs.getString(1), rs.getString(2)));
+			}
+
 		}
-
-		rs.close();
 		return users;
 	}
 
@@ -58,29 +58,22 @@ public class MySqlUserAdmin implements UserAdmin {
 	}
 
 	public Set<String> getGrants(DatabaseConnection dbc, DatabaseUser user, GrantTarget target) throws SQLException {
-		String sql;
+		String sql = switch (target.scope()) {
+			case GLOBAL -> "SELECT PRIVILEGE_TYPE FROM information_schema.USER_PRIVILEGES WHERE GRANTEE = ?";
+			case DATABASE -> "SELECT PRIVILEGE_TYPE FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ?";
+			default -> "SELECT PRIVILEGE_TYPE FROM information_schema.TABLE_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ? AND TABLE_NAME = ?";
+		};
 
-		switch (target.getScope()) {
-			case GLOBAL :
-				sql = "SELECT PRIVILEGE_TYPE FROM information_schema.USER_PRIVILEGES WHERE GRANTEE = ?";
-				break;
-			case DATABASE :
-				sql = "SELECT PRIVILEGE_TYPE FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ?";
-				break;
-			default :
-				sql = "SELECT PRIVILEGE_TYPE FROM information_schema.TABLE_PRIVILEGES WHERE GRANTEE = ? AND TABLE_SCHEMA = ? AND TABLE_NAME = ?";
-		}
-
-		Set<String> granted = new LinkedHashSet<String>();
+		Set<String> granted = new LinkedHashSet<>();
 
 		try (PreparedStatement ps = dbc.getConnection().prepareStatement(sql)) {
-			ps.setString(1, "'" + user.getName() + "'@'" + user.getHost() + "'");
+			ps.setString(1, "'" + user.name() + "'@'" + user.host() + "'");
 
-			if (target.getScope() != GrantTarget.Scope.GLOBAL) {
-				ps.setString(2, target.getDatabase());
+			if (target.scope() != GrantTarget.Scope.GLOBAL) {
+				ps.setString(2, target.database());
 			}
-			if (target.getScope() == GrantTarget.Scope.TABLE) {
-				ps.setString(3, target.getTable());
+			if (target.scope() == GrantTarget.Scope.TABLE) {
+				ps.setString(3, target.table());
 			}
 
 			try (ResultSet rs = ps.executeQuery()) {
@@ -95,7 +88,7 @@ public class MySqlUserAdmin implements UserAdmin {
 	public void setGrants(DatabaseConnection dbc, DatabaseUser user, GrantTarget target, Set<String> privileges) throws SQLException {
 		Set<String> current = getGrants(dbc, user, target);
 
-		for (String privilege : getPrivileges(target.getScope())) {
+		for (String privilege : getPrivileges(target.scope())) {
 			if (privileges.contains(privilege) && !current.contains(privilege)) {
 				dbc.executeUpdate("GRANT " + privilege + " ON " + objectName(target) + " TO " + account(user));
 			} else if (!privileges.contains(privilege) && current.contains(privilege)) {
@@ -105,7 +98,7 @@ public class MySqlUserAdmin implements UserAdmin {
 	}
 
 	private String account(DatabaseUser user) {
-		return dialect.literal(user.getName()) + "@" + dialect.literal(user.getHost());
+		return dialect.literal(user.name()) + "@" + dialect.literal(user.host());
 	}
 
 	private String identifiedBy(String password) {
@@ -113,13 +106,10 @@ public class MySqlUserAdmin implements UserAdmin {
 	}
 
 	private String objectName(GrantTarget target) {
-		switch (target.getScope()) {
-			case GLOBAL :
-				return "*.*";
-			case DATABASE :
-				return dialect.quote(target.getDatabase()) + ".*";
-			default :
-				return dialect.quote(target.getDatabase()) + "." + dialect.quote(target.getTable());
-		}
+		return switch (target.scope()) {
+			case GLOBAL -> "*.*";
+			case DATABASE -> dialect.quote(target.database()) + ".*";
+			default -> dialect.quote(target.database()) + "." + dialect.quote(target.table());
+		};
 	}
 }

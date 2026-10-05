@@ -9,7 +9,7 @@ import nl.errorsoft.esql.domain.*;
 import java.sql.*;
 import java.io.*;
 
-public class DatabaseConnection {
+public class DatabaseConnection implements AutoCloseable {
 	private String serverDescription = "";
 	private static final Logger log = LogManager.getLogger(DatabaseConnection.class);
 
@@ -20,8 +20,6 @@ public class DatabaseConnection {
 
 	private ConnectionProfile cp;
 	private Connection connection;
-	private Statement statement;
-	private PreparedStatement preparedStatement;
 
 	// Connection types.
 	private int connectionType = -1;
@@ -95,22 +93,27 @@ public class DatabaseConnection {
 	// Execute a query.
 	public java.sql.ResultSet executeQuery(String query) throws java.sql.SQLException {
 		log.debug("Query: {}", query);
-		statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+		Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+		// The statement lives as long as its result: closing the result set closes it.
+		statement.closeOnCompletion();
 		return statement.executeQuery(query);
 	}
 
 	public int executeUpdate(String query) throws java.sql.SQLException {
-		statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-		int i = statement.executeUpdate(query);
-		log.debug("Update: {} [{} row(s) updated]", query, i);
-		return i;
+		try (Statement statement = connection.createStatement()) {
+			int i = statement.executeUpdate(query);
+			log.debug("Update: {} [{} row(s) updated]", query, i);
+			return i;
+		}
 	}
 
 	// Runs a statement whose result, if any, is not needed.
 	public void execute(String query) throws java.sql.SQLException {
-		statement = connection.createStatement();
-		statement.execute(query);
-		log.debug("Execute: {}", query);
+		try (Statement statement = connection.createStatement()) {
+			statement.execute(query);
+			log.debug("Execute: {}", query);
+		}
 	}
 
 	// Returns the active database connection.
@@ -118,27 +121,9 @@ public class DatabaseConnection {
 		return connection;
 	}
 
-	// Returns the current statement.
-	public Statement getStatement() {
-		return statement;
-	}
-
-	// Closes the active statement and connection.
+	// Closes the connection.
+	@Override
 	public void close() {
-		try {
-			if (this.statement != null) {
-				this.statement.close();
-			}
-		} catch (java.sql.SQLException sql) {
-		}
-
-		try {
-			if (this.preparedStatement != null) {
-				this.preparedStatement.close();
-			}
-		} catch (java.sql.SQLException sql) {
-		}
-
 		try {
 			connection.close();
 			log.info("Connection to {} closed", url);

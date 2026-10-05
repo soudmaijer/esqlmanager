@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.database.control.DatabaseCC;
 
@@ -21,13 +23,6 @@ public class CreateTableCC {
 	private static final Logger log = LogManager.getLogger(CreateTableCC.class);
 
 	public CreateTableCC(ConnectionWindowCC cwcc) {
-		try {
-			if (!cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.CREATE_TABLE)) {
-				cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-				return;
-			}
-		} catch (Exception e) {
-		}
 		this.cwcc = cwcc;
 	}
 
@@ -39,8 +34,8 @@ public class CreateTableCC {
 			DatabaseCC dbc = new DatabaseCC(cwcc);
 			return dbc.getDatabases();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			return null;
+			ApplicationContext.get().errors().report("Load databases", e);
+			return new Vector();
 		}
 	}
 
@@ -71,7 +66,7 @@ public class CreateTableCC {
 			return;
 		}
 		try {
-			java.util.List<CreateColumn> list = new java.util.ArrayList<CreateColumn>();
+			java.util.List<CreateColumn> list = new java.util.ArrayList<>();
 			for (int i = 0; i < columns.size(); i++) {
 				list.add((CreateColumn) columns.get(i));
 			}
@@ -79,7 +74,7 @@ public class CreateTableCC {
 			ct.dispose();
 			cwcc.reloadSelectedDatabase();
 		} catch (Exception e) {
-			ct.showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(ct, "Create table", e);
 		}
 	}
 
@@ -89,7 +84,7 @@ public class CreateTableCC {
 			ct.dispose();
 			//cwcc.reloadSelectedDatabase();
 		} catch (Exception e) {
-			ct.showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(ct, "Modify table", e);
 		}
 	}
 

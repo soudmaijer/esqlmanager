@@ -42,6 +42,22 @@ Java Swing database manager (originally an Errorsoft graduation project, 2002-20
 * log4j2 only, never `System.out`/`System.err`. `OutputPanelAppender` shows log lines in the output panel. Query text is logged at `debug` in `nl.errorsoft.esql.data`.
 * Log connection start, server product/version and driver, so the output explains what happened.
 
+### Errors
+
+* Services and repositories do not swallow exceptions, they throw. A problem the user can fix (a row that can't be identified, a feature the database does not have) is an `EsqlException`, anything else is unexpected.
+* The controller or window that handles a user action catches and calls `ApplicationContext.get().errors().report(parentWindow, "Drop table", e)`. That logs the error once (a stack trace only for unexpected ones) and shows one message, "Drop table failed: <cause>". Do not call `log.error` and `showErrorMessage` yourself.
+* Long running jobs (export, import) report through `ProgressListener.failed`. `Main` installs `report` as the uncaught exception handler.
+* A catch that stays silent has a comment saying why (for example a table that can't be counted is still listed).
+
+### Resources and threads
+
+* Everything `AutoCloseable` is opened in try-with-resources: result sets, statements, streams, and `DatabaseConnection` itself. `DatabaseConnection.executeQuery` closes its statement when the result set is closed.
+* Background work (export, import, the process list) runs on virtual threads (`Thread.ofVirtual()`). Swing is still only touched on the event thread.
+
+### Java language level
+
+* Java 25 idioms: records for plain data and parameter objects, pattern matching for `instanceof` and `switch`, switch expressions, text blocks for SQL, lambdas instead of anonymous classes, diamond operator. `java.util.Observable` is gone, progress goes through `ProgressListener`.
+
 ### Configuration and resources
 
 * `runtime/` is the working directory: `conf/` (profiles, drivers, datatypes, settings, syntax), `credits.txt`. Code reads `conf/...` relative to the working directory, also in tests (surefire `workingDirectory`).

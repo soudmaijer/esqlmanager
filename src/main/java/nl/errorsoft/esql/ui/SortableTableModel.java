@@ -161,10 +161,10 @@ class Sort {
 			Object native1 = a.getNativeData();
 			Object native2 = b.getNativeData();
 
-			if (native1 instanceof Number && native2 instanceof Number) {
-				return compare((Number) native1, (Number) native2);
-			} else if (native1 instanceof java.util.Date && native2 instanceof java.util.Date) {
-				return compare((java.util.Date) native1, (java.util.Date) native2);
+			if (native1 instanceof Number number && native2 instanceof Number number1) {
+				return compare(number, number1);
+			} else if (native1 instanceof java.util.Date date && native2 instanceof java.util.Date date1) {
+				return compare(date, date1);
 			} else {
 				return (o1.toString().toLowerCase()).compareTo(o2.toString().toLowerCase());
 			}

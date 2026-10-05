@@ -5,15 +5,16 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Observable;
 
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.domain.ProgressListener;
 
-/** Runs an SQL script on its own thread and reports progress (0 to 100) or an Exception to its observers. */
-public class ImportService extends Observable implements Runnable {
+/** Runs an SQL script on its own thread and reports progress (0 to 100) or an Exception to its listener. */
+public class ImportService implements Runnable {
 	private static final String CONNECT = "\\connect ";
 
+	private ProgressListener listener = ProgressListener.NONE;
 	private final ImportRepository repository;
 	private final Object importToDatabase;
 	private final String file;
@@ -24,19 +25,22 @@ public class ImportService extends Observable implements Runnable {
 		this.file = file;
 	}
 
+	public void setListener(ProgressListener listener) {
+		this.listener = listener;
+	}
+
 	public void run() {
 		try {
 			progress(10);
 
-			if (importToDatabase instanceof Database) {
-				repository.switchDatabase(((Database) importToDatabase).getName());
+			if (importToDatabase instanceof Database database) {
+				repository.switchDatabase(database.getName());
 			}
 
 			runScript(Path.of(file));
 			progress(100);
 		} catch (Exception e) {
-			setChanged();
-			notifyObservers(e);
+			listener.failed(e);
 		}
 	}
 
@@ -63,11 +67,10 @@ public class ImportService extends Observable implements Runnable {
 	}
 
 	private void progress(int percent) {
-		setChanged();
-		notifyObservers(Integer.valueOf(percent));
+		listener.progressed(percent);
 	}
 
 	public void start() {
-		new Thread(this).start();
+		Thread.ofVirtual().name("import").start(this);
 	}
 }

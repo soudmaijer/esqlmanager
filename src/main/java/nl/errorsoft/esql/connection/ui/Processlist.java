@@ -1,28 +1,24 @@
 package nl.errorsoft.esql.connection.ui;
 
 import nl.errorsoft.esql.app.ApplicationContext;
-import nl.errorsoft.esql.connection.ConnectionContext;
 import nl.errorsoft.esql.connection.ServerService;
-
-import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.ServerProcess;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
-import nl.errorsoft.esql.table.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.errorsoft.esql.domain.*;
-import nl.errorsoft.esql.data.*;
-import java.sql.*;
-import java.awt.*;
-import java.awt.event.*;
+import nl.errorsoft.esql.data.DatabaseConnection;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
 
 public class Processlist extends JDialog implements Runnable, ActionListener {
 	private static final Logger log = LogManager.getLogger(Processlist.class);
@@ -58,13 +54,12 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 			parent.getLocation().y + (int) ((parent.getSize().height - this.getSize().height) / 2));
 		this.setVisible(true);
 
-		Thread t = new Thread(this);
-		t.start();
+		Thread.ofVirtual().name("process-list").start(this);
 	}
 
 	public void run() {
-		try {
-			m = new DatabaseConnection();
+		try (DatabaseConnection connection = new DatabaseConnection()) {
+			m = connection;
 			m.connect(cp, "");
 			servers = ApplicationContext.get().connection(m).servers();
 			int selRow = 0;
@@ -87,17 +82,13 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 
 					// Get processes and add all.
 					for (ServerProcess process : servers.getProcesses()) {
-						dtm.addRow(new Object[]{process.getId(), process.getUser(), process.getHost(), process.getDatabase(), process.getCommand(),
-							process.getTime(), process.getInfo()});
+						dtm.addRow(new Object[]{process.id(), process.user(), process.host(), process.database(), process.command(),
+							process.time(), process.info()});
 					}
 					jtable.setModel(dtm);
 					jtable.setRowSelectionInterval(selRow, selRow);
 
-					Runnable doAppend = new Runnable() {
-						public void run() {
-							jtable.updateUI();
-						}
-					};
+					Runnable doAppend = () -> jtable.updateUI();
 					SwingUtilities.invokeLater(doAppend);
 
 					for (int i = 5; i > 0; i--) {
@@ -107,10 +98,10 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 					}
 				}
 			}
-			ApplicationContext.get().release(m);
-			m.close();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
+		} finally {
+			ApplicationContext.get().release(m);
 		}
 	}
 
@@ -150,7 +141,7 @@ public class Processlist extends JDialog implements Runnable, ActionListener {
 				try {
 					servers.killProcess(jtable.getValueAt(jtable.getSelectedRow(), 0).toString());
 				} catch (Exception ae) {
-					log.error(ae.getMessage(), ae);
+					ApplicationContext.get().errors().report(this, "Kill process", ae);
 				}
 			}
 		}

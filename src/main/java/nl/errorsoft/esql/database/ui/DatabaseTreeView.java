@@ -8,11 +8,14 @@ import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.database.control.DatabaseCC;
 
-import nl.errorsoft.esql.table.*;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableColumn;
 
-import javax.swing.*;
-import javax.swing.tree.*;
-import nl.errorsoft.esql.domain.*;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 public class DatabaseTreeView extends JTree {
 	private DatabaseCC dcc;
@@ -30,11 +33,7 @@ public class DatabaseTreeView extends JTree {
 
 	public void addDatabase(Database db) {
 		rootNode.add(new DefaultMutableTreeNode(db));
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateUI();
-			}
-		});
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	public void deleteDatabase(Database database) {
@@ -47,11 +46,7 @@ public class DatabaseTreeView extends JTree {
 				break;
 			}
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateUI();
-			}
-		});
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	public void deleteTable(Table table) {
@@ -106,11 +101,7 @@ public class DatabaseTreeView extends JTree {
 		}
 
 		setModel(dtm);
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateUI();
-			}
-		});
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	public void loadTables(Database database, java.util.Vector tables) {
@@ -131,11 +122,7 @@ public class DatabaseTreeView extends JTree {
 				break;
 			}
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateUI();
-			}
-		});
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	public void loadTableColumns(Table table, nl.errorsoft.esql.table.TableColumn[] columns) {
@@ -162,11 +149,7 @@ public class DatabaseTreeView extends JTree {
 				}
 			}
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				updateUI();
-			}
-		});
+		SwingUtilities.invokeLater(this::updateUI);
 	}
 
 	public void selectTableInTree(Table table) {

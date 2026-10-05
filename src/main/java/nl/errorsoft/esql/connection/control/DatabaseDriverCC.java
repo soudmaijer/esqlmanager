@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.DatabaseDriver;
@@ -35,7 +37,7 @@ public class DatabaseDriverCC {
 			new DatabaseDriver().saveProperties(drivers, id, name, url, className, filePath, fieldOpen, fieldClose, dataOpen, dataClose);
 			du.showMessage("Saved changed successfully!");
 		} catch (Exception e) {
-			du.showErrorMessage("An error occured while saving the changes! " + e.getMessage());
+			ApplicationContext.get().errors().report(du, "Save properties", e);
 		}
 	}
 }

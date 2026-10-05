@@ -52,7 +52,7 @@ public class UserService {
 	}
 
 	public List<String> getDatabaseNames() throws Exception {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 
 		for (Database database : databases.getDatabases()) {
 			names.add(database.getName());
@@ -62,7 +62,7 @@ public class UserService {
 	}
 
 	public List<String> getTableNames(String databaseName) throws Exception {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 
 		for (Database database : databases.getDatabases()) {
 			if (database.getName().equals(databaseName)) {

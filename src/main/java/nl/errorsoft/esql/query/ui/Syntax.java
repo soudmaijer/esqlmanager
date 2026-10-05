@@ -3,17 +3,19 @@ package nl.errorsoft.esql.query.ui;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import javax.swing.event.*;
-import javax.swing.text.*;
-import java.util.*;
-import javax.swing.*;
-import java.awt.*;
+import java.io.File;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.util.List;
+import java.util.StringTokenizer;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
 
 public class Syntax implements DocumentListener {
 	private static final Logger log = LogManager.getLogger(Syntax.class);
@@ -66,29 +68,6 @@ public class Syntax implements DocumentListener {
 			log.warn("Warning: syntax.xml could not be loaded, no syntax highlighting will be available! {}", exception.getMessage());
 			log.error(exception.getMessage(), exception);
 		}
-		/*
-		try
-		{
-
-		BufferedReader in = new BufferedReader(new FileReader(file));
-			String input;
-			SyntaxObject current = null;
-
-			while( (input = in.readLine()) != null )
-			{	if( syn == null )
-				{	syn = new SyntaxObject(input);
-					current = syn;
-				}
-				else
-				{	SyntaxObject syn2 = new SyntaxObject(input);
-					current.next = syn2;
-					current = syn2;
-				}
-			}
-		}
-		catch(Exception e)
-		{
-		}*/
 	}
 
 	private Point checkKeyword(String word) {
@@ -197,11 +176,7 @@ public class Syntax implements DocumentListener {
 			final StyledDocument sd = (StyledDocument) e.getDocument();
 			final DocumentEvent tmp = e;
 			if (e.getDocument() instanceof StyledDocument) {
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						updateHighlight(sd, tmp.getOffset(), tmp.getLength());
-					}
-				});
+				SwingUtilities.invokeLater(() -> updateHighlight(sd, tmp.getOffset(), tmp.getLength()));
 			}
 		}
 	}
@@ -211,11 +186,7 @@ public class Syntax implements DocumentListener {
 			final StyledDocument sd = (StyledDocument) e.getDocument();
 			final DocumentEvent tmp = e;
 			if (e.getDocument() instanceof StyledDocument) {
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						updateHighlight(sd, tmp.getOffset(), tmp.getLength());
-					}
-				});
+				SwingUtilities.invokeLater(() -> updateHighlight(sd, tmp.getOffset(), tmp.getLength()));
 			}
 		}
 	}

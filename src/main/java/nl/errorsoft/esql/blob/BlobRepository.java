@@ -16,7 +16,7 @@ public class BlobRepository extends AbstractRepository {
 		super(dbc);
 	}
 
-	public void write(Table table, String column, String rowCondition, InputStream content, int length) throws SQLException {
+	public void write(Table table, String column, String rowCondition, InputStream content, long length) throws SQLException {
 		useDatabase(table.getDatabase().getName());
 
 		try (PreparedStatement statement = dbc.getConnection().prepareStatement(

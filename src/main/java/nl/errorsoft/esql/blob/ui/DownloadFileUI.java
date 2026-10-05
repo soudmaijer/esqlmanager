@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.blob.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.blob.control.UDDataCC;
 
 import java.awt.*;
@@ -126,9 +128,7 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 					jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
 				}
 			} catch (Exception err) {
-				JOptionPane pane = new JOptionPane();
-				pane.setMessageType(JOptionPane.OK_OPTION);
-				pane.showMessageDialog(this, "An error occured while saving data!\n\n" + err.getMessage(), "Save query", JOptionPane.WARNING_MESSAGE);
+				ApplicationContext.get().errors().report(this, "Select file", err);
 			}
 		} else if (e.getSource() == jButton2) {
 			this.dispose();

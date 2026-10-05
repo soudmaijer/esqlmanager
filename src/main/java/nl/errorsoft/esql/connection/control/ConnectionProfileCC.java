@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ConnectionProfile;
@@ -24,7 +26,7 @@ public class ConnectionProfileCC {
 		try {
 			cp = new ConnectionProfile();
 		} catch (Exception e) {
-			log.error("An error occured while loading profiles.xml file!");
+			ApplicationContext.get().errors().report("Connection profile cc", e);
 		}
 	}
 
@@ -57,7 +59,7 @@ public class ConnectionProfileCC {
 			jmcc.dispatchConnectionWindowUI(selcp);
 			cpui.dispose();
 		} catch (Exception e) {
-			cpui.showErrorMessage("Error while connecting to selected connectionprofile!");
+			ApplicationContext.get().errors().report(cpui, "Connect", e);
 		}
 	}
 
@@ -82,7 +84,7 @@ public class ConnectionProfileCC {
 				cpui.showMessage("Profile added succesfully!");
 			}
 		} catch (Exception e) {
-			cpui.showErrorMessage("Error while adding profile!");
+			ApplicationContext.get().errors().report(cpui, "Add profile", e);
 		}
 	}
 
@@ -102,7 +104,7 @@ public class ConnectionProfileCC {
 			jmcc.updateStatus("Ready...", false);
 			cpui.showMessage("Saved changes!");
 		} catch (Exception e) {
-			cpui.showErrorMessage("Error while saving profile!");
+			ApplicationContext.get().errors().report(cpui, "Edit profile", e);
 		}
 	}
 
@@ -113,7 +115,7 @@ public class ConnectionProfileCC {
 			cpui.loadProfiles(this.cp.getProfiles());
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			cpui.showErrorMessage("Error while deleting profile!");
+			ApplicationContext.get().errors().report(cpui, "Delete profile", e);
 		}
 	}
 }

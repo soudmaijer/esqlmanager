@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.importexport.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.database.Database;
 
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
@@ -149,6 +151,7 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 					this.jTextField1.setText(chooser.getSelectedFile().getAbsolutePath());
 				}
 			} catch (Exception err) {
+				ApplicationContext.get().errors().report(this, "Select file", err);
 			}
 		} else if (src == jButton2) {
 			if (jTextField1.getText().trim().length() <= 0) {

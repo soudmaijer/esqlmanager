@@ -36,7 +36,7 @@ public class PostgresDialect extends AbstractDialect {
 
 	/** Rows loaded with explicit ids leave the sequence behind, so the next insert would reuse an id. */
 	public List<String> afterDataLoadSql(DatabaseConnection dbc, String table) throws SQLException {
-		List<String> statements = new ArrayList<String>();
+		List<String> statements = new ArrayList<>();
 
 		try (PreparedStatement ps = dbc.getConnection().prepareStatement(
 			"SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND ( is_identity = 'YES' OR column_default LIKE 'nextval%' )")) {
@@ -54,16 +54,17 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	public String maintain(DatabaseConnection dbc, Maintenance command, String table) throws SQLException {
-		switch (command) {
-			case OPTIMIZE :
+		return switch (command) {
+			case OPTIMIZE -> {
 				dbc.executeUpdate("VACUUM " + quote(table));
-				return "Vacuumed " + table;
-			case ANALYZE :
+				yield "Vacuumed " + table;
+			}
+			case ANALYZE -> {
 				dbc.executeUpdate("ANALYZE " + quote(table));
-				return "Analyzed " + table;
-			default :
-				return super.maintain(dbc, command, table);
-		}
+				yield "Analyzed " + table;
+			}
+			default -> super.maintain(dbc, command, table);
+		};
 	}
 
 	/** PostgreSQL does not drop the database the connection is using, so move to another one first. */
@@ -84,16 +85,16 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	public List<ServerProcess> listProcesses(DatabaseConnection dbc) throws SQLException {
-		List<ServerProcess> processes = new ArrayList<ServerProcess>();
-		ResultSet rs = dbc.executeQuery(
-			"SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' AND pid <> pg_backend_pid() ORDER BY pid");
+		List<ServerProcess> processes = new ArrayList<>();
+		try (ResultSet rs = dbc.executeQuery(
+			"SELECT pid, usename, client_addr::text, datname, state, extract(epoch FROM now() - query_start)::bigint, query FROM pg_stat_activity WHERE backend_type = 'client backend' AND pid <> pg_backend_pid() ORDER BY pid")) {
 
-		while (rs.next()) {
-			processes.add(new ServerProcess(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6),
-				rs.getString(7)));
+			while (rs.next()) {
+				processes.add(new ServerProcess(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6),
+					rs.getString(7)));
+			}
+
 		}
-
-		rs.close();
 		return processes;
 	}
 
@@ -124,14 +125,14 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	public List<String> listDatabases(DatabaseConnection dbc) throws SQLException {
-		List<String> names = new ArrayList<String>();
-		ResultSet rs = dbc.executeQuery("SELECT datname FROM pg_database WHERE datallowconn AND NOT datistemplate ORDER BY datname");
+		List<String> names = new ArrayList<>();
+		try (ResultSet rs = dbc.executeQuery("SELECT datname FROM pg_database WHERE datallowconn AND NOT datistemplate ORDER BY datname")) {
 
-		while (rs.next()) {
-			names.add(rs.getString(1));
+			while (rs.next()) {
+				names.add(rs.getString(1));
+			}
+
 		}
-
-		rs.close();
 		return names;
 	}
 
@@ -150,10 +151,9 @@ public class PostgresDialect extends AbstractDialect {
 	}
 
 	public String getSchema(DatabaseConnection dbc) throws SQLException {
-		ResultSet rs = dbc.executeQuery("SELECT current_schema()");
-		String schema = rs.next() ? rs.getString(1) : "public";
-		rs.close();
-		return schema;
+		try (ResultSet rs = dbc.executeQuery("SELECT current_schema()")) {
+			return rs.next() ? rs.getString(1) : "public";
+		}
 	}
 
 	public Vector<Table> listTables(DatabaseConnection dbc, Database db) throws SQLException {

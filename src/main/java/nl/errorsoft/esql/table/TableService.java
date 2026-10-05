@@ -9,6 +9,7 @@ import java.util.List;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.domain.CreateColumn;
+import nl.errorsoft.esql.domain.EsqlException;
 import nl.errorsoft.esql.domain.DataType;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
@@ -155,7 +156,7 @@ public class TableService {
 	}
 
 	private List<String> columnNames(TableColumn[] columns) {
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 
 		for (TableColumn column : columns) {
 			names.add(column.getName());
@@ -183,7 +184,7 @@ public class TableService {
 		if (cell.getData().equals(newValue.toString())) {
 			return 0;
 		} else if (cell.getTableColumn().isBinary()) {
-			throw new Exception("Editing of binary data is not supported yet!");
+			throw new EsqlException("Editing of binary data is not supported yet!");
 		}
 
 		return repository.updateCell(table, row, cell, newValue.toString());

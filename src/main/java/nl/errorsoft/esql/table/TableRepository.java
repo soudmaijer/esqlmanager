@@ -11,12 +11,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import nl.errorsoft.esql.data.AbstractRepository;
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.CreateColumn;
+import nl.errorsoft.esql.domain.EsqlException;
 import nl.errorsoft.esql.domain.DataType;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.table.Table;
@@ -30,8 +28,6 @@ import nl.errorsoft.esql.domain.dialect.Dialect;
  * What differs per database is asked from the {@link Dialect}.
  */
 public class TableRepository extends AbstractRepository {
-	private static final Logger log = LogManager.getLogger(TableRepository.class);
-
 	public TableRepository(DatabaseConnection dbc) {
 		super(dbc);
 	}
@@ -40,7 +36,7 @@ public class TableRepository extends AbstractRepository {
 
 	public TableColumn[] loadColumns(Table table) throws SQLException {
 		useDatabaseOf(table);
-		List<TableColumn> columns = new ArrayList<TableColumn>();
+		List<TableColumn> columns = new ArrayList<>();
 		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
 
 		try (ResultSet rs = dmd.getColumns(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName(), "%")) {
@@ -70,49 +66,44 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	/** Loads the indexes of the table, its columns must be loaded first. */
-	public TableIndex[] loadIndexes(Table table) {
-		List<TableIndex> indexes = new ArrayList<TableIndex>();
+	public TableIndex[] loadIndexes(Table table) throws SQLException {
+		List<TableIndex> indexes = new ArrayList<>();
+		useDatabaseOf(table);
+		DatabaseMetaData dmd = dbc.getConnection().getMetaData();
+		String primaryKeyName = primaryKeyName(dmd, table);
 
-		try {
-			useDatabaseOf(table);
-			DatabaseMetaData dmd = dbc.getConnection().getMetaData();
-			String primaryKeyName = primaryKeyName(dmd, table);
-
-			try (ResultSet rs = dmd.getIndexInfo(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName(), false, false)) {
-				while (rs.next()) {
-					// Some drivers add a statistics row without an index name.
-					String indexName = rs.getString("INDEX_NAME");
-					if (indexName == null) {
-						continue;
-					}
-
-					// The primary key is always shown as PRIMARY, whatever name the server gave it.
-					String name = indexName.equals(primaryKeyName) ? "PRIMARY" : indexName;
-					TableColumn column = table.getTableColumn(rs.getString("COLUMN_NAME"));
-
-					// Some drivers report columns that are not in the column list.
-					if (column == null) {
-						continue;
-					}
-
-					TableIndex index = find(indexes, name);
-
-					if (index == null) {
-						index = new TableIndex(table);
-						index.setName(name);
-						index.setUnique(!rs.getBoolean("NON_UNIQUE"));
-						index.setFulltext("FULLTEXT".equalsIgnoreCase(rs.getString("TYPE")));
-						indexes.add(index);
-					}
-
-					column.setHasUniqueIndex(index.isUnique());
-					column.setIndexed(true);
-					column.setIndexPosition(rs.getInt("ORDINAL_POSITION"));
-					index.addTableColumn(column);
+		try (ResultSet rs = dmd.getIndexInfo(dbc.getConnection().getCatalog(), dbc.getSchema(), table.getName(), false, false)) {
+			while (rs.next()) {
+				// Some drivers add a statistics row without an index name.
+				String indexName = rs.getString("INDEX_NAME");
+				if (indexName == null) {
+					continue;
 				}
+
+				// The primary key is always shown as PRIMARY, whatever name the server gave it.
+				String name = indexName.equals(primaryKeyName) ? "PRIMARY" : indexName;
+				TableColumn column = table.getTableColumn(rs.getString("COLUMN_NAME"));
+
+				// Some drivers report columns that are not in the column list.
+				if (column == null) {
+					continue;
+				}
+
+				TableIndex index = find(indexes, name);
+
+				if (index == null) {
+					index = new TableIndex(table);
+					index.setName(name);
+					index.setUnique(!rs.getBoolean("NON_UNIQUE"));
+					index.setFulltext("FULLTEXT".equalsIgnoreCase(rs.getString("TYPE")));
+					indexes.add(index);
+				}
+
+				column.setHasUniqueIndex(index.isUnique());
+				column.setIndexed(true);
+				column.setIndexPosition(rs.getInt("ORDINAL_POSITION"));
+				index.addTableColumn(column);
 			}
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
 		}
 
 		return indexes.toArray(new TableIndex[indexes.size()]);
@@ -217,7 +208,7 @@ public class TableRepository extends AbstractRepository {
 		}
 
 		// Let the server do the paging when the dialect can, otherwise skip rows in the result set.
-		List<String> keyColumns = new ArrayList<String>();
+		List<String> keyColumns = new ArrayList<>();
 		for (TableColumn column : columns) {
 			if (column.isPrimary()) {
 				keyColumns.add(quote(column.getName()));
@@ -245,7 +236,7 @@ public class TableRepository extends AbstractRepository {
 				columns[i].setType(rsmd.getColumnType(i + 1));
 			}
 
-			List<TableData[]> rows = new ArrayList<TableData[]>();
+			List<TableData[]> rows = new ArrayList<>();
 
 			while (rs.next()) {
 				TableData[] row = new TableData[columns.length];
@@ -267,8 +258,8 @@ public class TableRepository extends AbstractRepository {
 	}
 
 	public void insertRow(Table table, TableData[] row) throws Exception {
-		List<String> names = new ArrayList<String>();
-		List<String> values = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
+		List<String> values = new ArrayList<>();
 
 		for (TableData cell : row) {
 			names.add(quote(cell.getTableColumn().getName()));
@@ -301,8 +292,8 @@ public class TableRepository extends AbstractRepository {
 	 * otherwise all of its columns that are not binary.
 	 */
 	public String rowFilter(TableData[] row) throws Exception {
-		List<String> keys = new ArrayList<String>();
-		List<String> columns = new ArrayList<String>();
+		List<String> keys = new ArrayList<>();
+		List<String> columns = new ArrayList<>();
 
 		for (TableData cell : row) {
 			TableColumn column = cell.getTableColumn();
@@ -318,7 +309,7 @@ public class TableRepository extends AbstractRepository {
 		List<String> conditions = keys.isEmpty() ? columns : keys;
 
 		if (conditions.isEmpty()) {
-			throw new Exception("The row can't be identified, it has no key and no column to compare.");
+			throw new EsqlException("The row can't be identified, it has no key and no column to compare.");
 		}
 
 		return String.join(" AND ", conditions);
@@ -352,7 +343,7 @@ public class TableRepository extends AbstractRepository {
 
 			result.setColumns(columns);
 			rs.beforeFirst();
-			List<TableData[]> rows = new ArrayList<TableData[]>();
+			List<TableData[]> rows = new ArrayList<>();
 
 			while (rs.next()) {
 				TableData[] row = new TableData[columns.length];

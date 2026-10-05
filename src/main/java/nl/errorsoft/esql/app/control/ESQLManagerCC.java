@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.app.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.connection.control.ConnectionProfileCC;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 import nl.errorsoft.esql.connection.control.DatabaseDriverCC;
@@ -113,6 +115,7 @@ public class ESQLManagerCC {
 				return;
 			}
 		} catch (Exception e) {
+			ApplicationContext.get().errors().report("Designer", e);
 		}
 
 		if (jmui.getConnectionWindowCount() > 0) {
@@ -146,10 +149,6 @@ public class ESQLManagerCC {
 
 	public int getAppBuild() {
 		return jm.getAppBuild();
-	}
-
-	public boolean isPro() {
-		return jm.isPro();
 	}
 
 }

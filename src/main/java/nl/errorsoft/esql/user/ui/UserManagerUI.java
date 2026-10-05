@@ -24,8 +24,8 @@ public class UserManagerUI extends JDialog {
 	private static final String LOADING = "Loading...";
 
 	private final UserManagerCC cc;
-	private final DefaultListModel<DatabaseUser> userModel = new DefaultListModel<DatabaseUser>();
-	private final JList<DatabaseUser> users = new JList<DatabaseUser>(userModel);
+	private final DefaultListModel<DatabaseUser> userModel = new DefaultListModel<>();
+	private final JList<DatabaseUser> users = new JList<>(userModel);
 	private final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(GrantTarget.global()));
 	private final JTree tree = new JTree(treeModel);
 	private final JPanel privilegePanel = new JPanel(new GridLayout(0, 2, 8, 4));
@@ -121,7 +121,7 @@ public class UserManagerUI extends JDialog {
 		}
 
 		try {
-			String database = ((GrantTarget) databaseNode.getUserObject()).getDatabase();
+			String database = ((GrantTarget) databaseNode.getUserObject()).database();
 			databaseNode.removeAllChildren();
 
 			for (String table : cc.getTableNames(database)) {
@@ -169,7 +169,7 @@ public class UserManagerUI extends JDialog {
 		}
 
 		Object object = ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
-		return object instanceof GrantTarget ? (GrantTarget) object : null;
+		return object instanceof GrantTarget gt ? gt : null;
 	}
 
 	private void showGrants() {
@@ -182,7 +182,7 @@ public class UserManagerUI extends JDialog {
 			try {
 				Set<String> granted = cc.getGrants(user, target);
 
-				for (String privilege : cc.getPrivileges(target.getScope())) {
+				for (String privilege : cc.getPrivileges(target.scope())) {
 					privilegePanel.add(new JCheckBox(privilege, granted.contains(privilege)));
 				}
 
@@ -196,7 +196,7 @@ public class UserManagerUI extends JDialog {
 	}
 
 	private void applyGrants() {
-		Set<String> selected = new LinkedHashSet<String>();
+		Set<String> selected = new LinkedHashSet<>();
 
 		for (Component component : privilegePanel.getComponents()) {
 			JCheckBox box = (JCheckBox) component;
@@ -282,14 +282,11 @@ public class UserManagerUI extends JDialog {
 	}
 
 	private String describe(GrantTarget target) {
-		switch (target.getScope()) {
-			case GLOBAL :
-				return "the server";
-			case DATABASE :
-				return "database " + target.getDatabase();
-			default :
-				return "table " + target.getDatabase() + "." + target.getTable();
-		}
+		return switch (target.scope()) {
+			case GLOBAL -> "the server";
+			case DATABASE -> "database " + target.database();
+			default -> "table " + target.database() + "." + target.table();
+		};
 	}
 
 	private void showError(String text, Exception e) {

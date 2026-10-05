@@ -4,14 +4,15 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
 
 import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.domain.ProgressListener;
 import nl.errorsoft.esql.table.Table;
 
-/** Writes databases and tables to an SQL script on its own thread and reports progress (0 to 100) or an Exception to its observers. */
-public class ExportService extends Observable implements Runnable {
+/** Writes databases and tables to an SQL script on its own thread and reports progress (0 to 100) or an Exception to its listener. */
+public class ExportService implements Runnable {
+	private ProgressListener listener = ProgressListener.NONE;
 	private final ExportRepository repository;
 	private final Object[] exportObject;
 	private final String file;
@@ -24,20 +25,22 @@ public class ExportService extends Observable implements Runnable {
 		this.options = options;
 	}
 
+	public void setListener(ProgressListener listener) {
+		this.listener = listener;
+	}
+
 	public void run() {
 		try (PrintWriter pw = new PrintWriter(file, StandardCharsets.UTF_8)) {
 			progress(10);
 
 			for (int i = 0; i < exportObject.length; i++) {
 				String database;
-				List<String> tables = new ArrayList<String>();
+				List<String> tables = new ArrayList<>();
 
-				if (exportObject[i] instanceof Database) {
-					Database source = (Database) exportObject[i];
+				if (exportObject[i] instanceof Database source) {
 					database = source.getName();
 					tables = repository.tableNames(source);
-				} else if (exportObject[i] instanceof Table) {
-					Table source = (Table) exportObject[i];
+				} else if (exportObject[i] instanceof Table source) {
 					database = source.getDatabase().getName();
 					tables.add(source.getName());
 				} else {
@@ -60,8 +63,7 @@ public class ExportService extends Observable implements Runnable {
 			}
 			progress(100);
 		} catch (Exception e) {
-			setChanged();
-			notifyObservers(e);
+			listener.failed(e);
 		}
 	}
 
@@ -84,11 +86,10 @@ public class ExportService extends Observable implements Runnable {
 	}
 
 	private void progress(int percent) {
-		setChanged();
-		notifyObservers(Integer.valueOf(percent));
+		listener.progressed(percent);
 	}
 
 	public void start() {
-		new Thread(this).start();
+		Thread.ofVirtual().name("export").start(this);
 	}
 }

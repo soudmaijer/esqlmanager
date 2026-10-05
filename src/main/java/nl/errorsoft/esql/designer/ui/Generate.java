@@ -5,17 +5,16 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 
-import nl.errorsoft.esql.data.DatabaseConnection;
 import nl.errorsoft.esql.domain.CreateColumn;
-import nl.errorsoft.esql.domain.dialect.Dialect;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import nl.errorsoft.esql.designer.model.Model;
 import javax.swing.*;
 import nl.errorsoft.esql.designer.DesignedDatabase;
 import nl.errorsoft.esql.designer.DesignedTable;
-import nl.errorsoft.esql.designer.DesignerService;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 public class Generate extends javax.swing.JDialog implements Runnable {
 	private static final Logger log = LogManager.getLogger(Generate.class);
@@ -89,21 +88,13 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		jPanel2.setBounds(10, 10, 240, 170);
 
 		jButton1.setText("Close");
-		jButton1.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				jButton1ActionPerformed(evt);
-			}
-		});
+		jButton1.addActionListener(evt -> jButton1ActionPerformed(evt));
 
 		jPanel1.add(jButton1);
 		jButton1.setBounds(168, 185, 80, 23);
 
 		generate.setText("Generate");
-		generate.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				generateActionPerformed(evt);
-			}
-		});
+		generate.addActionListener(evt -> generateActionPerformed(evt));
 
 		generate.setEnabled(false);
 
@@ -300,16 +291,16 @@ public class Generate extends javax.swing.JDialog implements Runnable {
 		boolean error = false;
 
 		try {
-			List<DesignedDatabase> model = new ArrayList<DesignedDatabase>();
+			List<DesignedDatabase> model = new ArrayList<>();
 
 			for (int i = 0; i < db.size(); i++) {
 				DatabaseObject d = (DatabaseObject) db.get(i);
-				List<DesignedTable> designedTables = new ArrayList<DesignedTable>();
+				List<DesignedTable> designedTables = new ArrayList<>();
 				Vector tb = m.getReferences(d);
 
 				for (int j = 0; j < tb.size(); j++) {
 					TableObject tbs = (TableObject) tb.get(j);
-					List<CreateColumn> columns = new ArrayList<CreateColumn>();
+					List<CreateColumn> columns = new ArrayList<>();
 
 					for (int k = 0; k < tbs.getFields().length; k++) {
 						columns.add(toCreateColumn(tbs.getFields()[k]));

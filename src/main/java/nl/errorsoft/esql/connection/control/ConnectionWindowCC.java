@@ -65,9 +65,9 @@ public class ConnectionWindowCC extends Thread {
 			setStatusDetail("");
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			cwui.showErrorMessage("Can`t connect: " + e.getMessage());
 			cwui.closeUI(false);
 			jmcc.updateStatus("Can`t connect to server...", false);
+			ApplicationContext.get().errors().report("Connect to " + cw.getConnectionProfile().getName(), e);
 		}
 	}
 
@@ -104,7 +104,7 @@ public class ConnectionWindowCC extends Thread {
 			ApplicationContext.get().release(cw.getDatabaseConnection());
 			cw.stop();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Close", e);
 		}
 
 		// Remove references
@@ -123,9 +123,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.showHelp();
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Database tree", e);
 		}
 	}
 
@@ -137,9 +135,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.getDatabaseTreeView().addDatabase(db);
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Create database", e);
 		}
 	}
 
@@ -154,9 +150,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Ready...", false);
 			this.showDatabaseTree();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Drop database", e);
 		}
 	}
 
@@ -170,9 +164,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Ready...", false);
 			this.databaseSelected(tb.getDatabase());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Drop table", e);
 		}
 	}
 
@@ -185,9 +177,7 @@ public class ConnectionWindowCC extends Thread {
 			reloadSelectedTable();
 			fp.dispose();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Add table column", e);
 		}
 	}
 
@@ -200,9 +190,7 @@ public class ConnectionWindowCC extends Thread {
 			reloadSelectedTable();
 			fp.dispose();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Edit table column", e);
 		}
 	}
 
@@ -216,9 +204,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Ready...", false);
 			reloadSelectedTable();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Drop table column", e);
 		}
 	}
 
@@ -241,9 +227,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Ready...", false);
 			reloadSelectedTable();
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Flush selected table", e);
 		}
 	}
 
@@ -266,9 +250,7 @@ public class ConnectionWindowCC extends Thread {
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Database selected", e);
 		}
 	}
 
@@ -292,9 +274,7 @@ public class ConnectionWindowCC extends Thread {
 			cwui.tableSelected();
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Table selected", e);
 		}
 	}
 
@@ -326,8 +306,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Ready...", false);
 			qu.setVisible(true);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(cwui, "Query", e);
 		}
 	}
 
@@ -338,8 +317,7 @@ public class ConnectionWindowCC extends Thread {
 			jmcc.updateStatus("Ready...", false);
 			fpu.setVisible(true);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(cwui, "Field", e);
 		}
 	}
 
@@ -369,9 +347,7 @@ public class ConnectionWindowCC extends Thread {
 			}
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Run custom sql", e);
 		}
 	}
 
@@ -382,9 +358,7 @@ public class ConnectionWindowCC extends Thread {
 		try {
 			getContext().databases().use(db);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Change database", e);
 		}
 	}
 
@@ -408,24 +382,20 @@ public class ConnectionWindowCC extends Thread {
 				table.getDatabase().getName() + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 			jmcc.updateStatus("Ready...", false);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Table data", e);
 		}
 	}
 
 	/*
 	 * @description: 	Starts the table indexes manager
 	 *
-	 * @comment:		PRO ONLY
 	 */
 	public void dispatchTableIndexesUI() {
 		try {
 			IndexesCC tcc = new IndexesCC(this, (Table) cwui.getSelectedNode().getUserObject());
 			tcc.startUI(jmcc.getUI());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(cwui, "Table indexes", e);
 		}
 	}
 
@@ -441,7 +411,7 @@ public class ConnectionWindowCC extends Thread {
 	}
 
 	/** Tells the user when the database of this connection can't do what they asked. */
-	private boolean requireFeature(Dialect.Feature feature, String description) {
+	public boolean requireFeature(Dialect.Feature feature, String description) {
 		if (cw.getConnectionProfile().getServerType().getDialect().supports(feature)) {
 			return true;
 		}
@@ -455,9 +425,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tbcc = new TableCC(this);
 			tbcc.startCreateTableUI(jmcc.getUI(), cwui.getDatabase());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Create table", e);
 		}
 	}
 
@@ -466,9 +434,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC dbcc = new TableCC(this);
 			dbcc.startEditTableUI(jmcc.getUI(), cwui.getDatabase(), cwui.getTable());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwui.showErrorMessage(e.getMessage());
-			jmcc.updateStatus("Error...", false);
+			ApplicationContext.get().errors().report(cwui, "Modify table", e);
 		}
 	}
 
@@ -509,7 +475,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tcc = new TableCC(this);
 			cwui.showTableDataView("Server status", tcc.showServerStatus());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Show server status", e);
 		}
 	}
 	public void showServerVariables() {
@@ -521,7 +487,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tcc = new TableCC(this);
 			cwui.showTableDataView("Server variables", tcc.showServerVariables());
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Show server variables", e);
 		}
 	}
 
@@ -530,7 +496,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tcc = new TableCC(this);
 			cwui.showMessage("Optimize table: " + cwui.getTable().getName(), tcc.optimizeTable(cwui.getTable()));
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Optimize table", e);
 		}
 	}
 
@@ -539,7 +505,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tcc = new TableCC(this);
 			cwui.showMessage("Analyze table: " + cwui.getTable().getName(), tcc.analyseTable(cwui.getTable()));
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Analyse table", e);
 		}
 	}
 
@@ -548,7 +514,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tcc = new TableCC(this);
 			cwui.showMessage("Check table: " + cwui.getTable().getName(), tcc.checkTable(cwui.getTable()));
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Check table", e);
 		}
 	}
 
@@ -557,7 +523,7 @@ public class ConnectionWindowCC extends Thread {
 			TableCC tcc = new TableCC(this);
 			cwui.showMessage("Repair table: " + cwui.getTable().getName(), tcc.repairTable(cwui.getTable()));
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report("Repair table", e);
 		}
 	}
 }

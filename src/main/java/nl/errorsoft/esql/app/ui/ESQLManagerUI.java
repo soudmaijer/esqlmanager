@@ -2,10 +2,6 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 
-import nl.errorsoft.esql.database.Database;
-
-import nl.errorsoft.esql.app.ESQLManager;
-import nl.errorsoft.esql.app.Settings;
 import nl.errorsoft.esql.app.control.ESQLManagerCC;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.query.SyntaxDocument;
@@ -17,10 +13,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import javax.swing.*;
-import javax.swing.text.*;
-import nl.errorsoft.esql.domain.*;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyleConstants;
 
 public class ESQLManagerUI extends JFrame implements ActionListener {
 	private static final Logger log = LogManager.getLogger(ESQLManagerUI.class);
@@ -205,21 +203,19 @@ public class ESQLManagerUI extends JFrame implements ActionListener {
 		toolbar.addSeparator();
 
 		cmbWindows = new JComboBox();
-		cmbWindows.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					if (cmbWindows.getItemCount() <= 0) {
-						return;
-					}
-
-					ConnectionWindowUI window = (ConnectionWindowUI) cmbWindows.getSelectedItem();
-
-					if (window != null) {
-						jdp.getDesktopManager().activateFrame(window);
-					}
-				} catch (Exception ae) {
-					log.error(ae.getMessage(), ae);
+		cmbWindows.addActionListener(e -> {
+			try {
+				if (cmbWindows.getItemCount() <= 0) {
+					return;
 				}
+
+				ConnectionWindowUI window = (ConnectionWindowUI) cmbWindows.getSelectedItem();
+
+				if (window != null) {
+					jdp.getDesktopManager().activateFrame(window);
+				}
+			} catch (Exception ae) {
+				log.error(ae.getMessage(), ae);
 			}
 		});
 

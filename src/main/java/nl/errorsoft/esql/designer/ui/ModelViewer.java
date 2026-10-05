@@ -403,14 +403,14 @@ public class ModelViewer extends JLayeredPane implements MouseListener, MouseMot
 			mo.addMouseListener(this);
 			mo.addMouseMotionListener(this);
 
-			if (mo instanceof DatabaseObject) {
-				this.add((DatabaseObject) mo);
+			if (mo instanceof DatabaseObject object) {
+				this.add(object);
 			}
-			if (mo instanceof CommentObject) {
-				this.add((CommentObject) mo);
+			if (mo instanceof CommentObject object1) {
+				this.add(object1);
 			}
-			if (mo instanceof TableObject) {
-				this.add((TableObject) mo);
+			if (mo instanceof TableObject object2) {
+				this.add(object2);
 			}
 		}
 

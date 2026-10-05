@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.user.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
 import nl.errorsoft.esql.table.*;
@@ -24,8 +26,7 @@ public class UserManagerCC {
 
 	public void startUI(ESQLManagerUI emui) {
 		try {
-			if (!getDialect().supports(Dialect.Feature.USER_MANAGER)) {
-				cwcc.getUI().showErrorMessage("The user manager is not available for this database");
+			if (!cwcc.requireFeature(Dialect.Feature.USER_MANAGER, "The user manager")) {
 				return;
 			}
 
@@ -34,8 +35,7 @@ public class UserManagerCC {
 			emui.updateStatus("Ready...", false);
 			ui.setVisible(true);
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			cwcc.getUI().showErrorMessage("Can't start the user manager: " + e.getMessage());
+			ApplicationContext.get().errors().report("Start user manager", e);
 		}
 	}
 

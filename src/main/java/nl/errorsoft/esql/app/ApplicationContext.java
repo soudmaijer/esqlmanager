@@ -14,7 +14,8 @@ import nl.errorsoft.esql.ui.ImageLoader;
 public final class ApplicationContext {
 	private static final ApplicationContext INSTANCE = new ApplicationContext();
 
-	private final Map<DatabaseConnection, ConnectionContext> connections = new ConcurrentHashMap<DatabaseConnection, ConnectionContext>();
+	private final Map<DatabaseConnection, ConnectionContext> connections = new ConcurrentHashMap<>();
+	private final ErrorHandler errors = new ErrorHandler();
 	private ImageLoader images;
 	private Settings settings;
 
@@ -88,6 +89,10 @@ public final class ApplicationContext {
 			images.addImage("../images/splash.gif", "esql");
 		}
 		return images;
+	}
+
+	public ErrorHandler errors() {
+		return errors;
 	}
 
 	public synchronized Settings settings() {

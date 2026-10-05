@@ -51,21 +51,21 @@ public class Properties extends JDialog implements ActionListener {
 		if (cur != null) {
 			cont.remove(cur);
 		}
-		if (obj instanceof TableObject) {
-			TableProperties tp = new TableProperties((TableObject) obj, serverType);
-			this.setTitle("Properties for '" + ((TableObject) obj).getName() + "'");
+		if (obj instanceof TableObject object) {
+			TableProperties tp = new TableProperties(object, serverType);
+			this.setTitle("Properties for '" + object.getName() + "'");
 			this.cont.add(tp);
 			cur = tp;
 		}
-		if (obj instanceof DatabaseObject) {
-			DatabaseProperties tp = new DatabaseProperties((DatabaseObject) obj);
-			this.setTitle("Properties for '" + ((DatabaseObject) obj).getName() + "'");
+		if (obj instanceof DatabaseObject object1) {
+			DatabaseProperties tp = new DatabaseProperties(object1);
+			this.setTitle("Properties for '" + object1.getName() + "'");
 			this.cont.add(tp);
 			cur = tp;
 		}
-		if (obj instanceof nl.errorsoft.esql.designer.model.Model) {
-			ModelProperties mp = new ModelProperties((nl.errorsoft.esql.designer.model.Model) obj);
-			this.setTitle("Properties for '" + ((nl.errorsoft.esql.designer.model.Model) obj).getName() + "'");
+		if (obj instanceof nl.errorsoft.esql.designer.model.Model model) {
+			ModelProperties mp = new ModelProperties(model);
+			this.setTitle("Properties for '" + model.getName() + "'");
 			this.cont.add(mp);
 			cur = mp;
 		}

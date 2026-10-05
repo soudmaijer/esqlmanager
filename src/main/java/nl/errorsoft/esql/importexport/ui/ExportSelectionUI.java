@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.importexport.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.importexport.control.ExportCC;
 
@@ -37,7 +39,7 @@ public class ExportSelectionUI extends JDialog implements ActionListener {
 			this.ecc = ecc;
 			jbInit();
 		} catch (Exception ex) {
-			log.error(ex.getMessage(), ex);
+			ApplicationContext.get().errors().report(this, "Export selection", ex);
 		}
 	}
 

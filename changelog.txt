@@ -33,6 +33,9 @@ eSQLManager changelog
   controller, service and repository layers. SQL only runs in repositories, which ask the Dialect. The domain classes are plain data.
 - ApplicationContext resolves the image loader, settings and the ConnectionContext of every open connection. A ConnectionContext wires the
   repositories and services of one connection once, controllers no longer create them.
+- Errors: one ErrorHandler logs an error once and shows one message, services and repositories no longer swallow exceptions.
+- Java 25: records, pattern matching, switch expressions, text blocks, lambdas and virtual threads for background work. Resources are closed
+  with try-with-resources (DatabaseConnection included), Observable is replaced by ProgressListener, the PRO/LE distinction is gone.
 - Code style: Spotless formats the sources (tabs, 160 columns, LF), .editorconfig added, the build checks the formatting.
 
 build #64 - RC3

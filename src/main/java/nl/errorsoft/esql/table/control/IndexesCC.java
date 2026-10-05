@@ -2,6 +2,8 @@
 
 package nl.errorsoft.esql.table.control;
 
+import nl.errorsoft.esql.app.ApplicationContext;
+
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.control.ConnectionWindowCC;
 
@@ -29,12 +31,8 @@ public class IndexesCC {
 	}
 
 	public void startUI(ESQLManagerUI eu) throws Exception {
-		try {
-			if (!cwcc.getDatabaseConnection().getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.INDEXES)) {
-				cwcc.getUI().showErrorMessage("This feature is only available for MySQL");
-				return;
-			}
-		} catch (Exception e) {
+		if (!cwcc.requireFeature(Dialect.Feature.INDEXES, "The index manager")) {
+			return;
 		}
 
 		iu = new IndexesUI(cwcc.getUI(), this);
@@ -53,8 +51,7 @@ public class IndexesCC {
 				cwcc.tableSelected(t, true);
 			}
 		} catch (Exception e) {
-			iu.showErrorMessage("Error while adding the index! " + e.getMessage());
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report(iu, "Add index", e);
 		}
 	}
 
@@ -73,8 +70,7 @@ public class IndexesCC {
 				cwcc.tableSelected(t, true);
 			}
 		} catch (Exception e) {
-			iu.showErrorMessage("Error while saving changed to the index! " + e.getMessage());
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report(iu, "Modify index", e);
 		}
 	}
 
@@ -84,8 +80,7 @@ public class IndexesCC {
 			iu.loadIndexes(t.getIndexes());
 			cwcc.tableSelected(t, true);
 		} catch (Exception e) {
-			iu.showErrorMessage("Error while dropping the index! " + e.getMessage());
-			log.error(e.getMessage(), e);
+			ApplicationContext.get().errors().report(iu, "Drop index", e);
 		}
 	}
 

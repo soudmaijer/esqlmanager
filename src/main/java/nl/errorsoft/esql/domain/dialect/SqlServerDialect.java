@@ -22,16 +22,13 @@ public class SqlServerDialect extends AbstractDialect {
 	}
 
 	public List<String> listDatabases(DatabaseConnection dbc) throws SQLException {
-		List<String> names = new ArrayList<String>();
-		CallableStatement cs = dbc.getConnection().prepareCall("{call sp_databases}");
-		ResultSet rs = cs.executeQuery();
+		List<String> names = new ArrayList<>();
 
-		while (rs.next()) {
-			names.add(rs.getString(1));
+		try (CallableStatement cs = dbc.getConnection().prepareCall("{call sp_databases}"); ResultSet rs = cs.executeQuery()) {
+			while (rs.next()) {
+				names.add(rs.getString(1));
+			}
 		}
-
-		rs.close();
-		cs.close();
 		return names;
 	}
 }

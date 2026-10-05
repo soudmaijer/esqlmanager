@@ -163,7 +163,7 @@ public class DBCreator extends JDialog implements MouseListener {
 					m.setFile(f);
 				}
 			} catch (Exception ex) {
-				log.error(ex.getMessage(), ex);
+				ApplicationContext.get().errors().report(this, "Open model", ex);
 			}
 		}
 
@@ -178,7 +178,7 @@ public class DBCreator extends JDialog implements MouseListener {
 					out.println(xml);
 				}
 			} catch (Exception ex) {
-				log.error(ex.getMessage(), ex);
+				ApplicationContext.get().errors().report(this, "Save current model", ex);
 			}
 		} else {
 			JFileChooser jfc = new JFileChooser();
@@ -205,7 +205,7 @@ public class DBCreator extends JDialog implements MouseListener {
 
 					mv.getModel().setFile(f);
 				} catch (Exception ex) {
-					log.error(ex.getMessage(), ex);
+					ApplicationContext.get().errors().report(this, "Save current model", ex);
 				}
 			}
 		}

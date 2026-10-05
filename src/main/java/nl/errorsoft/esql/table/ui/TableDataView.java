@@ -3,6 +3,7 @@
 package nl.errorsoft.esql.table.ui;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.domain.EsqlException;
 
 import nl.errorsoft.esql.query.ui.UndoHandler;
 import nl.errorsoft.esql.ui.ColumnWidths;
@@ -13,9 +14,9 @@ import nl.errorsoft.esql.ui.ImageLoader;
 import nl.errorsoft.esql.ui.MultiLineCellEditor;
 import nl.errorsoft.esql.ui.SortableTableModel;
 
-import nl.errorsoft.esql.data.*;
-import nl.errorsoft.esql.table.*;
-import nl.errorsoft.esql.table.control.*;
+import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.TableData;
+import nl.errorsoft.esql.table.control.TableCC;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,12 +24,13 @@ import org.apache.logging.log4j.Logger;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.table.*;
-import nl.errorsoft.esql.domain.*;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableColumnModel;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 public class TableDataView extends JPanel implements ActionListener {
 	private static final Logger log = LogManager.getLogger(TableDataView.class);
@@ -144,8 +146,8 @@ public class TableDataView extends JPanel implements ActionListener {
 						} else {
 							Object temp = tbData.getValueAt(tbData.getSelectedRow(), tbData.getSelectedColumn());
 
-							if (temp instanceof TableData) {
-								if (!((TableData) temp).isNewRow()) {
+							if (temp instanceof TableData data) {
+								if (!data.isNewRow()) {
 									enabledCellDataEditor();
 								}
 							}
@@ -358,11 +360,7 @@ public class TableDataView extends JPanel implements ActionListener {
 		jsplit.setDividerLocation(0.70);
 		cellData.setCaretPosition(0);
 
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				tbData.scrollRectToVisible(tbData.getCellRect(tbData.getSelectedRow(), 0, true));
-			}
-		});
+		SwingUtilities.invokeLater(() -> tbData.scrollRectToVisible(tbData.getCellRect(tbData.getSelectedRow(), 0, true)));
 	}
 
 	public void disableCellDataEditor() {
@@ -375,7 +373,7 @@ public class TableDataView extends JPanel implements ActionListener {
 		try {
 			tcc.dataChanged(cellData.getTableColumn().getTable(), rowData, cellData, newValue);
 		} catch (Exception e) {
-			this.showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(this, "Change cell", e);
 			return false;
 		}
 		return true;
@@ -400,11 +398,7 @@ public class TableDataView extends JPanel implements ActionListener {
 			stm.addRow(newData);
 			tbData.setRowSelectionInterval(stm.getRowCount() - 1, stm.getRowCount() - 1);
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					jsp.getVerticalScrollBar().setValue(jsp.getVerticalScrollBar().getMaximum());
-				}
-			});
+			SwingUtilities.invokeLater(() -> jsp.getVerticalScrollBar().setValue(jsp.getVerticalScrollBar().getMaximum()));
 		}
 	}
 
@@ -431,8 +425,7 @@ public class TableDataView extends JPanel implements ActionListener {
 				refreshData();
 			}
 		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			showErrorMessage(e.getMessage());
+			ApplicationContext.get().errors().report(this, "Save selected row", e);
 		}
 	}
 
@@ -464,7 +457,7 @@ public class TableDataView extends JPanel implements ActionListener {
 					stm.removeRow(ia[i]);
 					showRecordCount();
 				} catch (Exception e) {
-					showErrorMessage(e.getMessage());
+					ApplicationContext.get().errors().report(this, "Delete row", e);
 
 					if (ia.length > 1) {
 						pane = new JOptionPane();
@@ -539,15 +532,11 @@ public class TableDataView extends JPanel implements ActionListener {
 
 			try {
 				if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-					java.io.PrintWriter pw = new java.io.PrintWriter(
-						new java.io.FileOutputStream(new java.io.File(chooser.getSelectedFile().getAbsolutePath() + ".txt")));
-					pw.println(cellData.getText());
-					pw.close();
+					java.nio.file.Files.writeString(java.nio.file.Path.of(chooser.getSelectedFile().getAbsolutePath() + ".txt"),
+						cellData.getText() + System.lineSeparator());
 				}
 			} catch (Exception err) {
-				JOptionPane pane = new JOptionPane();
-				pane.setMessageType(JOptionPane.OK_OPTION);
-				pane.showMessageDialog(this, "An error occured while saving data!\n\n" + err.getMessage(), "Save query", JOptionPane.WARNING_MESSAGE);
+				ApplicationContext.get().errors().report(this, "Save cell data", err);
 			}
 		} else if (src == btnSaveData) {
 			int row = tbData.getSelectedRow();
@@ -572,7 +561,7 @@ public class TableDataView extends JPanel implements ActionListener {
 				skip = Integer.parseInt(this.jtfSkip.getText());
 				show = Integer.parseInt(this.jtfShow.getText());
 			} catch (Exception ex) {
-				showErrorMessage("No numeric value in skip or show field!");
+				ApplicationContext.get().errors().report(this, "Show data", new EsqlException("No numeric value in skip or show field!"));
 				return;
 			}
 
@@ -614,8 +603,7 @@ public class TableDataView extends JPanel implements ActionListener {
 				tcc.showTableData(table, skip, show);
 				inserting = false;
 			} catch (Exception ex) {
-				showErrorMessage(ex.getMessage());
-				log.error(ex.getMessage(), ex);
+				ApplicationContext.get().errors().report(this, "Show data", ex);
 			}
 		}
 	}
@@ -627,7 +615,7 @@ public class TableDataView extends JPanel implements ActionListener {
 			skip = Integer.parseInt(this.jtfSkip.getText());
 			show = Integer.parseInt(this.jtfShow.getText());
 		} catch (Exception ex) {
-			showErrorMessage("No numeric value in skip or show field!");
+			ApplicationContext.get().errors().report(this, "Refresh data", new EsqlException("No numeric value in skip or show field!"));
 			return;
 		}
 
@@ -643,8 +631,7 @@ public class TableDataView extends JPanel implements ActionListener {
 			tcc.showTableData(table, skip, show);
 
 		} catch (Exception ex) {
-			showErrorMessage(ex.getMessage());
-			log.error(ex.getMessage(), ex);
+			ApplicationContext.get().errors().report(this, "Refresh data", ex);
 		}
 	}
 }
