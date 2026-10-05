@@ -7,6 +7,8 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.app.ui.ESQLManagerUI;
 import nl.errorsoft.esql.connection.ui.ConnectionWindowUI;
 import nl.errorsoft.esql.designer.control.ModelViewerControl;
+import nl.errorsoft.esql.designer.export.DiagramExporter;
+import nl.errorsoft.esql.designer.export.DiagramModel;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.Generate;
 import nl.errorsoft.esql.designer.ui.ModelBrowser;
@@ -34,6 +36,8 @@ public class DBCreator extends JDialog implements MouseListener {
 	private JMenuItem file_sav = new JMenuItem("Save Model");
 	private JMenuItem file_sva = new JMenuItem("Save Model As...");
 	private JMenuItem file_ext = new JMenuItem("Close");
+	private JMenuItem file_plantuml = new JMenuItem("Export as PlantUML...");
+	private JMenuItem file_mermaid = new JMenuItem("Export as Mermaid...");
 
 	private JMenu edit = new JMenu("Edit");
 	private JMenuItem edit_del = new JMenuItem("Delete Selected");
@@ -77,6 +81,9 @@ public class DBCreator extends JDialog implements MouseListener {
 		file.add(file_sav);
 		file.add(file_sva);
 		file.addSeparator();
+		file.add(file_plantuml);
+		file.add(file_mermaid);
+		file.addSeparator();
 		file.add(file_ext);
 
 		file.setMnemonic('F');
@@ -109,6 +116,9 @@ public class DBCreator extends JDialog implements MouseListener {
 		file_sav.addMouseListener(this);
 		file_sva.addMouseListener(this);
 		file_new.addMouseListener(this);
+
+		file_plantuml.addActionListener(e -> exportDiagram("PlantUML", "puml", DiagramExporter::plantUml));
+		file_mermaid.addActionListener(e -> exportDiagram("Mermaid", "mmd", DiagramExporter::mermaid));
 
 		view.add(view_grid);
 		view.setMnemonic('V');
@@ -217,6 +227,23 @@ public class DBCreator extends JDialog implements MouseListener {
 				} catch (Exception ex) {
 					ApplicationContext.get().errors().report(this, "Save current model", ex);
 				}
+			}
+		}
+	}
+
+	/** Writes the model as a text diagram to a file the user chooses. */
+	private void exportDiagram(String format, String extension, java.util.function.Function<DiagramModel, String> exporter) {
+		JFileChooser jfc = new JFileChooser();
+		jfc.setDialogTitle("Export model as " + format);
+		jfc.setSelectedFile(new File(mv.getModel().getName() + "." + extension));
+
+		if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			try {
+				java.nio.file.Files.writeString(jfc.getSelectedFile().toPath(), exporter.apply(DiagramModel.of(mv.getModel())),
+					java.nio.charset.StandardCharsets.UTF_8);
+				log.info("Model exported as {} to {}", format, jfc.getSelectedFile());
+			} catch (Exception ex) {
+				ApplicationContext.get().errors().report(this, "Export as " + format, ex);
 			}
 		}
 	}

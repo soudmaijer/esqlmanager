@@ -145,7 +145,8 @@ public class TableObject extends ModelObject {
 		return foreignKeyColumns.contains(field.getName()) ? "linkimg" : "fldimg";
 	}
 
-	private static String typeText(Field field) {
+	/** The type as the card shows it, lower case with the length: varchar(100). */
+	public static String typeText(Field field) {
 		String length = field.getLength() == null ? "" : field.getLength().trim();
 		String typeName = field.getType() == null ? "" : field.getType().getName().toLowerCase();
 		return length.isEmpty() ? typeName : typeName + "(" + length + ")";
