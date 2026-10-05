@@ -18,36 +18,35 @@ class DatabaseTreeViewCellRenderer extends DefaultTreeCellRenderer
 	{   
      	super.getTreeCellRendererComponent( tree, value, sel, expanded, leaf, row, hasFocus );
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-		TreePath tp = new TreePath( node.getPath() );
 		
 		if( node.getUserObject() instanceof Database )
 		{
 			if( hasFocus )
-				setIcon(new ImageIcon(imgldr.getImage("dbimgsel")));
+				setIcon(imgldr.getIcon("dbimgsel"));
 			else
-				setIcon(new ImageIcon(imgldr.getImage("dbimg")));
+				setIcon(imgldr.getIcon("dbimg"));
 		}
 		else if( node.getUserObject() instanceof Table )
 		{
 			if( hasFocus )
-				setIcon(new ImageIcon(imgldr.getImage("tbimgsel")));
+				setIcon(imgldr.getIcon("tbimgsel"));
 			else
-				setIcon(new ImageIcon(imgldr.getImage("tbimg")));
+				setIcon(imgldr.getIcon("tbimg"));
 		}
 		else if( node.getUserObject() instanceof nl.errorsoft.esql.domain.TableColumn )
 		{
 			TableColumn temp = (TableColumn)node.getUserObject();
 			
 			if( temp.isPrimary() )
-				setIcon(new ImageIcon(imgldr.getImage("keyimg")));
+				setIcon(imgldr.getIcon("keyimg"));
 			else if( temp.hasIndex() )
-				setIcon(new ImageIcon(imgldr.getImage("imgHasIndexSel")));
+				setIcon(imgldr.getIcon("imgHasIndexSel"));
 			else
-				setIcon(new ImageIcon(imgldr.getImage("fldimg")));
+				setIcon(imgldr.getIcon("fldimg"));
 		}
 		else
 		{
-			setIcon(new ImageIcon(imgldr.getImage("pc")));
+			setIcon(imgldr.getIcon("pc"));
 		}
 		
 		return this;

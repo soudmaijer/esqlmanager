@@ -1,11 +1,14 @@
 package nl.errorsoft.esql.gui;
 
 import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 public class ImageLoader
 {	private String imgpath;
 	private Image [] images = new Image [0];
 	private String [] names = new String [0];
+	private java.util.Map<String, Icon> icons = new java.util.HashMap<String, Icon>();
 
 	public ImageLoader (String imgpath)
 	{	this.imgpath = imgpath;
@@ -31,6 +34,17 @@ public class ImageLoader
 	private java.net.URL getResource(String path)
 	{	String name = java.nio.file.Paths.get("/", path).normalize().toString().substring(1);
 		return this.getClass().getClassLoader().getResource(name);
+	}
+
+	/** Icons are created once per image, renderers ask for them on every repaint. */
+	public Icon getIcon(String name)
+	{	Icon icon = icons.get( name );
+
+		if( icon == null && getImage( name ) != null )
+		{	icon = new ImageIcon( getImage( name ) );
+			icons.put( name, icon );
+		}
+		return icon;
 	}
 
 	public Image getImage(String name)

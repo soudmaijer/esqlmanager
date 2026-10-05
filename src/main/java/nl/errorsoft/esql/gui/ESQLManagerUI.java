@@ -16,7 +16,8 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 	// Control class for ESQLManager UI, manages all use-cases actions.
 	private ESQLManagerCC jmcc;
-	private JTabbedPane jtpQueryOutput;
+	private static final int MAX_OUTPUT_CHARS = 200000;
+	private JPanel outputPanel;
 
 	// Menubar
 	private JMenuBar menubar;
@@ -54,7 +55,7 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	// Statusbar
 	private JPanel statusbar;
 	private StatusLight stl;
-	private Label statusMsg;
+	private JLabel statusMsg;
 
 	// Containers etc.
 	private JSplitPane jsplit;
@@ -65,7 +66,6 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 	private MutableAttributeSet attributeSet;
 	
 	SyntaxDocument syndoc = new SyntaxDocument();
-	private JPanel jp;
 
 	public ESQLManagerUI( ESQLManagerCC jmcc )
 	{
@@ -104,12 +104,17 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 	public void initComponents()
 	{
-		try
+		// FlatLaf paints much faster than the native macOS look and feel, especially while resizing.
+		if( !com.formdev.flatlaf.FlatLightLaf.setup() )
 		{
-			// Set default platform Look & Feel.
-			UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+			try
+			{
+				UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+			}
+			catch( Exception e )
+			{	log.warn( "Could not set the look and feel", e );
+			}
 		}
-		catch( Exception e )	{}
 
 		/*
 		 * Menubar
@@ -233,22 +238,30 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		stl.setPreferredSize(new Dimension(20,16));
 		statusbar.add( stl, BorderLayout.EAST );
 		
-		jp = new JPanel( new FlowLayout( FlowLayout.LEFT, 3, 2 ) );
-		statusMsg = new Label( "© Copyright Errorsoft 2002-2003." );
-		statusMsg.setBackground( new JLabel().getBackground() );
-		statusMsg.setSize( new Dimension( 200, 20 ) );
-		jp.add( statusMsg );
-		
-		statusbar.add( jp, BorderLayout.WEST);
+		statusMsg = new JLabel( "Ready..." );
+		statusMsg.setBorder( BorderFactory.createEmptyBorder( 3, 8, 3, 8 ) );
+		statusbar.add( statusMsg, BorderLayout.CENTER );
 		this.getContentPane().add( statusbar, BorderLayout.SOUTH );
 
 		/*
 		 * Other components
 		 */
-		jtpQueryOutput = new JTabbedPane( JTabbedPane.BOTTOM );
-		jtpQueryOutput.setFont( new Font(jtpQueryOutput.getFont().getName(), Font.BOLD, jtpQueryOutput.getFont().getSize()) ); 
+		outputPanel = new JPanel( new BorderLayout() );
+		JLabel outputTitle = new JLabel( "Output" );
+		outputTitle.setFont( outputTitle.getFont().deriveFont( Font.BOLD ) );
+		outputTitle.setBorder( BorderFactory.createEmptyBorder( 3, 8, 3, 8 ) );
+		outputPanel.add( outputTitle, BorderLayout.NORTH );
 		
-		jta = new JTextPane();
+		// No line wrapping: re-wrapping a long log on every width change made resizing slow.
+		jta = new JTextPane()
+		{
+			public boolean getScrollableTracksViewportWidth()
+			{
+				return false;
+			}
+		};
+		// A read-only text pane is painted grey by default, the output should look like the other content areas.
+		jta.setBackground( new Color( UIManager.getColor( "TextPane.background" ).getRGB() ) );
 		jta.setFont(new Font("arial", Font.PLAIN, 11));
 		jta.setEditable(false);
 
@@ -263,16 +276,20 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 
 		//ScrollPane for tree.
 		jsp = new JScrollPane(jta);
-		jsp.getViewport().setBackground(Color.white);
+		jsp.getViewport().setBackground( jta.getBackground() );
+		jsp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		jsp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		jtpQueryOutput.addTab( "Output", jsp );
+		outputPanel.add( jsp, BorderLayout.CENTER );
 		
-		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jdp, jtpQueryOutput);
+		jsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, jdp, outputPanel);
 		jsplit.setOneTouchExpandable(true);
+		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
 		jsplit.setContinuousLayout(true);
+		// A maximized internal frame must not limit how far the divider can move.
+		jdp.setMinimumSize( new Dimension( 0, 0 ) );
 		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
 		jsplit.setResizeWeight(1.0);
-		jtpQueryOutput.setMinimumSize( new Dimension( 0, 60 ) );
+		outputPanel.setMinimumSize( new Dimension( 0, 60 ) );
 		getContentPane().add(jsplit);
 
 		/*
@@ -324,19 +341,39 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		stl.switchRedLight(red);
 		
 		statusMsg.setText( message );
-		statusMsg.setBackground( new JLabel().getBackground() );
-		statusMsg.setSize( new Dimension( 200, 20 ) );
 	}
 
 	// Displays messages in output window.
 	public void print( String s )
 	{
+		// Log messages come from any thread, the document may only be changed on the event thread.
+		if( !SwingUtilities.isEventDispatchThread() )
+		{
+			SwingUtilities.invokeLater( () -> print( s ) );
+			return;
+		}
+		
 		try
 		{	
 			syndoc.append( s );
+			trimOutput();
 			jta.setCaretPosition( jta.getDocument().getLength() );
 		}
 		catch(Exception e)	{	}
+	}
+
+	// Keeps the output panel from growing without limit.
+	private void trimOutput() throws javax.swing.text.BadLocationException
+	{
+		int length = syndoc.getLength();
+		
+		if( length > MAX_OUTPUT_CHARS )
+		{
+			int cut = length - MAX_OUTPUT_CHARS / 2;
+			String head = syndoc.getText( cut, Math.min( 200, length - cut ) );
+			int lineEnd = head.indexOf( '\n' );
+			syndoc.remove( 0, lineEnd < 0 ? cut : cut + lineEnd + 1 );
+		}
 	}
 
 	public void addConnectionWindow( ConnectionWindowUI cw )
@@ -348,7 +385,14 @@ public class ESQLManagerUI extends JFrame implements ActionListener
 		btnTileVertical.setEnabled( true );
 
 		jdp.add( cw );
-		jdp.getDesktopManager().maximizeFrame( cw );
+		
+		// A maximized frame follows the size of the desktop, so the content scales with the output panel.
+		try
+		{	cw.setMaximum( true );
+		}
+		catch( java.beans.PropertyVetoException e )
+		{	log.warn( "Could not maximize the connection window", e );
+		}
 
 		cmbWindows.addItem( cw );
 		cmbWindows.setSelectedIndex( cmbWindows.getItemCount()-1 );

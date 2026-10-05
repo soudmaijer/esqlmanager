@@ -38,17 +38,16 @@ public class HeaderRenderer extends DefaultTableCellRenderer
 		Object obj = state.get(new Integer(column));
 
 		if(obj != null && ((Integer)obj).intValue() == UP)
-		{	button.setIcon(new ImageIcon(il.getImage("sortup")));
+		{	button.setIcon(il.getIcon("sortup"));
 		}
 		else if(obj != null && ((Integer)obj).intValue() == DOWN)
-		{	button.setIcon(new ImageIcon(il.getImage("sortdown")));
+		{	button.setIcon(il.getIcon("sortdown"));
 		}
 		else
 		{
 			button.setIcon(null);
 		}
 
-		button.updateUI();
 		return button;
 	}
 	
