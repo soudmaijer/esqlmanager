@@ -14,6 +14,8 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+import nl.errorsoft.esql.ui.util.Forms;
+
 /**
  * <p>Title: </p>
  * <p>Description: </p>
@@ -48,34 +50,29 @@ public class ExportSelectionUI extends JDialog implements ActionListener {
 	void jbInit() throws Exception {
 		this.setTitle("Export data");
 		this.setResizable(false);
-		this.getContentPane().setLayout(null);
-		this.setSize(new Dimension(265, 200));
 		jRadioButton1.setText("As CSV comma-seperated");
-		jRadioButton1.setBounds(new Rectangle(10, 30, 175, 23));
 		jRadioButton2.setText("As SQL statements");
-		jRadioButton2.setBounds(new Rectangle(10, 7, 172, 23));
-		jLabel1.setFont(new java.awt.Font("Dialog", 1, 11));
+		jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD));
 		jLabel1.setText("Export data options:");
-		jLabel1.setBounds(new Rectangle(30, 20, 161, 15));
-		jPanel1.setLayout(null);
-		jPanel1.setBorder(BorderFactory.createEtchedBorder());
-		jPanel1.setBounds(new Rectangle(29, 47, 194, 59));
-		jButton1.setBounds(new Rectangle(29, 120, 94, 21));
 		jButton1.setText("Cancel");
 		jButton1.addActionListener(this);
-		jButton2.setBounds(new Rectangle(127, 120, 95, 21));
 		jButton2.setText("Next");
 		jButton2.addActionListener(this);
-		jPanel1.add(jRadioButton2, null);
-		jPanel1.add(jRadioButton1, null);
 		jRadioButton1.setEnabled(false);
 		jRadioButton2.setSelected(true);
-		this.getContentPane().add(jButton1, null);
-		this.getContentPane().add(jButton2, null);
-		this.getContentPane().add(jLabel1, null);
-		this.getContentPane().add(jPanel1, null);
-		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
-			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
+
+		jPanel1.setLayout(new BoxLayout(jPanel1, BoxLayout.Y_AXIS));
+		jPanel1.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+		jPanel1.add(jRadioButton2);
+		jPanel1.add(jRadioButton1);
+		JPanel root = Forms.padded(new JPanel(new BorderLayout(0, Forms.GAP)));
+		root.add(jLabel1, BorderLayout.NORTH);
+		root.add(jPanel1, BorderLayout.CENTER);
+		root.add(Forms.buttonRow(jButton1, jButton2), BorderLayout.SOUTH);
+		setContentPane(root);
+		getRootPane().setDefaultButton(jButton2);
+		pack();
+		setLocationRelativeTo(jm);
 	}
 
 	public void actionPerformed(ActionEvent e) {

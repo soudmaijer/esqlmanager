@@ -112,19 +112,6 @@ public class Credits extends Canvas implements Runnable {
 			}
 		}
 	}
-
-	public static void main(String args[]) {
-		Frame j = new Frame();
-		j.setSize(640, 480);
-		j.setLayout(null);
-		j.setBackground(Color.black);
-
-		Credits c = new Credits();
-		c.setBounds(20, 40, 200, 200);
-		j.add(c);
-
-		j.setVisible(true);
-	}
 }
 
 class CreditObject {

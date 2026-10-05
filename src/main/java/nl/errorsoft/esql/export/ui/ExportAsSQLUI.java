@@ -18,6 +18,8 @@ import nl.errorsoft.esql.table.Table;
  */
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,13 +36,11 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		super((JFrame) jm, false);
 		this.jm = jm;
 		this.ecc = ecc;
-		this.getRootPane().setPreferredSize(new java.awt.Dimension(560, 320));
 		this.initComponents();
 		this.setTitle("Export as SQL");
 		this.setResizable(false);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
-			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
+		this.setLocationRelativeTo(jm);
 		this.setVisible(true);
 		this.toFront();
 	}
@@ -122,84 +122,45 @@ public class ExportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		jButton3 = new javax.swing.JButton();
 		jScrollPane1 = new javax.swing.JScrollPane();
 
-		getContentPane().setLayout(null);
-
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {
 				closeDialog(evt);
 			}
 		});
 
-		jPanel1.setLayout(null);
-
-		jPanel2.setLayout(null);
-
-		jPanel2.setBorder(new javax.swing.border.TitledBorder(null, "Info", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
 		jLabel1.setText("Select the database(s) / table(s) you would like to export on the left");
+		jPanel2.setLayout(new java.awt.BorderLayout());
 		jPanel2.add(jLabel1);
-		jLabel1.setBounds(20, 20, 330, 15);
+		Forms.titled(jPanel2, "Info");
 
-		jPanel1.add(jPanel2);
-		jPanel2.setBounds(10, 10, 370, 50);
-		jPanel3.setLayout(null);
-
-		jPanel3.setBorder(new javax.swing.border.TitledBorder(null, "Export options", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
-		jCheckBox1.setText("Dump table structure");
+		jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.Y_AXIS));
 		jPanel3.add(jCheckBox1);
-		jCheckBox1.setBounds(15, 25, 330, 20);
-
-		jCheckBox2.setText("Dump table data");
 		jPanel3.add(jCheckBox2);
-		jCheckBox2.setBounds(15, 45, 340, 20);
-
-		jCheckBox3.setText("Include `CREATE DATABASE` statements");
 		jPanel3.add(jCheckBox3);
-		jCheckBox3.setBounds(15, 65, 340, 20);
-
-		jCheckBox4.setText("Include `USE DATABASE` statements");
-		jPanel3.add(jCheckBox4);
-		jCheckBox4.setBounds(15, 105, 340, 20);
-
-		jCheckBox5.setText("Include `DROP TABLE` statements");
 		jPanel3.add(jCheckBox5);
-		jCheckBox5.setBounds(15, 85, 340, 20);
+		jPanel3.add(jCheckBox4);
+		Forms.titled(jPanel3, "Export options");
 
-		jPanel1.add(jPanel3);
-		jPanel3.setBounds(10, 70, 370, 140);
-
-		jPanel4.setLayout(null);
-		jPanel4.setBorder(new javax.swing.border.TitledBorder(null, "Save as", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
 		jTextField1.setEditable(false);
-		jPanel4.add(jTextField1);
-		jTextField1.setBounds(10, 20, 260, 21);
-
+		jTextField1.setColumns(20);
 		jButton1.setText("Browse...");
 		jButton1.addActionListener(this);
-		jPanel4.add(jButton1);
-		jButton1.setBounds(270, 20, 90, 21);
-
-		jPanel1.add(jPanel4);
-		jPanel4.setBounds(10, 220, 370, 50);
+		jPanel4.setLayout(new java.awt.BorderLayout(Forms.GAP, 0));
+		jPanel4.add(jTextField1, java.awt.BorderLayout.CENTER);
+		jPanel4.add(jButton1, java.awt.BorderLayout.EAST);
+		Forms.titled(jPanel4, "Save as");
 
 		jButton2.setText("Export");
 		jButton2.addActionListener(this);
-		jPanel1.add(jButton2);
-		jButton2.setBounds(175, 285, 100, 23);
-
 		jButton3.setText("Close");
 		jButton3.addActionListener(this);
-		jPanel1.add(jButton3);
-		jButton3.setBounds(280, 285, 100, 23);
 
-		getContentPane().add(jPanel1);
-		jPanel1.setBounds(170, 0, 390, 320);
-
-		getContentPane().add(jScrollPane1);
-		jScrollPane1.setBounds(0, 0, 170, 322);
-
+		jPanel1 = new Forms.Grid().full(jPanel2).full(jPanel3).full(jPanel4).full(Forms.buttonRow(jButton2, jButton3)).done();
+		jScrollPane1.setPreferredSize(new java.awt.Dimension(180, 320));
+		javax.swing.JPanel root = Forms.padded(new javax.swing.JPanel(new java.awt.BorderLayout(Forms.PADDING, 0)));
+		root.add(jScrollPane1, java.awt.BorderLayout.WEST);
+		root.add(jPanel1, java.awt.BorderLayout.CENTER);
+		setContentPane(root);
 		pack();
 	}
 

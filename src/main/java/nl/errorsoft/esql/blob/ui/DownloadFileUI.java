@@ -10,6 +10,8 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+import nl.errorsoft.esql.ui.util.Forms;
+
 /*
  * JDialog.java
  *
@@ -48,48 +50,31 @@ public class DownloadFileUI extends javax.swing.JDialog implements UDDataIF, Act
 		jTextField1 = new javax.swing.JTextField();
 		jButton3 = new javax.swing.JButton();
 
-		getContentPane().setLayout(null);
-
 		setTitle("Download data");
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {
 				closeDialog(evt);
 			}
 		});
-
-		getContentPane().add(jProgressBar1);
-		jProgressBar1.setBounds(20, 100, 330, 16);
-
 		jLabel1.setText("Press \"Download\" to start the transfer now!");
-		getContentPane().add(jLabel1);
-		jLabel1.setBounds(20, 75, 270, 15);
-
 		jButton1.setText("Download now!");
-		getContentPane().add(jButton1);
-		jButton1.setBounds(20, 135, 110, 23);
-
 		jButton2.setText("Cancel");
-		getContentPane().add(jButton2);
-		jButton2.setBounds(240, 135, 110, 23);
-
-		jLabel2.setFont(new java.awt.Font("Dialog", 1, 11));
 		jLabel2.setText("Select a location on disk:");
-		getContentPane().add(jLabel2);
-		jLabel2.setBounds(20, 20, 150, 15);
-
-		getContentPane().add(jTextField1);
-		jTextField1.setBounds(20, 40, 240, 20);
-
 		jButton3.setText("Save as...");
-		getContentPane().add(jButton3);
-		jButton3.setBounds(260, 40, 90, 21);
-
+		jLabel2.setFont(jLabel2.getFont().deriveFont(java.awt.Font.BOLD));
+		jTextField1.setColumns(24);
 		jButton3.addActionListener(this);
 		jButton2.addActionListener(this);
 		jButton1.addActionListener(this);
 
-		this.getRootPane().setPreferredSize(new java.awt.Dimension(375, 175));
-
+		JPanel file = new JPanel(new BorderLayout(Forms.GAP, 0));
+		file.add(jTextField1, BorderLayout.CENTER);
+		file.add(jButton3, BorderLayout.EAST);
+		JPanel content = new Forms.Grid().full(jLabel2).full(file).full(jLabel1).full(jProgressBar1).done();
+		JPanel root = Forms.padded(new JPanel(new BorderLayout()));
+		root.add(content, BorderLayout.CENTER);
+		root.add(Forms.buttonRow(jButton1, jButton2), BorderLayout.SOUTH);
+		setContentPane(root);
 		pack();
 	}//GEN-END:initComponents
 

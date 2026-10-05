@@ -19,6 +19,8 @@ import nl.errorsoft.esql.ui.util.ExtentionFileFilter;
  */
 
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import javax.swing.tree.*;
 import javax.swing.event.*;
 import java.awt.event.*;
@@ -36,13 +38,11 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		super((JFrame) jm, false);
 		this.jm = jm;
 		this.ecc = ecc;
-		this.getRootPane().setPreferredSize(new java.awt.Dimension(560, 300));
 		this.initComponents();
 		this.setTitle("Import as SQL");
 		this.setResizable(false);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
-			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
+		this.setLocationRelativeTo(jm);
 		this.setVisible(true);
 		this.toFront();
 	}
@@ -63,61 +63,39 @@ public class ImportAsSQLUI extends javax.swing.JDialog implements ActionListener
 		jButton3 = new javax.swing.JButton();
 		jScrollPane1 = new javax.swing.JScrollPane();
 
-		getContentPane().setLayout(null);
-
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {
 				closeDialog(evt);
 			}
 		});
 
-		jPanel1.setLayout(null);
-
-		jPanel2.setLayout(null);
-
-		jPanel2.setBorder(new javax.swing.border.TitledBorder(null, "Info", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
 		jLabel1.setText(
-			"<html>1. Select a database or table you want to import data into. If you don`t want to import data into a specific database or table go to step 2.<br><br>2. Press the \"Browse..\" button to select the file containing the sql-statements.<br><br>3. Press the \"Import\" button to start.</html>");
+			"<html><body style='width: 300px'>1. Select a database or table you want to import data into. If you don`t want to import data into a specific database or table go to step 2.<br><br>2. Press the \"Browse..\" button to select the file containing the sql-statements.<br><br>3. Press the \"Import\" button to start.</body></html>");
 		jLabel1.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+		jPanel2.setLayout(new java.awt.BorderLayout());
 		jPanel2.add(jLabel1);
-		jLabel1.setBounds(20, 25, 320, 120);
+		Forms.titled(jPanel2, "Info");
 
-		jPanel1.add(jPanel2);
-		jPanel2.setBounds(10, 10, 370, 170);
-
-		jPanel4.setLayout(null);
-
-		jPanel4.setBorder(new javax.swing.border.TitledBorder(null, "Pick File From Disk", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-			javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", 1, 11)));
 		jTextField1.setEditable(false);
-		jPanel4.add(jTextField1);
-		jTextField1.setBounds(10, 20, 260, 21);
-
+		jTextField1.setColumns(20);
 		jButton1.setText("Browse...");
 		jButton1.addActionListener(this);
-		jPanel4.add(jButton1);
-		jButton1.setBounds(270, 20, 90, 21);
-
-		jPanel1.add(jPanel4);
-		jPanel4.setBounds(10, 190, 370, 50);
+		jPanel4.setLayout(new java.awt.BorderLayout(Forms.GAP, 0));
+		jPanel4.add(jTextField1, java.awt.BorderLayout.CENTER);
+		jPanel4.add(jButton1, java.awt.BorderLayout.EAST);
+		Forms.titled(jPanel4, "Pick File From Disk");
 
 		jButton2.setText("Import");
 		jButton2.addActionListener(this);
-		jPanel1.add(jButton2);
-		jButton2.setBounds(175, 260, 100, 21);
-
 		jButton3.setText("Close");
 		jButton3.addActionListener(this);
-		jPanel1.add(jButton3);
-		jButton3.setBounds(280, 260, 100, 21);
 
-		getContentPane().add(jPanel1);
-		jPanel1.setBounds(170, 0, 390, 300);
-
-		getContentPane().add(jScrollPane1);
-		jScrollPane1.setBounds(0, 0, 170, 302);
-
+		jPanel1 = new Forms.Grid().full(jPanel2).full(jPanel4).full(Forms.buttonRow(jButton2, jButton3)).done();
+		jScrollPane1.setPreferredSize(new java.awt.Dimension(180, 300));
+		JPanel root = Forms.padded(new JPanel(new java.awt.BorderLayout(Forms.PADDING, 0)));
+		root.add(jScrollPane1, java.awt.BorderLayout.WEST);
+		root.add(jPanel1, java.awt.BorderLayout.CENTER);
+		setContentPane(root);
 		pack();
 	}
 

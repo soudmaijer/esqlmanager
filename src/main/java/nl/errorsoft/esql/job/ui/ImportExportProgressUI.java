@@ -8,6 +8,8 @@ import nl.errorsoft.esql.error.Dialogs;
  */
 import nl.errorsoft.esql.ui.util.EscapeToClose;
 import javax.swing.*;
+
+import nl.errorsoft.esql.ui.util.Forms;
 import javax.swing.tree.*;
 import javax.swing.event.*;
 import java.awt.event.*;
@@ -24,7 +26,6 @@ public class ImportExportProgressUI extends javax.swing.JDialog {
 		super(jm, "Import / Export progress");
 		// Esc does not close this window: a running job must not be hidden by accident.
 		getRootPane().putClientProperty(EscapeToClose.DISABLED, true);
-		this.getRootPane().setPreferredSize(new java.awt.Dimension(360, 100));
 		initComponents();
 		this.setLocation(jm.getLocation().x + (int) ((jm.getSize().width - this.getSize().width) / 2),
 			jm.getLocation().y + (int) ((jm.getSize().height - this.getSize().height) / 2));
@@ -42,25 +43,21 @@ public class ImportExportProgressUI extends javax.swing.JDialog {
 		jLabel1 = new javax.swing.JLabel();
 		jButton1 = new javax.swing.JButton();
 
-		getContentPane().setLayout(null);
-
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {
 				closeDialog(evt);
 			}
 		});
-
-		getContentPane().add(jProgressBar1);
-		jProgressBar1.setBounds(15, 40, 330, 16);
-
 		jLabel1.setText("Import / Export progress");
-		getContentPane().add(jLabel1);
-		jLabel1.setBounds(15, 15, 270, 15);
-
 		jButton1.setText("Close");
-		getContentPane().add(jButton1);
-		jButton1.setBounds(245, 65, 100, 25);
-		this.jButton1.setEnabled(false);
+		jButton1.setEnabled(false);
+		jProgressBar1.setPreferredSize(new java.awt.Dimension(330, jProgressBar1.getPreferredSize().height));
+
+		JPanel root = Forms.padded(new JPanel(new java.awt.BorderLayout(0, Forms.GAP)));
+		root.add(jLabel1, java.awt.BorderLayout.NORTH);
+		root.add(jProgressBar1, java.awt.BorderLayout.CENTER);
+		root.add(Forms.buttonRow(jButton1), java.awt.BorderLayout.SOUTH);
+		setContentPane(root);
 		pack();
 	}
 
