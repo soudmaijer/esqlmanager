@@ -66,6 +66,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           flags=""
-          case "$GITHUB_REF_NAME" in *-*) flags="--prerelease --draft" ;; esac
+          case "$GITHUB_REF_NAME" in *-*) flags="--prerelease" ;; esac
           gh release create "$GITHUB_REF_NAME" "${{ steps.dmg.outputs.file }}" \
             --title "eSQLManager $GITHUB_REF_NAME" --notes-file release-notes.md $flags
