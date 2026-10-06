@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: One status line per query result
+
+- The bar below a query tab no longer repeats "Query returned n row(s)": the line on the result tab already says
+  when it ran, on which database, the rows and the time. The bar shows "Running...", the statement that failed, or
+  the number of statements when some of them returned no rows, and is empty otherwise.
+
 06-10-2026: Output tabs per connection, find in the output and the query editor
 
 - The output panel has an Application tab (start up, settings, drivers, connections that failed to open) and a tab

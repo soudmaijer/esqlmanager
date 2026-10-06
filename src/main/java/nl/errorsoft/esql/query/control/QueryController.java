@@ -196,8 +196,8 @@ public class QueryController implements SchemaNames {
 	}
 
 	/**
-	 * Runs the statements in order on a virtual thread and stops at the first that fails. The outcome of each goes to the log, the total or the failing
-	 * statement to the status bar; {@code done} gets the results on the event thread.
+	 * Runs the statements in order on a virtual thread and stops at the first that fails. The outcome of each goes to the log and a result tab, "Running...", the failing
+	 * statement or the count of statements without rows to the status bar; {@code done} gets the results on the event thread.
 	 */
 	public void run(List<String> statements, Component parent, Consumer<RunResult> done) {
 		connectionWindowController.setStatusDetail(parent, "Running " + (statements.size() == 1 ? "statement" : statements.size() + " statements") + "...");
@@ -231,7 +231,6 @@ public class QueryController implements SchemaNames {
 		}
 
 		List<StatementResult> results = new ArrayList<>();
-		StatementResult last = null;
 		long start = System.nanoTime();
 
 		for (int i = 0; i < statements.size(); i++) {
@@ -245,9 +244,9 @@ public class QueryController implements SchemaNames {
 				switch (queries.execute(sql)) {
 					case ExecutionResult.Rows rows -> {
 						long millis = millisSince(started);
-						last = new StatementResult(sql.strip(), rows.result(), ranAt, currentDatabase(), millis);
-						results.add(last);
-						log.info("{}: {} row(s) in {} ms", which, last.rowCount(), millis);
+						StatementResult result = new StatementResult(sql.strip(), rows.result(), ranAt, currentDatabase(), millis);
+						results.add(result);
+						log.info("{}: {} row(s) in {} ms", which, result.rowCount(), millis);
 					}
 					case ExecutionResult.DatabaseChanged changed -> log.info("{}: {} changed to {}", which, databaseTerm(), changed.database());
 					case ExecutionResult.Updated updated -> log.info("{}: {} row(s) affected in {} ms", which, updated.count(), millisSince(started));
@@ -260,11 +259,17 @@ public class QueryController implements SchemaNames {
 			}
 		}
 
-		String summary = statements.size() == 1 && last != null
-			? "Query returned " + last.rowCount() + " row(s) in " + millisSince(start) + " ms"
-			: statements.size() + " statement(s) executed in " + millisSince(start) + " ms";
+		String summary = summary(statements.size(), results.size(), millisSince(start));
 		SwingUtilities.invokeLater(() -> connectionWindowController.setStatusDetail(parent, summary));
 		return new RunResult(results, true);
+	}
+
+	/**
+	 * What the bar below the query tab says after a successful run. A statement with rows has its own line on its result tab (time, database, rows,
+	 * duration), so the bar does not repeat it and stays empty when every statement had rows; otherwise it says how many statements ran.
+	 */
+	static String summary(int statements, int withRows, long millis) {
+		return withRows == statements ? "" : statements + " statement(s) executed in " + millis + " ms";
 	}
 
 	private static void report(Component parent, String action, Exception e) {

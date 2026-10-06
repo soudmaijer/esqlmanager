@@ -47,5 +47,5 @@ Several connections can be open at the same time. They all appear in the explore
 
 ## Status bars
 
-* The bar at the bottom of a tab shows its last message: on the table data how many rows were loaded and how long it took, on a query tab the outcome of its last run. A tab without a message of its own, such as a fresh query tab, leaves it empty. On the table data the paging buttons are in the same bar. What happens in the explorer (tables listed, a model opened in the designer) is in the output panel.
+* The bar at the bottom of a tab shows its last message: on the table data how many rows were loaded and how long it took, on a query tab "Running..." while statements run, the statement that failed, or how many statements ran when some returned no rows; a result has its own line with when it ran, the database, the rows and the time, which the bar does not repeat. A tab without a message of its own, such as a fresh query tab, leaves it empty. On the table data the paging buttons are in the same bar. What happens in the explorer (tables listed, a model opened in the designer) is in the output panel.
 * The status bar of the application shows a light for the state and, on the right, the server and account of the connection of the tab in front or of the node selected in the explorer.
