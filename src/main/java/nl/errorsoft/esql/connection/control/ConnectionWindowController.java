@@ -41,14 +41,18 @@ import nl.errorsoft.esql.designer.ui.diagram.ModelFactory;
 import nl.errorsoft.esql.query.ui.QueryTab;
 import nl.errorsoft.esql.user.control.UserManagerController;
 
+import org.apache.logging.log4j.CloseableThreadContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import nl.errorsoft.esql.dialect.Dialect;
 import java.util.*;
 import javax.swing.SwingUtilities;
 
 public class ConnectionWindowController {
+	/** The key of the log context with the profile name of the connection, shown before the log lines in the output panel. */
+	public static final String LOG_CONNECTION = "connection";
 	private String statusDetail = "";
 	private static final Logger log = LogManager.getLogger(ConnectionWindowController.class);
 
@@ -75,7 +79,7 @@ public class ConnectionWindowController {
 		mainController.updateStatus("Connecting...", true);
 
 		Thread.ofVirtual().name("connect").start(() -> {
-			try {
+			try (var context = logContext()) {
 				session.start();
 				SwingUtilities.invokeLater(() -> mainController.updateStatus("Loading databases...", true));
 				List<Database> databases = getContext().databases().getDatabases();
@@ -91,6 +95,23 @@ public class ConnectionWindowController {
 				});
 			}
 		});
+	}
+
+	/**
+	 * Puts the profile name of this connection on the log lines of the current thread until closed, so the output panel shows which connection did what.
+	 * For work on a thread of its own.
+	 */
+	public CloseableThreadContext.Instance logContext() {
+		return CloseableThreadContext.put(LOG_CONNECTION, session.getConnectionProfile().getName());
+	}
+
+	/**
+	 * This connection became the one the user works with (its window came to the front, a node of it was selected): the status bar shows it, and what the
+	 * event thread logs from now on is marked with its name.
+	 */
+	public void activate() {
+		ThreadContext.put(LOG_CONNECTION, session.getConnectionProfile().getName());
+		showStatusInfo();
 	}
 
 	/** Shows the server and account of this connection in the status bar of the application. */
@@ -160,7 +181,7 @@ public class ConnectionWindowController {
 	public <T> void inBackground(String action, String status, Work<T> work, Outcome<T> done, Runnable always) {
 		mainController.updateStatus(status, true);
 		Thread.ofVirtual().name(action).start(() -> {
-			try {
+			try (var context = logContext()) {
 				T result = work.run();
 				SwingUtilities.invokeLater(() -> {
 					mainController.showConnectionState();
@@ -185,14 +206,9 @@ public class ConnectionWindowController {
 		});
 	}
 
-	/** Closes the designers opened from this connection; false when the user keeps one open. */
-	public boolean closeDesigners() {
-		return mainController.getMainWindow().closeDesigners(this);
-	}
-
 	/**
-	 * Disconnects after asking: editors with unsaved changes ask first, then the user confirms, then the designers of this connection ask to save. Every
-	 * window of the connection closes.
+	 * Disconnects after asking: editors with unsaved changes ask first, then the user confirms. Every work window of the connection closes, its designers
+	 * stay open without it.
 	 */
 	public void disconnect() {
 		if (!view.confirmCloseEditors()) {
@@ -200,7 +216,7 @@ public class ConnectionWindowController {
 		}
 		int windows = view.frameCount();
 		String closing = windows == 0 ? "" : " " + windows + (windows == 1 ? " tab will close." : " tabs will close.");
-		if (Dialogs.confirm(parent(), "Disconnect", "Disconnect from " + getTitle() + "?" + closing, "Disconnect") && closeDesigners()) {
+		if (Dialogs.confirm(parent(), "Disconnect", "Disconnect from " + getTitle() + "?" + closing, "Disconnect")) {
 			closeWindow();
 		}
 	}
@@ -215,6 +231,7 @@ public class ConnectionWindowController {
 		}
 
 		view.closeAll();
+		mainController.getMainWindow().detachDesigners(this);
 		mainController.removeConnection(this);
 	}
 
@@ -602,54 +619,37 @@ public class ConnectionWindowController {
 		}
 	}
 
-	/*
-	 * @description: shows the tables of the selected database in the tree. The tab with the table list opens on a double click, see openDatabase.
-	 */
+	/** Shows the tables of the selected database in the tree, loaded in the background. The tab with the table list opens on a double click, see openDatabase. */
 	public void databaseSelected(Database database) {
 		if (hasSchemas()) {
 			loadSchemas(database);
 			return;
 		}
 
-		try {
-			mainController.updateStatus("Loading tables...", true);
-
-			DatabaseController databaseController = new DatabaseController(this);
-			java.util.List<Table> tables = databaseController.getTables(database);
+		DatabaseController databaseController = new DatabaseController(this);
+		inBackground("Load tables", "Loading tables...", () -> databaseController.getTables(database), tables -> {
 			view.branch().loadTables(database, tables);
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent(), "Load tables", e);
-		}
+		});
 	}
 
-	/** Shows the schemas of a database in the tree; on PostgreSQL this connects to that database. */
+	/** Shows the schemas of a database in the tree, loaded in the background; on PostgreSQL this connects to that database. */
 	private void loadSchemas(Database database) {
 		String schemas = dialect().schemaTerm() + "s";
-
-		try {
-			mainController.updateStatus("Loading " + schemas + "...", true);
-			java.util.List<Schema> list = new DatabaseController(this).getSchemas(database);
+		DatabaseController databaseController = new DatabaseController(this);
+		inBackground("Load " + schemas, "Loading " + schemas + "...", () -> databaseController.getSchemas(database), list -> {
 			view.branch().loadSchemas(database, list);
 			setStatusDetail(database.getName() + ": " + list.size() + " " + dialect().schemaTerm() + "(s)");
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent(), "Load " + schemas, e);
-		}
+		});
 	}
 
-	/** Shows the tables of a schema in the tree. */
+	/** Shows the tables of a schema in the tree, loaded in the background. */
 	public void schemaSelected(Schema schema) {
-		try {
-			mainController.updateStatus("Loading tables...", true);
-			java.util.List<Table> tables = new DatabaseController(this).getTables(schema);
+		DatabaseController databaseController = new DatabaseController(this);
+		inBackground("Load tables", "Loading tables...", () -> databaseController.getTables(schema), tables -> {
 			view.branch().loadTables(schema, tables);
 			setStatusDetail(schema.getDatabase().getName() + "." + schema.getName() + ": " + tables.size() + " table(s)");
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent(), "Load tables", e);
-		}
+		});
 	}
 
 	/** Double click on a database: opens the table list in a tab and puts that tab in front. */
@@ -672,21 +672,14 @@ public class ConnectionWindowController {
 		}
 	}
 
-	/*
-	 * @description: loads the columns of the selected table in the tree. The data opens on a double click, see openTable.
-	 */
+	/** Loads the columns of the table in the background and shows them under it in the tree. The data opens on a double click, see openTable. */
 	public void tableSelected(Table table, boolean addTreeColumns) {
-		try {
-			if (addTreeColumns) {
-				mainController.updateStatus("Fetching table columns...", true);
-				TableColumn[] fields = new TableController(this).getColumns(table);
-				view.branch().loadTableColumns(table, fields);
-			}
-
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent(), "Load table", e);
+		if (!addTreeColumns) {
+			return;
 		}
+		TableController tableController = new TableController(this);
+		inBackground("Load table", "Fetching table columns...", () -> tableController.getColumns(table),
+			columns -> view.branch().loadTableColumns(table, columns));
 	}
 
 	/** Shows columns loaded in the background under the table in the tree, on the event thread. */
@@ -854,8 +847,9 @@ public class ConnectionWindowController {
 		}
 	}
 
+	/** The name of the profile: two connections to the same server as the same user are told apart by it. */
 	public String getTitle() {
-		return session.getConnectionProfile().getUsername() + "@" + session.getConnectionProfile().getHost();
+		return session.getConnectionProfile().getName();
 	}
 
 	/** What is selected in the tree (a database, schema, table, ...), null when nothing is. */

@@ -136,7 +136,7 @@ public class QueryController implements SchemaNames {
 
 	private void loadTables(Database database) {
 		Thread.ofVirtual().name("completion-tables").start(() -> {
-			try {
+			try (var context = connectionWindowController.logContext()) {
 				DatabaseService service = connectionWindowController.getContext().databases();
 				Map<String, Map<String, Table>> loaded = new ConcurrentHashMap<>();
 				List<Schema> schemas = service.getSchemas(database);
@@ -185,8 +185,10 @@ public class QueryController implements SchemaNames {
 	public void run(List<String> statements, Component parent, Consumer<RunResult> done) {
 		connectionWindowController.setStatusDetail(parent, "Running " + (statements.size() == 1 ? "statement" : statements.size() + " statements") + "...");
 		Thread.ofVirtual().name("query").start(() -> {
-			RunResult result = run(statements, parent);
-			SwingUtilities.invokeLater(() -> done.accept(result));
+			try (var context = connectionWindowController.logContext()) {
+				RunResult result = run(statements, parent);
+				SwingUtilities.invokeLater(() -> done.accept(result));
+			}
 		});
 	}
 
@@ -313,7 +315,7 @@ public class QueryController implements SchemaNames {
 	private void loadColumns(Table table, String key) {
 		Map<String, Map<String, Table>> loadedFor = tables;
 		Thread.ofVirtual().name("completion-columns").start(() -> {
-			try {
+			try (var context = connectionWindowController.logContext()) {
 				List<String> names = new ArrayList<>();
 
 				for (TableColumn column : connectionWindowController.getContext().tables().loadColumns(table)) {

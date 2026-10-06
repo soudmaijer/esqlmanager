@@ -54,6 +54,9 @@ public class ExplorerPanel extends JPanel {
 	private final DefaultTreeModel model = new DefaultTreeModel(root);
 	private final JTree tree = new JTree(model);
 	private final Map<ConnectionNode, ConnectionWindowController> connections = new IdentityHashMap<>();
+	private static final String TREE = "tree";
+	private static final String EMPTY = "empty";
+	private final JPanel cards = new JPanel(new java.awt.CardLayout()); // The tree, or the hint when it is empty
 
 	private final JButton refreshButton = button("pc", "Reload databases");
 	private final JButton queryButton = button("imgRunQuery", "New query");
@@ -124,9 +127,32 @@ public class ExplorerPanel extends JPanel {
 		JScrollPane scroll = new JScrollPane(tree);
 		scroll.setBorder(null);
 		scroll.getViewport().setBackground(UIManager.getColor("Tree.background"));
+		cards.add(scroll, TREE);
+		cards.add(emptyHint(), EMPTY);
 		add(toolbar, BorderLayout.NORTH);
-		add(scroll, BorderLayout.CENTER);
+		add(cards, BorderLayout.CENTER);
+		showTreeOrHint();
 		updateButtons();
+	}
+
+	/** Without connections and saved profiles the explorer says how to start, with a button for the first profile. */
+	private JPanel emptyHint() {
+		JLabel text = new JLabel("<html><center>No connections yet.<br>Create a profile to connect to a server.</center></html>", SwingConstants.CENTER);
+		text.setForeground(UIManager.getColor("Label.disabledForeground"));
+		JButton create = new JButton("New connection...", images.getIcon("imgConnect"));
+		create.addActionListener(e -> mainController.showConnectionProfileDialog());
+		JPanel hint = new JPanel(new java.awt.GridBagLayout());
+		hint.setBackground(UIManager.getColor("Tree.background"));
+		java.awt.GridBagConstraints cell = new java.awt.GridBagConstraints();
+		cell.gridx = 0;
+		cell.insets = new java.awt.Insets(6, 12, 6, 12);
+		hint.add(text, cell);
+		hint.add(create, cell);
+		return hint;
+	}
+
+	private void showTreeOrHint() {
+		((java.awt.CardLayout) cards.getLayout()).show(cards, root.getChildCount() == 0 ? EMPTY : TREE);
 	}
 
 	private JButton button(String icon, String tooltip) {
@@ -142,6 +168,7 @@ public class ExplorerPanel extends JPanel {
 		model.insertNodeInto(treeNode, root, connections.size());
 		connections.put(node, controller);
 		tree.setSelectionPath(new TreePath(treeNode.getPath()));
+		showTreeOrHint();
 		return new ConnectionBranch(tree, treeNode);
 	}
 
@@ -155,6 +182,7 @@ public class ExplorerPanel extends JPanel {
 			}
 		}
 		updateButtons();
+		showTreeOrHint();
 	}
 
 	/** Shows the saved profiles that are not connected below the connections. */
@@ -168,6 +196,7 @@ public class ExplorerPanel extends JPanel {
 		for (ConnectionProfile profile : profiles) {
 			model.insertNodeInto(new DefaultMutableTreeNode(new ProfileNode(profile)), root, root.getChildCount());
 		}
+		showTreeOrHint();
 	}
 
 	/** The selected node when it belongs to this connection (the connection node itself or a node below it), else null. */
@@ -199,6 +228,7 @@ public class ExplorerPanel extends JPanel {
 		if (controller == null) {
 			return;
 		}
+		controller.activate();
 		switch (node.getUserObject()) {
 			case Database database -> controller.databaseSelected(database);
 			case Schema schema -> controller.schemaSelected(schema);
@@ -207,7 +237,6 @@ public class ExplorerPanel extends JPanel {
 				// The connection and columns have nothing to load.
 			}
 		}
-		controller.showStatusInfo();
 	}
 
 	/** The toolbar offers what fits the selected node. */

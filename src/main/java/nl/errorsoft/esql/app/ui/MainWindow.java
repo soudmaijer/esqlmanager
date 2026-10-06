@@ -79,7 +79,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	// Containers etc.
 	private JSplitPane split;
-	private JSplitPane explorerSplit; // The explorer left, the work windows and the output right
+	private JSplitPane explorerSplit; // The explorer left, the work windows right; the output panel below both
 	private ExplorerPanel explorer;
 	private JScrollPane outputScroll;
 	private RSyntaxTextArea outputText;
@@ -315,23 +315,25 @@ public class MainWindow extends JFrame implements ActionListener {
 		outputScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		outputPanel.add(outputScroll, BorderLayout.CENTER);
 
-		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, workArea, outputPanel);
-		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
-		split.setContinuousLayout(true);
-		// A maximized internal frame must not limit how far the divider can move.
-		desktop.setMinimumSize(new Dimension(0, 0));
-		workArea.setMinimumSize(new Dimension(0, 0));
-		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
-		split.setResizeWeight(1.0);
-		outputPanel.setMinimumSize(new Dimension(0, 60));
-
 		explorer = new ExplorerPanel(mainController);
 		explorer.setMinimumSize(new Dimension(160, 0));
-		explorerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, explorer, split);
+		explorerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, explorer, workArea);
 		explorerSplit.setContinuousLayout(true);
 		// Extra window width goes to the work windows, the explorer keeps its width.
 		explorerSplit.setResizeWeight(0);
-		getContentPane().add(explorerSplit);
+		// A maximized internal frame must not limit how far the dividers can move.
+		desktop.setMinimumSize(new Dimension(0, 0));
+		workArea.setMinimumSize(new Dimension(0, 0));
+		explorerSplit.setMinimumSize(new Dimension(0, 0));
+
+		// The output panel spans the whole width, below the explorer and the work windows.
+		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, explorerSplit, outputPanel);
+		// Layout is cheap with FlatLaf, so the panels follow the divider while dragging.
+		split.setContinuousLayout(true);
+		// Extra window height goes to the explorer and the desktop, the output panel keeps its height unless the divider is moved.
+		split.setResizeWeight(1.0);
+		outputPanel.setMinimumSize(new Dimension(0, 60));
+		getContentPane().add(split);
 
 		/*
 		 *	ActionListeners
@@ -370,7 +372,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		return windowTabs.selectedFrame();
 	}
 
-	/** Next and previous, then a check item per open window that brings it to the front. */
+	/** Next and previous, then the open windows grouped by connection (a heading with its name), each a check item that brings it to the front. */
 	private void fillWindowMenu() {
 		windowMenu.removeAll();
 		java.util.List<JInternalFrame> frames = windowTabs == null ? java.util.List.of() : windowTabs.getFrames();
@@ -378,14 +380,33 @@ public class MainWindow extends JFrame implements ActionListener {
 		previousWindowItem.setEnabled(frames.size() > 1);
 		windowMenu.add(nextWindowItem);
 		windowMenu.add(previousWindowItem);
-		if (!frames.isEmpty()) {
-			windowMenu.addSeparator();
-		}
+
+		java.util.Map<String, java.util.List<JInternalFrame>> groups = new java.util.LinkedHashMap<>();
 		for (JInternalFrame frame : frames) {
-			JCheckBoxMenuItem item = new JCheckBoxMenuItem(frame.getTitle(), frame.getFrameIcon(), frame == windowTabs.selectedFrame());
-			item.addActionListener(e -> windowTabs.select(frame));
-			windowMenu.add(item);
+			groups.computeIfAbsent(connectionOf(frame), key -> new java.util.ArrayList<>()).add(frame);
 		}
+		groups.forEach((connection, grouped) -> {
+			windowMenu.addSeparator();
+			if (!connection.isEmpty()) {
+				JMenuItem heading = new JMenuItem(connection);
+				heading.setEnabled(false);
+				windowMenu.add(heading);
+			}
+			for (JInternalFrame frame : grouped) {
+				JCheckBoxMenuItem item = new JCheckBoxMenuItem(frame.getTitle(), frame.getFrameIcon(), frame == windowTabs.selectedFrame());
+				item.addActionListener(e -> windowTabs.select(frame));
+				windowMenu.add(item);
+			}
+		});
+	}
+
+	/** The name of the connection a window belongs to, empty for the help and a designer without a connection. */
+	private static String connectionOf(JInternalFrame frame) {
+		if (frame instanceof DesignerWindow designer) {
+			return designer.getConnection() == null ? "" : designer.getConnection().getTitle();
+		}
+		Object connection = frame.getClientProperty(WindowTabsPanel.CONNECTION_TITLE);
+		return connection == null ? "" : connection.toString();
 	}
 
 	/** The resting state: green and connected while a connection is open, red when there is none. */
@@ -494,17 +515,18 @@ public class MainWindow extends JFrame implements ActionListener {
 		windowTabs.removeWindow(designer);
 	}
 
-	/**
-	 * Closes the designers opened from a connection, each asking to save its model first.
-	 * @return false when the user cancelled one of them
-	 */
-	public boolean closeDesigners(ConnectionWindowController connection) {
+	/** The designers of a connection that closes stay open without it. */
+	public void detachDesigners(ConnectionWindowController connection) {
 		for (JInternalFrame frame : windowTabs.getFrames()) {
-			if (frame instanceof DesignerWindow designer && designer.getConnection() == connection && !designer.close()) {
-				return false;
+			if (frame instanceof DesignerWindow designer && designer.getConnection() == connection) {
+				designer.detach();
 			}
 		}
-		return true;
+	}
+
+	/** The open connections, in the order they were opened. */
+	public java.util.List<ConnectionWindowController> openConnections() {
+		return mainController.getConnections();
 	}
 
 	public void actionPerformed(java.awt.event.ActionEvent event) {

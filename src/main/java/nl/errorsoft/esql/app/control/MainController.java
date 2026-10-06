@@ -92,6 +92,11 @@ public class MainController {
 		showConnectionState();
 	}
 
+	/** The open connections, in the order they were opened. */
+	public List<ConnectionWindowController> getConnections() {
+		return List.copyOf(connections);
+	}
+
 	public int connectionCount() {
 		return connections.size();
 	}

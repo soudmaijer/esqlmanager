@@ -52,7 +52,7 @@ public class WorkFrame extends JInternalFrame {
 
 			@Override
 			public void internalFrameActivated(InternalFrameEvent e) {
-				connection.showStatusInfo();
+				connection.activate();
 			}
 		});
 

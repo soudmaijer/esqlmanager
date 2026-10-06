@@ -5,6 +5,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.ui.MainWindow;
+import nl.errorsoft.esql.connection.ServerType;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.export.DiagramExporter;
@@ -56,7 +57,8 @@ public class DesignerWindow extends JInternalFrame {
 	private DesignerPropertiesDialog properties;
 
 	private MainWindow mainWindow;
-	private ConnectionWindowController connection;
+	private ConnectionWindowController connection; // Null after the connection closed: the designer stays open
+	private final ServerType serverType; // The server the model is designed for, also without a connection
 
 	public DesignerWindow(MainWindow mainWindow, ConnectionWindowController connection) {
 		this(mainWindow, connection, null);
@@ -78,6 +80,7 @@ public class DesignerWindow extends JInternalFrame {
 
 		this.mainWindow = mainWindow;
 		this.connection = connection;
+		this.serverType = connection.getConnectionProfile().getServerType();
 
 		canvas = new DesignerCanvas(new DesignerCanvasController(this));
 
@@ -160,9 +163,9 @@ public class DesignerWindow extends JInternalFrame {
 
 		buildMenu();
 
-		canvas.setShowTableTypes(connection.getConnectionProfile().getServerType().getDialect().getTableTypes().length > 0);
+		canvas.setShowTableTypes(serverType.getDialect().getTableTypes().length > 0);
 
-		properties = new DesignerPropertiesDialog(mainWindow, connection.getConnectionProfile().getServerType());
+		properties = new DesignerPropertiesDialog(mainWindow, serverType);
 
 		if (model != null) {
 			this.setSize(1024, 720);
@@ -175,9 +178,14 @@ public class DesignerWindow extends JInternalFrame {
 		mainWindow.addDesignerWindow(this);
 	}
 
-	/** The connection the designer was opened from; generating the model runs on it. */
+	/** The connection the model is generated on; null when it was closed. */
 	public ConnectionWindowController getConnection() {
 		return connection;
+	}
+
+	/** The connection closed: the designer stays open with its model, Generate asks for another connection to the same kind of server. */
+	public void detach() {
+		connection = null;
 	}
 
 	/**
@@ -220,12 +228,31 @@ public class DesignerWindow extends JInternalFrame {
 		this.getContentPane().add(canvas.getToolbar(), BorderLayout.NORTH);
 	}
 
+	/** Generates the model on its connection; a designer whose connection closed asks for an open connection to the same kind of server first. */
 	public void generate() {
 		if (connection == null) {
-			Dialogs.info(this, "Generate model", "The designer has no connection. Open it again from a connected database to generate the model.");
-			return;
+			connection = chooseConnection();
+			if (connection == null) {
+				return;
+			}
 		}
 		new GenerateDialog(mainWindow, connection, canvas.getModel());
+	}
+
+	/** One of the open connections to a server of the model's type, chosen by the user; null when there is none or the user cancelled. */
+	private ConnectionWindowController chooseConnection() {
+		java.util.List<ConnectionWindowController> candidates = mainWindow.openConnections().stream()
+			.filter(open -> open.getConnectionProfile().getServerType().getType() == serverType.getType()).toList();
+		if (candidates.isEmpty()) {
+			Dialogs.info(this, "Generate model", "The designer has no connection. Connect to a " + serverType.getDescription()
+				+ " server first, the model is generated there.");
+			return null;
+		}
+		JComboBox<String> choice = new JComboBox<>(candidates.stream().map(ConnectionWindowController::getTitle).toArray(String[]::new));
+		JPanel form = new JPanel(new BorderLayout(0, 6));
+		form.add(new JLabel("Generate the model on the connection:"), BorderLayout.NORTH);
+		form.add(choice, BorderLayout.CENTER);
+		return Dialogs.form(this, "Generate model", form, "Choose", choice, () -> null) ? candidates.get(choice.getSelectedIndex()) : null;
 	}
 
 	public void showProperties(Object src) {

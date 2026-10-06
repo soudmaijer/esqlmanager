@@ -14,7 +14,8 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import nl.errorsoft.esql.app.ui.MainWindow;
 
 /**
- * Shows the application log in the output panel at the bottom of the main window.
+ * Shows the application log in the output panel at the bottom of the main window. One log for every connection: a line written for a connection starts
+ * with its profile name, from the log context {@code connection} (see {@code ConnectionWindowController.logContext}).
  */
 public class OutputPanelAppender extends AbstractAppender {
 	private final MainWindow mainWindow;
@@ -32,7 +33,8 @@ public class OutputPanelAppender extends AbstractAppender {
 	public static void install(MainWindow mainWindow) {
 		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
-		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n").setCharset(StandardCharsets.UTF_8)
+		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %notEmpty{[%X{connection}] }%msg%n")
+			.setCharset(StandardCharsets.UTF_8)
 			.setConfiguration(config).build();
 		Appender appender = new OutputPanelAppender(layout, mainWindow);
 
