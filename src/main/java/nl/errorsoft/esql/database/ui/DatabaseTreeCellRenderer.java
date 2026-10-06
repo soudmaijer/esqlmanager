@@ -49,7 +49,7 @@ public class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 				if (!selected) {
 					setForeground(UIManager.getColor("Label.disabledForeground"));
 				}
-				setToolTipText("Not connected, double click to connect");
+				setToolTipText("Double-click to connect");
 			}
 			case Database database -> setIcon(icon("dbimg", selected));
 			case Schema schema -> setIcon(icon("schemaimg", selected));

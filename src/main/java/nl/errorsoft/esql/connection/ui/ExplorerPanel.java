@@ -21,7 +21,10 @@ import javax.swing.SwingConstants;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 
 import nl.errorsoft.esql.app.ApplicationContext;
@@ -75,6 +78,22 @@ public class ExplorerPanel extends JPanel {
 		tree.setShowsRootHandles(true);
 		tree.setCellRenderer(new DatabaseTreeCellRenderer(images, null));
 		ToolTipManager.sharedInstance().registerComponent(tree);
+		tree.addTreeWillExpandListener(new TreeWillExpandListener() {
+			// A saved profile has a handle like a connection: expanding it connects. The connection takes its place in the tree at once.
+			@Override
+			public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+				Object object = ((DefaultMutableTreeNode) event.getPath().getLastPathComponent()).getUserObject();
+				if (object instanceof ProfileNode profile) {
+					mainController.connect(profile.profile());
+					throw new ExpandVetoException(event, "Connecting");
+				}
+			}
+
+			@Override
+			public void treeWillCollapse(TreeExpansionEvent event) {
+				// Nothing to do.
+			}
+		});
 		tree.addTreeSelectionListener(e -> {
 			updateButtons();
 			if (e.isAddedPath()) {
@@ -195,7 +214,10 @@ public class ExplorerPanel extends JPanel {
 			}
 		}
 		for (ConnectionProfile profile : profiles) {
-			model.insertNodeInto(new DefaultMutableTreeNode(new ProfileNode(profile)), root, root.getChildCount());
+			DefaultMutableTreeNode node = new DefaultMutableTreeNode(new ProfileNode(profile));
+			// The child only makes the tree draw an expand handle, expanding connects instead (see the will expand listener).
+			node.add(new DefaultMutableTreeNode("Connecting..."));
+			model.insertNodeInto(node, root, root.getChildCount());
 		}
 		showTreeOrHint();
 	}
@@ -270,7 +292,7 @@ public class ExplorerPanel extends JPanel {
 		}
 	}
 
-	/** A double click connects a saved profile and opens a database or table in a window. */
+	/** A double click opens a database or table in a window; the tree expands a saved profile, which connects. */
 	private void doubleClicked(MouseEvent e) {
 		TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 		if (path == null) {

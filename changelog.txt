@@ -1,6 +1,11 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Saved profiles look like connections
+
+- A saved profile that is not connected has an expand arrow and the (greyed) server icon like a connection;
+  expanding it connects, as does a double click. The tooltip says "Double-click to connect".
+
 06-10-2026: One explorer for all connections
 
 - The connection windows are gone: the explorer on the left lists every open connection (named after its profile)

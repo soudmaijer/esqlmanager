@@ -26,7 +26,7 @@ The **Databases and schemas** tab is available after a successful test. It lists
 
 Profiles are saved in `conf/profiles.xml`. A saved password is stored there in plain text, so only save one on a machine you trust, or turn Save password off.
 
-Several connections can be open at the same time. They all appear in the explorer on the left, each under the name of its profile, so two connections to the same server as the same user are told apart. Saved profiles that are not connected are listed below them in grey: double click one (or choose Connect in its context menu) to connect, Edit connection opens the profile dialog on it. When there are no connections and no saved profiles yet, the explorer shows a **New connection...** button that opens the connection dialog.
+Several connections can be open at the same time. They all appear in the explorer on the left, each under the name of its profile, so two connections to the same server as the same user are told apart. Saved profiles that are not connected are listed below them in grey: expand one with its arrow, double click it (or choose Connect in its context menu) to connect, Edit connection opens the profile dialog on it. When there are no connections and no saved profiles yet, the explorer shows a **New connection...** button that opens the connection dialog.
 
 ## The main window
 
