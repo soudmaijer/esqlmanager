@@ -6,7 +6,6 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.designer.DesignedModel;
 import nl.errorsoft.esql.designer.ModelCheck;
 import nl.errorsoft.esql.designer.model.Model;
-import nl.errorsoft.esql.designer.ui.diagram.ModelFactory;
 
 /** Checks a designer model and generates it on the server of a connection; the generate dialog shows the progress. */
 public class GenerateController {
@@ -18,7 +17,7 @@ public class GenerateController {
 
 	/** The model as plain records; call it on the event thread, the snapshot can then be checked and generated on any thread. */
 	public DesignedModel snapshot(Model model) {
-		return ModelFactory.toDesigned(model);
+		return model.toDesigned();
 	}
 
 	public List<String> problems(ModelCheck step, DesignedModel model) {

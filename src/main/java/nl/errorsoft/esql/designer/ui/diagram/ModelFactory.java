@@ -54,68 +54,6 @@ public final class ModelFactory {
 		return model;
 	}
 
-	/**
-	 * A snapshot of the model as plain records, for the check and the generation; read it on the event thread, the records can then be used on any
-	 * thread. A table linked to no database is listed apart.
-	 */
-	public static DesignedModel toDesigned(Model model) {
-		List<DesignedDatabase> databases = new ArrayList<>();
-		List<TableCard> linked = new ArrayList<>();
-
-		for (ModelCard object : model.getObjects()) {
-			if (object instanceof DatabaseCard database) {
-				List<DesignedTable> tables = new ArrayList<>();
-				for (ModelCard reference : model.getReferences(database)) {
-					if (reference instanceof TableCard table) {
-						linked.add(table);
-						tables.add(designed(model, table));
-					}
-				}
-				databases.add(new DesignedDatabase(database.getName(), tables));
-			}
-		}
-
-		List<DesignedTable> unlinked = new ArrayList<>();
-		for (ModelCard object : model.getObjects()) {
-			if (object instanceof TableCard table && !linked.contains(table)) {
-				unlinked.add(designed(model, table));
-			}
-		}
-		return new DesignedModel(databases, unlinked);
-	}
-
-	private static DesignedTable designed(Model model, TableCard table) {
-		List<ColumnDefinition> columns = new ArrayList<>();
-		for (DesignerColumn field : table.getFields()) {
-			columns.add(column(field));
-		}
-
-		// The keys the table has on other tables; the keys other tables have on it are generated with those tables.
-		List<DesignedForeignKey> keys = new ArrayList<>();
-		for (ModelForeignKey key : model.foreignKeysOf(table)) {
-			if (key.from() == table) {
-				keys.add(new DesignedForeignKey(key.name(), key.fromColumns(), key.to().getName(), key.toColumns(), key.onDelete(), key.onUpdate()));
-			}
-		}
-		return new DesignedTable(table.getName(), table.getType(), table.getComment(), columns, keys);
-	}
-
-	private static ColumnDefinition column(DesignerColumn field) {
-		ColumnDefinition column = new ColumnDefinition(field.getName());
-		column.type = field.getType();
-		column.length = field.getLength();
-		column.defaultValue = field.getDefault();
-		column.primary = field.primary;
-		column.index = field.index;
-		column.unique = field.unique;
-		column.binary = field.binary;
-		column.notNull = field.notNull;
-		column.unsigned = field.unsigned;
-		column.autoIncrement = field.autoIncrement;
-		column.zerofill = field.zerofill;
-		return column;
-	}
-
 	private static DesignerColumn field(ColumnDefinition column, DataType[] dataTypes) {
 		DesignerColumn field = new DesignerColumn(column.name, dataType(column.type, dataTypes), column.length, column.defaultValue, "");
 		field.primary = column.primary;

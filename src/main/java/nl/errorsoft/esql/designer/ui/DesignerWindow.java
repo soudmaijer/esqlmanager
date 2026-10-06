@@ -237,7 +237,7 @@ public class DesignerWindow extends JInternalFrame {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle("Open existing model");
 
-		ModelFileFilter modelFilter = new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)");
+		ModelFileFilter modelFilter = new ModelFileFilter("edm", "eSQLManager models (*.edm)");
 		fileChooser.addChoosableFileFilter(modelFilter);
 
 		File selected = fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
@@ -265,7 +265,7 @@ public class DesignerWindow extends JInternalFrame {
 		if (!auto || file == null) {
 			JFileChooser fileChooser = new JFileChooser();
 			fileChooser.setDialogTitle("Save model as");
-			fileChooser.addChoosableFileFilter(new ModelFileFilter("edm", "eSQLManager Database Models (*.edm)"));
+			fileChooser.addChoosableFileFilter(new ModelFileFilter("edm", "eSQLManager models (*.edm)"));
 			fileChooser.setSelectedFile(file != null ? file : new File(canvas.getModel().getName() + ".edm"));
 			if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION || fileChooser.getSelectedFile() == null) {
 				return false;

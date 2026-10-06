@@ -9,8 +9,6 @@ import nl.errorsoft.esql.ui.util.Forms;
 import java.awt.*;
 
 public class DatabasePropertiesPanel extends JPanel implements PropertiesPanel {
-	private JLabel nameLabel = new JLabel("Name:");
-	private JLabel commentLabel = new JLabel("Description:");
 	private JTextField nameField = new JTextField();
 	private JTextArea commentField = new JTextArea();
 
@@ -22,8 +20,6 @@ public class DatabasePropertiesPanel extends JPanel implements PropertiesPanel {
 
 	public DatabasePropertiesPanel(DatabaseCard databaseCard, Model model) {
 		this.model = model;
-		nameLabel.setLabelFor(nameField);
-		nameLabel.setDisplayedMnemonic('N');
 		nameField.setText(databaseCard.getName());
 		commentField.setFont(nameField.getFont());
 		commentField.setLineWrap(true);
@@ -32,7 +28,7 @@ public class DatabasePropertiesPanel extends JPanel implements PropertiesPanel {
 		JScrollPane commentScroll = new JScrollPane(commentField);
 		commentScroll.setPreferredSize(new Dimension(185, 185));
 
-		JPanel general = Forms.padded(new Forms.Grid().row(nameLabel, nameField).area(commentLabel, commentScroll).panel());
+		JPanel general = Forms.padded(new Forms.Grid().row("&Name:", nameField).area("&Description:", commentScroll).panel());
 
 		setLayout(new BorderLayout());
 		add(general, BorderLayout.CENTER);

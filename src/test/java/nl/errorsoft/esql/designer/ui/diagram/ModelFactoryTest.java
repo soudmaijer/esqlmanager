@@ -32,7 +32,7 @@ class ModelFactoryTest {
 		model.addReference(shop, note);
 		model.addForeignKey(new ModelForeignKey(orders, List.of("customer_id"), customers, List.of("id"), "fk_customer", "CASCADE", ""));
 
-		DesignedModel snapshot = ModelFactory.toDesigned(model);
+		DesignedModel snapshot = model.toDesigned();
 
 		assertEquals(1, snapshot.databases().size());
 		List<DesignedTable> tables = snapshot.databases().get(0).tables();

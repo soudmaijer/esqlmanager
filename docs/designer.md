@@ -2,7 +2,7 @@
 
 [Back to the help index](index.md)
 
-Tools > Database Designer draws a model of databases, tables and notes, and generates it on a MySQL or PostgreSQL server. The designer opens as a window on the desktop of eSQLManager, with a tab of its own next to the connection windows, so you can switch between a connection and its models. Each model has its own designer window. Closing it (or disconnecting its connection) asks to save the model first.
+Tools > Database designer draws a model of databases, tables and notes, and generates it on a MySQL or PostgreSQL server. The designer opens as a window on the desktop of eSQLManager, with a tab of its own next to the connection windows, so you can switch between a connection and its models. Each model has its own designer window. Closing it (or disconnecting its connection) asks to save the model first.
 
 ![The model designer with the shop database and its tables](designer.png)
 
@@ -19,11 +19,11 @@ Tools > Database Designer draws a model of databases, tables and notes, and gene
 | Menu | Items |
 |---|---|
 | File | New model (Cmd+N, Ctrl+N elsewhere), Open model (Cmd+O), Save model (Cmd+S), Save model as, Export as PlantUML, Export as Mermaid, Close |
-| Edit | Delete selected (Delete), Select all (Cmd+A), Deselect all (Cmd+D) |
+| Edit | Delete selected (Delete, asks first), Select all (Cmd+A), Deselect all (Cmd+D) |
 | View | Show grid, Arrange automatically |
-| Model | Add new database (F1), Add new table (F2), Add new comment (F3), Attach table (F4), Attach comment (F5), Show object properties, Show model properties |
+| Model | Add database (F1), Add table (F2), Add note (F3), Attach table (F4), Attach note (F5), Show object properties, Show model properties |
 
-Delete removes the selected connector, or else the selected cards. Attach and Show object properties work on the selection however it was made, also after Select all. The generate button of the toolbar ("Generate model in database") opens the generate dialog.
+Delete removes the selected connector, or else the selected cards, after asking for confirmation. Attach and Show object properties work on the selection however it was made, also after Select all. The generate button of the toolbar ("Generate model in database") opens the generate dialog.
 
 ## Foreign keys
 

@@ -1,6 +1,11 @@
 package nl.errorsoft.esql.designer.model;
 
+import nl.errorsoft.esql.designer.DesignedDatabase;
+import nl.errorsoft.esql.designer.DesignedForeignKey;
+import nl.errorsoft.esql.designer.DesignedModel;
+import nl.errorsoft.esql.designer.DesignedTable;
 import nl.errorsoft.esql.designer.export.DiagramModel;
+import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.designer.ui.diagram.NoteCard;
 import nl.errorsoft.esql.designer.ui.diagram.DatabaseCard;
 import nl.errorsoft.esql.designer.ui.diagram.DesignerColumn;
@@ -359,6 +364,68 @@ public class Model implements MouseListener, MouseMotionListener {
 	/** Reads a model file of version 0.1 or 0.2. */
 	public Model loadModel(File xml) throws Exception {
 		return ModelXml.read(xml);
+	}
+
+	/**
+	 * A snapshot of the model as plain records, for the check and the generation; read it on the event thread, the records can then be used on any
+	 * thread. A table linked to no database is listed apart.
+	 */
+	public DesignedModel toDesigned() {
+		List<DesignedDatabase> databases = new ArrayList<>();
+		List<TableCard> linked = new ArrayList<>();
+
+		for (ModelCard object : getObjects()) {
+			if (object instanceof DatabaseCard database) {
+				List<DesignedTable> tables = new ArrayList<>();
+				for (ModelCard reference : getReferences(database)) {
+					if (reference instanceof TableCard table) {
+						linked.add(table);
+						tables.add(designed(table));
+					}
+				}
+				databases.add(new DesignedDatabase(database.getName(), tables));
+			}
+		}
+
+		List<DesignedTable> unlinked = new ArrayList<>();
+		for (ModelCard object : getObjects()) {
+			if (object instanceof TableCard table && !linked.contains(table)) {
+				unlinked.add(designed(table));
+			}
+		}
+		return new DesignedModel(databases, unlinked);
+	}
+
+	private DesignedTable designed(TableCard table) {
+		List<ColumnDefinition> columns = new ArrayList<>();
+		for (DesignerColumn field : table.getFields()) {
+			columns.add(column(field));
+		}
+
+		// The keys the table has on other tables; the keys other tables have on it are generated with those tables.
+		List<DesignedForeignKey> keys = new ArrayList<>();
+		for (ModelForeignKey key : foreignKeysOf(table)) {
+			if (key.from() == table) {
+				keys.add(new DesignedForeignKey(key.name(), key.fromColumns(), key.to().getName(), key.toColumns(), key.onDelete(), key.onUpdate()));
+			}
+		}
+		return new DesignedTable(table.getName(), table.getType(), table.getComment(), columns, keys);
+	}
+
+	private static ColumnDefinition column(DesignerColumn field) {
+		ColumnDefinition column = new ColumnDefinition(field.getName());
+		column.type = field.getType();
+		column.length = field.getLength();
+		column.defaultValue = field.getDefault();
+		column.primary = field.primary;
+		column.index = field.index;
+		column.unique = field.unique;
+		column.binary = field.binary;
+		column.notNull = field.notNull;
+		column.unsigned = field.unsigned;
+		column.autoIncrement = field.autoIncrement;
+		column.zerofill = field.zerofill;
+		return column;
 	}
 
 	/** What a text diagram (PlantUML, Mermaid) shows of this model. */

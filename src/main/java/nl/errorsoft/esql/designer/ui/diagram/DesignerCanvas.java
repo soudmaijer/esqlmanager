@@ -29,6 +29,7 @@ import nl.errorsoft.esql.ui.util.ToolbarButtons;
 import javax.swing.KeyStroke;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.model.ModelForeignKey;
 import nl.errorsoft.esql.designer.model.Model;
@@ -57,14 +58,14 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private ModelCard place = null;
 
 	private JMenu model_menu = new JMenu("Model");
-	private JMenuItem create_database = new JMenuItem("Add new database");
-	private JMenuItem create_table = new JMenuItem("Add new table");
-	private JMenuItem create_comment = new JMenuItem("Add new comment");
+	private JMenuItem create_database = new JMenuItem("Add database");
+	private JMenuItem create_table = new JMenuItem("Add table");
+	private JMenuItem create_comment = new JMenuItem("Add note");
 	private JMenuItem show_properties = new JMenuItem("Show object properties");
 	private JMenuItem show_model_properties = new JMenuItem("Show model properties");
 
 	private JMenuItem attach_table = new JMenuItem("Attach table");
-	private JMenuItem attach_comment = new JMenuItem("Attach comment");
+	private JMenuItem attach_comment = new JMenuItem("Attach note");
 
 	private JToolBar toolbar = new JToolBar();
 	private JButton addDatabaseButton = new JButton();
@@ -101,7 +102,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.canvasController = canvasController;
 		this.setLayout(null);
 		this.setOpaque(true);
-		model = new Model("New Model");
+		model = new Model("New model");
 
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
@@ -119,7 +120,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		model_menu.setMnemonic('M');
 		create_database.setMnemonic('D');
 		create_table.setMnemonic('T');
-		create_comment.setMnemonic('C');
+		create_comment.setMnemonic('N');
+		attach_table.setMnemonic('A');
+		attach_comment.setMnemonic('C');
+		show_properties.setMnemonic('S');
+		show_model_properties.setMnemonic('M');
 
 		create_database.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
 		create_table.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
@@ -149,9 +154,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 		exportButton.setIcon(ApplicationContext.get().imageLoader().getIcon("des_check"));
 
-		addDatabaseButton.setToolTipText("Add new database");
-		addTableButton.setToolTipText("Add new table");
-		addCommentButton.setToolTipText("Add new comment");
+		addDatabaseButton.setToolTipText("Add database");
+		addTableButton.setToolTipText("Add table");
+		addCommentButton.setToolTipText("Add note");
 
 		newButton.setToolTipText("New model");
 		saveButton.setToolTipText("Save model");
@@ -335,7 +340,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	public void resetModel() {
-		Model model = new Model("New Model");
+		Model model = new Model("New model");
 		this.model = model;
 		this.removeAll();
 		this.repaint();
@@ -352,11 +357,28 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	 	Function to remove all selected objects from the model
 	 */
 	public void removeSelectedObjects() {
+		List<ModelCard> selected = model.getSelectedObjects();
+		if (selected.isEmpty() || !Dialogs.confirmDestructive(this, "Delete from model", deleteMessage(selected), "Delete")) {
+			return;
+		}
 		List<ModelCard> objects = model.removeSelectedObjects();
 		for (int i = 0; i < objects.size(); i++) {
 			this.remove((ModelCard) objects.get(i));
 		}
 		this.repaint();
+	}
+
+	/** What the confirmation of a delete says: the object by name, and the foreign keys that go with a table. */
+	private String deleteMessage(List<ModelCard> selected) {
+		if (selected.size() > 1) {
+			return "Delete " + selected.size() + " objects from the model?";
+		}
+		return switch (selected.get(0)) {
+			case TableCard table when !model.foreignKeysOf(table).isEmpty() -> "Delete table '" + table.getName() + "' and its foreign keys from the model?";
+			case TableCard table -> "Delete table '" + table.getName() + "' from the model?";
+			case DatabaseCard database -> "Delete database '" + database.getName() + "' from the model?";
+			default -> "Delete this note from the model?";
+		};
 	}
 
 	/*
@@ -449,7 +471,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	public void removeForeignKey(ModelForeignKey key) {
-		if (key != null) {
+		if (key != null && Dialogs.confirmDestructive(this, "Remove foreign key", "Remove foreign key '" + key.name() + "' from the model?", "Remove")) {
 			model.removeForeignKey(key);
 			if (selectedKey == key) {
 				selectedKey = null;
@@ -610,15 +632,15 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private void attachTable() {
 		List<ModelCard> selected = this.getModel().getSelectedObjects();
 		if (!placemode && selected.size() == 1 && selected.get(0) instanceof DatabaseCard database) {
-			this.createTableCard("New Table", database);
+			this.createTableCard("New table", database);
 		}
 	}
 
-	/** Model > Attach comment (F5): a new note linked to the selected object. */
+	/** Model > Attach note (F5): a new note linked to the selected object. */
 	private void attachNote() {
 		List<ModelCard> selected = this.getModel().getSelectedObjects();
 		if (!placemode && selected.size() == 1) {
-			this.createNoteCard("New comment", selected.get(0));
+			this.createNoteCard("New note", selected.get(0));
 		}
 	}
 
@@ -765,11 +787,11 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == create_database || e.getSource() == addDatabaseButton) {
-			this.createDatabaseCard("New Database");
+			this.createDatabaseCard("New database");
 		} else if (e.getSource() == create_table || e.getSource() == addTableButton) {
-			this.createTableCard("New Table");
+			this.createTableCard("New table");
 		} else if (e.getSource() == create_comment || e.getSource() == addCommentButton) {
-			this.createNoteCard("New comment");
+			this.createNoteCard("New note");
 		} else if (e.getSource() == openButton) {
 			canvasController.openModel();
 		} else if (e.getSource() == saveButton) {
@@ -828,9 +850,9 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	JPopupMenu canvasMenu(Point point) {
 		JPopupMenu menu = new JPopupMenu();
-		menu.add(item("Add database", "add_database", () -> placeAt(model.createDatabaseCard("New Database"), point)));
-		menu.add(item("Add table", "add_table", () -> placeAt(model.createTableCard("New Table"), point)));
-		menu.add(item("Add note", "add_comment", () -> placeAt(model.createNoteCard("New comment"), point)));
+		menu.add(item("Add database", "add_database", () -> placeAt(model.createDatabaseCard("New database"), point)));
+		menu.add(item("Add table", "add_table", () -> placeAt(model.createTableCard("New table"), point)));
+		menu.add(item("Add note", "add_comment", () -> placeAt(model.createNoteCard("New note"), point)));
 		menu.addSeparator();
 		if (!model.getObjects().isEmpty()) {
 			menu.add(item("Select all", null, () -> {
@@ -875,7 +897,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Properties...", "des_properties", this::showProperties));
 		menu.add(item("Add table to this database", "add_table", () -> {
-			TableCard table = model.createTableCard("New Table");
+			TableCard table = model.createTableCard("New table");
 			model.addReference(database, table);
 			Rectangle card = database.cardBounds();
 			placeAt(table, new Point(card.x, card.y + card.height + 40));
@@ -902,7 +924,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	private void addObjectItems(JPopupMenu menu, ModelCard object, List<ModelCard> linked) {
 		if (!(object instanceof NoteCard)) {
 			menu.add(item("Add note", "add_comment", () -> {
-				NoteCard note = model.createNoteCard("New comment");
+				NoteCard note = model.createNoteCard("New note");
 				model.addReference(note, object);
 				Rectangle card = object.cardBounds();
 				placeAt(note, new Point(card.x + card.width + 40, card.y));

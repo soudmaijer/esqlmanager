@@ -11,17 +11,11 @@ import javax.swing.event.*;
 public class ModelPropertiesPanel extends JPanel implements PropertiesPanel {
 	private Model model;
 
-	private JLabel nameLabel = new JLabel("Name:");
-	private JLabel commentLabel = new JLabel("Description:");
-	private JLabel authorLabel = new JLabel("Author:");
-
 	private JTextField nameField = new JTextField();
 	private JTextField authorField = new JTextField();
 	private JTextArea commentField = new JTextArea();
 
 	public ModelPropertiesPanel(Model model) {
-		nameLabel.setLabelFor(nameField);
-		nameLabel.setDisplayedMnemonic('N');
 		this.model = model;
 
 		nameField.setText(model.getName());
@@ -33,7 +27,7 @@ public class ModelPropertiesPanel extends JPanel implements PropertiesPanel {
 		JScrollPane commentScroll = new JScrollPane(commentField);
 		commentScroll.setPreferredSize(new Dimension(185, 135));
 
-		JPanel general = Forms.padded(new Forms.Grid().row(nameLabel, nameField).row(authorLabel, authorField).area(commentLabel, commentScroll).panel());
+		JPanel general = Forms.padded(new Forms.Grid().row("&Name:", nameField).row("A&uthor:", authorField).area("&Description:", commentScroll).panel());
 
 		setLayout(new BorderLayout());
 		add(general, BorderLayout.CENTER);
