@@ -3,35 +3,48 @@ package nl.errorsoft.esql.app.ui;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.time.Year;
 
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JWindow;
+import javax.swing.KeyStroke;
 import javax.swing.Timer;
 
-import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.ui.icon.ImageLoader;
 
 /**
- * The splash: the artwork with the name, version and commit, shown over the main window. At start up it closes itself after a time and then runs
- * {@code done}; opened from About (time 0) it scrolls the credits over the artwork and closes on a click.
+ * The splash: the application logo on a dark gradient with the name, version, commit and a status line, shown over the main window. At start up it
+ * closes itself after a time and then runs {@code done}; opened from About (time 0) it scrolls the credits at the bottom and closes on a click, Esc, Enter or Space.
  * <p>
- * Everything is painted by the content pane in {@code paintComponent}, the Swing way: a window that paints in {@code Window.paint} can show up empty
- * when Swing repaints its root pane from the window's back buffer instead. The closing timer starts when the window is open, so the splash is shown
- * for the whole time.
+ * The splash is artwork with fixed colours, the same in every theme. Everything is painted by the content pane in {@code paintComponent}: a window that
+ * paints in {@code Window.paint} can show up empty when Swing repaints its root pane from the back buffer instead. The logo is an SVG, drawn at the
+ * scale of the screen. The closing timer starts when the window is open, so the splash is shown for the whole time.
  */
 public class SplashWindow extends JWindow {
-	static final Dimension SIZE = new Dimension(400, 240);
+	static final Dimension SIZE = new Dimension(560, 340);
+	private static final Color TOP = new Color(0x1b2029);
+	private static final Color BOTTOM = new Color(0x2c3442);
+	private static final Color EDGE = new Color(0x3d4757);
+	private static final Color TITLE = new Color(0xf2f4f7);
+	private static final Color MUTED = new Color(0x9aa4b2);
+	private static final int LOGO = 132;
+	/** The area the credits scroll in (About), above the bottom line. */
+	static final Rectangle CREDITS = new Rectangle(24, 222, SIZE.width - 48, 76);
 
 	/** The text on the splash. */
 	public record Info(String name, String version, String commit) {
@@ -42,20 +55,29 @@ public class SplashWindow extends JWindow {
 	/** Must be created on the event thread. */
 	public SplashWindow(Window owner, Info info, int time, Runnable done) {
 		super(owner);
-		Image artwork = ApplicationContext.get().imageLoader().getImage("esql");
-		Artwork content = new Artwork(artwork, info);
+		boolean about = time == 0;
+		Artwork content = new Artwork(info, about ? "Click or press Esc to close" : "Starting...");
 		content.setLayout(null);
 		setContentPane(content);
 		setSize(SIZE);
 		setLocation(centeredIn(owner.getBounds(), SIZE));
 
-		if (time == 0) {
+		if (about) {
 			credits = new CreditsPanel();
-			credits.setBounds(0, 165, 400, 75);
+			credits.setBounds(CREDITS);
 			content.add(credits);
 			content.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mouseClicked(MouseEvent e) {
+					cleanUp();
+				}
+			});
+			for (int key : new int[]{KeyEvent.VK_ESCAPE, KeyEvent.VK_ENTER, KeyEvent.VK_SPACE}) {
+				content.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key, 0), "close");
+			}
+			content.getActionMap().put("close", new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
 					cleanUp();
 				}
 			});
@@ -75,6 +97,9 @@ public class SplashWindow extends JWindow {
 		}
 		setVisible(true);
 		toFront();
+		if (about) {
+			requestFocus();
+		}
 		content.repaint();
 	}
 
@@ -91,14 +116,15 @@ public class SplashWindow extends JWindow {
 		dispose();
 	}
 
-	/** The artwork with the name, version, commit and copyright. */
+	/** The gradient, the logo, the name, version and commit, the status line and the copyright. */
 	static final class Artwork extends JComponent {
-		private final Image artwork;
 		private final Info info;
+		private final String status;
+		private final Icon logo = ImageLoader.logoIcon(LOGO);
 
-		Artwork(Image artwork, Info info) {
-			this.artwork = artwork;
+		Artwork(Info info, String status) {
 			this.info = info;
+			this.status = status;
 			setOpaque(true);
 		}
 
@@ -108,18 +134,32 @@ public class SplashWindow extends JWindow {
 			try {
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-				// The colours of the artwork, which is the same in every theme.
-				g2.setColor(Color.white);
+				g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+				g2.setPaint(new GradientPaint(0, 0, TOP, 0, getHeight(), BOTTOM));
 				g2.fillRect(0, 0, getWidth(), getHeight());
-				g2.drawImage(artwork, 0, 0, this);
-				g2.setColor(Color.black);
-				g2.setFont(new Font("Arial", Font.BOLD, 12));
-				g2.drawString(info.name(), 17, 196);
-				g2.setFont(new Font("Arial", Font.PLAIN, 11));
-				g2.drawString("Version " + info.version(), 17, 212);
-				g2.drawString("Commit " + info.commit(), 17, 227);
-				g2.drawString("http://www.errorsoft.nl", 274, 212);
-				g2.drawString("© Copyright Errorsoft 2002-" + Year.now().getValue(), 230, 227);
+				g2.setColor(EDGE);
+				g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+
+				int logoY = 52;
+				logo.paintIcon(this, g2, 40, logoY);
+
+				int x = 40 + LOGO + 32;
+				g2.setColor(TITLE);
+				g2.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 34));
+				g2.drawString(info.name(), x, logoY + 58);
+				g2.setColor(MUTED);
+				g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+				g2.drawString("Version " + info.version() + "  ·  commit " + info.commit(), x, logoY + 86);
+				g2.drawString("MySQL and PostgreSQL database manager", x, logoY + 108);
+
+				// The bottom line: what happens (or how to close) on the left, the copyright on the right.
+				g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+				int baseline = getHeight() - 16;
+				g2.setColor(TITLE);
+				g2.drawString(status, 24, baseline);
+				g2.setColor(MUTED);
+				String copyright = "\u00A9 Errorsoft 2002-" + Year.now().getValue();
+				g2.drawString(copyright, getWidth() - 24 - g2.getFontMetrics().stringWidth(copyright), baseline);
 			} finally {
 				g2.dispose();
 			}

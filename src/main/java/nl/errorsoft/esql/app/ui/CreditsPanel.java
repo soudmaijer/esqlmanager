@@ -2,7 +2,6 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.DataDirectory;
 
-import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -19,18 +18,19 @@ import javax.swing.Timer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** The credits scrolling up over the splash artwork, behind a translucent white panel. Painted by Swing in {@code paintComponent}. */
+/** The credits scrolling up in a translucent panel on the dark splash. Painted by Swing in {@code paintComponent}; fixed colours, as the splash. */
 public class CreditsPanel extends JComponent {
 	private static final Logger log = LogManager.getLogger(CreditsPanel.class);
-	// The colours of the splash artwork the credits scroll over.
-	private static final Color BORDER = new Color(0x5B5150);
-	private static final Color HEADING = new Color(0xA24811);
-	private static final Color TEXT = new Color(0x000000);
-	private static final int LINE = 11;
+	// The colours of the splash the credits scroll on.
+	private static final Color BORDER = new Color(0x4a5568);
+	private static final Color HEADING = new Color(0x8cb4ff);
+	private static final Color TEXT = new Color(0xd5dae1);
+	private static final Color PANEL = new Color(0, 0, 0, 60);
+	private static final int LINE = 14;
 	/** Moves the credits up a pixel at a time, on the event thread. */
 	private final Timer scroller = new Timer(45, e -> scroll());
-	private final Font bold = new Font("Arial", Font.BOLD, 11);
-	private final Font plain = new Font("Arial", Font.PLAIN, 11);
+	private final Font bold = new Font(Font.SANS_SERIF, Font.BOLD, 11);
+	private final Font plain = new Font(Font.SANS_SERIF, Font.PLAIN, 11);
 	private List<String> lines = List.of();
 	/** Where the first line is, from the top; starts below the panel. */
 	private int offset = -1;
@@ -54,12 +54,11 @@ public class CreditsPanel extends JComponent {
 			if (offset < 0) {
 				offset = getHeight();
 			}
-			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
-			g2.setColor(Color.WHITE);
-			g2.fillRect(0, 0, getWidth(), getHeight());
-			g2.setComposite(AlphaComposite.SrcOver);
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g2.setColor(PANEL);
+			g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
 			g2.setColor(BORDER);
-			g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+			g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
 			g2.clipRect(1, 1, getWidth() - 2, getHeight() - 2);
 
 			FontMetrics boldMetrics = g2.getFontMetrics(bold);

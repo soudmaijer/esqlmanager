@@ -19,26 +19,6 @@ public class ImageLoader {
 		this.imagePath = imagePath;
 	}
 
-	public void addImage(String fileName, String name) {
-		Image loaded = Toolkit.getDefaultToolkit().getImage(getResource(imagePath + fileName));
-
-		MediaTracker tracker = new MediaTracker(new Canvas());
-		tracker.addImage(loaded, 1);
-		try {
-			tracker.waitForAll();
-			if (tracker.isErrorAny()) {
-				log.warn("Image {} ({}) could not be loaded", name, fileName);
-			}
-			this.expand();
-			images[0] = loaded;
-			names[0] = name;
-		} catch (InterruptedException e) {
-			// Interrupted while waiting for the image, which then stays unregistered; keep the interrupt for the caller.
-			Thread.currentThread().interrupt();
-			log.warn("Loading image {} ({}) was interrupted", name, fileName);
-		}
-	}
-
 	// Modern classloaders reject ".." in resource names, so normalise the path (relative to the classpath root) first
 	private java.net.URL getResource(String path) {
 		String name = java.nio.file.Paths.get("/", path).normalize().toString().substring(1);
@@ -72,6 +52,11 @@ public class ImageLoader {
 		Color selection = UIManager.getColor("Tree.selectionBackground");
 		Color target = white ? (selection != null ? selection : Color.DARK_GRAY) : Color.WHITE;
 		return new Color(target.getRed(), target.getGreen(), target.getBlue(), color.getAlpha());
+	}
+
+	/** The application logo (icons/logo.svg) as an icon of this size, drawn sharp at the scale of the screen it is painted on. */
+	public static Icon logoIcon(int size) {
+		return new FlatSVGIcon("icons/logo.svg", size, size, ImageLoader.class.getClassLoader());
 	}
 
 	/** The application logo (icons/logo.svg) rendered at the sizes a window and the Dock ask for. */

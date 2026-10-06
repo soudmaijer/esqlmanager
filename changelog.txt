@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: A new splash
+
+- The splash shows the application logo, sharp on high resolution screens, on a dark background with the name,
+  version, commit and "Starting...". Opened from About it scrolls the credits at the bottom and closes on a click,
+  Esc, Enter or Space. The old GIF artwork is gone.
+
 06-10-2026: The splash no longer comes up empty
 
 - The splash sometimes showed an empty window at start up. It is now painted the Swing way, created on the event

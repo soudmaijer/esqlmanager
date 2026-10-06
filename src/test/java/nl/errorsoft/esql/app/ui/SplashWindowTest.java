@@ -10,6 +10,6 @@ import org.junit.jupiter.api.Test;
 class SplashWindowTest {
 	@Test
 	void isCentredOverTheMainWindow() {
-		assertEquals(new Point(300, 180), SplashWindow.centeredIn(new Rectangle(100, 50, 800, 500), SplashWindow.SIZE));
+		assertEquals(new Point(220, 130), SplashWindow.centeredIn(new Rectangle(100, 50, 800, 500), SplashWindow.SIZE));
 	}
 }
