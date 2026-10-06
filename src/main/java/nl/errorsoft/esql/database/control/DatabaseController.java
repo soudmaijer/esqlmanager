@@ -7,6 +7,7 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.ui.TableListTab;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
+import nl.errorsoft.esql.connection.ConnectionNode;
 import nl.errorsoft.esql.database.ui.DatabaseTree;
 import nl.errorsoft.esql.dialect.Dialect;
 
@@ -59,7 +60,8 @@ public class DatabaseController {
 
 	/** A tree of the given databases, which were listed beforehand (on another thread). */
 	public DatabaseTree databaseTree(java.util.List<Database> databases) {
-		DatabaseTree databaseTree = new DatabaseTree(connectionWindowController.getTitle(),
+		DatabaseTree databaseTree = new DatabaseTree(
+			new ConnectionNode(connectionWindowController.getConnectionProfile(), connectionWindowController.getTitle()),
 			connectionWindowController.getConnectionProfile().getServerType().iconName());
 		databaseTree.loadDatabases(databases);
 		return databaseTree;

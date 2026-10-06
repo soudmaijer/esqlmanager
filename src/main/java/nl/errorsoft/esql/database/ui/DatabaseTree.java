@@ -1,12 +1,10 @@
 package nl.errorsoft.esql.database.ui;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
@@ -15,128 +13,83 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 
 /**
- * The tree of databases, tables and columns of a connection; on servers with schemas a database holds schemas, which hold the tables. It only shows what the controller loads: {@code DatabaseController} and {@code ConnectionWindowController}
- * fetch the data through the services and call these methods.
+ * A tree with the databases, tables and columns of one connection; on servers with schemas a database holds schemas, which hold the tables. The nodes
+ * below the root are kept by a {@link ConnectionBranch}, which only shows what the controller loads: {@code DatabaseController} and
+ * {@code ConnectionWindowController} fetch the data through the services and call these methods.
  */
 public class DatabaseTree extends JTree {
-	private final DefaultMutableTreeNode rootNode;
-	private final DefaultTreeModel treeModel;
+	private final ConnectionBranch branch;
 
-	/** @param serverIcon the icon of the root node, the server (see {@code ServerType.iconName}) */
-	public DatabaseTree(String title, String serverIcon) {
-		this.rootNode = new DefaultMutableTreeNode(title);
-		this.treeModel = new DefaultTreeModel(rootNode, false);
-		setModel(treeModel);
+	/**
+	 * @param root what the root node shows, the server (a {@code ConnectionNode} or a title)
+	 * @param serverIcon the icon of the root node (see {@code ServerType.iconName})
+	 */
+	public DatabaseTree(Object root, String serverIcon) {
+		DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(root);
+		setModel(new DefaultTreeModel(rootNode, false));
 		setCellRenderer(new DatabaseTreeCellRenderer(ApplicationContext.get().imageLoader(), serverIcon));
+		this.branch = new ConnectionBranch(this, rootNode);
+	}
+
+	/** The nodes of the connection, below the root. */
+	public ConnectionBranch getBranch() {
+		return branch;
 	}
 
 	public void loadDatabases(List<Database> databases) {
-		rootNode.removeAllChildren();
-		databases.forEach(db -> rootNode.add(new DefaultMutableTreeNode(db)));
-		treeModel.reload();
+		branch.loadDatabases(databases);
 	}
 
 	/** The names of the databases in the tree. */
 	public List<String> databaseNames() {
-		List<String> names = new java.util.ArrayList<>();
-
-		for (int i = 0; i < rootNode.getChildCount(); i++) {
-			names.add(((DefaultMutableTreeNode) rootNode.getChildAt(i)).getUserObject().toString());
-		}
-		return names;
+		return branch.databaseNames();
 	}
 
 	public void addDatabase(Database db) {
-		rootNode.add(new DefaultMutableTreeNode(db));
-		treeModel.reload(rootNode);
+		branch.addDatabase(db);
 	}
 
 	public void deleteDatabase(Database database) {
-		databaseNode(database.getName()).ifPresent(node -> remove(rootNode, node));
+		branch.deleteDatabase(database);
 	}
 
 	public void deleteSchema(Schema schema) {
-		schemaNode(schema).ifPresent(node -> remove((DefaultMutableTreeNode) node.getParent(), node));
+		branch.deleteSchema(schema);
 	}
 
 	public void deleteTable(Table table) {
-		tableNode(table).ifPresent(node -> remove((DefaultMutableTreeNode) node.getParent(), node));
+		branch.deleteTable(table);
 	}
 
 	public void deleteTableColumn(TableColumn column) {
-		tableNode(column.getTable()).flatMap(tableNode -> child(tableNode, column.getName(), TableColumn.class))
-			.ifPresent(node -> remove((DefaultMutableTreeNode) node.getParent(), node));
+		branch.deleteTableColumn(column);
 	}
 
 	public void loadTables(Database database, List<Table> tables) {
-		databaseNode(database.getName()).ifPresent(node -> replaceChildren(node, tables));
+		branch.loadTables(database, tables);
 	}
 
 	public void loadSchemas(Database database, List<Schema> schemas) {
-		databaseNode(database.getName()).ifPresent(node -> replaceChildren(node, schemas));
+		branch.loadSchemas(database, schemas);
 	}
 
 	public void loadTables(Schema schema, List<Table> tables) {
-		schemaNode(schema).ifPresent(node -> replaceChildren(node, tables));
+		branch.loadTables(schema, tables);
 	}
 
 	public void loadTableColumns(Table table, TableColumn[] columns) {
-		tableNode(table).ifPresent(node -> replaceChildren(node, List.of(columns)));
+		branch.loadTableColumns(table, columns);
 	}
 
 	public void selectDatabase(Database database) {
-		databaseNode(database.getName()).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
+		branch.selectDatabase(database);
 	}
 
 	public void selectSchema(Schema schema) {
-		schemaNode(schema).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
+		branch.selectSchema(schema);
 	}
 
 	public void selectTableInTree(Table table) {
-		tableNode(table).ifPresent(node -> setSelectionPath(new TreePath(node.getPath())));
-	}
-
-	private void replaceChildren(DefaultMutableTreeNode node, List<?> children) {
-		node.removeAllChildren();
-		children.forEach(child -> node.add(new DefaultMutableTreeNode(child)));
-		treeModel.reload(node);
-		TreePath path = new TreePath(node.getPath());
-		scrollPathToVisible(path);
-		expandPath(path);
-		setSelectionPath(path);
-	}
-
-	private void remove(DefaultMutableTreeNode parent, DefaultMutableTreeNode node) {
-		parent.remove(node);
-		treeModel.reload(parent);
-	}
-
-	private Optional<DefaultMutableTreeNode> databaseNode(String name) {
-		return child(rootNode, name, Database.class);
-	}
-
-	private Optional<DefaultMutableTreeNode> schemaNode(Schema schema) {
-		return databaseNode(schema.getDatabase().getName()).flatMap(db -> child(db, schema.getName(), Schema.class));
-	}
-
-	/** Under its schema when the server has schemas and that schema is shown, otherwise under its database. */
-	private Optional<DefaultMutableTreeNode> tableNode(Table table) {
-		Optional<DefaultMutableTreeNode> parent = table.getSchema() == null ? Optional.empty() : schemaNode(table.getSchema());
-
-		if (parent.isEmpty()) {
-			parent = databaseNode(table.getDatabase().getName());
-		}
-		return parent.flatMap(node -> child(node, table.getName(), Table.class));
-	}
-
-	/** The child of {@code parent} of the given type whose name ({@code toString}) is {@code name}, ignoring case. */
-	private static Optional<DefaultMutableTreeNode> child(DefaultMutableTreeNode parent, String name, Class<?> type) {
-		for (int i = 0; i < parent.getChildCount(); i++) {
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) parent.getChildAt(i);
-			if (type.isInstance(node.getUserObject()) && node.getUserObject().toString().equalsIgnoreCase(name)) {
-				return Optional.of(node);
-			}
-		}
-		return Optional.empty();
+		branch.selectTable(table);
 	}
 }
