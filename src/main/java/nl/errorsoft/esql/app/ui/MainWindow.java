@@ -16,7 +16,9 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ui.ExplorerPanel;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.app.ExitPlan;
 import nl.errorsoft.esql.app.StatusContext;
+import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.ui.icon.StatusLight;
 
 import org.apache.logging.log4j.LogManager;
@@ -142,7 +144,11 @@ public class MainWindow extends JFrame implements ActionListener {
 		optionsMenu = new JMenu("Options");
 		connectItem = new JMenuItem("Connect...");
 		disconnectItem = new JMenuItem("Disconnect");
-		exitItem = new JMenuItem("Exit");
+		exitItem = new JMenuItem(new ExitPlan(0, 0, Appearance.isMac()).title("eSQLManager"));
+		if (Appearance.isMac()) {
+			exitItem.setAccelerator(
+				javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		}
 		optionsMenu.add(connectItem);
 		optionsMenu.add(disconnectItem);
 		optionsMenu.addSeparator();
@@ -150,7 +156,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		optionsMenu.setMnemonic('O');
 		connectItem.setMnemonic('C');
 		disconnectItem.setMnemonic('D');
-		exitItem.setMnemonic('x');
+		exitItem.setMnemonic(Appearance.isMac() ? 'Q' : 'x');
 		menubar.add(optionsMenu);
 
 		settingsMenu = new JMenu("Settings");
@@ -353,9 +359,12 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	public void closeWindow() {
-		if (Dialogs.confirmDestructive(this, "Exit eSQLManager", "Exit eSQLManager? Open connections will be closed.", "Exit")) {
-			mainController.closeWindow();
-		}
+		mainController.quit();
+	}
+
+	/** The open designers, in the order of their tabs. */
+	public java.util.List<DesignerWindow> designers() {
+		return windowTabs.getFrames().stream().filter(DesignerWindow.class::isInstance).map(DesignerWindow.class::cast).toList();
 	}
 
 	public JInternalFrame getSelectedFrame() {

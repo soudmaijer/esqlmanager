@@ -42,6 +42,11 @@ public enum Appearance {
 	}
 
 	/** Properties that macOS only reads before the first window exists. */
+	/** Whether this runs on macOS. */
+	public static boolean isMac() {
+		return MAC;
+	}
+
 	public static void prepareDesktop() {
 		if (MAC) {
 			System.setProperty("apple.laf.useScreenMenuBar", "true");

@@ -23,7 +23,11 @@ import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.BuildInfo;
+import nl.errorsoft.esql.app.ExitPlan;
 import nl.errorsoft.esql.app.StatusContext;
+import nl.errorsoft.esql.settings.Appearance;
+import nl.errorsoft.esql.ui.dialog.Dialogs;
+import java.awt.Desktop;
 import nl.errorsoft.esql.connection.ProfileNode;
 import nl.errorsoft.esql.connection.TreeSelection;
 import nl.errorsoft.esql.settings.Appearance;
@@ -42,6 +46,7 @@ public class MainController {
 	private BuildInfo buildInfo;
 	private MainWindow mainWindow;
 	private final StatusContext statusContext = new StatusContext();
+	private boolean quitting; // Set while the exit questions are open
 	private final List<ConnectionWindowController> connections = new ArrayList<>(); // Open connections, in the order they were opened
 
 	public MainController() {
@@ -59,6 +64,7 @@ public class MainController {
 		log.info("{} starting on Java {} ({}), {} {}", getTitle(), System.getProperty("java.version"), System.getProperty("java.vendor"),
 			System.getProperty("os.name"), System.getProperty("os.arch"));
 		log.info("Working directory: {}", System.getProperty("user.dir"));
+		installQuitHandler();
 		refreshProfiles();
 		showConnectionState();
 		// After the main window has been shown and laid out, so the splash comes up over it, not behind or before it.
@@ -71,8 +77,47 @@ public class MainController {
 		connectionProfileController.showDialog(mainWindow, true);
 	}
 
-	public void closeWindow() {
-		System.exit(0);
+	/**
+	 * Quits the application. Nothing open: at once. Otherwise one question names what closes; then every connection with unsaved editors and every designer
+	 * asks to save, and a Cancel anywhere keeps the application open with everything still open.
+	 */
+	public void quit() {
+		if (quitting) {
+			return;
+		}
+		quitting = true;
+		try {
+			List<DesignerWindow> designers = mainWindow.designers();
+			ExitPlan plan = new ExitPlan(connections.size(), designers.size(), Appearance.isMac());
+
+			if (plan.needsConfirmation() && !Dialogs.confirm(mainWindow, plan.title(getAppName()), plan.message(), plan.verb())) {
+				return;
+			}
+			for (ConnectionWindowController connection : List.copyOf(connections)) {
+				if (!connection.confirmCloseEditors()) {
+					return;
+				}
+			}
+			for (DesignerWindow designer : designers) {
+				if (!designer.offerToSaveBeforeQuit()) {
+					return;
+				}
+			}
+			System.exit(0);
+		} finally {
+			quitting = false;
+		}
+	}
+
+	/** macOS: Cmd+Q and Quit in the application menu go through the same question. */
+	private void installQuitHandler() {
+		if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
+			Desktop.getDesktop().setQuitHandler((event, response) -> {
+				// The application ends itself when the user confirms; until then the system must not.
+				response.cancelQuit();
+				SwingUtilities.invokeLater(this::quit);
+			});
+		}
 	}
 
 	/**

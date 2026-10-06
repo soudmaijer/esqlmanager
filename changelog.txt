@@ -1,6 +1,13 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Quitting
+
+- Quitting with nothing open no longer asks anything. With connections or designers open it asks one plain
+  question that says what closes ("Close 2 connections and quit?"), with Quit (macOS) or Exit as the button, and
+  designers ask to save before anything closes; Cancel anywhere keeps everything open.
+- On macOS the menu item is Quit eSQLManager (Cmd+Q), also from the application menu.
+
 06-10-2026: A status bar that follows you
 
 - The status bar at the bottom describes the window in front or the node selected in the explorer, whichever you

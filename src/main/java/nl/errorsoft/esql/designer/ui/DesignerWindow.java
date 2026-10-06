@@ -195,15 +195,22 @@ public class DesignerWindow extends JInternalFrame {
 	 * @return false when the user cancelled
 	 */
 	public boolean close() {
-		Dialogs.SaveChoice choice = Dialogs.askSave(this, "Close designer", "Save model '" + canvas.getModel().getName() + "' first?");
-		if (choice == Dialogs.SaveChoice.CANCEL) {
-			return false;
-		}
-		if (choice == Dialogs.SaveChoice.SAVE && !saveCurrentModel(true)) {
+		if (!offerToSave("Close designer")) {
 			return false;
 		}
 		mainWindow.removeDesignerWindow(this);
 		return true;
+	}
+
+	/** Before the application quits: asks to save the model, without closing the designer; false when the user cancelled. */
+	public boolean offerToSaveBeforeQuit() {
+		mainWindow.selectWorkFrame(this);
+		return offerToSave("Quit");
+	}
+
+	private boolean offerToSave(String title) {
+		Dialogs.SaveChoice choice = Dialogs.askSave(this, title, "Save model '" + canvas.getModel().getName() + "' first?");
+		return choice != Dialogs.SaveChoice.CANCEL && (choice != Dialogs.SaveChoice.SAVE || saveCurrentModel(true));
 	}
 
 	@Override

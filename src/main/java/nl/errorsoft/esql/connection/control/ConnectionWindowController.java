@@ -248,6 +248,11 @@ public class ConnectionWindowController {
 		}
 	}
 
+	/** Asks every editor of this connection with unsaved changes whether to discard them; false when the user keeps one. */
+	public boolean confirmCloseEditors() {
+		return view.confirmCloseEditors();
+	}
+
 	/** Closes the connection and its windows without asking, and takes it out of the explorer. */
 	public void closeWindow() {
 		try {
