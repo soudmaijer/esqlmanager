@@ -64,6 +64,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 	private boolean busy;
 	private final JPanel editor = Forms.titled(new JPanel(new BorderLayout(0, Forms.GAP)), "Index");
 	private final JLabel hint = new JLabel(" ");
+	private boolean hintIsError;
 
 	// Columns, type or a new index changed since the indexes were loaded.
 	private boolean modified;
@@ -183,10 +184,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 		availableColumnList.addMouseListener(doubleClick(availableColumnList, usedColumnList));
 		usedColumnList.addMouseListener(doubleClick(usedColumnList, availableColumnList));
 
-		Color disabled = UIManager.getColor("Label.disabledForeground");
-		if (disabled != null) {
-			hint.setForeground(disabled);
-		}
+		colourHint();
 		editor.add(type, BorderLayout.NORTH);
 		editor.add(columns, BorderLayout.CENTER);
 		editor.add(hint, BorderLayout.SOUTH);
@@ -257,8 +255,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 		if (indexList.getSelectedValue() instanceof TableIndex index) {
 			DefaultListModel<TableColumn> usedModel = (DefaultListModel<TableColumn>) usedColumnList.getModel();
 			if (usedModel.isEmpty()) {
-				hint.setForeground(errorColor());
-				hint.setText("Select at least one column for the index.");
+				showHint("Select at least one column for the index.", true);
 				return;
 			}
 			TableColumn[] columns = new TableColumn[usedModel.getSize()];
@@ -279,8 +276,27 @@ public class IndexesTab extends JPanel implements EditorTab {
 		}
 	}
 
-	private static Color errorColor() {
-		return Forms.errorColor();
+	private void showHint(String text, boolean error) {
+		hintIsError = error;
+		hint.setText(text);
+		colourHint();
+	}
+
+	/** The hint is dimmed, or the error colour of the theme; taken again when the look and feel changes. */
+	private void colourHint() {
+		Color colour = hintIsError ? Forms.errorColor() : UIManager.getColor("Label.disabledForeground");
+		if (colour != null) {
+			hint.setForeground(colour);
+		}
+	}
+
+	@Override
+	public void updateUI() {
+		super.updateUI();
+		// Called by the JPanel constructor before the fields exist.
+		if (hint != null) {
+			colourHint();
+		}
 	}
 
 	private void moveUsed(int step) {
@@ -307,7 +323,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 	private void showNone() {
 		shown = null;
 		setTitle("Index");
-		hint.setText(" ");
+		showHint(" ", false);
 		for (Component component : new Component[]{normalRadio, uniqueRadio, fulltextRadio, usedColumnList, availableColumnList, addToListButton,
 			removeFromListButton, upButton, downButton,
 			saveButton, dropButton}) {
@@ -393,8 +409,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 			component.setEnabled(true);
 		}
 		setTitle("Index: " + index);
-		hint.setForeground(UIManager.getColor("Label.disabledForeground"));
-		hint.setText(index.isPrimary() ? "The primary key is always unique, only its columns can change." : " ");
+		showHint(index.isPrimary() ? "The primary key is always unique, only its columns can change." : " ", false);
 
 		for (TableColumn column : avail) {
 			availableModel.addElement(column);

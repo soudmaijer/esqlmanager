@@ -26,15 +26,15 @@ class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
 
 		if (node.getUserObject() instanceof Database) {
-			if (hasFocus) {
+			if (selected) {
 				setIcon(imgldr.getIcon("dbimgsel"));
 			} else {
 				setIcon(imgldr.getIcon("dbimg"));
 			}
 		} else if (node.getUserObject() instanceof Schema) {
-			setIcon(imgldr.getIcon(hasFocus ? "schemaimgsel" : "schemaimg"));
+			setIcon(imgldr.getIcon(selected ? "schemaimgsel" : "schemaimg"));
 		} else if (node.getUserObject() instanceof Table) {
-			if (hasFocus) {
+			if (selected) {
 				setIcon(imgldr.getIcon("tbimgsel"));
 			} else {
 				setIcon(imgldr.getIcon("tbimg"));
@@ -50,7 +50,7 @@ class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 				setIcon(imgldr.getIcon("fldimg"));
 			}
 		} else {
-			setIcon(imgldr.getIcon(hasFocus ? serverIcon + "sel" : serverIcon));
+			setIcon(imgldr.getIcon(selected ? serverIcon + "sel" : serverIcon));
 		}
 
 		return this;

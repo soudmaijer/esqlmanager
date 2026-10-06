@@ -14,7 +14,9 @@ import nl.errorsoft.esql.ui.table.MultiLineCellEditor;
 import nl.errorsoft.esql.ui.table.SortableTableModel;
 
 import nl.errorsoft.esql.table.Table;
+import nl.errorsoft.esql.table.Paging;
 import nl.errorsoft.esql.table.TableCell;
+import nl.errorsoft.esql.ui.table.NullCellRenderer;
 import nl.errorsoft.esql.table.control.TableController;
 
 import java.awt.*;
@@ -112,6 +114,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 			}
 		};
 		dataTable.setAutoCreateColumnsFromModel(false);
+		dataTable.setDefaultRenderer(Object.class, new NullCellRenderer());
 		dataTable.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -400,7 +403,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 			return;
 		}
 
-		String from = "'" + table.getDatabase().getName() + "." + table.getName() + "'";
+		String from = "'" + table.getDatabase().getName() + "." + table.qualifiedName() + "'";
 
 		if (Dialogs.confirmDestructive(this, "Delete rows", "Delete " + selectedRows.length + " row(s) from " + from + "? This cannot be undone.", "Delete")) {
 			int columnCount = dataTable.getColumnCount();
@@ -501,13 +504,17 @@ public class TableDataTab extends JPanel implements ActionListener {
 			chooser.setAcceptAllFileFilterUsed(false);
 			chooser.setDialogTitle("Save cell data...");
 
-			try {
-				if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-					java.nio.file.Files.writeString(nl.errorsoft.esql.ui.util.FileChoosers.withExtension(chooser.getSelectedFile(), ".txt").toPath(),
-						cellData.getText() + System.lineSeparator());
-				}
-			} catch (Exception err) {
-				ApplicationContext.get().errors().report(this, "Save cell data", err);
+			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+				java.nio.file.Path target = nl.errorsoft.esql.ui.util.FileChoosers.withExtension(chooser.getSelectedFile(), ".txt").toPath();
+				String text = cellData.getText() + System.lineSeparator();
+				// The file is written off the event thread, a failure is reported on it.
+				Thread.ofVirtual().name("save-cell-data").start(() -> {
+					try {
+						java.nio.file.Files.writeString(target, text);
+					} catch (Exception err) {
+						SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(this, "Save cell data", err));
+					}
+				});
 			}
 		} else if (source == saveDataButton) {
 			int row = dataTable.getSelectedRow();
@@ -538,35 +545,20 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 			try {
 				int rows = table.getRowCount();
+				Paging page = new Paging(skip, show);
 
 				if (source == firstButton) {
-					skip = 0;
+					page = page.first();
 				} else if (source == prevButton) {
-					skip = skip - show;
-
-					if (skip < 0) {
-						skip = 0;
-					}
+					page = page.previous();
 				} else if (source == runButton) {
-					if (skip + show > rows) {
-						skip = rows - show;
-					}
-					if (rows - show < 0) {
-						skip = 0;
-					}
+					page = page.clamped(rows);
 				} else if (source == nextButton) {
-					skip = skip + show;
-
-					if (skip >= rows) {
-						skip = skip - show;
-					}
+					page = page.next(rows);
 				} else if (source == lastButton) {
-					skip = rows - show;
-
-					if (rows < show) {
-						skip = 0;
-					}
+					page = page.last(rows);
 				}
+				skip = page.skip();
 
 				skipField.setText(Integer.toString(skip));
 				showField.setText(Integer.toString(show));
@@ -591,11 +583,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 		}
 
 		try {
-			skip = rows - show;
-
-			if (rows < show) {
-				skip = 0;
-			}
+			// Called after a row was added: the new row is at the end, so the last page is shown.
+			skip = new Paging(skip, show).last(rows).skip();
 
 			this.disableCellDataEditor();
 			inserting = false;

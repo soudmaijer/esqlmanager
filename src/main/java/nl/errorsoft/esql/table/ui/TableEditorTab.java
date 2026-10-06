@@ -276,6 +276,15 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		return panel;
 	}
 
+	@Override
+	public void updateUI() {
+		super.updateUI();
+		// Called by the JPanel constructor before the fields exist; the theme's error colour changes with the look and feel.
+		if (problem != null) {
+			problem.setForeground(Forms.errorColor());
+		}
+	}
+
 	private JPanel bottom() {
 		problem.setForeground(Forms.errorColor());
 		save.addActionListener(e -> save());

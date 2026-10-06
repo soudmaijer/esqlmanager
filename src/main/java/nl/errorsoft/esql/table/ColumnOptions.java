@@ -6,7 +6,13 @@ public record ColumnOptions(String name, String length, String defaultValue, Dat
 
 	/** The column definition, with the options the type does not allow left off. */
 	public ColumnDefinition toColumn() {
-		ColumnDefinition column = TableService.newColumn(name, length, defaultValue, type, autoIncrement, unsigned, nullable);
+		ColumnDefinition column = new ColumnDefinition(name);
+		column.type = type;
+		column.length = length;
+		column.defaultValue = defaultValue;
+		column.unsigned = type.allows(DataType.Option.UNSIGNED) && unsigned;
+		column.notNull = type.allows(DataType.Option.NOT_NULL) && !nullable;
+		column.autoIncrement = autoIncrement;
 		column.primary = primary;
 		column.comment = comment;
 		return column;

@@ -159,34 +159,16 @@ public class TableService {
 		repository.dropColumn(column);
 	}
 
-	/** A column definition from the form of a dialog: options the type does not have are switched off. */
-	public static ColumnDefinition newColumn(String name, String length, String defaultValue, DataType type, boolean auto, boolean unsigned, boolean nullable) {
-		ColumnDefinition column = new ColumnDefinition(name);
-		column.type = type;
-		column.length = length;
-		column.defaultValue = defaultValue;
-		column.unsigned = type.allows(DataType.Option.UNSIGNED) && unsigned;
-		column.notNull = type.allows(DataType.Option.NOT_NULL) && !nullable;
-		column.autoIncrement = auto;
-		return column;
-	}
-
 	// Indexes
 
 	public void addIndex(Table table, TableIndex index, TableColumn[] columns, String type) throws Exception {
-		if (columns == null || columns.length <= 0) {
-			return;
-		}
-
+		requireColumns(columns);
 		repository.addIndex(table, index.getName(), indexType(type), columnNames(columns));
 		loadIndexes(table);
 	}
 
 	public void modifyIndex(Table table, TableIndex index, TableColumn[] columns, String type) throws Exception {
-		if (columns == null || columns.length <= 0) {
-			return;
-		}
-
+		requireColumns(columns);
 		repository.modifyIndex(table, index.getName(), indexType(type), columnNames(columns));
 		loadIndexes(table);
 	}
@@ -194,6 +176,12 @@ public class TableService {
 	public void dropIndex(Table table, TableIndex index) throws Exception {
 		repository.dropIndex(table, index.getName());
 		loadIndexes(table);
+	}
+
+	private void requireColumns(TableColumn[] columns) {
+		if (columns == null || columns.length <= 0) {
+			throw new EsqlException("Select at least one column for the index.");
+		}
 	}
 
 	private String indexType(String type) {

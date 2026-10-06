@@ -40,27 +40,22 @@ public class TableCell {
 		return newRow;
 	}
 
+	/** The text of the cell, null for SQL NULL. */
 	public String getData() {
-		if (data == null) {
-			return "null";
-		} else {
-			return data.toString();
-		}
+		return data == null ? null : data.toString();
 	}
 
+	/** The value as the driver gave it, null for SQL NULL. */
 	public Object getNativeData() {
-		if (data == null) {
-			return "null";
-		} else {
-			return data;
-		}
+		return data;
 	}
 
 	public String toString() {
-		if (column.isBinary()) {
+		if (column != null && column.isBinary()) {
 			return "[BINARY]";
 		} else if (data == null) {
-			return "null";
+			// SQL NULL: the grid draws NULL itself (NullCellRenderer), the text is empty so that it sorts first.
+			return "";
 		} else {
 			return data.toString();
 		}

@@ -1,7 +1,5 @@
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.ui.dialog.Dialogs;
-
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
@@ -70,12 +68,8 @@ public class IndexesController {
 		run("Drop index", "Dropping index...", () -> service().dropIndex(table, index));
 	}
 
-	/** A change of an index, which needs at least one column. */
+	/** A change of an index (the service refuses one without columns). */
 	private void change(String action, TableIndex index, TableColumn[] columns, Change change) {
-		if (columns.length <= 0) {
-			Dialogs.error(connectionWindowController.getWindow(), "Indexes", "Select at least one column for the index.");
-			return;
-		}
 		run(action, "Saving index...", change);
 	}
 

@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.ui.table;
 
 import nl.errorsoft.esql.table.TableCell;
+import nl.errorsoft.esql.ui.util.Forms;
 
 import java.awt.*;
 import javax.swing.*;
@@ -8,7 +9,6 @@ import javax.swing.table.*;
 import javax.swing.border.*;
 
 public class MultiLineCellEditor extends AbstractCellEditor implements TableCellEditor {
-	private final Border focusBorder = new LineBorder(Color.RED);
 	private final Border emptyBorder = BorderFactory.createEmptyBorder(0, 0, 0, 0);
 	private JTextArea editorComponent;
 	private JScrollPane pane;
@@ -38,7 +38,7 @@ public class MultiLineCellEditor extends AbstractCellEditor implements TableCell
 	 *	Override method in TableCellEditor, returns the EditorComponent for the selected Cell.
 	 */
 	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-		editorComponent.setBorder(focusBorder);
+		editorComponent.setBorder(new LineBorder(focusColor()));
 		editorComponent.setText(switch (value) {
 			case null -> "";
 			case TableCell cell -> cell.getEditText();
@@ -47,5 +47,11 @@ public class MultiLineCellEditor extends AbstractCellEditor implements TableCell
 		editorComponent.grabFocus();
 		editorComponent.selectAll();
 		return editorComponent;
+	}
+
+	/** The theme's focus colour, taken when the editor opens so that it follows a change of look and feel. */
+	private static Color focusColor() {
+		Color focus = UIManager.getColor("Component.focusColor");
+		return focus != null ? focus : Forms.errorColor();
 	}
 }

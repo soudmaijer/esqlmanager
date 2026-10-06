@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import nl.errorsoft.esql.jdbc.DatabaseConnection;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.table.ColumnDefinition;
+import nl.errorsoft.esql.table.ColumnOptions;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.DatabaseListService;
 import nl.errorsoft.esql.database.DatabaseRepository;
@@ -107,15 +108,16 @@ abstract class DialectContractTest {
 		assertEquals(Arrays.asList("id", "name", "note"), columnNames(table));
 		assertTrue(service().loadIndexes(table)[0].isPrimary() || indexNames(table).contains("PRIMARY"));
 
-		service().addColumn(table, TableService.newColumn("age", "", "0", INTEGER, false, false, true));
+		service().addColumn(table, new ColumnOptions("age", "", "0", INTEGER, false, false, true, false, "").toColumn());
 		assertTrue(columnNames(table).contains("age"));
 
-		service().editColumn(table.getTableColumn("age"), TableService.newColumn("years", "", "5", BIGINT, false, false, false));
+		service().editColumn(table.getTableColumn("age"), new ColumnOptions("years", "", "5", BIGINT, false, false, false, false, "").toColumn());
 		assertTrue(columnNames(table).contains("years"));
 		assertFalse(columnNames(table).contains("age"));
 
 		TableIndex index = new TableIndex(table);
 		index.setName("u_years");
+		assertThrows(EsqlException.class, () -> service().addIndex(table, index, new TableColumn[0], "UNIQUE"));
 		service().addIndex(table, index, new TableColumn[]{table.getTableColumn("years")}, "UNIQUE");
 		assertTrue(table.getTableIndex("u_years").isUnique());
 
@@ -784,7 +786,7 @@ abstract class DialectContractTest {
 		runSynchronously(imported::setListener, imported);
 		assertEquals(1, service().loadPage(orders, 0, 10).length);
 
-		service().addColumn(orders, TableService.newColumn("extra", "", "", INTEGER, false, false, true));
+		service().addColumn(orders, new ColumnOptions("extra", "", "", INTEGER, false, false, true, false, "").toColumn());
 		TableIndex index = new TableIndex(orders);
 		index.setName("orders_note_idx");
 		service().addIndex(orders, index, new TableColumn[]{orders.getTableColumn("note")}, "INDEX");
@@ -1011,10 +1013,10 @@ abstract class DialectContractTest {
 		};
 
 		queryTabSwitches.run();
-		service().addColumn(table, TableService.newColumn("age", "", "0", INTEGER, false, false, true));
+		service().addColumn(table, new ColumnOptions("age", "", "0", INTEGER, false, false, true, false, "").toColumn());
 		table.setColumns(service().loadColumns(table));
 		queryTabSwitches.run();
-		service().editColumn(table.getTableColumn("age"), TableService.newColumn("years", "", "5", BIGINT, false, false, false));
+		service().editColumn(table.getTableColumn("age"), new ColumnOptions("years", "", "5", BIGINT, false, false, false, false, "").toColumn());
 		table.setColumns(service().loadColumns(table));
 		queryTabSwitches.run();
 		service().dropColumn(table.getTableColumn("years"));
