@@ -1,6 +1,5 @@
 package nl.errorsoft.esql.table.control;
 
-import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.database.Database;
@@ -34,7 +33,12 @@ public class TableEditorController {
 			return;
 		}
 
-		window().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditorTab(this, NEW_TABLE, database, null));
+		connectionWindowController.inBackground("Create table", "Listing databases...", this::databases, databases -> {
+			// Opened twice while loading: the first tab stays.
+			if (!window().selectEditorTab(NEW_TABLE)) {
+				window().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditorTab(this, NEW_TABLE, databases, database, null));
+			}
+		});
 	}
 
 	/** Opens the editor of an existing table, after loading its columns in the background when they are not known yet. */
@@ -46,25 +50,22 @@ public class TableEditorController {
 		}
 
 		String title = "Edit " + table.getName();
-		connectionWindowController.inBackground("Modify table", "Loading columns...",
-			() -> table.getColumns() != null ? table.getColumns() : connectionWindowController.getContext().tables().loadColumns(table), columns -> {
-				// Opened twice while loading: the first tab stays.
-				if (!window().selectEditorTab(key)) {
-					window().showEditorTab(key, title, new TableEditorTab(this, title, database, table));
-				}
-			});
+		connectionWindowController.inBackground("Modify table", "Loading columns...", () -> {
+			if (table.getColumns() == null) {
+				connectionWindowController.getContext().tables().loadColumns(table);
+			}
+			return databases();
+		}, databases -> {
+			// Opened twice while loading: the first tab stays.
+			if (!window().selectEditorTab(key)) {
+				window().showEditorTab(key, title, new TableEditorTab(this, title, databases, database, table));
+			}
+		});
 	}
 
-	/*
-	 	List all databases, so user can choose database to create table on
-	*/
-	public List<Database> getDatabases() {
-		try {
-			return connectionWindowController.getContext().databases().getDatabases();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(window(), "Load databases", e);
-			return List.of();
-		}
+	/** The databases a new table can go in; database work, not for the event thread. */
+	private List<Database> databases() throws Exception {
+		return connectionWindowController.getContext().databases().getDatabases();
 	}
 
 	/** True when the server has schemas between databases and tables. */
@@ -128,22 +129,23 @@ public class TableEditorController {
 			Dialogs.error(window(), "Create table", "Add at least one column.");
 			return;
 		}
-		try {
-			connectionWindowController.getContext().tables().createTable(inTargetSchema(definition));
+		TableDefinition target = inTargetSchema(definition);
+		editor.setSaving(true);
+		connectionWindowController.inBackground("Create table", "Creating table...", () -> {
+			connectionWindowController.getContext().tables().createTable(target);
+			return target;
+		}, created -> {
 			window().removeTab(editor);
 			connectionWindowController.reloadSelectedDatabase();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(window(), "Create table", e);
-		}
+		}, () -> editor.setSaving(false));
 	}
 
 	public void modifyTable(TableEditorTab editor, Table table, String tableName, String tableType, String tableComment) {
-		try {
+		editor.setSaving(true);
+		connectionWindowController.inBackground("Modify table", "Saving table...", () -> {
 			connectionWindowController.getContext().tables().modifyTable(table, tableName, tableType, tableComment);
-			window().removeTab(editor);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(window(), "Modify table", e);
-		}
+			return table;
+		}, modified -> window().removeTab(editor), () -> editor.setSaving(false));
 	}
 
 	/** Cancel: closes the tab, asking first when something changed. */

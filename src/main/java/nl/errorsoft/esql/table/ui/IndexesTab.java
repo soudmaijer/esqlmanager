@@ -58,6 +58,10 @@ public class IndexesTab extends JPanel implements EditorTab {
 	private final JButton saveButton = Forms.button("&Save");
 	private final JButton dropButton = Forms.button("D&rop");
 	private final JButton closeButton = Forms.button("&Close");
+	/** Whether the table has no primary key yet, so one can be added. */
+	private boolean primaryAllowed = true;
+	/** Set while a change of the indexes runs in the background. */
+	private boolean busy;
 	private final JPanel editor = Forms.titled(new JPanel(new BorderLayout(0, Forms.GAP)), "Index");
 	private final JLabel hint = new JLabel(" ");
 
@@ -318,12 +322,21 @@ public class IndexesTab extends JPanel implements EditorTab {
 		}
 	}
 
+	/** Disables the buttons that change the table while a change runs, so that it is not started twice. */
+	public void setBusy(boolean busy) {
+		this.busy = busy;
+		saveButton.setEnabled(!busy);
+		dropButton.setEnabled(!busy);
+		addButton.setEnabled(!busy);
+		primaryButton.setEnabled(!busy && primaryAllowed);
+	}
+
 	/** Shows the indexes as they are in the database, nothing is modified any more. */
 	public void loadIndexes(TableIndex[] indexes) {
 		modified = false;
 		loading = true;
 		shown = null;
-		primaryButton.setEnabled(true);
+		primaryAllowed = true;
 		DefaultListModel<TableIndex> model = new DefaultListModel<>();
 		indexList.setModel(model);
 		usedColumnList.setModel(new DefaultListModel<>());
@@ -333,13 +346,14 @@ public class IndexesTab extends JPanel implements EditorTab {
 		if (indexes != null && indexes.length > 0) {
 			for (TableIndex index : indexes) {
 				if (index.isPrimary()) {
-					primaryButton.setEnabled(false);
+					primaryAllowed = false;
 				}
 				model.addElement(index);
 			}
 			indexList.setSelectedIndex(0);
 			itemSelected(indexes[0]);
 		}
+		primaryButton.setEnabled(!busy && primaryAllowed);
 		loading = false;
 	}
 

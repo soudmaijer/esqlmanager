@@ -1,5 +1,8 @@
 package nl.errorsoft.esql.table.control;
 
+import java.util.List;
+import java.util.function.IntConsumer;
+
 import nl.errorsoft.esql.table.ColumnDefinition;
 import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
@@ -93,16 +96,50 @@ public class TableController {
 		tableDataTab.saveSelectedRow();
 	}
 
-	public void insertRow(Table table, TableCell[] rowData) throws Exception {
-		service().insertRow(table, rowData);
+	/** Inserts the row off the event thread, then {@code saved} on it; {@code always} runs on the event thread in any case. */
+	public void insertRow(Table table, TableCell[] rowData, Runnable saved, Runnable always) {
+		connectionWindowController.inBackground("Save row", "Saving row...", () -> {
+			service().insertRow(table, rowData);
+			return rowData;
+		}, row -> saved.run(), always);
 	}
 
-	public void dataChanged(Table table, TableCell[] rowData, TableCell cellData, Object newValue) throws Exception {
-		service().changeCell(table, rowData, cellData, newValue);
+	/** Writes the new value of a cell off the event thread, then {@code saved} on it; {@code always} runs on the event thread in any case. */
+	public void changeCell(Table table, TableCell[] rowData, TableCell cellData, Object newValue, Runnable saved, Runnable always) {
+		connectionWindowController.inBackground("Change cell", "Saving cell...", () -> {
+			service().changeCell(table, rowData, cellData, newValue);
+			return cellData;
+		}, cell -> saved.run(), always);
 	}
 
-	public void deleteRow(Table table, TableCell[] rowData) throws Exception {
-		service().deleteRow(table, rowData);
+	/** How many rows were deleted, in order, and what stopped the rest (null when all were). */
+	private record RowsDeleted(int count, Exception failure) {
+	}
+
+	/**
+	 * Deletes the rows in order off the event thread and stops at the first that fails. {@code deleted} gets on the event thread how many were deleted,
+	 * then a failure is reported; {@code always} runs on the event thread in any case.
+	 */
+	public void deleteRows(Table table, List<TableCell[]> rows, IntConsumer deleted, Runnable always) {
+		connectionWindowController.inBackground("Delete rows", "Deleting rows...", () -> {
+			int count = 0;
+
+			for (TableCell[] row : rows) {
+				try {
+					service().deleteRow(table, row);
+				} catch (Exception e) {
+					return new RowsDeleted(count, e);
+				}
+				count++;
+			}
+			return new RowsDeleted(count, null);
+		}, result -> {
+			deleted.accept(result.count());
+
+			if (result.failure() != null) {
+				throw result.failure();
+			}
+		}, always);
 	}
 
 	/*

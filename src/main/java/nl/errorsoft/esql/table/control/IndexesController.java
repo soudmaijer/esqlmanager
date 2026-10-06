@@ -7,8 +7,6 @@ import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
 import nl.errorsoft.esql.table.ui.IndexesTab;
 
-import nl.errorsoft.esql.app.ApplicationContext;
-
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
 import nl.errorsoft.esql.dialect.Dialect;
@@ -55,46 +53,51 @@ public class IndexesController {
 	}
 
 	public void addIndex(TableIndex index, TableColumn[] columns, String type) {
-		try {
-			if (columns.length <= 0) {
-				Dialogs.error(connectionWindowController.getWindow(), "Indexes", "Select at least one column for the index.");
-			} else {
-				service().addIndex(table, index, columns, type);
-				indexesTab.loadIndexes(table.getIndexes());
-				connectionWindowController.tableSelected(table, true);
-			}
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindowController.getWindow(), "Add index", e);
-		}
+		change("Add index", index, columns, () -> service().addIndex(table, index, columns, type));
 	}
 
 	public void modifyIndex(TableIndex index, TableColumn[] columns, String type) {
-		try {
-			if (columns.length <= 0) {
-				Dialogs.error(connectionWindowController.getWindow(), "Indexes", "Select at least one column for the index.");
+		change("Modify index", index, columns, () -> {
+			if (index.isNew()) {
+				service().addIndex(table, index, columns, type);
 			} else {
-				if (index.isNew()) {
-					service().addIndex(table, index, columns, type);
-				} else {
-					service().modifyIndex(table, index, columns, type);
-				}
-
-				indexesTab.loadIndexes(table.getIndexes());
-				connectionWindowController.tableSelected(table, true);
+				service().modifyIndex(table, index, columns, type);
 			}
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindowController.getWindow(), "Modify index", e);
-		}
+		});
 	}
 
 	public void dropIndex(TableIndex index) {
-		try {
-			service().dropIndex(table, index);
-			indexesTab.loadIndexes(table.getIndexes());
-			connectionWindowController.tableSelected(table, true);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindowController.getWindow(), "Drop index", e);
+		run("Drop index", "Dropping index...", () -> service().dropIndex(table, index));
+	}
+
+	/** A change of an index, which needs at least one column. */
+	private void change(String action, TableIndex index, TableColumn[] columns, Change change) {
+		if (columns.length <= 0) {
+			Dialogs.error(connectionWindowController.getWindow(), "Indexes", "Select at least one column for the index.");
+			return;
 		}
+		run(action, "Saving index...", change);
+	}
+
+	/** Runs the change in the background with the buttons of the tab disabled, then shows the indexes as they are now. */
+	private void run(String action, String status, Change change) {
+		indexesTab.setBusy(true);
+		connectionWindowController.inBackground(action, status, () -> {
+			change.run();
+			return new Changed(table.getIndexes(), service().loadColumns(table));
+		}, changed -> {
+			indexesTab.loadIndexes(changed.indexes());
+			connectionWindowController.showTableColumns(table, changed.columns());
+		}, () -> indexesTab.setBusy(false));
+	}
+
+	/** The indexes after a change, and the columns for the tree. */
+	private record Changed(TableIndex[] indexes, TableColumn[] columns) {
+	}
+
+	/** Database work that changes the indexes of the table. */
+	private interface Change {
+		void run() throws Exception;
 	}
 
 	private TableService service() throws Exception {

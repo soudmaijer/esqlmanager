@@ -23,6 +23,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.undo.UndoManager;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TableDataTab extends JPanel implements ActionListener {
 	private int skip;
@@ -94,12 +96,14 @@ public class TableDataTab extends JPanel implements ActionListener {
 						}
 					}
 
-					// Data updated.
-					if (dataChanged(rowData, tableCell, newData)) {
+					// Data updated: the editor stays open until the server took the value, and stays after a failure so that it can be corrected.
+					int selectedRow = dataTable.getSelectedRow();
+					int selectedColumn = dataTable.getSelectedColumn();
+					changeCell(rowData, tableCell, newData, () -> {
 						tableCell.setEditedText(newData == null ? null : newData.toString());
-						dataTable.setValueAt(tableCell, dataTable.getSelectedRow(), dataTable.getSelectedColumn());
+						dataTable.setValueAt(tableCell, selectedRow, selectedColumn);
 						removeEditor();
-					}
+					});
 				}
 			}
 			public boolean isCellEditable(int row, int column) {
@@ -336,14 +340,10 @@ public class TableDataTab extends JPanel implements ActionListener {
 		split.setBottomComponent(null);
 	}
 
-	public boolean dataChanged(TableCell[] rowData, TableCell cellData, Object newValue) {
-		try {
-			tableController.dataChanged(cellData.getTableColumn().getTable(), rowData, cellData, newValue);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(this, "Change cell", e);
-			return false;
-		}
-		return true;
+	/** Writes the cell in the background, the grid is disabled meanwhile; {@code saved} runs on the event thread when the server took it. */
+	private void changeCell(TableCell[] rowData, TableCell cellData, Object newValue, Runnable saved) {
+		dataTable.setEnabled(false);
+		tableController.changeCell(cellData.getTableColumn().getTable(), rowData, cellData, newValue, saved, () -> dataTable.setEnabled(true));
 	}
 
 	public void insertNewRow() {
@@ -386,13 +386,9 @@ public class TableDataTab extends JPanel implements ActionListener {
 		for (int j = 0; j < columnCount; j++) {
 			cells[j] = (TableCell) sortableModel.getValueAt(selectedRow, j);
 		}
-		try {
-			if (cells[0].isNewRow()) {
-				tableController.insertRow(table, cells);
-				refreshData();
-			}
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(this, "Save selected row", e);
+		if (cells[0].isNewRow()) {
+			dataTable.setEnabled(false);
+			tableController.insertRow(table, cells, this::refreshData, () -> dataTable.setEnabled(true));
 		}
 	}
 
@@ -408,30 +404,34 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		if (Dialogs.confirmDestructive(this, "Delete rows", "Delete " + selectedRows.length + " row(s) from " + from + "? This cannot be undone.", "Delete")) {
 			int columnCount = dataTable.getColumnCount();
-			TableCell[] cells = new TableCell[columnCount];
+			// From the bottom up, so that removing a row leaves the index of the next one alone. A new row that was never saved is only removed.
+			List<Integer> saved = new ArrayList<>();
+			List<TableCell[]> rows = new ArrayList<>();
 
 			for (int i = selectedRows.length - 1; i >= 0; i--) {
+				TableCell[] cells = new TableCell[columnCount];
+
 				for (int j = 0; j < columnCount; j++) {
 					cells[j] = (TableCell) sortableModel.getValueAt(selectedRows[i], j);
 				}
-				try {
-					if (!cells[0].isNewRow()) {
-						tableController.deleteRow(table, cells);
-					} else {
-						inserting = false;
-					}
+				if (cells[0].isNewRow()) {
+					inserting = false;
 					sortableModel.removeRow(selectedRows[i]);
-					showRecordCount();
-				} catch (Exception e) {
-					ApplicationContext.get().errors().report(this, "Delete row", e);
-
-					if (selectedRows.length > 1) {
-						if (!Dialogs.confirm(this, "Delete rows", "Delete failed for a row. Continue with the remaining rows?", "Continue")) {
-							break;
-						}
-					}
-
+				} else {
+					saved.add(selectedRows[i]);
+					rows.add(cells);
 				}
+			}
+			showRecordCount();
+
+			if (!rows.isEmpty()) {
+				dataTable.setEnabled(false);
+				tableController.deleteRows(table, rows, deleted -> {
+					for (int i = 0; i < deleted; i++) {
+						sortableModel.removeRow(saved.get(i));
+					}
+					showRecordCount();
+				}, () -> dataTable.setEnabled(true));
 			}
 		}
 	}
@@ -487,10 +487,12 @@ public class TableDataTab extends JPanel implements ActionListener {
 				rowData[i] = (TableCell) dataTable.getValueAt(this.editingRow, i);
 			}
 
-			if (this.dataChanged(rowData, this.editingCell, this.cellData.getText())) {
-				editingCell.setEditedText(this.cellData.getText());
+			TableCell cell = editingCell;
+			String text = cellData.getText();
+			changeCell(rowData, cell, text, () -> {
+				cell.setEditedText(text);
 				sortableModel.fireTableDataChanged();
-			}
+			});
 		} else if (source == closeCellDataButton) {
 			this.disableCellDataEditor();
 		} else if (source == saveCellDataButton) {

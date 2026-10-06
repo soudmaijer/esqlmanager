@@ -113,7 +113,8 @@ public class TableEditorTab extends JPanel implements EditorTab {
 	private final String initialType;
 	private boolean columnsChanged;
 
-	public TableEditorTab(TableEditorController createTableController, String title, Database database, Table table) {
+	/** @param databases the databases a new table can go in, loaded by the controller before the tab opens. */
+	public TableEditorTab(TableEditorController createTableController, String title, List<Database> databases, Database database, Table table) {
 		super(new BorderLayout(0, Forms.PADDING));
 		this.createTableController = createTableController;
 		this.title = title;
@@ -121,8 +122,7 @@ public class TableEditorTab extends JPanel implements EditorTab {
 		setBorder(BorderFactory.createEmptyBorder(Forms.PADDING, Forms.PADDING, Forms.PADDING, Forms.PADDING));
 
 		DefaultComboBoxModel<Database> databaseModel = new DefaultComboBoxModel<>();
-		List<Database> db = createTableController.getDatabases();
-		for (Database candidate : db) {
+		for (Database candidate : databases) {
 			databaseModel.addElement(candidate);
 			if (database != null && candidate.toString().equals(database.toString())) {
 				database = candidate;
@@ -387,6 +387,11 @@ public class TableEditorTab extends JPanel implements EditorTab {
 				showProblems = false;
 			}
 		}
+	}
+
+	/** Disables Save while the table is saved in the background, so that it is not saved twice. */
+	public void setSaving(boolean saving) {
+		save.setEnabled(!saving);
 	}
 
 	private void save() {

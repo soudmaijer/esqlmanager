@@ -684,6 +684,12 @@ public class ConnectionWindowController {
 		}
 	}
 
+	/** Shows columns loaded in the background under the table in the tree, on the event thread. */
+	public void showTableColumns(Table table, TableColumn[] columns) {
+		connectionWindow.getDatabaseTree().loadTableColumns(table, columns);
+		connectionWindow.tableSelected();
+	}
+
 	/** Double click on a table: opens its data in a tab and puts that tab in front. */
 	public void openTable(Table table) {
 		if (table == null) {
