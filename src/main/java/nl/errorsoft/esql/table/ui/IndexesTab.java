@@ -35,7 +35,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.TitledBorder;
 
 /**
- * The indexes of one table, as a tab of the connection window. The list on the left holds all indexes with their type, the editor on the right the type
+ * The indexes of one table, as a work window with a tab of its own. The list on the left holds all indexes with their type, the editor on the right the type
  * and the columns of the selected one. Save writes the selected index, Drop removes it; the tab stays open and shows the indexes as they are after the
  * change. Close closes it, asking first when the selected index has changes that are not saved.
  */

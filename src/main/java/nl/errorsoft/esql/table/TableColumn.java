@@ -20,6 +20,7 @@ public class TableColumn {
 	private int indexPosition;
 	private String comment = "";
 	private boolean generated;
+	private String displayTypeName;
 	private String references;
 
 	public TableColumn(Table table) {
@@ -174,7 +175,7 @@ public class TableColumn {
 
 	/** The type as the tree shows it after the name: {@code integer}, {@code varchar(100)}. */
 	public String getTypeLabel() {
-		String type = nativeTypeName == null ? "" : nativeTypeName;
+		String type = displayTypeName != null ? displayTypeName : nativeTypeName == null ? "" : nativeTypeName;
 		String length = getLength();
 		return length.isEmpty() ? type : type + "(" + length + ")";
 	}
@@ -183,6 +184,11 @@ public class TableColumn {
 	 * Whether the server generates the value (the metadata's IS_AUTOINCREMENT). Only shown in the tree; editing a column keeps using
 	 * {@link #isAutoIncrement()}.
 	 */
+	/** The type in the words of the server's dialect ({@code integer} for PostgreSQL's {@code int4}), for {@link #getTypeLabel()}. */
+	public void setDisplayTypeName(String displayTypeName) {
+		this.displayTypeName = displayTypeName;
+	}
+
 	public boolean isGenerated() {
 		return generated;
 	}

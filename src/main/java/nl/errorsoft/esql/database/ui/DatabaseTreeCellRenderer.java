@@ -38,6 +38,8 @@ public class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 		super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
 		setToolTipText(null);
 		Object object = value instanceof DefaultMutableTreeNode node ? node.getUserObject() : value;
+		// Without the focus FlatLaf paints the selection in pale grey: the white selection icons would vanish on it.
+		selected = selected && tree.isFocusOwner();
 
 		switch (object) {
 			case ConnectionNode connection -> setIcon(icon(connection.getProfile().getServerType().iconName(), selected));

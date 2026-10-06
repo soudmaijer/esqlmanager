@@ -14,7 +14,7 @@ import nl.errorsoft.esql.table.ui.TableEditorTab;
 
 import java.util.List;
 
-/** Opens the table editor as a tab of the connection window ("New table", "Edit orders") and saves what it holds. */
+/** Opens the table editor as a work window ("New table", "Edit orders") and saves what it holds. */
 public class TableEditorController {
 	private static final String NEW_TABLE = "New table";
 

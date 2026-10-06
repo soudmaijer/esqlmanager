@@ -41,6 +41,9 @@ public class TableRepository extends AbstractRepository {
 				column.setDefault(rs.getString("COLUMN_DEF"));
 				column.setComment(rs.getString("REMARKS"));
 				column.setGenerated("YES".equalsIgnoreCase(rs.getString("IS_AUTOINCREMENT")));
+				if (column.getNativeTypeName() != null) {
+					column.setDisplayTypeName(dialect().datatypeName(column.getNativeTypeName()));
+				}
 				columns.add(column);
 			}
 		}

@@ -45,7 +45,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 /**
- * Creates a new table or edits the name, type and comment of an existing one, as a tab of the connection window. The properties of the table are at the
+ * Creates a new table or edits the name, type and comment of an existing one, as a work window with a tab of its own. The properties of the table are at the
  * top, the columns in a grid that can be edited in place, and the details of the selected column in a group below it. Save (also Ctrl/Cmd+S) and Cancel
  * are at the bottom; the tab asks before it discards changes.
  */
