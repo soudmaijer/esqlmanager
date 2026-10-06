@@ -52,6 +52,7 @@ public final class ApplicationContext {
 			images.addIcon("imgDropTable", "table-drop", 16, false);
 			images.addIcon("imgUserManager", "users", 16, false);
 			images.addIcon("imgRunQuery", "run-query", 16, false);
+			images.addIcon("imgClearOutput", "eraser", 16, false);
 			images.addIcon("imgRunSelection", "run", 16, false);
 			images.addIcon("imgRunAll", "run-all", 16, false);
 			images.addIcon("imgOpen", "folder-open", 16, false);

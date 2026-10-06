@@ -1,6 +1,11 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Clear the output
+
+- The eraser button right of the output tabs, Clear in the log's context menu and Cmd+K (Ctrl+K) in the log empty
+  the tab in front. It is disabled while the tab is empty. The log file keeps everything.
+
 06-10-2026: Stack traces in a log file
 
 - Everything that is logged, with the full stack trace of an unexpected error, is written to esqlmanager.log in

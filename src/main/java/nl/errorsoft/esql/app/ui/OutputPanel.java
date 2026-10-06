@@ -1,14 +1,28 @@
 package nl.errorsoft.esql.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
@@ -19,11 +33,13 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.OutputRouting;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.editor.FindBar;
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
 
 /**
  * The output panel across the bottom of the main window: an Application tab with what belongs to no connection (start up, settings, drivers, errors
  * without a connection) and a tab per open connection, titled with its profile name and server icon, with what was logged for it. Each tab is a read-only
- * SQL coloured log without wrapping, kept below {@link #MAX_CHARS}, with a find bar (menu key+F).
+ * SQL coloured log without wrapping, kept below {@link #MAX_CHARS}, with a find bar (menu key+F). Clear (the button right of the tabs, the context menu
+ * of the text, menu key+K) empties the text of the tab in front; the log file keeps everything.
  */
 public class OutputPanel extends JPanel {
 	static final int MAX_CHARS = 200000;
@@ -55,6 +71,14 @@ public class OutputPanel extends JPanel {
 			findBar = FindBar.install(text, this);
 		}
 
+		boolean isEmpty() {
+			return text.getDocument().getLength() == 0;
+		}
+
+		void clear() {
+			text.setText("");
+		}
+
 		void append(String line) {
 			try {
 				text.append(line);
@@ -81,11 +105,87 @@ public class OutputPanel extends JPanel {
 		}
 	}
 
+	private final JButton clearButton = new JButton(ApplicationContext.get().imageLoader().getIcon("imgClearOutput"));
+
 	public OutputPanel() {
 		super(new BorderLayout());
-		tabs.addTab(APPLICATION, application);
 		tabs.putClientProperty("JTabbedPane.tabHeight", 26);
+		clearButton.setToolTipText("Clear the output (" + shortcutText() + ")");
+		clearButton.getAccessibleContext().setAccessibleName("Clear");
+		clearButton.putClientProperty("JButton.buttonType", "toolBarButton");
+		clearButton.setFocusable(false);
+		clearButton.addActionListener(e -> clear());
+		// Right of the tabs, at the right edge.
+		Box trailing = Box.createHorizontalBox();
+		trailing.add(Box.createHorizontalGlue());
+		trailing.add(clearButton);
+		trailing.add(Box.createHorizontalStrut(4));
+		tabs.putClientProperty("JTabbedPane.trailingComponent", trailing);
+		tabs.addChangeListener(e -> updateClear());
 		add(tabs, BorderLayout.CENTER);
+		addLog(APPLICATION, null, application, null);
+	}
+
+	private static KeyStroke clearKey() {
+		return KeyStroke.getKeyStroke(KeyEvent.VK_K, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
+	}
+
+	private static String shortcutText() {
+		return KeyEvent.getModifiersExText(clearKey().getModifiers()) + "+K";
+	}
+
+	/** Adds a tab and wires its Clear: the context menu item, menu key+K and the enablement of the button. */
+	private void addLog(String title, Icon icon, Log log, String tooltip) {
+		JMenuItem clearItem = new JMenuItem("Clear");
+		clearItem.setMnemonic('C');
+		clearItem.setAccelerator(clearKey());
+		clearItem.addActionListener(e -> log.clear());
+		JPopupMenu menu = log.text.getPopupMenu();
+		menu.addSeparator();
+		menu.add(clearItem);
+		menu.addPopupMenuListener(new PopupMenuListener() {
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				ToolbarButtons.setAvailable(clearItem, log.isEmpty() ? "The output is empty." : null);
+			}
+
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+			}
+
+			public void popupMenuCanceled(PopupMenuEvent e) {
+			}
+		});
+		log.text.getInputMap().put(clearKey(), "esql.clear");
+		log.text.getActionMap().put("esql.clear", new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				log.clear();
+			}
+		});
+		log.text.getDocument().addDocumentListener(new DocumentListener() {
+			public void insertUpdate(DocumentEvent e) {
+				updateClear();
+			}
+
+			public void removeUpdate(DocumentEvent e) {
+				updateClear();
+			}
+
+			public void changedUpdate(DocumentEvent e) {
+			}
+		});
+		tabs.addTab(title, icon, log, tooltip);
+		updateClear();
+	}
+
+	/** Empties the text of the tab in front. */
+	public void clear() {
+		if (tabs.getSelectedComponent() instanceof Log log) {
+			log.clear();
+		}
+	}
+
+	private void updateClear() {
+		boolean empty = !(tabs.getSelectedComponent() instanceof Log log) || log.isEmpty();
+		ToolbarButtons.setAvailable(clearButton, empty ? "The output is empty." : null);
 	}
 
 	/** Adds the tab of a connection that was opened, after the other tabs. */
@@ -95,7 +195,7 @@ public class OutputPanel extends JPanel {
 		}
 		Log log = new Log();
 		connections.put(name, log);
-		tabs.addTab(name, ApplicationContext.get().imageLoader().getIcon(serverIcon), log, "Log of " + name);
+		addLog(name, ApplicationContext.get().imageLoader().getIcon(serverIcon), log, "Log of " + name);
 	}
 
 	/** Removes the tab of a connection that was closed; what it logged afterwards goes to the Application tab with its name in front. */
