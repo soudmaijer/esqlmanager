@@ -14,10 +14,12 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import nl.errorsoft.esql.app.ui.MainWindow;
 
 /**
- * Shows the application log in the output panel at the bottom of the main window. One log for every connection: a line written for a connection starts
- * with its profile name, from the log context {@code connection} (see {@code ConnectionWindowController.logContext}).
+ * Shows the application log in the output panel at the bottom of the main window: a line written for a connection (log context {@code connection}, see
+ * {@code ConnectionWindowController.logContext}) in the tab of that connection, other lines in the Application tab ({@code OutputRouting}).
  */
 public class OutputPanelAppender extends AbstractAppender {
+	/** The log context key of the connection a line belongs to, see {@code ConnectionWindowController.logContext}. */
+	private static final String CONNECTION = "connection";
 	private final MainWindow mainWindow;
 
 	private OutputPanelAppender(Layout<? extends Serializable> layout, MainWindow mainWindow) {
@@ -26,14 +28,14 @@ public class OutputPanelAppender extends AbstractAppender {
 	}
 
 	public void append(LogEvent event) {
-		mainWindow.print(new String(getLayout().toByteArray(event), StandardCharsets.UTF_8));
+		mainWindow.getOutput().print(event.getContextData().getValue(CONNECTION), new String(getLayout().toByteArray(event), StandardCharsets.UTF_8));
 	}
 
 	/** Attaches the output panel to the root logger. */
 	public static void install(MainWindow mainWindow) {
 		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
-		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %notEmpty{[%X{connection}] }%msg%n")
+		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n")
 			.setCharset(StandardCharsets.UTF_8)
 			.setConfiguration(config).build();
 		Appender appender = new OutputPanelAppender(layout, mainWindow);

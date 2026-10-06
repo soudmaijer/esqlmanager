@@ -1,6 +1,16 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Output tabs per connection, find in the output and the query editor
+
+- The output panel has an Application tab (start up, settings, drivers, connections that failed to open) and a tab
+  per open connection, with its profile name and server logo, for what that connection logged, its errors included.
+  The tab appears on connect and goes on disconnect; selecting a node or work tab of a connection brings its log to
+  the front without taking the focus. Lines in a connection's tab no longer carry the profile name.
+- Cmd+F (Ctrl+F elsewhere) opens a find bar in the output tab in front and in the query editor: all matches are
+  highlighted, "2 of 5" or "No results" is shown, Enter and Shift+Enter go to the next and previous match, Match
+  case narrows the search, Esc closes the bar.
+
 06-10-2026: Explorer loads on expand, contextual buttons, toolbar on the table list
 
 - Selecting a node in the explorer no longer loads anything (and no longer connects to a PostgreSQL database). A

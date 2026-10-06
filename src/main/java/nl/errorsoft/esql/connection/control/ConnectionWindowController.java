@@ -75,11 +75,14 @@ public class ConnectionWindowController {
 	/** Shows the connection in the explorer on the event thread, then connects and lists the databases on a virtual thread. */
 	private void open() {
 		ConnectionProfile profile = session.getConnectionProfile();
-		log.info("Connecting to {} on {}:{} as {}", profile.getServerType().getDescription(), profile.getHost(), profile.getPort(),
-			profile.getUsername());
 		node = new ConnectionNode(profile, getTitle());
 		view = new WorkFrames(this, mainController.getMainWindow(), node);
 		mainController.addConnection(this);
+		// Logged after the connection has its tab in the output panel, and in its name: the event thread may still carry another connection's.
+		try (var context = logContext()) {
+			log.info("Connecting to {} on {}:{} as {}", profile.getServerType().getDescription(), profile.getHost(), profile.getPort(),
+				profile.getUsername());
+		}
 		mainController.updateStatus("Connecting...", true);
 
 		Thread.ofVirtual().name("connect").start(() -> {
@@ -95,7 +98,9 @@ public class ConnectionWindowController {
 				SwingUtilities.invokeLater(() -> {
 					closeWindow();
 					mainController.updateStatus("Cannot connect to server...", true);
-					ApplicationContext.get().errors().report("Connect to " + profile.getName(), e);
+					try (var context = logContext()) {
+						ApplicationContext.get().errors().report("Connect to " + profile.getName(), e);
+					}
 				});
 			}
 		});
@@ -115,6 +120,7 @@ public class ConnectionWindowController {
 	 */
 	public void activate() {
 		ThreadContext.put(LOG_CONNECTION, session.getConnectionProfile().getName());
+		mainController.getMainWindow().getOutput().showConnection(getTitle());
 		showStatusInfo();
 	}
 
@@ -189,10 +195,10 @@ public class ConnectionWindowController {
 				T result = work.run();
 				SwingUtilities.invokeLater(() -> {
 					mainController.showConnectionState();
-					try {
+					try (var log = logContext()) {
 						done.accept(result);
 					} catch (Exception e) {
-						ApplicationContext.get().errors().report(parent(), action, e);
+						reportFailure(action, e);
 					} finally {
 						always.run();
 					}
@@ -201,13 +207,20 @@ public class ConnectionWindowController {
 				SwingUtilities.invokeLater(() -> {
 					mainController.showConnectionState();
 					try {
-						ApplicationContext.get().errors().report(parent(), action, e);
+						reportFailure(action, e);
 					} finally {
 						always.run();
 					}
 				});
 			}
 		});
+	}
+
+	/** Reports a failure of this connection: the error is logged in the tab of the connection in the output panel. */
+	private void reportFailure(String action, Exception e) {
+		try (var log = logContext()) {
+			ApplicationContext.get().errors().report(parent(), action, e);
+		}
 	}
 
 	/**
@@ -237,6 +250,10 @@ public class ConnectionWindowController {
 		view.closeAll();
 		mainController.getMainWindow().detachDesigners(this);
 		mainController.removeConnection(this);
+		// What the event thread logs from now on belongs to no connection, until another one is activated.
+		if (getTitle().equals(ThreadContext.get(LOG_CONNECTION))) {
+			ThreadContext.remove(LOG_CONNECTION);
+		}
 	}
 
 	/** Lists the databases again in the background and shows them in the tree. */

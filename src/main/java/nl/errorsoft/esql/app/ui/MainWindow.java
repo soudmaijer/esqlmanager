@@ -13,14 +13,11 @@ import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ui.ExplorerPanel;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
-import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
 import nl.errorsoft.esql.ui.icon.StatusLight;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -34,8 +31,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	// Control class for BuildInfo UI, manages all use-cases actions.
 	private MainController mainController;
-	private static final int MAX_OUTPUT_CHARS = 200000;
-	private JPanel outputPanel;
+	private OutputPanel outputPanel;
 
 	// Menubar
 	private JMenuBar menubar;
@@ -80,8 +76,6 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JSplitPane split;
 	private JSplitPane explorerSplit; // The explorer left, the work windows right; the output panel below both
 	private ExplorerPanel explorer;
-	private JScrollPane outputScroll;
-	private RSyntaxTextArea outputText;
 	private JDesktopPane desktop;
 	private WindowTabsPanel windowTabs; // Connection windows and designers
 	private ImageLoader imageLoader;
@@ -270,20 +264,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		/*
 		 * Other components
 		 */
-		outputPanel = new JPanel(new BorderLayout());
-		JLabel outputTitle = new JLabel("Output");
-		outputTitle.setFont(outputTitle.getFont().deriveFont(Font.BOLD));
-		outputTitle.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
-		outputPanel.add(outputTitle, BorderLayout.NORTH);
-
-		// No line wrapping: re-wrapping a long log on every width change made resizing slow.
-		// The log shows the statements that were run, so it gets the SQL colours of the query editor.
-		outputText = new RSyntaxTextArea();
-		outputText.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_SQL);
-		outputText.setLineWrap(false);
-		outputText.setEditable(false);
-		outputText.setHighlightCurrentLine(false);
-		EditorTheme.install(outputText);
+		outputPanel = new OutputPanel();
 
 		// DesktopPane.
 		desktop = new JDesktopPane();
@@ -301,12 +282,6 @@ public class MainWindow extends JFrame implements ActionListener {
 		JPanel workArea = new JPanel(new BorderLayout());
 		workArea.add(topRow, BorderLayout.NORTH);
 		workArea.add(desktop, BorderLayout.CENTER);
-
-		//ScrollPane for tree.
-		outputScroll = new JScrollPane(outputText);
-		outputScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		outputScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		outputPanel.add(outputScroll, BorderLayout.CENTER);
 
 		explorer = new ExplorerPanel(mainController);
 		explorer.setMinimumSize(new Dimension(160, 0));
@@ -453,34 +428,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		statusInfo.setText(info.length() == 0 ? " " : info);
 	}
 
-	// Displays messages in output window.
-	public void print(String s) {
-		// Log messages come from any thread, the document may only be changed on the event thread.
-		if (!SwingUtilities.isEventDispatchThread()) {
-			SwingUtilities.invokeLater(() -> print(s));
-			return;
-		}
-
-		try {
-			outputText.append(s);
-			trimOutput();
-			outputText.setCaretPosition(outputText.getDocument().getLength());
-		} catch (javax.swing.text.BadLocationException e) {
-			// Cannot happen, trimOutput only reads and removes inside the document.
-		}
-	}
-
-	// Keeps the output panel from growing without limit.
-	private void trimOutput() throws javax.swing.text.BadLocationException {
-		javax.swing.text.Document doc = outputText.getDocument();
-		int length = doc.getLength();
-
-		if (length > MAX_OUTPUT_CHARS) {
-			int cut = length - MAX_OUTPUT_CHARS / 2;
-			String head = doc.getText(cut, Math.min(200, length - cut));
-			int lineEnd = head.indexOf('\n');
-			doc.remove(0, lineEnd < 0 ? cut : cut + lineEnd + 1);
-		}
+	/** The output panel at the bottom: the Application tab and a log tab per connection. */
+	public OutputPanel getOutput() {
+		return outputPanel;
 	}
 
 	/** The tree of every connection and the saved profiles, on the left. */

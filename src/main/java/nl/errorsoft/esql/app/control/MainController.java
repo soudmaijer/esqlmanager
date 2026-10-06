@@ -82,12 +82,14 @@ public class MainController {
 	/** A connection was opened: it is listed in the explorer instead of its saved profile. */
 	public void addConnection(ConnectionWindowController connection) {
 		connections.add(connection);
+		mainWindow.getOutput().addConnection(connection.getTitle(), connection.getConnectionProfile().getServerType().iconName());
 		refreshProfiles();
 		showConnectionState();
 	}
 
 	public void removeConnection(ConnectionWindowController connection) {
 		connections.remove(connection);
+		mainWindow.getOutput().removeConnection(connection.getTitle());
 		refreshProfiles();
 		showConnectionState();
 	}

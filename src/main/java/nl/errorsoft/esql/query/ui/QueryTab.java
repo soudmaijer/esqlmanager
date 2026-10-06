@@ -134,7 +134,11 @@ public class QueryTab extends JPanel {
 		results.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 		results.putClientProperty("JTabbedPane.tabClosable", true);
 		results.putClientProperty("JTabbedPane.tabCloseCallback", (java.util.function.IntConsumer) this::closeResult);
-		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorScroll, noResult);
+		// The find bar (menu key+F) sits below the editor, above the results.
+		JPanel editorPanel = new JPanel(new BorderLayout());
+		editorPanel.add(editorScroll, BorderLayout.CENTER);
+		nl.errorsoft.esql.ui.editor.FindBar.install(editor, editorPanel);
+		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorPanel, noResult);
 		split.setResizeWeight(0.5);
 		split.setContinuousLayout(true);
 		split.setBorder(BorderFactory.createEmptyBorder());

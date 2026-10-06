@@ -29,3 +29,7 @@ Statements are separated by `;`. A semicolon inside quotes, dollar quotes or com
 The completion offers SQL keywords, the tables of the chosen database and their columns. It knows what fits at the caret: tables after `FROM` and `JOIN`, columns of a table or alias after a period. Aliases such as `o` in `FROM orders o` are resolved. On PostgreSQL the tables of every schema of the database are known: a plain name is a table of the chosen schema (the first of the search path), other schemas are offered after `FROM` and `sales.` lists the tables of `sales`; `sales.orders` resolves for the column completion too. Names that need it are quoted for the server.
 
 macOS gives Cmd+Space to Spotlight. To use it for completion, turn off that shortcut in System Settings > Keyboard > Keyboard Shortcuts > Spotlight.
+
+## Find
+
+Cmd+F (Ctrl+F on Windows and Linux) in the editor opens a find bar below it, the same as in the output panel: every match is highlighted, "2 of 5" or "No results" says where you are, Enter and Shift+Enter go to the next and previous match, **Match case** narrows the search and Esc closes the bar and returns to the editor.
