@@ -14,10 +14,15 @@ import nl.errorsoft.esql.dialect.Dialect.Maintenance;
 public final class TreeMenu {
 	/** What kind of node was clicked. */
 	public enum Node {
-		SERVER, DATABASE, SCHEMA, TABLE, COLUMN
+		/** A saved profile that is not connected ({@link ProfileNode}). */
+		PROFILE,
+		/** The node of an open connection ({@link ConnectionNode}): the server, and disconnecting it. */
+		CONNECTION, SERVER, DATABASE, SCHEMA, TABLE, COLUMN
 	}
 
 	public enum Item {
+		// Profile and connection.
+		CONNECT("Connect"), EDIT_PROFILE("Edit connection..."), DISCONNECT("Disconnect"),
 		// Server.
 		CREATE_DATABASE("Create {database}..."), NEW_QUERY("New query"), USERS("Users..."), PROCESS_LIST("Process list"), SERVER_STATUS(
 			"Show status"), SERVER_VARIABLES("Show variables"), EXPORT("Export..."), IMPORT("Import..."), RELOAD_DATABASES("Reload {database}s"),
@@ -52,18 +57,16 @@ public final class TreeMenu {
 		List<Item> items = new ArrayList<>();
 
 		switch (node) {
-			case SERVER -> {
-				addIf(items, dialect.supports(Feature.CREATE_DATABASE), Item.CREATE_DATABASE);
-				items.add(Item.NEW_QUERY);
-				items.add(Item.SEPARATOR);
-				addIf(items, dialect.supports(Feature.USER_MANAGER), Item.USERS);
-				addIf(items, dialect.supports(Feature.PROCESS_LIST), Item.PROCESS_LIST);
-				addIf(items, dialect.supports(Feature.SERVER_STATUS), Item.SERVER_STATUS);
-				addIf(items, dialect.supports(Feature.SERVER_STATUS), Item.SERVER_VARIABLES);
-				items.add(Item.SEPARATOR);
-				addImportExport(items, dialect);
-				items.add(Item.RELOAD_DATABASES);
+			case PROFILE -> {
+				items.add(Item.CONNECT);
+				items.add(Item.EDIT_PROFILE);
 			}
+			case CONNECTION -> {
+				addServerItems(items, dialect);
+				items.add(Item.SEPARATOR);
+				items.add(Item.DISCONNECT);
+			}
+			case SERVER -> addServerItems(items, dialect);
 			case DATABASE -> {
 				boolean schemas = dialect.supports(Feature.SCHEMAS);
 				items.add(Item.OPEN_DATABASE);
@@ -121,6 +124,20 @@ public final class TreeMenu {
 			}
 		}
 		return tidy(items);
+	}
+
+	/** What the server itself offers: on the server node of a connection window and on the node of a connection. */
+	private static void addServerItems(List<Item> items, Dialect dialect) {
+		addIf(items, dialect.supports(Feature.CREATE_DATABASE), Item.CREATE_DATABASE);
+		items.add(Item.NEW_QUERY);
+		items.add(Item.SEPARATOR);
+		addIf(items, dialect.supports(Feature.USER_MANAGER), Item.USERS);
+		addIf(items, dialect.supports(Feature.PROCESS_LIST), Item.PROCESS_LIST);
+		addIf(items, dialect.supports(Feature.SERVER_STATUS), Item.SERVER_STATUS);
+		addIf(items, dialect.supports(Feature.SERVER_STATUS), Item.SERVER_VARIABLES);
+		items.add(Item.SEPARATOR);
+		addImportExport(items, dialect);
+		items.add(Item.RELOAD_DATABASES);
 	}
 
 	private static void addImportExport(List<Item> items, Dialect dialect) {

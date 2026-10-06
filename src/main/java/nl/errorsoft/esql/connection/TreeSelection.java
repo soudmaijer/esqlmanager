@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection;
 
+import java.util.List;
+
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.table.Table;
@@ -45,5 +47,23 @@ public final class TreeSelection {
 	/** The selected column. */
 	public static TableColumn column(Object selected) {
 		return selected instanceof TableColumn column ? column : null;
+	}
+
+	/**
+	 * The connection a node belongs to: the {@link ConnectionNode} nearest to the selected node on its path.
+	 *
+	 * @param path the objects of the nodes from the root of the tree to the selected node (the user objects of a {@code TreePath}), or null
+	 * @return null when nothing is selected or the node is not part of a connection (a saved profile, the hidden root)
+	 */
+	public static ConnectionNode connection(List<?> path) {
+		if (path == null) {
+			return null;
+		}
+		for (Object node : path.reversed()) {
+			if (node instanceof ConnectionNode connection) {
+				return connection;
+			}
+		}
+		return null;
 	}
 }

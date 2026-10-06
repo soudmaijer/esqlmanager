@@ -601,7 +601,9 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 			case RELOAD_COLUMNS -> connectionWindowController.reloadSelectedTable();
 			case EDIT_FIELD -> connectionWindowController.showColumnPropertiesDialog(false, true);
 			case DROP_FIELD -> dropField();
-			case SEPARATOR -> {
+			case DISCONNECT -> closeWindow(true);
+			// Items of saved profiles, which this window does not show.
+			case CONNECT, EDIT_PROFILE, SEPARATOR -> {
 			}
 		}
 	}

@@ -47,6 +47,22 @@ class TreeMenuTest {
 	}
 
 	@Test
+	void aConnectionHasTheServerItemsAndDisconnectAtTheEnd() {
+		for (Dialect dialect : List.of(MY_SQL, POSTGRES, SQL_SERVER)) {
+			List<Item> connection = TreeMenu.itemsFor(Node.CONNECTION, dialect);
+			List<Item> server = TreeMenu.itemsFor(Node.SERVER, dialect);
+			assertEquals(server, connection.subList(0, server.size()), String.valueOf(dialect));
+			assertEquals(List.of(Item.SEPARATOR, Item.DISCONNECT), connection.subList(server.size(), connection.size()));
+		}
+	}
+
+	@Test
+	void aSavedProfileCanOnlyBeConnectedOrEdited() {
+		assertEquals(List.of(Item.CONNECT, Item.EDIT_PROFILE), TreeMenu.itemsFor(Node.PROFILE, POSTGRES));
+		assertEquals("Edit connection...", Item.EDIT_PROFILE.label(MY_SQL));
+	}
+
+	@Test
 	void postgresDatabaseHoldsSchemasAndTheLabelsSaySo() {
 		List<Item> database = TreeMenu.itemsFor(Node.DATABASE, POSTGRES);
 		assertTrue(database.containsAll(List.of(Item.CREATE_SCHEMA, Item.RELOAD_SCHEMAS)));

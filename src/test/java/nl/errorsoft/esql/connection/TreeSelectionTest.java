@@ -1,7 +1,10 @@
 package nl.errorsoft.esql.connection;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.util.List;
 
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
@@ -36,6 +39,26 @@ class TreeSelectionTest {
 		assertSame(table, TreeSelection.table(column));
 		assertSame(schema, TreeSelection.schema(column));
 		assertSame(database, TreeSelection.database(column));
+	}
+
+	@Test
+	void aNodeBelongsToTheNearestConnectionOnItsPath() {
+		ConnectionNode connection = new ConnectionNode(new ConnectionProfile(), "postgres@localhost");
+		assertSame(connection, TreeSelection.connection(List.of("root", connection, database, schema, table, column)));
+		assertSame(connection, TreeSelection.connection(List.of("root", connection)));
+	}
+
+	@Test
+	void aProfileOrNothingHasNoConnection() {
+		assertNull(TreeSelection.connection(null));
+		assertNull(TreeSelection.connection(List.of()));
+		assertNull(TreeSelection.connection(List.of("root", new ProfileNode(new ConnectionProfile()))));
+	}
+
+	@Test
+	void twoConnectionsOfOneProfileAreTwoNodes() {
+		ConnectionProfile profile = new ConnectionProfile();
+		assertNotEquals(new ConnectionNode(profile, "a"), new ConnectionNode(profile, "a"));
 	}
 
 	@Test
