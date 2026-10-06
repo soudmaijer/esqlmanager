@@ -222,7 +222,7 @@ Note that `profiles.xml` stores saved passwords in plain text; switch off "Save 
 
 ### Preferences
 
-Settings > Preferences holds the appearance (below), the font size of the SQL editors and the output panel (applies at once), the default folder that the export, import and file transfer windows start in, and the default file encoding of the export and import windows. They are stored in `settings.xml`.
+Settings > Preferences holds the appearance (below), the font size of the SQL editors and the output panel (applies at once), the default folder that the export, import and file transfer windows start in, the default file encoding of the export and import windows, and whether the help opens at start. They are stored in `settings.xml`.
 
 ### Appearance
 
@@ -294,6 +294,12 @@ docs/                user documentation (Markdown), also the in-app help
 src/test/java        dialect tests against real servers
 runtime/             configuration the application reads and writes
 ```
+
+## License
+
+eSQLManager is free to use, also commercially. All other rights are reserved: copying, forking, modifying or redistributing it, or building a derivative or a re-implementation of it (also with AI tools), and using it as AI training material, needs the written permission of the author. See [LICENSE](LICENSE).
+
+The third-party libraries (FlatLaf, RSyntaxTextArea and AutoComplete, ELK, JSVG, commonmark, Log4j, Guava, the PostgreSQL and SQL Server JDBC drivers) and the icons stay under their own licenses, listed in [NOTICE.txt](NOTICE.txt). The MySQL and Oracle JDBC drivers are not included; they are downloaded on first use under their own licenses.
 
 ## Credits
 

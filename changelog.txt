@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: A license
+
+- A LICENSE file: eSQLManager is free to use, also commercially; copying, forking, modifying, rebuilding it (also
+  with AI tools) and using it as AI training material need the written permission of the author. NOTICE.txt lists
+  the third-party libraries and their licenses; the README has a License section.
+
 06-10-2026: The help opens at start
 
 - The help opens in a tab when the application starts. Closing that tab (its cross or a middle click) turns this

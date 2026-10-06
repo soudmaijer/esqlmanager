@@ -1,0 +1,17 @@
+eSQLManager License
+
+Copyright (c) 2002-2026 Stephan Oudmaijer. All rights reserved except as stated here.
+
+1. Use. Anyone may use this software free of charge, for private, educational and commercial purposes.
+
+2. No copying or rebuilding without permission. Copying, forking, modifying or redistributing the software or its source code, and building a derivative work or a re-implementation of it, is only allowed with the prior written permission of the copyright holder.
+
+3. No AI cloning. Rule 2 includes using AI systems or other automated tools to copy, clone, rebuild or re-create the software from its code, its documentation or its behaviour.
+
+4. No AI training. Using the software, its source code or its documentation as training, fine-tuning or evaluation material for AI models is not allowed without the prior written permission of the copyright holder.
+
+5. No warranty. The software is provided "as is", without warranty of any kind, express or implied. The copyright holder is not liable for any claim, damage or other liability arising from the software or its use.
+
+6. Third-party software. The libraries and other works that eSQLManager uses or ships, such as the JDBC drivers and the icons, stay under their own licenses. See NOTICE.txt and the list in the README. This license does not change those licenses.
+
+For permission, contact the copyright holder: Stephan Oudmaijer.

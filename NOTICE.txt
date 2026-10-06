@@ -1,0 +1,20 @@
+eSQLManager uses the following third-party software. Each part stays under its own license; the LICENSE of eSQLManager does not apply to it.
+
+Libraries shipped with eSQLManager
+  FlatLaf and FlatLaf Extras 3.7.2 (Apache License 2.0), https://www.formdev.com/flatlaf/
+  JSVG 2.1.0, used by FlatLaf Extras for SVG icons (MIT License), https://github.com/weisJ/jsvg
+  RSyntaxTextArea 4.0.1 (BSD 3-Clause License), https://github.com/bobbylight/RSyntaxTextArea
+  AutoComplete 4.0.0 (BSD 3-Clause License), https://github.com/bobbylight/AutoComplete
+  Eclipse Layout Kernel (ELK), org.eclipse.elk.alg.layered 0.12.0 (Eclipse Public License 2.0), https://eclipse.dev/elk/
+  Xtext Xbase library 2.44.0, needed by ELK (Eclipse Public License 2.0)
+  Guava 33.7.2 (Apache License 2.0), https://github.com/google/guava
+  commonmark-java and its GFM tables extension 0.24.0 (BSD 2-Clause License), https://github.com/commonmark/commonmark-java
+  Apache Log4j 2 (log4j-api, log4j-core) 2.26.1 (Apache License 2.0), https://logging.apache.org/log4j/
+  PostgreSQL JDBC Driver 42.7.13 (BSD 2-Clause License), https://jdbc.postgresql.org/
+  Microsoft JDBC Driver for SQL Server 13.6.0 (MIT License), https://github.com/microsoft/mssql-jdbc
+
+Drivers downloaded by the user
+  MySQL Connector/J and the Oracle JDBC driver (ojdbc11) are not shipped. They are downloaded from Maven Central on first use, after the user confirms, and stay under their own licenses: MySQL Connector/J is GPLv2 with the Universal FOSS Exception, ojdbc11 is under the Oracle Free Use Terms and Conditions (FUTC).
+
+Icons and logos
+  Lucide icons (ISC License), Devicon (MIT License) and Simple Icons (CC0 1.0). The server logos are trademarks of their owners. Details are in src/main/resources/icons/svg/NOTICE.txt.
