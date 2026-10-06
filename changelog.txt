@@ -20,6 +20,18 @@ eSQLManager changelog
   downloaded jar is loaded from a private copy of the bytes whose checksum was checked. A driver is not downloaded
   twice at the same time. The Close button of the driver settings has the mnemonic L.
 - Export looks up the columns of a table with _ and % escaped, so a table such as a_b no longer gets the columns of axb.
+- Deleting objects or a foreign key in the designer asks for confirmation. The Model menu reads Add database, Add table,
+  Add note, Attach table, Attach note and has mnemonics, as do the menus of the main window ("JDBC driver settings",
+  "Database designer" in sentence case). New objects are named "New table", "New database" and "New note".
+- SQL NULL in the data grid is shown as a dimmed NULL and is no longer the text "null"; the paging
+  moves of the data tab are in table.Paging with a unit test.
+- An index without columns is refused by the service ("Select at least one column for the index."), the cell editor
+  border uses the theme's focus colour, the tree icons of selected rows follow the selection, the hint and problem
+  lines of the table tabs follow a change of look and feel, saving cell data no longer blocks the window.
+- The query tab labels the picker with the server's word for a database; the user manager says "Opening the user manager...".
+- Statements are logged before they run, connect throws SQLException, the data folder is prepared on first use and a
+  failure is reported as an error, a missing help page is reported, credits are read as UTF-8, painting of the splash
+  and credits disposes its graphics.
 
 05-10-2026: Packaging starts from a clean slate
 

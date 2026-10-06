@@ -8,7 +8,7 @@ Double click a table in the tree (or choose Open in its context menu) to show it
 
 ## Editing data
 
-* Click a cell and type to change it, then press **Update changes** in the toolbar. An empty cell is stored as `NULL`.
+* Click a cell and type to change it, then press **Update changes** in the toolbar. An empty cell is stored as `NULL` and shown as a dimmed *NULL*, so it differs from the text "null".
 * **Insert new row** adds an empty row to fill in, **Delete row** removes the selected rows after asking.
 * Binary columns (blobs) can be uploaded from a file and saved to a file.
 
