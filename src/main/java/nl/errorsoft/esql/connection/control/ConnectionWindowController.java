@@ -55,7 +55,6 @@ public class ConnectionWindowController {
 	private ConnectionSession session;
 	private ConnectionWindow connectionWindow;
 	private ConnectionView view;
-	private TableController tableController;
 
 	/** Opens the connection window at once and connects in the background; the tree is filled when the databases are listed. */
 	public ConnectionWindowController(MainController mainController, nl.errorsoft.esql.connection.ConnectionProfile profile) {
@@ -704,18 +703,6 @@ public class ConnectionWindowController {
 		view.rootSelected();
 	}
 
-	public void insertNewRow() {
-		tableController.insertNewRow();
-	}
-
-	public void deleteSelectedRows() {
-		tableController.deleteSelectedRows();
-	}
-
-	public void saveSelectedRow() {
-		tableController.saveSelectedRow();
-	}
-
 	/** Opens a new query tab on the database selected in the tree; without a selection on the database the connection uses. */
 	public void startQueryTab() {
 		QueryController controller = new QueryController(this);
@@ -756,7 +743,6 @@ public class ConnectionWindowController {
 			: table.getDatabase().getName();
 
 		inBackground("Load table data", "Loading table data...", () -> controller.loadPage(table, 0, 50), rows -> {
-			tableController = controller;
 			view.showTableDataTab(place + " : " + table.getName(), controller.newTableDataTab(table, rows));
 			setViewStatus(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 		});

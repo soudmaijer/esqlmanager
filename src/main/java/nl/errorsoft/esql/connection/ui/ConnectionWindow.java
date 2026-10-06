@@ -63,9 +63,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 	private JButton userManagerButton;
 	private JButton designerButton;
 	private JButton runQueryButton;
-	private JButton newRowButton;
-	private JButton updateRowButton;
-	private JButton deleteRowButton;
 	private JButton addFieldButton;
 	private JButton deleteFieldButton;
 
@@ -110,12 +107,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		userManagerButton.setToolTipText("User manager");
 		runQueryButton = new JButton(imgLoader.getIcon("imgRunQuery"));
 		runQueryButton.setToolTipText("Run SQL query");
-		newRowButton = new JButton(imgLoader.getIcon("imgNewRow"));
-		newRowButton.setToolTipText("Insert new row");
-		updateRowButton = new JButton(imgLoader.getIcon("imgUpdateRow"));
-		updateRowButton.setToolTipText("Update changes");
-		deleteRowButton = new JButton(imgLoader.getIcon("imgDeleteRow"));
-		deleteRowButton.setToolTipText("Delete row");
 		addFieldButton = new JButton(imgLoader.getIcon("imgAddField"));
 		addFieldButton.setToolTipText("Add field");
 		deleteFieldButton = new JButton(imgLoader.getIcon("imgDeleteField"));
@@ -134,17 +125,10 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		toolbar.add(addFieldButton);
 		toolbar.add(deleteFieldButton);
 		toolbar.addSeparator();
-		toolbar.add(newRowButton);
-		toolbar.add(deleteRowButton);
-		toolbar.add(updateRowButton);
 		ToolbarButtons.style(refreshTreeButton, userManagerButton, runQueryButton, designerButton, createTableButton, dropTableButton, addFieldButton,
-			deleteFieldButton, newRowButton,
-			deleteRowButton, updateRowButton);
+			deleteFieldButton);
 
 		// Disable.
-		this.newRowButton.setEnabled(false);
-		this.updateRowButton.setEnabled(false);
-		this.deleteRowButton.setEnabled(false);
 		this.designerButton.setEnabled(false);
 		this.dropTableButton.setEnabled(false);
 		this.createTableButton.setEnabled(false);
@@ -220,9 +204,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		designerButton.addActionListener(this);
 		userManagerButton.addActionListener(this);
 		runQueryButton.addActionListener(this);
-		newRowButton.addActionListener(this);
-		updateRowButton.addActionListener(this);
-		deleteRowButton.addActionListener(this);
 		addFieldButton.addActionListener(this);
 		deleteFieldButton.addActionListener(this);
 
@@ -244,9 +225,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		dropTableButton.setEnabled(false);
 		addFieldButton.setEnabled(false);
 		deleteFieldButton.setEnabled(false);
-		newRowButton.setEnabled(false);
-		deleteRowButton.setEnabled(false);
-		updateRowButton.setEnabled(false);
 	}
 
 	// Disable buttons if database selected.
@@ -256,9 +234,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		dropTableButton.setEnabled(false);
 		addFieldButton.setEnabled(false);
 		deleteFieldButton.setEnabled(false);
-		newRowButton.setEnabled(false);
-		deleteRowButton.setEnabled(false);
-		updateRowButton.setEnabled(false);
 	}
 
 	// Disable buttons if table selected.
@@ -268,9 +243,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		dropTableButton.setEnabled(true);
 		addFieldButton.setEnabled(true);
 		deleteFieldButton.setEnabled(false);
-		newRowButton.setEnabled(true);
-		deleteRowButton.setEnabled(true);
-		updateRowButton.setEnabled(true);
 	}
 
 	// Disable buttons if field selected.
@@ -280,9 +252,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		dropTableButton.setEnabled(true);
 		addFieldButton.setEnabled(true);
 		deleteFieldButton.setEnabled(true);
-		newRowButton.setEnabled(true);
-		deleteRowButton.setEnabled(true);
-		updateRowButton.setEnabled(true);
 	}
 
 	/*
@@ -290,9 +259,6 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 	 * buttons which aren`t available.
 	 */
 	public void disableDataEdit() {
-		newRowButton.setEnabled(false);
-		deleteRowButton.setEnabled(false);
-		updateRowButton.setEnabled(false);
 	}
 
 	// Close frame.
@@ -509,19 +475,7 @@ public class ConnectionWindow extends JInternalFrame implements ConnectionView, 
 		Object eventSource = e.getSource();
 
 		// Insert new row
-		if (eventSource == newRowButton) {
-			connectionWindowController.insertNewRow();
-		}
-		// Delete row
-		else if (eventSource == deleteRowButton) {
-			connectionWindowController.deleteSelectedRows();
-		}
-		// Update or insert row
-		else if (eventSource == updateRowButton) {
-			connectionWindowController.saveSelectedRow();
-		}
-		// Refresh database tree.
-		else if (eventSource == refreshTreeButton) {
+		if (eventSource == refreshTreeButton) {
 			connectionWindowController.showDatabaseTree();
 		}
 		// Run SQL query window.

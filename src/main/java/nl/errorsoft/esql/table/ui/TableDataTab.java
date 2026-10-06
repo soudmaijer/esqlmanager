@@ -45,6 +45,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private JScrollPane cellScroll; // ScrollPane for cellData textArea
 
 	private JComponent navigationBar;
+	private JToolBar rowToolbar;
 	private JButton firstButton;
 	private JButton prevButton;
 	private JButton runButton;
@@ -220,6 +221,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		split.setTopComponent(dataScroll);
 		this.add(split, BorderLayout.CENTER);
+		rowToolbar = rowToolbar(icons);
+		this.add(rowToolbar, BorderLayout.NORTH);
 		navigationBar = toolbar;
 
 		// Create TextArea for row data.
@@ -275,6 +278,34 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 		cellEditorPanel.add(cellToolbar, BorderLayout.NORTH);
 		cellEditorPanel.add(cellScroll, BorderLayout.CENTER);
+	}
+
+	/** Insert, delete and save rows, at the top of the view; only a table (not a query result or the server status) can be edited. */
+	private JToolBar rowToolbar(ImageLoader icons) {
+		JToolBar bar = new JToolBar();
+		bar.setFloatable(false);
+		JButton insert = new JButton(icons.getIcon("imgNewRow"));
+		insert.setToolTipText("Insert new row");
+		insert.addActionListener(e -> insertNewRow());
+		JButton delete = new JButton(icons.getIcon("imgDeleteRow"));
+		delete.setToolTipText("Delete row");
+		delete.addActionListener(e -> deleteSelectedRows());
+		JButton update = new JButton(icons.getIcon("imgUpdateRow"));
+		update.setToolTipText("Update changes");
+		update.addActionListener(e -> saveSelectedRow());
+		bar.add(insert);
+		bar.add(delete);
+		bar.add(update);
+		nl.errorsoft.esql.ui.util.ToolbarButtons.style(insert, delete, update);
+		bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")));
+		return bar;
+	}
+
+	/** Enables the row buttons for a table, disables them for rows that cannot be written back (server status, variables). */
+	public void setRowEditing(boolean editable) {
+		for (Component button : rowToolbar.getComponents()) {
+			button.setEnabled(editable);
+		}
 	}
 
 	private void bindUndo(KeyStroke key, String name, Runnable action) {

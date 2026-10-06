@@ -42,6 +42,7 @@ public class TableController {
 	public TableDataTab newTableDataTab(Table table, TableCell[][] rows) {
 		tableDataTab = new TableDataTab(this);
 		tableDataTab.loadData(table, table.getColumns(), rows);
+		tableDataTab.setRowEditing(true);
 		return tableDataTab;
 	}
 
@@ -82,18 +83,6 @@ public class TableController {
 
 	public void editTableColumn(TableColumn tableColumn, ColumnDefinition column) throws Exception {
 		service().editColumn(tableColumn, column);
-	}
-
-	public void insertNewRow() {
-		tableDataTab.insertNewRow();
-	}
-
-	public void deleteSelectedRows() {
-		tableDataTab.deleteSelectedRows();
-	}
-
-	public void saveSelectedRow() {
-		tableDataTab.saveSelectedRow();
 	}
 
 	/** Inserts the row off the event thread, then {@code saved} on it; {@code always} runs on the event thread in any case. */
@@ -172,6 +161,7 @@ public class TableController {
 	private TableDataTab show(QueryResult result) throws Exception {
 		TableDataTab view = new TableDataTab(this);
 		view.loadData(result.table(), result.table().getColumns(), result.rows());
+		view.setRowEditing(false);
 		return view;
 	}
 
