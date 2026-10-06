@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * The preferences of the user, kept in {@code conf/settings.xml}: the appearance, the font size of the editors, the folder the export, import and
- * file transfer windows start in, and the default file encoding. A missing file, a missing element or a value that makes no sense gives the default.
+ * file transfer windows start in, the default file encoding and whether the help opens at start. A missing file, a missing element or a value that makes no sense gives the default.
  */
 public class Settings {
 	public static final int MIN_FONT_SIZE = 8;
@@ -32,6 +32,7 @@ public class Settings {
 	private int editorFontSize = DEFAULT_FONT_SIZE;
 	private String defaultFolder = "";
 	private Charset defaultEncoding = StandardCharsets.UTF_8;
+	private boolean showHelpAtStart = true;
 	/** Why the file could not be read, until the user has been told once; null when it was read or did not exist. */
 	private EsqlException loadProblem;
 
@@ -80,6 +81,15 @@ public class Settings {
 		this.defaultEncoding = encoding == null ? StandardCharsets.UTF_8 : encoding;
 	}
 
+	/** Whether the help opens when the application starts; true until the user closes the help tab. */
+	public boolean isShowHelpAtStart() {
+		return showHelpAtStart;
+	}
+
+	public void setShowHelpAtStart(boolean show) {
+		this.showHelpAtStart = show;
+	}
+
 	/**
 	 * Reads the file. A missing file gives the defaults. A file that cannot be read also gives the defaults, but is first copied to a .bak file next to
 	 * it so that the next save does not destroy it, and {@link #takeLoadProblem} tells the user once.
@@ -97,6 +107,7 @@ public class Settings {
 			setEditorFontSize(parseInt(XmlFiles.childText(root, "editorFontSize"), DEFAULT_FONT_SIZE));
 			setDefaultFolder(XmlFiles.childText(root, "defaultFolder"));
 			setDefaultEncoding(parseCharset(XmlFiles.childText(root, "defaultEncoding")));
+			showHelpAtStart = !"false".equalsIgnoreCase(XmlFiles.childText(root, "showHelpAtStart", "true").trim());
 		} catch (RuntimeException e) {
 			loadProblem = new EsqlException(keepCorruptFile(e), e);
 		}
@@ -137,6 +148,7 @@ public class Settings {
 		XmlFiles.addChild(root, "editorFontSize", String.valueOf(editorFontSize));
 		XmlFiles.addChild(root, "defaultFolder", defaultFolder);
 		XmlFiles.addChild(root, "defaultEncoding", defaultEncoding.name());
+		XmlFiles.addChild(root, "showHelpAtStart", String.valueOf(showHelpAtStart));
 		XmlFiles.write(file.toPath(), document);
 	}
 

@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.io.File;
 import java.nio.charset.Charset;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -27,6 +28,7 @@ public class SettingsDialog extends FormDialog {
 	private final JSpinner fontSize;
 	private final JTextField folder = new JTextField(24);
 	private final JComboBox<Charset> encoding;
+	private final JCheckBox showHelp = Forms.mnemonic(new JCheckBox(), "Show the &help at start");
 
 	public SettingsDialog(JFrame parent) {
 		super(parent, "Preferences", true);
@@ -37,6 +39,8 @@ public class SettingsDialog extends FormDialog {
 		folder.setToolTipText("The export, import and file transfer windows start in this folder. Empty for the folder the system chooses.");
 		encoding = Encodings.combo(settings.getDefaultEncoding());
 
+		showHelp.setSelected(settings.isShowHelpAtStart());
+
 		JButton browse = Forms.button("&Browse...");
 		browse.addActionListener(e -> chooseFolder());
 		JPanel folderRow = new JPanel(new BorderLayout(Forms.GAP, 0));
@@ -44,7 +48,8 @@ public class SettingsDialog extends FormDialog {
 		folderRow.add(browse, BorderLayout.EAST);
 
 		Forms.Grid form = new Forms.Grid().row("&Appearance:", appearance).row("Editor &font size:", fontSize)
-			.row(Forms.label("Default &folder:", folder), folderRow).row("Default file &encoding:", encoding);
+			.row(Forms.label("Default &folder:", folder), folderRow).row("Default file &encoding:", encoding)
+			.full(showHelp);
 		setOkCancel(form.panel(), "&Save", "Cancel");
 		setValidator(this::problem);
 		setOnAccept(() -> {
@@ -52,6 +57,7 @@ public class SettingsDialog extends FormDialog {
 			settings.setEditorFontSize((Integer) fontSize.getValue());
 			settings.setDefaultFolder(folder.getText());
 			settings.setDefaultEncoding((Charset) encoding.getSelectedItem());
+			settings.setShowHelpAtStart(showHelp.isSelected());
 			// The choices apply now even when they cannot be kept for the next start.
 			settings.getAppearance().apply();
 			EditorTheme.applyFontSize();

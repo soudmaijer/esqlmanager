@@ -1,6 +1,8 @@
 package nl.errorsoft.esql.app.control;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.error.EsqlException;
+import nl.errorsoft.esql.settings.Settings;
 import nl.errorsoft.esql.app.OutputPanelAppender;
 
 import nl.errorsoft.esql.connection.control.ConnectionProfileController;
@@ -67,8 +69,25 @@ public class MainController {
 		installQuitHandler();
 		refreshProfiles();
 		showConnectionState();
+		if (ApplicationContext.get().settings().isShowHelpAtStart()) {
+			mainWindow.showHelp();
+		}
 		// After the main window has been shown and laid out, so the splash comes up over it, not behind or before it.
 		SwingUtilities.invokeLater(() -> showSplashScreen(3000));
+	}
+
+	/** The user closed the help tab: it no longer opens at start (the Preferences checkbox turns it on again). */
+	public void helpClosedByUser() {
+		Settings settings = ApplicationContext.get().settings();
+		if (!settings.isShowHelpAtStart()) {
+			return;
+		}
+		settings.setShowHelpAtStart(false);
+		try {
+			settings.saveSettings();
+		} catch (EsqlException e) {
+			ApplicationContext.get().errors().report(mainWindow, "Save settings", e);
+		}
 	}
 
 	public void splashReady() {

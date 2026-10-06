@@ -491,6 +491,7 @@ public class MainWindow extends JFrame implements ActionListener {
 			helpWindow = new HelpWindow(() -> {
 				windowTabs.removeWindow(helpWindow);
 				helpWindow = null;
+				mainController.helpClosedByUser();
 			});
 			windowTabs.addWindow(helpWindow);
 		} else {

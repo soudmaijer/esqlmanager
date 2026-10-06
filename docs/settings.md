@@ -24,6 +24,7 @@ Settings > Preferences also holds:
 | Editor font size | The font size (8 to 32) of the query editor, the output panel and the other SQL editors. It applies at once. |
 | Default folder | The folder the export, import, upload and download file windows start in. Empty uses the folder the system chooses. |
 | Default file encoding | The encoding the export and import windows start with (UTF-8 unless changed). |
+| Show the help at start | Opens the help in a tab when the application starts. Closing the help tab turns this off; the checkbox turns it on again. |
 
 ## JDBC drivers
 
@@ -43,7 +44,7 @@ The application reads and writes its configuration in `conf/`:
 | File | Contents |
 |---|---|
 | `profiles.xml` | Connection profiles |
-| `settings.xml` | Preferences: appearance, editor font size, default folder and default file encoding |
+| `settings.xml` | Preferences: appearance, editor font size, default folder, default file encoding and whether the help opens at start |
 | `driver.xml` | JDBC driver class, URL and own driver jar per server type |
 | `datatypes.xml` | Column types per server type |
 

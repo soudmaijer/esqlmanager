@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: The help opens at start
+
+- The help opens in a tab when the application starts. Closing that tab (its cross or a middle click) turns this
+  off for next time; quitting does not. Settings > Preferences has a "Show the help at start" checkbox to turn it
+  on again. Opening the help from the Help button or menu never changes the choice.
+
 06-10-2026: Screenshots and README
 
 - All screenshots show the current window (explorer with several connections and column types, query tab with the

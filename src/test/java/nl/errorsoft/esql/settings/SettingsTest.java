@@ -16,6 +16,28 @@ import org.junit.jupiter.api.io.TempDir;
 
 class SettingsTest {
 	@Test
+	void theHelpOpensAtStartUnlessTheFileSaysFalse(@TempDir Path dir) {
+		File file = dir.resolve("settings.xml").toFile();
+		Settings settings = new Settings(file);
+		assertTrue(settings.isShowHelpAtStart());
+
+		settings.saveSettings();
+		assertTrue(new Settings(file).isShowHelpAtStart(), "a file without the choice, or with true, shows the help");
+
+		settings.setShowHelpAtStart(false);
+		settings.saveSettings();
+		assertEquals(false, new Settings(file).isShowHelpAtStart());
+	}
+
+	@Test
+	void aFileWithoutTheHelpElementShowsTheHelp(@TempDir Path dir) throws Exception {
+		File file = dir.resolve("settings.xml").toFile();
+		Files.writeString(file.toPath(), "<config><appearance>DARK</appearance></config>");
+
+		assertTrue(new Settings(file).isShowHelpAtStart());
+	}
+
+	@Test
 	void aMissingFileGivesTheDefaults(@TempDir Path dir) {
 		Settings settings = new Settings(dir.resolve("none.xml").toFile());
 
