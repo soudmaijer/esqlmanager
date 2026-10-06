@@ -1,7 +1,9 @@
 package nl.errorsoft.esql.database.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -98,6 +100,30 @@ class ConnectionBranchTest {
 
 		assertEquals(4, tree.getSelectionPath().getPathCount());
 		assertSame(root, tree.getSelectionPath().getPathComponent(0));
+	}
+
+	@Test
+	void aLazyBranchLoadsWhatIsBelowANodeOnlyWhenAskedTo() {
+		DefaultMutableTreeNode server = new DefaultMutableTreeNode("lazy");
+		root.add(server);
+		ConnectionBranch lazy = new ConnectionBranch(tree, server, true);
+		Database shop = new Database("shop");
+		Table orders = table(shop, "orders");
+
+		lazy.loadDatabases(List.of(shop));
+		DefaultMutableTreeNode shopNode = (DefaultMutableTreeNode) server.getChildAt(0);
+		assertTrue(ConnectionBranch.needsLoading(shopNode));
+
+		lazy.loadTables(shop, List.of(orders));
+		assertFalse(ConnectionBranch.needsLoading(shopNode));
+		assertTrue(ConnectionBranch.needsLoading((DefaultMutableTreeNode) shopNode.getChildAt(0)));
+	}
+
+	@Test
+	void aBranchOfADialogHasNoPlaceholders() {
+		Database shop = new Database("shop");
+		mysqlBranch.loadDatabases(List.of(shop));
+		assertEquals(0, mysql.getChildAt(0).getChildCount());
 	}
 
 	private static Table table(Database database, String name) {

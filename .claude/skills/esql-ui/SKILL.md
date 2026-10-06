@@ -1,12 +1,12 @@
 ---
 name: esql-ui
-description: Swing UI rules of eSQLManager (U1-U8): dialogs, layouts, colours, icons, wording, menus, editor tabs, threading, verification. Applied to files in ui packages during code review.
+description: Swing UI rules of eSQLManager (U1-U9): dialogs, layouts, colours, icons, wording, menus, editor tabs, threading, verification. Applied to files in ui packages during code review.
 user_invocable: false
 ---
 
 # eSQLManager UI Rules
 
-Eight rules derived from `CLAUDE.md`. Applied to every file in a `ui` or `ui.dialog` package and to controllers that show anything.
+Nine rules derived from `CLAUDE.md`. Applied to every file in a `ui` or `ui.dialog` package and to controllers that show anything.
 
 ---
 
@@ -73,7 +73,7 @@ JOptionPane.showConfirmDialog(window, "Are you sure?");
 
 **Flag:**
 - Swing components touched from a virtual or background thread without `SwingUtilities.invokeLater`.
-- Blocking work (JDBC, file IO) on the event thread. A controller runs it through `ConnectionWindowController.inBackground`, also the loads triggered by selecting a node in the explorer.
+- Blocking work (JDBC, file IO) on the event thread. A controller runs it through `ConnectionWindowController.inBackground`, also the loads triggered by expanding a node in the explorer (selecting a node never loads anything).
 - A thread doing a connection's work without `ConnectionWindowController.logContext()` (its log lines lose the connection name in the output panel).
 
 ```java
@@ -90,5 +90,14 @@ grid.show(service.load(table)); // JDBC on the EDT
 ## Rule U8: Verification
 
 **Flag (as a note on the change, not on a line):**
-- A UI change with no evidence that it was painted in-process to a `BufferedImage` (light and dark for the designer) and looked at. See "Verifying UI changes" in `CLAUDE.md`.
+- A UI change with no evidence that it was painted in-process to a `BufferedImage` and looked at. Light always; dark too only when the change paints or colours something new (a component, icon, colour, renderer or painter), not for logic, behaviour or enablement changes. Docs images are light only. See "Verifying UI changes" in `CLAUDE.md`.
 - A visible UI change without retaken `docs/screenshot.png`, `docs/designer.png`, `docs/query.png` or `docs/connect.png`, README and `changelog.txt` (newest entry first).
+
+## Rule U9: Contextual buttons
+
+**Flag:**
+- A toolbar button, menu bar item or view button that stays enabled when its action cannot run in the current context (nothing or the wrong node selected, no rows selected, nothing changed). It is disabled.
+- A disabled button without a tooltip saying what is needed. Use `ToolbarButtons.setAvailable(component, missing)` with a sentence such as "Select a database first.".
+- A button for an action the server never offers (`Dialect.supports(Feature)`, `maintenanceCommands()`) that is greyed out instead of hidden; the same for actions a view can never do (row buttons on a query result).
+- Enablement of a tree action computed in a toolbar or menu by its own checks instead of `TreeMenu.missing(item, path, dialect)` and `TreeMenu.supported(item, dialect)`, the decisions the context menus use; for a list of tables `TreeMenu.missingForTables`.
+- Labels that hardcode "database" or "schema" instead of `Dialect.databaseTerm()`/`schemaTerm()`.

@@ -55,6 +55,10 @@ public class DatabaseTreeCellRenderer extends DefaultTreeCellRenderer {
 			case Schema schema -> setIcon(icon("schemaimg", selected));
 			case Table table -> setIcon(icon("tbimg", selected));
 			case TableColumn column -> showColumn(column, selected);
+			case ConnectionBranch.Loading loading -> {
+				setIcon(null);
+				setForeground(UIManager.getColor("Label.disabledForeground"));
+			}
 			case null, default -> setIcon(serverIcon == null ? null : icon(serverIcon, selected));
 		}
 		return this;

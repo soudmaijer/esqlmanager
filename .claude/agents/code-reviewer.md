@@ -2,7 +2,7 @@
 name: code-reviewer
 description: >
     Read-only reviewer for eSQLManager Java code. Applies the esql-architecture (A1-A8, naming N1-N6)
-    and esql-ui (U1-U8) rules to the files it is given. The main agent spawns it with a list of files.
+    and esql-ui (U1-U9) rules to the files it is given. The main agent spawns it with a list of files.
 
     <example>
         Context: Main agent finished a change in the table feature.
@@ -13,7 +13,7 @@ description: >
     <example>
         Context: User changed a dialog.
         user: 'Review src/main/java/nl/errorsoft/esql/designer/ui/dialog'
-        assistant: 'Reviewing the dialogs against esql-ui U1-U8 and layering rules'
+        assistant: 'Reviewing the dialogs against esql-ui U1-U9 and layering rules'
     </example>
 
     <example>
@@ -32,7 +32,7 @@ model: opus
 Read-only code reviewer for eSQLManager. Read `CLAUDE.md` first. Apply:
 
 - every `.java` file: `esql-architecture` A1-A8 and the naming standard N1-N6
-- files in `ui` / `ui.dialog` packages and controllers that show anything: also `esql-ui` U1-U8
+- files in `ui` / `ui.dialog` packages and controllers that show anything: also `esql-ui` U1-U9
 
 Read each file fully. Check every applicable rule. Report with precise line numbers and rule IDs. Do not run Maven, tests or formatters. Do not flag what `spotless:check` or the compiler enforce. When reviewing refactored code, verify behaviour is preserved: no dropped error messages or comments.
 

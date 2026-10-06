@@ -47,6 +47,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
 import nl.errorsoft.esql.dialect.Dialect;
+import nl.errorsoft.esql.connection.TreeSelection;
+import nl.errorsoft.esql.table.ui.TableListTab;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.*;
 import javax.swing.SwingUtilities;
 
@@ -55,6 +58,7 @@ public class ConnectionWindowController {
 	public static final String LOG_CONNECTION = "connection";
 	private String statusDetail = "";
 	private static final Logger log = LogManager.getLogger(ConnectionWindowController.class);
+	private final ReentrantLock treeLoads = new ReentrantLock(); // One tree load at a time, see inTree
 
 	private MainController mainController;
 	private ConnectionSession session;
@@ -294,24 +298,25 @@ public class ConnectionWindowController {
 
 	public void dropTable() {
 		Table table = selectedTable("Drop table");
-		if (table == null) {
-			return;
+		if (table != null) {
+			dropTables(List.of(table), () -> {
+			});
 		}
+	}
 
-		try {
-			mainController.updateStatus("Deleting table...", true);
-			TableController tableController = new TableController(this);
-			tableController.dropTable(table);
-			view.branch().deleteTable(table);
-			mainController.showConnectionState();
-			if (table.getSchema() != null && hasSchemas()) {
-				this.schemaSelected(table.getSchema());
-			} else {
-				this.databaseSelected(table.getDatabase());
+	/** Drops the tables (asked beforehand) in the background, takes them out of the tree, then runs {@code dropped} on the event thread. */
+	public void dropTables(List<Table> tables, Runnable dropped) {
+		TableController tableController = new TableController(this);
+		inBackground("Drop table", "Deleting table...", () -> {
+			for (Table table : tables) {
+				tableController.dropTable(table);
 			}
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent(), "Drop table", e);
-		}
+			return tables;
+		}, done -> {
+			done.forEach(view.branch()::deleteTable);
+			setStatusDetail(done.size() == 1 ? "Table " + done.getFirst().getName() + " dropped" : done.size() + " tables dropped");
+			dropped.run();
+		});
 	}
 
 	public void addTableColumn(ColumnPropertiesDialog fieldPropertiesDialog, ColumnOptions options) {
@@ -364,7 +369,7 @@ public class ConnectionWindowController {
 	public void reloadSelectedTable() {
 		Table table = selectedTable("Reload columns");
 		if (table != null) {
-			this.tableSelected(table, true);
+			this.loadColumns(table);
 		}
 	}
 
@@ -373,11 +378,11 @@ public class ConnectionWindowController {
 		Schema schema = view.getSchema();
 
 		if (schema != null && hasSchemas()) {
-			this.schemaSelected(schema);
+			this.loadSchema(schema);
 		} else {
 			Database database = selectedDatabase("Reload");
 			if (database != null) {
-				this.databaseSelected(database);
+				this.loadDatabase(database);
 			}
 		}
 	}
@@ -451,7 +456,7 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Renaming " + term + "...", true);
 			new DatabaseController(this).renameSchema(schema, name);
-			databaseSelected(schema.getDatabase());
+			loadDatabase(schema.getDatabase());
 			setStatusDetail(schema.getDatabase().getName() + ": " + term + " " + schema.getName() + " renamed to " + name);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(parent(), "Rename " + term, e);
@@ -467,7 +472,7 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Creating " + dialect().schemaTerm() + "...", true);
 			Schema schema = new DatabaseController(this).createSchema(database, name);
-			databaseSelected(database);
+			loadDatabase(database);
 			setStatusDetail(database.getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " created");
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(parent(), "Create " + dialect().schemaTerm(), e);
@@ -495,9 +500,9 @@ public class ConnectionWindowController {
 	/** Shows the tables of the schema or database a table is in, after the list has changed. */
 	private void reloadTablesOf(Table table) {
 		if (table.getSchema() != null && hasSchemas()) {
-			schemaSelected(table.getSchema());
+			loadSchema(table.getSchema());
 		} else {
-			databaseSelected(table.getDatabase());
+			loadDatabase(table.getDatabase());
 		}
 	}
 
@@ -619,67 +624,101 @@ public class ConnectionWindowController {
 		}
 	}
 
-	/** Shows the tables of the selected database in the tree, loaded in the background. The tab with the table list opens on a double click, see openDatabase. */
-	public void databaseSelected(Database database) {
-		if (hasSchemas()) {
-			loadSchemas(database);
-			return;
+	/**
+	 * Loads the children of a node the user expanded in the explorer: the schemas or tables of a database (on PostgreSQL this connects to it), the tables of
+	 * a schema, the columns of a table. {@code always} runs on the event thread afterwards, also after a failure, which is reported.
+	 */
+	public void loadChildren(Object node, Runnable always) {
+		switch (node) {
+			case Database database -> loadDatabase(database, always);
+			case Schema schema -> loadSchema(schema, always);
+			case Table table -> loadColumns(table, always);
+			case null, default -> always.run();
 		}
+	}
 
-		DatabaseController databaseController = new DatabaseController(this);
-		inBackground("Load tables", "Loading tables...", () -> databaseController.getTables(database), tables -> {
-			view.branch().loadTables(database, tables);
-			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
+	/** Shows the schemas (on servers with schemas) or tables of a database in the tree, loaded in the background. */
+	public void loadDatabase(Database database) {
+		loadDatabase(database, () -> {
 		});
 	}
 
-	/** Shows the schemas of a database in the tree, loaded in the background; on PostgreSQL this connects to that database. */
-	private void loadSchemas(Database database) {
-		String schemas = dialect().schemaTerm() + "s";
+	private void loadDatabase(Database database, Runnable always) {
 		DatabaseController databaseController = new DatabaseController(this);
-		inBackground("Load " + schemas, "Loading " + schemas + "...", () -> databaseController.getSchemas(database), list -> {
-			view.branch().loadSchemas(database, list);
-			setStatusDetail(database.getName() + ": " + list.size() + " " + dialect().schemaTerm() + "(s)");
-		});
+		if (hasSchemas()) {
+			String schemas = dialect().schemaTerm() + "s";
+			inTree("Load " + schemas, "Loading " + schemas + "...", () -> databaseController.getSchemas(database), list -> {
+				view.branch().loadSchemas(database, list);
+				setStatusDetail(database.getName() + ": " + list.size() + " " + dialect().schemaTerm() + "(s)");
+			}, always);
+			return;
+		}
+		inTree("Load tables", "Loading tables...", () -> databaseController.getTables(database), tables -> {
+			view.branch().loadTables(database, tables);
+			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
+		}, always);
 	}
 
 	/** Shows the tables of a schema in the tree, loaded in the background. */
-	public void schemaSelected(Schema schema) {
-		DatabaseController databaseController = new DatabaseController(this);
-		inBackground("Load tables", "Loading tables...", () -> databaseController.getTables(schema), tables -> {
-			view.branch().loadTables(schema, tables);
-			setStatusDetail(schema.getDatabase().getName() + "." + schema.getName() + ": " + tables.size() + " table(s)");
+	public void loadSchema(Schema schema) {
+		loadSchema(schema, () -> {
 		});
 	}
 
-	/** Double click on a database: opens the table list in a tab and puts that tab in front. */
-	public void openDatabase(Database database) {
-		if (database == null) {
-			selectedDatabase("Open " + dialect().databaseTerm());
-			return;
-		}
-
-		try {
-			mainController.updateStatus("Loading tables...", true);
-
-			DatabaseController databaseController = new DatabaseController(this);
-			java.util.List<Table> tables = databaseController.getTables(database);
-			view.showTableListTab(viewKey(database, ""), database.getName(), databaseController.getTableListTab(tables));
-			setViewStatus(database.getName() + ": " + tables.size() + " table(s)");
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(parent(), "Open database", e);
-		}
+	private void loadSchema(Schema schema, Runnable always) {
+		DatabaseController databaseController = new DatabaseController(this);
+		inTree("Load tables", "Loading tables...", () -> databaseController.getTables(schema), tables -> {
+			view.branch().loadTables(schema, tables);
+			setStatusDetail(schema.getDatabase().getName() + "." + schema.getName() + ": " + tables.size() + " table(s)");
+		}, always);
 	}
 
 	/** Loads the columns of the table in the background and shows them under it in the tree. The data opens on a double click, see openTable. */
-	public void tableSelected(Table table, boolean addTreeColumns) {
-		if (!addTreeColumns) {
+	public void loadColumns(Table table) {
+		loadColumns(table, () -> {
+		});
+	}
+
+	private void loadColumns(Table table, Runnable always) {
+		TableController tableController = new TableController(this);
+		inTree("Load table", "Fetching table columns...", () -> tableController.getColumns(table), columns -> view.branch().loadTableColumns(table, columns),
+			always);
+	}
+
+	/**
+	 * As {@link #inBackground(String, String, Work, Outcome, Runnable)}, with the work of one load at a time per connection: the tree loads share the
+	 * connection, and on PostgreSQL loading a database reconnects, so expanding several nodes quickly must not let their loads run into each other.
+	 */
+	private <T> void inTree(String action, String status, Work<T> work, Outcome<T> done, Runnable always) {
+		inBackground(action, status, () -> {
+			treeLoads.lock();
+			try {
+				return work.run();
+			} finally {
+				treeLoads.unlock();
+			}
+		}, done, always);
+	}
+
+	/** Opens the list of the tables of a database or schema in a tab and puts that tab in front (Show tables). */
+	public void openTableList(Object node) {
+		Database database = TreeSelection.database(node);
+		if (database == null) {
+			selectedDatabase("Show tables");
 			return;
 		}
-		TableController tableController = new TableController(this);
-		inBackground("Load table", "Fetching table columns...", () -> tableController.getColumns(table),
-			columns -> view.branch().loadTableColumns(table, columns));
+		Schema schema = node instanceof Schema s && hasSchemas() ? s : null;
+		String title = schema == null ? database.getName() : database.getName() + "." + schema.getName();
+		DatabaseController databaseController = new DatabaseController(this);
+
+		inTree("Show tables", "Loading tables...", () -> schema == null ? databaseController.getTables(database) : databaseController.getTables(schema),
+			tables -> {
+				TableListTab tab = new TableListTab(this, database, schema);
+				tab.loadTables(tables);
+				view.showTableListTab(viewKey(database, schema == null ? "" : schema.getName() + "."), title, tab);
+				setViewStatus(title + ": " + tables.size() + " table(s)");
+			}, () -> {
+			});
 	}
 
 	/** Shows columns loaded in the background under the table in the tree, on the event thread. */
@@ -698,8 +737,15 @@ public class ConnectionWindowController {
 
 	/** Opens a new query tab on the database selected in the tree; without a selection on the database the connection uses. */
 	public void startQueryTab() {
+		startQueryTab(view.getDatabase(), view.getSchema());
+	}
+
+	/** Opens a new query tab on a database (and schema, may be null); without a database on the one the connection uses. */
+	public void startQueryTab(Database selected, Schema schema) {
 		QueryController controller = new QueryController(this);
-		Database selected = view.getDatabase();
+		if (schema != null && hasSchemas()) {
+			controller.startInSchema(schema.getName());
+		}
 		inBackground("Open query", "Listing databases...", controller::databases,
 			databases -> view.showQueryTab(new QueryTab(controller, databases, selected)));
 	}
@@ -764,10 +810,12 @@ public class ConnectionWindowController {
 	 */
 	public void showIndexesTab() {
 		Table table = selectedTable("Indexes");
-		if (table == null) {
-			return;
+		if (table != null) {
+			showIndexesTab(table);
 		}
+	}
 
+	public void showIndexesTab(Table table) {
 		try {
 			IndexesController indexesController = new IndexesController(this, table);
 			indexesController.showTab();
@@ -813,12 +861,15 @@ public class ConnectionWindowController {
 
 	public void showCreateTableTab() {
 		Database database = selectedDatabase("Create table");
-		if (database == null) {
-			return;
+		if (database != null) {
+			showCreateTableTab(database, view.getSchema());
 		}
+	}
 
+	/** Opens the editor for a new table in the database, in the schema on servers with schemas (null: the current one). */
+	public void showCreateTableTab(Database database, Schema schema) {
 		try {
-			new TableEditorController(this).startCreateTable(database, hasSchemas() ? view.getSchema() : null);
+			new TableEditorController(this).startCreateTable(database, hasSchemas() ? schema : null);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(parent(), "Create table", e);
 		}
@@ -852,10 +903,12 @@ public class ConnectionWindowController {
 
 	public void showEditTableTab() {
 		Table table = selectedTable("Edit table");
-		if (table == null) {
-			return;
+		if (table != null) {
+			showEditTableTab(table);
 		}
+	}
 
+	public void showEditTableTab(Table table) {
 		try {
 			new TableEditorController(this).startEditTable(table.getDatabase(), table);
 		} catch (Exception e) {
@@ -946,35 +999,50 @@ public class ConnectionWindowController {
 	}
 
 	public void optimizeTable() {
-		maintainSelectedTable("Optimize table", TableController::optimizeTable);
+		maintainSelectedTable(Dialect.Maintenance.OPTIMIZE);
 	}
 
 	public void analyzeTable() {
-		maintainSelectedTable("Analyze table", TableController::analyzeTable);
+		maintainSelectedTable(Dialect.Maintenance.ANALYZE);
 	}
 
 	public void checkTable() {
-		maintainSelectedTable("Check table", TableController::checkTable);
+		maintainSelectedTable(Dialect.Maintenance.CHECK);
 	}
 
 	public void repairTable() {
-		maintainSelectedTable("Repair table", TableController::repairTable);
+		maintainSelectedTable(Dialect.Maintenance.REPAIR);
 	}
 
-	/** A maintenance command on a table that returns the server's report. */
-	private interface Maintenance {
-		String run(TableController controller, Table table) throws Exception;
+	/** "Optimize table", the words of a maintenance command for its menu item, button and report. */
+	public static String maintenanceLabel(Dialect.Maintenance command) {
+		String word = command.name().toLowerCase(Locale.ROOT);
+		return Character.toUpperCase(word.charAt(0)) + word.substring(1) + " table";
 	}
 
-	/** Runs a maintenance command on the selected table in the background and shows the server's report. */
-	private void maintainSelectedTable(String action, Maintenance maintenance) {
-		Table table = selectedTable(action);
-		if (table == null) {
-			return;
+	private void maintainSelectedTable(Dialect.Maintenance command) {
+		Table table = selectedTable(maintenanceLabel(command));
+		if (table != null) {
+			maintainTables(command, List.of(table));
 		}
+	}
 
+	/** Runs a maintenance command on the tables in the background, one after the other, and shows the server's report. */
+	public void maintainTables(Dialect.Maintenance command, List<Table> tables) {
+		String action = maintenanceLabel(command);
 		TableController controller = new TableController(this);
-		inBackground(action, action + "...", () -> maintenance.run(controller, table),
-			report -> Dialogs.info(parent(), action + ": " + table.getName(), report));
+		inBackground(action, action + "...", () -> {
+			StringBuilder report = new StringBuilder();
+			for (Table table : tables) {
+				String result = switch (command) {
+					case OPTIMIZE -> controller.optimizeTable(table);
+					case ANALYZE -> controller.analyzeTable(table);
+					case CHECK -> controller.checkTable(table);
+					case REPAIR -> controller.repairTable(table);
+				};
+				report.append(tables.size() > 1 ? table.getName() + ": " : "").append(result).append(tables.size() > 1 ? "\n" : "");
+			}
+			return report.toString().strip();
+		}, report -> Dialogs.info(parent(), tables.size() == 1 ? action + ": " + tables.getFirst().getName() : action, report));
 	}
 }

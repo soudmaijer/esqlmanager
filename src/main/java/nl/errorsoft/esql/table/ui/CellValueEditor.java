@@ -26,6 +26,7 @@ import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
 import nl.errorsoft.esql.ui.util.FileChoosers;
 import nl.errorsoft.esql.ui.util.Forms;
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -48,6 +49,7 @@ public class CellValueEditor extends JPanel {
 	private final JPanel content = new JPanel(cards);
 	private final JLabel title = new JLabel();
 	private final JLabel hint = new JLabel();
+	private static final String READ_ONLY = "The cell is read-only.";
 	private final JButton format = Forms.button("F&ormat");
 	private final JToggleButton wrap = Forms.mnemonic(new JToggleButton(), "&Wrap lines");
 	private final JButton setNull = Forms.button("Set &NULL");
@@ -144,8 +146,9 @@ public class CellValueEditor extends JPanel {
 		boolean binaryCell = cell.getTableColumn() != null && cell.getTableColumn().isBinary();
 		cards.show(content, binaryCell ? BINARY : TEXT);
 		editor.setEditable(writable && !binaryCell);
-		upload.setEnabled(writable && !cell.isNewRow());
-		download.setEnabled(writable && !cell.isNewRow());
+		String transfer = !writable ? READ_ONLY : cell.isNewRow() ? "Save the new row first." : null;
+		ToolbarButtons.setAvailable(upload, transfer);
+		ToolbarButtons.setAvailable(download, transfer);
 		for (JButton textOnly : new JButton[]{format, setNull, load, save}) {
 			textOnly.setVisible(!binaryCell);
 		}
@@ -192,11 +195,13 @@ public class CellValueEditor extends JPanel {
 
 	private void changed() {
 		boolean changed = isChanged();
-		apply.setEnabled(changed);
-		revert.setEnabled(changed);
-		setNull.setEnabled(writable && !editor.getText().isEmpty());
-		load.setEnabled(writable);
-		format.setEnabled(writable && ValueFormat.detect(editor.getText()).canFormat());
+		String unchanged = changed ? null : "Change the value first.";
+		ToolbarButtons.setAvailable(apply, unchanged);
+		ToolbarButtons.setAvailable(revert, unchanged);
+		ToolbarButtons.setAvailable(setNull, !writable ? READ_ONLY : editor.getText().isEmpty() ? "The value is already empty." : null);
+		ToolbarButtons.setAvailable(load, writable ? null : READ_ONLY);
+		ToolbarButtons.setAvailable(format,
+			!writable ? READ_ONLY : ValueFormat.detect(editor.getText()).canFormat() ? null : "The value is not JSON or XML.");
 		if (writable) {
 			hint.setText(editor.getText().isEmpty() ? "Empty is NULL" : "");
 		}

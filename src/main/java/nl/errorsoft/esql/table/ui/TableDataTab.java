@@ -9,6 +9,7 @@ import nl.errorsoft.esql.ui.table.ColumnWidths;
 import nl.errorsoft.esql.ui.table.SortHeaderListener;
 import nl.errorsoft.esql.ui.table.HeaderRenderer;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
 import nl.errorsoft.esql.ui.table.MultiLineCellEditor;
 import nl.errorsoft.esql.ui.table.SortableTableModel;
 
@@ -58,6 +59,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private boolean editable = false;
 	private JButton updateButton;
 	private JButton editValueButton;
+	private JButton deleteButton;
 	private SortHeaderListener headerListener;
 
 	public TableDataTab(TableController tableController) {
@@ -232,6 +234,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		insert.setToolTipText("Insert new row");
 		insert.addActionListener(e -> insertNewRow());
 		JButton delete = new JButton(icons.getIcon("imgDeleteRow"));
+		deleteButton = delete;
 		delete.setToolTipText("Delete row");
 		delete.addActionListener(e -> deleteSelectedRows());
 		JButton update = new JButton(icons.getIcon("imgUpdateRow"));
@@ -244,7 +247,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 		editValueButton = new JButton(icons.getIcon("imgEditValue"));
 		editValueButton.setToolTipText("Edit value (F2)");
 		editValueButton.addActionListener(e -> openValueEditor());
-		editValueButton.setEnabled(false);
 		bar.add(insert);
 		bar.add(delete);
 		bar.add(update);
@@ -252,18 +254,21 @@ public class TableDataTab extends JPanel implements ActionListener {
 		bar.add(editValueButton);
 		bar.addSeparator();
 		bar.add(query);
-		nl.errorsoft.esql.ui.util.ToolbarButtons.style(insert, delete, update, editValueButton, query);
+		ToolbarButtons.style(insert, delete, update, editValueButton, query);
 		bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")));
 		return bar;
 	}
 
-	/** Enables the row buttons for a table, disables them for rows that cannot be written back (query results, server status, variables). */
+	/**
+	 * Shows the row buttons for a table and hides them for rows that can never be written back (query results, server status, variables): an action that
+	 * can never run there is hidden, not disabled. Edit value stays, it shows a read-only value.
+	 */
 	public void setRowEditing(boolean editable) {
 		this.editable = editable;
 
 		for (Component button : rowToolbar.getComponents()) {
 			if (button != editValueButton) {
-				button.setEnabled(editable);
+				button.setVisible(editable);
 			}
 		}
 		refreshUpdateButtons();
@@ -296,7 +301,9 @@ public class TableDataTab extends JPanel implements ActionListener {
 		if (updateButton == null || valueEditor == null) {
 			return; // still being built
 		}
-		updateButton.setEnabled(pendingChange() != PendingChange.NONE);
+		ToolbarButtons.setAvailable(updateButton, pendingChange() != PendingChange.NONE ? null : "Change a cell or insert a row first.");
+		ToolbarButtons.setAvailable(deleteButton, dataTable.getSelectedRowCount() > 0 ? null : "Select a row first.");
+		ToolbarButtons.setAvailable(editValueButton, selectedCell() != null ? null : "Select a cell first.");
 	}
 
 	/** Writes what is pending: the text of the value editor, or else the cell edited in the grid and a new row. */
@@ -331,9 +338,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private void selectionChanged() {
 		TableCell selected = selectedCell();
 
-		if (editValueButton != null) {
-			editValueButton.setEnabled(selected != null);
-		}
 		if (valueEditorVisible() && selected != null && selected != valueEditor.getCell() && !valueEditor.isChanged()) {
 			valueEditor.showCell(selected, readOnlyReason(selected));
 		}

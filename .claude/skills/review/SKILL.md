@@ -24,7 +24,7 @@ Orchestrator that delegates review to `code-reviewer` agents. It never edits fil
 
 3. **Spawn `code-reviewer` agents in parallel** (several Agent calls in one message), each with:
 
-   > Review these files. Apply `esql-architecture` (A1-A8, N1-N6) to all, and `esql-ui` (U1-U8) to ui, dialog and controller files. Report findings with file:line, rule id and failure scenario, and list naming problems in untouched classes under "Rename debt".
+   > Review these files. Apply `esql-architecture` (A1-A8, N1-N6) to all, and `esql-ui` (U1-U9) to ui, dialog and controller files. Report findings with file:line, rule id and failure scenario, and list naming problems in untouched classes under "Rename debt".
    >
    > Files: <list>
 

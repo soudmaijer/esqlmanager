@@ -57,6 +57,30 @@ public final class ToolbarButtons {
 		return separator;
 	}
 
+	private static final String TOOLTIP = "esql.tooltip";
+
+	/**
+	 * Enables a button or menu item when nothing is missing, otherwise disables it and adds what is needed to its tooltip ("New query: select a database
+	 * first."). The tooltip the component had the first time is its own text; {@code missing} is a sentence ("Select a database first.") or null.
+	 */
+	public static void setAvailable(javax.swing.JComponent component, String missing) {
+		Object own = component.getClientProperty(TOOLTIP);
+		if (own == null) {
+			own = component.getToolTipText() != null
+				? component.getToolTipText()
+				: component instanceof AbstractButton button && button.getText() != null ? button.getText().replace("...", "") : "";
+			component.putClientProperty(TOOLTIP, own);
+		}
+		component.setEnabled(missing == null);
+		String text = own.toString();
+		if (missing == null) {
+			component.setToolTipText(text.isEmpty() || component instanceof javax.swing.JMenuItem ? null : text);
+		} else {
+			String lower = Character.toLowerCase(missing.charAt(0)) + missing.substring(1);
+			component.setToolTipText(text.isEmpty() ? missing : text + ": " + lower);
+		}
+	}
+
 	private static Icon toolbarSize(Icon icon) {
 		if (icon instanceof FlatSVGIcon svg && svg.getIconWidth() != ICON_SIZE) {
 			return svg.derive(ICON_SIZE, ICON_SIZE);

@@ -21,11 +21,43 @@ import nl.errorsoft.esql.table.TableColumn;
 public class ConnectionBranch {
 	private final JTree tree;
 	private final DefaultMutableTreeNode root;
+	private final boolean lazy;
 
-	/** @param root a node of {@code tree}, whose model must be a {@link DefaultTreeModel} */
+	/** The only child of a node whose children are loaded when it is expanded: it gives the node its expand handle and says "Loading..." meanwhile. */
+	public static final class Loading {
+		@Override
+		public String toString() {
+			return "Loading...";
+		}
+	}
+
+	/** A branch that shows only what is loaded: nodes without children are leaves until something is loaded below them. */
 	public ConnectionBranch(JTree tree, DefaultMutableTreeNode root) {
+		this(tree, root, false);
+	}
+
+	/**
+	 * @param root a node of {@code tree}, whose model must be a {@link DefaultTreeModel}
+	 * @param lazy whether databases, schemas and tables get a {@link Loading} child, so that expanding them is what loads their children
+	 */
+	public ConnectionBranch(JTree tree, DefaultMutableTreeNode root, boolean lazy) {
 		this.tree = tree;
 		this.root = root;
+		this.lazy = lazy;
+	}
+
+	/** Whether the children of the node have not been loaded yet: its only child is the {@link Loading} placeholder. */
+	public static boolean needsLoading(DefaultMutableTreeNode node) {
+		return node.getChildCount() == 1 && ((DefaultMutableTreeNode) node.getChildAt(0)).getUserObject() instanceof Loading;
+	}
+
+	/** A node for a database, schema, table or column; in a lazy branch everything but a column gets the placeholder child. */
+	private DefaultMutableTreeNode newNode(Object object) {
+		DefaultMutableTreeNode node = new DefaultMutableTreeNode(object);
+		if (lazy && !(object instanceof TableColumn)) {
+			node.add(new DefaultMutableTreeNode(new Loading()));
+		}
+		return node;
 	}
 
 	public DefaultMutableTreeNode getRoot() {
@@ -38,7 +70,7 @@ public class ConnectionBranch {
 
 	public void loadDatabases(List<Database> databases) {
 		root.removeAllChildren();
-		databases.forEach(db -> root.add(new DefaultMutableTreeNode(db)));
+		databases.forEach(db -> root.add(newNode(db)));
 		model().nodeStructureChanged(root);
 		tree.expandPath(new TreePath(root.getPath()));
 	}
@@ -54,7 +86,7 @@ public class ConnectionBranch {
 	}
 
 	public void addDatabase(Database db) {
-		root.add(new DefaultMutableTreeNode(db));
+		root.add(newNode(db));
 		model().reload(root);
 	}
 
@@ -117,7 +149,7 @@ public class ConnectionBranch {
 		boolean selectionInside = selected != null && path.isDescendant(selected);
 
 		node.removeAllChildren();
-		children.forEach(child -> node.add(new DefaultMutableTreeNode(child)));
+		children.forEach(child -> node.add(newNode(child)));
 		model().reload(node);
 		tree.expandPath(path);
 		if (selectionInside) {

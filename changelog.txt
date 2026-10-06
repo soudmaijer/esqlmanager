@@ -1,6 +1,21 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Explorer loads on expand, contextual buttons, toolbar on the table list
+
+- Selecting a node in the explorer no longer loads anything (and no longer connects to a PostgreSQL database). A
+  database, schema or table loads its children when it is expanded (arrow, double click, right arrow key), with a
+  "Loading..." line meanwhile; a failed load is reported and the node folds up again. Loads of one connection run
+  one after the other, and expanding a node again while it loads does not load it twice.
+- A double click on a database folds it open or closed; the table list opens with Show tables (context menu of a
+  database or schema, formerly Open) or Enter. Enter on a table opens its data.
+- Buttons and menu items that cannot run yet are disabled with a tooltip saying what is needed ("Select a database
+  first."); those the server never offers are hidden. The explorer toolbar, the Tools and Options menus and the
+  context menus take this from the same decision. Table data views of query results and the server status no
+  longer show the row buttons; Delete row needs a selected row.
+- The table list has a toolbar: Add table, Reload, New query, and for the selected tables Open data, Edit table,
+  Indexes, Drop table and a maintenance menu (wrench). Several tables can be dropped or maintained at once.
+
 06-10-2026: New query in the Tools menu
 
 - Tools > New query (Ctrl/Cmd+T) opens a query tab like the explorer button. Both, and the context menus, offer it only

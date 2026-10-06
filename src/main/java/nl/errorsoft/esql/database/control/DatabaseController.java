@@ -4,7 +4,6 @@ import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.table.Table;
-import nl.errorsoft.esql.table.ui.TableListTab;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ConnectionNode;
@@ -139,16 +138,6 @@ public class DatabaseController {
 
 	private boolean hasSchemas() {
 		return connectionWindowController.getConnectionProfile().getServerType().getDialect().supports(Dialect.Feature.SCHEMAS);
-	}
-
-	public TableListTab getTableListTab(java.util.List<Table> tables) throws Exception {
-		TableListTab tableListTab = new TableListTab(this);
-		tableListTab.loadTables(tables);
-		return tableListTab;
-	}
-
-	public void tableSelected(Table table) {
-		connectionWindowController.selectTableInTree(table);
 	}
 
 }

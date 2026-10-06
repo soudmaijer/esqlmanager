@@ -31,6 +31,7 @@ import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.connection.ConnectionNode;
 import nl.errorsoft.esql.connection.ConnectionProfile;
+import nl.errorsoft.esql.connection.NodeLoads;
 import nl.errorsoft.esql.connection.ProfileNode;
 import nl.errorsoft.esql.connection.TreeMenu;
 import nl.errorsoft.esql.connection.TreeSelection;
@@ -62,6 +63,7 @@ public class ExplorerPanel extends JPanel {
 	private final JPanel cards = new JPanel(new java.awt.CardLayout()); // The tree, or the hint when it is empty
 
 	private final List<Runnable> selectionListeners = new ArrayList<>();
+	private final NodeLoads loads = new NodeLoads();
 	private final JButton connectButton = button("imgConnectSmall", "Connect");
 	private final JButton queryButton = button("imgRunQuery", "New query");
 	private final JButton usersButton = button("imgUserManager", "User manager");
@@ -81,10 +83,13 @@ public class ExplorerPanel extends JPanel {
 			// A saved profile has a handle like a connection: expanding it connects. The connection takes its place in the tree at once.
 			@Override
 			public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
-				Object object = ((DefaultMutableTreeNode) event.getPath().getLastPathComponent()).getUserObject();
-				if (object instanceof ProfileNode profile) {
+				DefaultMutableTreeNode node = (DefaultMutableTreeNode) event.getPath().getLastPathComponent();
+				if (node.getUserObject() instanceof ProfileNode profile) {
 					mainController.connect(profile.profile());
 					throw new ExpandVetoException(event, "Connecting");
+				}
+				if (ConnectionBranch.needsLoading(node)) {
+					loadChildren(event.getPath());
 				}
 			}
 
@@ -94,9 +99,11 @@ public class ExplorerPanel extends JPanel {
 			}
 		});
 		tree.addTreeSelectionListener(e -> {
+			// Selecting only selects: what is below a node loads when it is expanded, a view opens on a double click, Enter or a menu item.
 			updateButtons();
-			if (e.isAddedPath()) {
-				nodeSelected((DefaultMutableTreeNode) e.getPath().getLastPathComponent());
+			ConnectionWindowController controller = selectedConnection();
+			if (e.isAddedPath() && controller != null) {
+				controller.activate();
 			}
 		});
 		tree.addMouseListener(new MouseAdapter() {
@@ -116,6 +123,15 @@ public class ExplorerPanel extends JPanel {
 				if (e.getClickCount() == 2 && !e.isPopupTrigger()) {
 					doubleClicked(e);
 				}
+			}
+		});
+
+		// Enter opens what a double click on a table opens, and the table list of a database or schema.
+		tree.getInputMap(JTree.WHEN_FOCUSED).put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER, 0), "openSelected");
+		tree.getActionMap().put("openSelected", new javax.swing.AbstractAction() {
+			@Override
+			public void actionPerformed(java.awt.event.ActionEvent e) {
+				openSelected();
 			}
 		});
 
@@ -179,7 +195,7 @@ public class ExplorerPanel extends JPanel {
 		connections.put(node, controller);
 		tree.setSelectionPath(new TreePath(treeNode.getPath()));
 		showTreeOrHint();
-		return new ConnectionBranch(tree, treeNode);
+		return new ConnectionBranch(tree, treeNode, true);
 	}
 
 	public void removeConnection(ConnectionNode node) {
@@ -236,46 +252,60 @@ public class ExplorerPanel extends JPanel {
 		return objects;
 	}
 
-	/** Selecting a database, schema or table loads what is below it; the status bar shows the connection of the node. */
-	private void nodeSelected(DefaultMutableTreeNode node) {
-		ConnectionWindowController controller = selectedConnection();
-		if (controller == null) {
+	/**
+	 * A database, schema or table was expanded while its children were not loaded yet: the controller of its connection loads them (one load at a time per
+	 * connection). The "Loading..." child shows meanwhile; after a failure, which the controller reports, the node collapses again. Expanding the node again
+	 * while its load runs does not start another.
+	 */
+	private void loadChildren(TreePath path) {
+		DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+		ConnectionWindowController controller = connections.get(TreeSelection.connection(userObjects(path)));
+		if (controller == null || !loads.start(node)) {
 			return;
 		}
-		controller.activate();
-		switch (node.getUserObject()) {
-			case Database database -> controller.databaseSelected(database);
-			case Schema schema -> controller.schemaSelected(schema);
-			case Table table -> controller.tableSelected(table, node.getChildCount() == 0);
-			default -> {
-				// The connection and columns have nothing to load.
+		controller.loadChildren(node.getUserObject(), () -> {
+			loads.finish(node);
+			if (ConnectionBranch.needsLoading(node)) {
+				tree.collapsePath(path);
 			}
-		}
+		});
 	}
 
-	/** The toolbar offers what fits the selected node. */
+	/** The toolbar offers what fits the selected node: hidden what the server never offers, disabled (saying what is needed) what the node cannot do. */
 	private void updateButtons() {
 		ConnectionWindowController controller = selectedConnection();
-		TreePath path = tree.getSelectionPath();
-		Object selected = path == null ? null : ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
-		boolean connected = controller != null;
-		boolean inDatabase = selected instanceof Database || selected instanceof Schema;
+		Dialect dialect = controller == null ? null : controller.dialect();
 
-		queryButton.setEnabled(canStartQuery());
-		usersButton.setEnabled(connected && controller.dialect().supports(Dialect.Feature.USER_MANAGER));
-		designerButton.setEnabled(connected && inDatabase);
+		show(queryButton, TreeMenu.Item.NEW_QUERY, dialect);
+		show(usersButton, TreeMenu.Item.USERS, dialect);
+		show(designerButton, TreeMenu.Item.OPEN_IN_DESIGNER, dialect);
 		selectionListeners.forEach(Runnable::run);
 	}
 
-	/** New query needs a database or something inside one (schema, table, column) of an open connection. */
-	public boolean canStartQuery() {
+	private void show(javax.swing.JComponent component, TreeMenu.Item item, Dialect dialect) {
+		component.setVisible(dialect == null || TreeMenu.supported(item, dialect));
+		ToolbarButtons.setAvailable(component, missing(item));
+	}
+
+	/**
+	 * What the selected node lacks for an item of the tree menus, null when it can run ({@link TreeMenu#missing}); for the menu bar, so that it agrees with
+	 * the toolbar and the context menus.
+	 */
+	public String missing(TreeMenu.Item item) {
 		TreePath path = tree.getSelectionPath();
-		return path != null && TreeSelection.inDatabase(userObjects(path));
+		ConnectionWindowController controller = selectedConnection();
+		return TreeMenu.missing(item, path == null ? null : userObjects(path), controller == null ? null : controller.dialect());
+	}
+
+	/** Whether the server of the selected connection offers the item; true when no connection is selected (the item is then disabled, not hidden). */
+	public boolean supported(TreeMenu.Item item) {
+		ConnectionWindowController controller = selectedConnection();
+		return controller == null || TreeMenu.supported(item, controller.dialect());
 	}
 
 	/** Opens a query tab on the selected database, the same as the toolbar button. */
 	public void startQuery() {
-		if (canStartQuery()) {
+		if (missing(TreeMenu.Item.NEW_QUERY) == null) {
 			act(ConnectionWindowController::startQueryTab);
 		}
 	}
@@ -307,7 +337,7 @@ public class ExplorerPanel extends JPanel {
 		}
 	}
 
-	/** A double click connects a saved profile, opens a table (without expanding it) and opens a database; other nodes expand or collapse. */
+	/** A double click connects a saved profile and opens a table (without expanding it); other nodes expand or collapse, expanding loads them. */
 	private void doubleClicked(MouseEvent e) {
 		TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 		if (path == null) {
@@ -318,12 +348,24 @@ public class ExplorerPanel extends JPanel {
 
 		switch (object) {
 			case ProfileNode profile -> mainController.connect(profile.profile());
-			case Database database when controller != null -> {
-				controller.openDatabase(database);
-				toggle(path);
-			}
 			case Table table when controller != null -> controller.openTable(table);
 			default -> toggle(path);
+		}
+	}
+
+	/** Enter: a table opens its data, a database or schema its table list, a saved profile connects. */
+	private void openSelected() {
+		TreePath path = tree.getSelectionPath();
+		ConnectionWindowController controller = selectedConnection();
+		Object object = path == null ? null : ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+		switch (object) {
+			case ProfileNode profile -> mainController.connect(profile.profile());
+			case Table table when controller != null -> controller.openTable(table);
+			case Database database when controller != null -> controller.openTableList(database);
+			case Schema schema when controller != null -> controller.openTableList(schema);
+			case null, default -> {
+				// Nothing to open.
+			}
 		}
 	}
 
@@ -443,7 +485,7 @@ public class ExplorerPanel extends JPanel {
 			case EXPORT -> c.showExportDialog();
 			case IMPORT -> c.showImportDialog();
 			case RELOAD_DATABASES -> c.showDatabaseTree();
-			case OPEN_DATABASE -> c.openDatabase(c.getView().getDatabase());
+			case OPEN_DATABASE -> c.openTableList(node);
 			case CREATE_TABLE -> c.showCreateTableTab();
 			case OPEN_IN_DESIGNER -> c.openDatabaseInDesigner();
 			case DROP_DATABASE -> {

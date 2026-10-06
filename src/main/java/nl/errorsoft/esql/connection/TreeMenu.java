@@ -27,7 +27,7 @@ public final class TreeMenu {
 		CREATE_DATABASE("Create {database}..."), NEW_QUERY("New query"), USERS("Users..."), PROCESS_LIST("Process list"), SERVER_STATUS(
 			"Show status"), SERVER_VARIABLES("Show variables"), EXPORT("Export..."), IMPORT("Import..."), RELOAD_DATABASES("Reload {database}s"),
 		// Database.
-		OPEN_DATABASE("Open"), CREATE_TABLE("Create table..."), OPEN_IN_DESIGNER("Open in designer"), DROP_DATABASE("Drop {database}..."), RELOAD_TABLES(
+		OPEN_DATABASE("Show tables"), CREATE_TABLE("Create table..."), OPEN_IN_DESIGNER("Open in designer"), DROP_DATABASE("Drop {database}..."), RELOAD_TABLES(
 			"Reload tables"), CREATE_SCHEMA("Create {schema}..."), RELOAD_SCHEMAS("Reload {schema}s"),
 		// Schema.
 		RENAME_SCHEMA("Rename {schema}..."), DROP_SCHEMA("Drop {schema}..."),
@@ -83,6 +83,7 @@ public final class TreeMenu {
 				items.add(schemas ? Item.RELOAD_SCHEMAS : Item.RELOAD_TABLES);
 			}
 			case SCHEMA -> {
+				items.add(Item.OPEN_DATABASE);
 				items.add(Item.NEW_QUERY);
 				items.add(Item.SEPARATOR);
 				addIf(items, dialect.supports(Feature.CREATE_TABLE), Item.CREATE_TABLE);
@@ -104,9 +105,7 @@ public final class TreeMenu {
 				addIf(items, dialect.supports(Feature.CREATE_TABLE), Item.RENAME_TABLE);
 				addIf(items, dialect.supports(Feature.CREATE_TABLE), Item.DUPLICATE_TABLE);
 				items.add(Item.SEPARATOR);
-				for (Maintenance command : Maintenance.values()) {
-					addIf(items, dialect.maintenanceCommands().contains(command), maintenanceItem(command));
-				}
+				items.addAll(maintenanceItems(dialect));
 				items.add(Item.SEPARATOR);
 				addIf(items, dialect.supports(Feature.EXPORT), Item.EXPORT);
 				items.add(Item.EMPTY_TABLE);
@@ -124,6 +123,82 @@ public final class TreeMenu {
 			}
 		}
 		return tidy(items);
+	}
+
+	/**
+	 * Whether the server ever offers the item, on any node. A toolbar button or menu item of an item it never offers is hidden, not disabled (the same
+	 * decision as the context menus, which leave the item out).
+	 */
+	public static boolean supported(Item item, Dialect dialect) {
+		for (Node node : Node.values()) {
+			if (itemsFor(node, dialect).contains(item)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * What the selection lacks for the item to run, as the sentence for the tooltip of its disabled button ("Select a database first."); null when it can
+	 * run. The toolbars, the menu bar and the context menus all ask this, so they agree.
+	 *
+	 * @param path the objects of the nodes from the root of the tree to the selected node, or null when nothing is selected
+	 * @param dialect the server of the selected connection, for its words; may be null when no connection is selected
+	 */
+	public static String missing(Item item, List<?> path, Dialect dialect) {
+		Object selected = path == null || path.isEmpty() ? null : path.getLast();
+		String database = dialect == null ? "database" : dialect.databaseTerm();
+		String schema = dialect == null ? "schema" : dialect.schemaTerm();
+
+		if (item == Item.CONNECT || item == Item.EDIT_PROFILE) {
+			return selected instanceof ProfileNode ? null : "Select a saved connection first.";
+		}
+		if (TreeSelection.connection(path) == null) {
+			return "Select a connection first.";
+		}
+		return switch (item) {
+			case OPEN_DATABASE, NEW_QUERY, CREATE_TABLE, OPEN_IN_DESIGNER, DROP_DATABASE, RELOAD_TABLES, CREATE_SCHEMA, RELOAD_SCHEMAS -> TreeSelection
+				.database(selected) != null ? null : "Select a " + database + " first.";
+			case RENAME_SCHEMA, DROP_SCHEMA -> TreeSelection.schema(selected) != null ? null : "Select a " + schema + " first.";
+			case OPEN_TABLE, EDIT_TABLE, INDEXES, ADD_FIELD, EMPTY_TABLE, DROP_TABLE, RENAME_TABLE, DUPLICATE_TABLE, OPTIMIZE, ANALYZE, CHECK, REPAIR,
+				RELOAD_COLUMNS -> TreeSelection.table(selected) != null ? null : "Select a table first.";
+			case PROPERTIES -> TreeSelection.table(selected) != null || selected instanceof nl.errorsoft.esql.database.Database
+				? null
+				: "Select a table or " + database + " first.";
+			case EDIT_FIELD, DROP_FIELD -> TreeSelection.column(selected) != null ? null : "Select a column first.";
+			default -> null;
+		};
+	}
+
+	/**
+	 * What the selected rows of a list of tables lack for the item to run, null when it can run: opening and editing work on one table, dropping and
+	 * maintenance on one or more, the items of the database or schema itself (create table, reload, new query) always run.
+	 */
+	public static String missingForTables(Item item, int selectedTables) {
+		return switch (item) {
+			case OPEN_TABLE, EDIT_TABLE, INDEXES -> selectedTables == 1 ? null : selectedTables == 0 ? "Select a table first." : "Select one table.";
+			case DROP_TABLE, OPTIMIZE, ANALYZE, CHECK, REPAIR -> selectedTables > 0 ? null : "Select a table first.";
+			default -> null;
+		};
+	}
+
+	/** The table maintenance items the server offers, in menu order. */
+	public static List<Item> maintenanceItems(Dialect dialect) {
+		List<Item> items = new ArrayList<>();
+		for (Maintenance command : Maintenance.values()) {
+			addIf(items, dialect.maintenanceCommands().contains(command), maintenanceItem(command));
+		}
+		return items;
+	}
+
+	/** The maintenance command of an item, null for other items. */
+	public static Maintenance maintenanceCommand(Item item) {
+		for (Maintenance command : Maintenance.values()) {
+			if (maintenanceItem(command) == item) {
+				return command;
+			}
+		}
+		return null;
 	}
 
 	/** What the server itself offers: on the server node of a dialog's tree and on the node of a connection. */

@@ -4,6 +4,10 @@
 
 ## Viewing data
 
+## The table list
+
+**Show tables** in the context menu of a database or schema (or Enter on it in the tree) opens the list of its tables with their row count, type and comment. Its toolbar has **Add table** (a new table in that database or schema), **Reload** and **New query**, and for the selected rows **Open data** (also a double click or Enter), **Edit table**, **Indexes**, **Drop table** and, in the wrench menu, the maintenance commands the server offers (Optimize, Analyze, and Check and Repair on MySQL). Select several rows with Shift or Cmd/Ctrl to drop or maintain them together; Open data, Edit table and Indexes need exactly one.
+
 Double click a table in the tree (or choose Open in its context menu) to show its rows. The data is shown a page at a time; the paging buttons are in the bar at the bottom of the tab. Click a column header to sort. Paging orders by the primary key, so rows keep their place after an update.
 
 ## Editing data

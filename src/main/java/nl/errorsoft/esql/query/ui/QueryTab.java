@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.query.ui;
 
+import nl.errorsoft.esql.ui.util.ToolbarButtons;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -242,8 +244,9 @@ public class QueryTab extends JPanel {
 	/** Nothing runs or switches while statements run or the database or schema is being changed. */
 	private void updateControls() {
 		boolean idle = !running && !switching;
-		runSelectionButton.setEnabled(idle);
-		runAllButton.setEnabled(idle);
+		String running = idle ? null : "Wait for the running statements.";
+		ToolbarButtons.setAvailable(runSelectionButton, running);
+		ToolbarButtons.setAvailable(runAllButton, running);
 		databases.setEnabled(idle);
 		schemas.setEnabled(idle);
 	}

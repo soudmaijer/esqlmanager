@@ -72,6 +72,7 @@ public final class ApplicationContext {
 			images.addIcon("imgFirst", "first", 16, false);
 			images.addIcon("imgPrev", "prev", 16, false);
 			images.addIcon("imgRun", "refresh", 16, false);
+			images.addIcon("imgMaintenance", "wrench", 16, false);
 			images.addIcon("imgNext", "next", 16, false);
 			images.addIcon("imgLast", "last", 16, false);
 			images.addIcon("add_database", "database-add", 16, false);

@@ -369,8 +369,9 @@ public class MainWindow extends JFrame implements ActionListener {
 	private void fillWindowMenu() {
 		windowMenu.removeAll();
 		java.util.List<JInternalFrame> frames = windowTabs == null ? java.util.List.of() : windowTabs.getFrames();
-		nextWindowItem.setEnabled(frames.size() > 1);
-		previousWindowItem.setEnabled(frames.size() > 1);
+		String oneWindow = frames.size() > 1 ? null : "Open a second window first.";
+		ToolbarButtons.setAvailable(nextWindowItem, oneWindow);
+		ToolbarButtons.setAvailable(previousWindowItem, oneWindow);
 		windowMenu.add(nextWindowItem);
 		windowMenu.add(previousWindowItem);
 
@@ -414,13 +415,27 @@ public class MainWindow extends JFrame implements ActionListener {
 		updateMenus();
 	}
 
-	/** The items that work on a connection are enabled while a connection is open. */
+	/**
+	 * The items that work on a connection need one; New query needs a database selected in the explorer, the same decision as its toolbar button and
+	 * context menu ({@code TreeMenu}). Import, export and the designer are hidden when the server of the active connection never offers them.
+	 */
 	private void updateMenus() {
-		boolean connected = mainController.connectionCount() > 0;
-		for (JMenuItem item : new JMenuItem[]{disconnectItem, importFromFileItem, exportToFileItem, designerItem}) {
-			item.setEnabled(connected);
+		var active = explorer != null && mainController.connectionCount() > 0 ? mainController.activeConnection() : null;
+		String noConnection = active == null ? "Connect to a server first." : null;
+		ToolbarButtons.setAvailable(disconnectItem, noConnection);
+		showFor(importFromFileItem, active, nl.errorsoft.esql.connection.TreeMenu.Item.IMPORT, noConnection);
+		showFor(exportToFileItem, active, nl.errorsoft.esql.connection.TreeMenu.Item.EXPORT, noConnection);
+		showFor(designerItem, active, nl.errorsoft.esql.connection.TreeMenu.Item.OPEN_IN_DESIGNER, noConnection);
+		if (explorer != null) {
+			newQueryItem.setVisible(explorer.supported(nl.errorsoft.esql.connection.TreeMenu.Item.NEW_QUERY));
+			ToolbarButtons.setAvailable(newQueryItem, explorer.missing(nl.errorsoft.esql.connection.TreeMenu.Item.NEW_QUERY));
 		}
-		newQueryItem.setEnabled(explorer != null && explorer.canStartQuery());
+	}
+
+	private static void showFor(JMenuItem item, nl.errorsoft.esql.connection.control.ConnectionWindowController active,
+		nl.errorsoft.esql.connection.TreeMenu.Item treeItem, String missing) {
+		item.setVisible(active == null || nl.errorsoft.esql.connection.TreeMenu.supported(treeItem, active.dialect()));
+		ToolbarButtons.setAvailable(item, missing);
 	}
 
 	public void updateStatus(final String message, final boolean red) {

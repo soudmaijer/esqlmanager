@@ -70,7 +70,8 @@ class TreeMenuTest {
 		assertEquals("Reload schemas", Item.RELOAD_SCHEMAS.label(POSTGRES));
 		assertEquals("Reload databases", Item.RELOAD_DATABASES.label(POSTGRES));
 		assertEquals(
-			List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.IMPORT, Item.RENAME_SCHEMA,
+			List.of(Item.OPEN_DATABASE, Item.NEW_QUERY, Item.SEPARATOR, Item.CREATE_TABLE, Item.OPEN_IN_DESIGNER, Item.SEPARATOR, Item.EXPORT, Item.IMPORT,
+				Item.RENAME_SCHEMA,
 				Item.DROP_SCHEMA,
 				Item.SEPARATOR, Item.RELOAD_TABLES),
 			TreeMenu.itemsFor(Node.SCHEMA, POSTGRES));
@@ -115,5 +116,38 @@ class TreeMenuTest {
 				}
 			}
 		}
+	}
+
+	@Test
+	void anItemTheServerNeverOffersIsNotSupported() {
+		assertTrue(TreeMenu.supported(Item.USERS, POSTGRES));
+		assertFalse(TreeMenu.supported(Item.USERS, SQL_SERVER));
+		assertFalse(TreeMenu.supported(Item.REPAIR, POSTGRES));
+		assertTrue(TreeMenu.supported(Item.NEW_QUERY, SQL_SERVER));
+	}
+
+	@Test
+	void missingSaysWhatToSelectInTheWordsOfTheServer() {
+		ConnectionNode connection = new ConnectionNode(null, "local");
+		nl.errorsoft.esql.database.Database shop = new nl.errorsoft.esql.database.Database("shop");
+		nl.errorsoft.esql.table.Table orders = new nl.errorsoft.esql.table.Table(shop);
+
+		assertEquals("Select a connection first.", TreeMenu.missing(Item.NEW_QUERY, null, null));
+		assertEquals("Select a database first.", TreeMenu.missing(Item.NEW_QUERY, List.of("root", connection), POSTGRES));
+		assertEquals(null, TreeMenu.missing(Item.NEW_QUERY, List.of("root", connection, shop), POSTGRES));
+		assertEquals(null, TreeMenu.missing(Item.USERS, List.of("root", connection), POSTGRES));
+		assertEquals("Select a table first.", TreeMenu.missing(Item.DROP_TABLE, List.of("root", connection, shop), MY_SQL));
+		assertEquals(null, TreeMenu.missing(Item.DROP_TABLE, List.of("root", connection, shop, orders), MY_SQL));
+		assertEquals("Select a schema first.", TreeMenu.missing(Item.DROP_SCHEMA, List.of("root", connection, shop), POSTGRES));
+	}
+
+	@Test
+	void severalTablesCanBeDroppedAndMaintainedButOnlyOneOpened() {
+		assertEquals(null, TreeMenu.missingForTables(Item.CREATE_TABLE, 0));
+		assertEquals("Select a table first.", TreeMenu.missingForTables(Item.OPEN_TABLE, 0));
+		assertEquals(null, TreeMenu.missingForTables(Item.EDIT_TABLE, 1));
+		assertEquals("Select one table.", TreeMenu.missingForTables(Item.INDEXES, 2));
+		assertEquals(null, TreeMenu.missingForTables(Item.DROP_TABLE, 3));
+		assertEquals(null, TreeMenu.missingForTables(Item.ANALYZE, 3));
 	}
 }

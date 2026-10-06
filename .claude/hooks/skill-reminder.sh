@@ -20,7 +20,7 @@ case "$f" in
     ;;
   */src/main/java/*/ui/*.java | */src/main/java/*/ui/*/*.java | */ui/dialog/*.java)
     category="ui"
-    msg="UI check: you edited ${f}. This session, verify UI changes follow the esql-ui skill (U1-U8): dialogs only through ui.dialog.Dialogs and FormDialog, Forms layouts with 12px padding (no null layouts), colours from UIManager, icons through imageLoader(), sentence case wording with the action as primary button, no success popup when the status bar shows it, context menus built on open, editors as EditorTab tabs, Swing on the event thread, and check the result by painting in-process. Fix violations now rather than deferring to /review."
+    msg="UI check: you edited ${f}. This session, verify UI changes follow the esql-ui skill (U1-U9): dialogs only through ui.dialog.Dialogs and FormDialog, Forms layouts with 12px padding (no null layouts), colours from UIManager, icons through imageLoader(), sentence case wording with the action as primary button, no success popup when the status bar shows it, context menus built on open, editors as EditorTab tabs, Swing on the event thread, disabled buttons with a tooltip saying what is needed and unsupported ones hidden (TreeMenu.missing/supported), and check the result by painting in-process. Fix violations now rather than deferring to /review."
     ;;
   */src/main/java/*/control/*.java | */src/main/java/*/dialect/*.java | */src/main/java/*/dialect/*/*.java | *Service.java | *Repository.java)
     category="layers"
