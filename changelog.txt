@@ -15,6 +15,10 @@ eSQLManager changelog
   the background. When reading fails the window does not open, instead of opening without a tree.
 - Reloading the databases of the tree (also after Generate in the designer) lists them in the background, and Open
   in designer switches to the database before it reads the columns and foreign keys of each table.
+- A connection is made by the driver of its server type (an own jar, bundled or downloaded) instead of the first driver
+  DriverManager finds for the URL, so a chosen jar is really used. A jar replaced at the same path is loaded again; a
+  downloaded jar is loaded from a private copy of the bytes whose checksum was checked. A driver is not downloaded
+  twice at the same time. The Close button of the driver settings has the mnemonic L.
 - Export looks up the columns of a table with _ and % escaped, so a table such as a_b no longer gets the columns of axb.
 
 05-10-2026: Packaging starts from a clean slate

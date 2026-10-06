@@ -2,6 +2,7 @@ package nl.errorsoft.esql.driver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,7 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.sql.Driver;
-import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -39,7 +41,12 @@ class DriverServiceTest {
 		package esqltest;
 
 		public class FakeDriver implements java.sql.Driver {
-			public java.sql.Connection connect(String url, java.util.Properties info) { return null; }
+			public java.sql.Connection connect(String url, java.util.Properties info) throws java.sql.SQLException {
+				if (!acceptsURL(url)) {
+					return null;
+				}
+				throw new java.sql.SQLException("FakeDriver connects to " + url);
+			}
 			public boolean acceptsURL(String url) { return url.startsWith("jdbc:esqltest:"); }
 			public java.sql.DriverPropertyInfo[] getPropertyInfo(String url, java.util.Properties info) { return new java.sql.DriverPropertyInfo[0]; }
 			public int getMajorVersion() { return 1; }
@@ -121,7 +128,7 @@ class DriverServiceTest {
 	}
 
 	@Test
-	void aDownloadedDriverIsRegisteredWithTheDriverManager() throws Exception {
+	void aDownloadedDriverIsLoadedOnceAndConnectsItself() throws Exception {
 		DriverService service = new DriverService(drivers, repository.toUri());
 		DriverArtifact artifact = artifact(sha256(jar));
 		service.download(artifact, ProgressListener.NONE);
@@ -129,9 +136,24 @@ class DriverServiceTest {
 		Driver loaded = service.load(source(artifact));
 
 		assertEquals(DRIVER_CLASS, loaded.getClass().getName());
-		Driver registered = DriverManager.getDriver("jdbc:esqltest:anything");
-		assertEquals(DriverService.DelegatingDriver.class, registered.getClass(), "the driver of another class loader is handed out through the wrapper");
 		assertSame(loaded, service.load(source(artifact)), "a jar is loaded once");
+		// The connection is made by the loaded driver, whatever DriverManager has registered.
+		SQLException e = assertThrows(SQLException.class, () -> service.connect(source(artifact), "jdbc:esqltest:shop", new Properties()));
+		assertEquals("FakeDriver connects to jdbc:esqltest:shop", e.getMessage());
+		assertThrows(EsqlException.class, () -> service.connect(source(artifact), "jdbc:postgresql://localhost/shop", new Properties()));
+	}
+
+	@Test
+	void anOwnJarReplacedAtTheSamePathIsLoadedAgain() throws Exception {
+		Path own = Files.write(temp.resolve("own.jar"), jar);
+		DriverService service = new DriverService(drivers, repository.toUri());
+		DriverSource source = new DriverSource(DRIVER_CLASS, own.toString(), null);
+		Driver first = service.load(source);
+
+		Files.write(own, jar);
+		Files.setLastModifiedTime(own, java.nio.file.attribute.FileTime.fromMillis(Files.getLastModifiedTime(own).toMillis() + 5000));
+
+		assertNotSame(first, service.load(source));
 	}
 
 	@Test

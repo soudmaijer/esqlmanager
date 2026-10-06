@@ -71,7 +71,7 @@ public class DriverDialog extends FormDialog {
 		type.addItemListener(e -> show((DatabaseDriver) type.getSelectedItem()));
 
 		JButton save = Forms.button("&Save");
-		JButton close = Forms.button("Close");
+		JButton close = Forms.button("C&lose");
 		save.addActionListener(e -> save());
 		close.addActionListener(e -> dispose());
 		layoutDialog(new Forms.Grid().full(typePanel).full(source).full(properties).done(), save, close);

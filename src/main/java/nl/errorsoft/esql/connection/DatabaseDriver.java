@@ -1,7 +1,6 @@
 package nl.errorsoft.esql.connection;
 
 import nl.errorsoft.esql.app.DataDirectory;
-import nl.errorsoft.esql.driver.DriverArtifact;
 import nl.errorsoft.esql.driver.DriverSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -152,7 +151,7 @@ public class DatabaseDriver {
 
 	/** Where the driver of this server type comes from. */
 	public DriverSource driverSource() {
-		return new DriverSource(driverClassName, driverJar, DriverArtifact.forServerType(id));
+		return new DriverSource(driverClassName, driverJar, ServerType.driverArtifact(id));
 	}
 
 	public void setFieldOpenChar(String fieldOpenChar) {

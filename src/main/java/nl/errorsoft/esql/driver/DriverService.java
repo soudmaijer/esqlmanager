@@ -10,20 +10,17 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 import nl.errorsoft.esql.error.EsqlException;
 import nl.errorsoft.esql.job.ProgressListener;
@@ -32,9 +29,10 @@ import org.apache.logging.log4j.LogManager;
 
 /**
  * Finds and loads the JDBC driver of a server type: a jar the user chose, a driver bundled with the application, or a driver downloaded from a Maven
- * repository into the drivers directory. A downloaded jar is checked against the SHA-256 pinned in its {@link DriverArtifact}, when it is downloaded and
- * every time it is loaded. A driver from a jar is loaded by its own class loader and registered with {@link DriverManager} through a wrapper, because
- * {@code DriverManager} does not hand out drivers of a class loader the caller cannot see.
+ * repository into the drivers directory. A downloaded jar is checked against the SHA-256 pinned in its {@link DriverArtifact} when it is downloaded and
+ * before it is loaded; the class loader reads a private copy of the checked bytes, so a file changed after the check is never loaded. A jar is loaded
+ * once per run, again when the file changed (another jar chosen at the same path). Connections are made through the driver {@link #load} returns,
+ * not through {@code DriverManager}, which would hand out whichever registered driver accepts the URL first.
  */
 public class DriverService {
 	public static final URI MAVEN_CENTRAL = URI.create("https://repo1.maven.org/maven2/");
@@ -44,8 +42,8 @@ public class DriverService {
 
 	private final Path directory;
 	private final URI repository;
-	/** The driver loaded from each jar, so a jar gets one class loader and is registered once. */
-	private final Map<Path, Driver> loaded = new ConcurrentHashMap<>();
+	/** The driver loaded from each jar, so a jar gets one class loader per run (a new one when the file changed). */
+	private final Map<JarFile, Driver> loaded = new ConcurrentHashMap<>();
 
 	/**
 	 * @param directory where downloaded drivers are kept
@@ -79,7 +77,7 @@ public class DriverService {
 		return directory.resolve(artifact.fileName());
 	}
 
-	/** Loads the driver and makes sure {@link DriverManager} hands it out. A driver that is not installed is an {@link EsqlException}. */
+	/** Loads the driver. A driver that is not installed is an {@link EsqlException}. */
 	public Driver load(DriverSource source) {
 		switch (status(source)) {
 			case OWN_JAR -> {
@@ -87,23 +85,30 @@ public class DriverService {
 				if (!Files.isRegularFile(jar)) {
 					throw new EsqlException("The driver jar " + jar + " does not exist. Choose another one in Settings > JDBC Driver settings.");
 				}
-				return loadFromJar(jar, source.className());
+				return loadFromJar(jar, source.className(), path -> path);
 			}
 			case BUNDLED -> {
 				return newDriver(source.className(), DriverService.class.getClassLoader());
 			}
 			case DOWNLOADED -> {
-				Path jar = jarOf(source.artifact());
-				if (!loaded.containsKey(jar.toAbsolutePath())) {
-					verify(jar, source.artifact());
-				}
-				return loadFromJar(jar, source.className());
+				return loadFromJar(jarOf(source.artifact()), source.className(), path -> verifiedCopy(path, source.artifact()));
 			}
 			default -> {
 				String name = source.artifact() != null ? "The " + source.artifact().name() + " driver" : "The driver " + source.className();
 				throw new EsqlException(name + " is not installed. Download it in Settings > JDBC Driver settings.");
 			}
 		}
+	}
+
+	/** Connects with the driver of the source, the one {@link #load} gives; a driver that does not accept the URL is an {@link EsqlException}. */
+	public Connection connect(DriverSource source, String url, Properties properties) throws SQLException {
+		Driver driver = load(source);
+		Connection connection = driver.connect(url, properties);
+
+		if (connection == null) {
+			throw new EsqlException("The driver " + source.className() + " does not accept the URL " + url + ".");
+		}
+		return connection;
 	}
 
 	/**
@@ -153,32 +158,59 @@ public class DriverService {
 		return HexFormat.of().formatHex(digest.digest());
 	}
 
-	/** Checks a downloaded jar before it is loaded; a jar that was changed is deleted. */
-	private void verify(Path jar, DriverArtifact artifact) {
-		try (InputStream in = new DigestInputStream(Files.newInputStream(jar), sha256())) {
-			in.transferTo(OutputStream.nullOutputStream());
-			String actual = HexFormat.of().formatHex(((DigestInputStream) in).getMessageDigest().digest());
+	/**
+	 * Checks a downloaded jar before it is loaded and returns a private copy of the bytes that were checked, for the class loader. A jar that was changed is
+	 * deleted.
+	 */
+	private Path verifiedCopy(Path jar, DriverArtifact artifact) {
+		Path copy = null;
+		try {
+			copy = Files.createTempFile("esql-" + artifact.artifactId() + "-", ".jar");
+			copy.toFile().deleteOnExit();
+			String actual;
+			try (DigestInputStream in = new DigestInputStream(Files.newInputStream(jar), sha256()); OutputStream out = Files.newOutputStream(copy)) {
+				in.transferTo(out);
+				actual = HexFormat.of().formatHex(in.getMessageDigest().digest());
+			}
 			if (!actual.equalsIgnoreCase(artifact.sha256())) {
+				Files.deleteIfExists(copy);
 				Files.deleteIfExists(jar);
 				throw new EsqlException("The " + artifact.name() + " driver in " + jar
 					+ " does not have the expected SHA-256 checksum and was deleted. Download it again in Settings > JDBC Driver settings.");
 			}
+			return copy;
 		} catch (IOException e) {
 			throw new EsqlException("The " + artifact.name() + " driver in " + jar + " cannot be read: " + e.getMessage(), e);
 		}
 	}
 
-	private Driver loadFromJar(Path jar, String className) {
-		return loaded.computeIfAbsent(jar.toAbsolutePath(), path -> {
+	/** A jar as it is now: the same path with another time or size is another jar. */
+	private record JarFile(Path path, FileTime modified, long size) {
+		static JarFile of(Path jar) {
+			try {
+				Path path = jar.toAbsolutePath();
+				return new JarFile(path, Files.getLastModifiedTime(path), Files.size(path));
+			} catch (IOException e) {
+				throw new EsqlException("The driver jar " + jar + " cannot be read: " + e.getMessage(), e);
+			}
+		}
+	}
+
+	/** The jar to give the class loader for a jar file: the file itself, or a checked copy of it. */
+	private interface Prepare {
+		Path jarToLoad(Path jar);
+	}
+
+	private Driver loadFromJar(Path jar, String className, Prepare prepare) {
+		return loaded.computeIfAbsent(JarFile.of(jar), file -> {
 			try {
 				// The class loader stays open as long as the application runs: the driver's classes are loaded from it lazily.
-				URLClassLoader loader = new URLClassLoader(new URL[]{path.toUri().toURL()}, DriverService.class.getClassLoader());
+				URLClassLoader loader = new URLClassLoader(new URL[]{prepare.jarToLoad(file.path()).toUri().toURL()}, DriverService.class.getClassLoader());
 				Driver driver = newDriver(className, loader);
-				DriverManager.registerDriver(new DelegatingDriver(driver));
-				log.info("Loaded the driver {} from {}", className, path);
+				log.info("Loaded the driver {} from {}", className, file.path());
 				return driver;
-			} catch (IOException | SQLException e) {
-				throw new EsqlException("The driver " + className + " cannot be loaded from " + path + ": " + e.getMessage(), e);
+			} catch (IOException e) {
+				throw new EsqlException("The driver " + className + " cannot be loaded from " + file.path() + ": " + e.getMessage(), e);
 			}
 		});
 	}
@@ -208,50 +240,6 @@ public class DriverService {
 			return MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("Every Java runtime has SHA-256", e);
-		}
-	}
-
-	/** A driver of the application's class loader that hands the work to a driver from another class loader, so {@link DriverManager} accepts it. */
-	static final class DelegatingDriver implements Driver {
-		private final Driver driver;
-
-		DelegatingDriver(Driver driver) {
-			this.driver = driver;
-		}
-
-		@Override
-		public Connection connect(String url, Properties info) throws SQLException {
-			return driver.connect(url, info);
-		}
-
-		@Override
-		public boolean acceptsURL(String url) throws SQLException {
-			return driver.acceptsURL(url);
-		}
-
-		@Override
-		public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
-			return driver.getPropertyInfo(url, info);
-		}
-
-		@Override
-		public int getMajorVersion() {
-			return driver.getMajorVersion();
-		}
-
-		@Override
-		public int getMinorVersion() {
-			return driver.getMinorVersion();
-		}
-
-		@Override
-		public boolean jdbcCompliant() {
-			return driver.jdbcCompliant();
-		}
-
-		@Override
-		public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-			return driver.getParentLogger();
 		}
 	}
 }

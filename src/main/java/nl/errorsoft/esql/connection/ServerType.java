@@ -103,9 +103,18 @@ public class ServerType {
 		};
 	}
 
+	/** The driver to download for a server type, null when the driver of that type is bundled; the only place that maps a server type to one. */
+	public static DriverArtifact driverArtifact(int type) {
+		return switch (type) {
+			case MY_SQL -> DriverArtifact.MYSQL;
+			case ORACLE -> DriverArtifact.ORACLE;
+			default -> null;
+		};
+	}
+
 	/** Where the JDBC driver comes from: a jar of the user, the application, or a download (from driver.xml). */
 	public DriverSource driverSource() {
-		return driverSource != null ? driverSource : new DriverSource(driverName, "", DriverArtifact.forServerType(type));
+		return driverSource != null ? driverSource : new DriverSource(driverName, "", driverArtifact(type));
 	}
 
 	public String getDriverName() {

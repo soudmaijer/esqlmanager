@@ -56,9 +56,16 @@ public class DatabaseConnection implements AutoCloseable {
 			this.close();
 		}
 
-		ApplicationContext.get().drivers().load(profile.getServerType().driverSource());
 		log.info("Connecting to {} as {}", url, profile.getUsername());
-		connection = java.sql.DriverManager.getConnection(url, profile.getUsername(), profile.getPassword());
+		java.util.Properties credentials = new java.util.Properties();
+		if (profile.getUsername() != null) {
+			credentials.setProperty("user", profile.getUsername());
+		}
+		if (profile.getPassword() != null) {
+			credentials.setProperty("password", profile.getPassword());
+		}
+		// The driver of this server type, not whichever driver DriverManager finds first for the URL.
+		connection = ApplicationContext.get().drivers().connect(profile.getServerType().driverSource(), url, credentials);
 
 		DatabaseMetaData meta = connection.getMetaData();
 		serverDescription = meta.getDatabaseProductName() + " " + meta.getDatabaseMajorVersion() + "." + meta.getDatabaseMinorVersion();
