@@ -1,0 +1,7 @@
+-> Sort: `sum(b.amount)` DESC  (actual time=0.87..0.877 rows=286 loops=1)
+    -> Table scan on <temporary>  (actual time=0.803..0.819 rows=286 loops=1)
+        -> Aggregate using temporary table  (actual time=0.802..0.802 rows=286 loops=1)
+            -> Nested loop inner join  (cost=270 rows=200) (actual time=0.034..0.654 rows=715 loops=1)
+                -> Filter: (a.kind = 3)  (cost=200 rows=200) (actual time=0.0201..0.231 rows=286 loops=1)
+                    -> Table scan on a  (cost=200 rows=2000) (actual time=0.0184..0.166 rows=2000 loops=1)
+                -> Index lookup on b using cap_b_a (a_id=a.id)  (cost=0.25 rows=1) (actual time=0.00118..0.00132 rows=2.5 loops=286)

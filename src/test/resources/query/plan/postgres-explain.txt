@@ -1,0 +1,98 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Sort",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Startup Cost": 101.80,
+      "Total Cost": 101.81,
+      "Plan Rows": 3,
+      "Plan Width": 106,
+      "Sort Key": ["(sum(b.amount)) DESC"],
+      "Plans": [
+        {
+          "Node Type": "Aggregate",
+          "Strategy": "Sorted",
+          "Partial Mode": "Simple",
+          "Parent Relationship": "Outer",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 101.56,
+          "Total Cost": 101.78,
+          "Plan Rows": 3,
+          "Plan Width": 106,
+          "Group Key": ["a.name"],
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 101.56,
+              "Total Cost": 101.62,
+              "Plan Rows": 26,
+              "Plan Width": 102,
+              "Sort Key": ["a.name"],
+              "Plans": [
+                {
+                  "Node Type": "Nested Loop",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Inner",
+                  "Startup Cost": 4.51,
+                  "Total Cost": 100.94,
+                  "Plan Rows": 26,
+                  "Plan Width": 102,
+                  "Inner Unique": false,
+                  "Plans": [
+                    {
+                      "Node Type": "Seq Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "cap_a",
+                      "Alias": "a",
+                      "Startup Cost": 0.00,
+                      "Total Cost": 19.25,
+                      "Plan Rows": 3,
+                      "Plan Width": 102,
+                      "Filter": "(kind = 3)"
+                    },
+                    {
+                      "Node Type": "Bitmap Heap Scan",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "cap_b",
+                      "Alias": "b",
+                      "Startup Cost": 4.51,
+                      "Total Cost": 26.94,
+                      "Plan Rows": 29,
+                      "Plan Width": 8,
+                      "Recheck Cond": "(a.id = a_id)",
+                      "Plans": [
+                        {
+                          "Node Type": "Bitmap Index Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Index Name": "cap_b_a",
+                          "Startup Cost": 0.00,
+                          "Total Cost": 4.50,
+                          "Plan Rows": 29,
+                          "Plan Width": 0,
+                          "Index Cond": "(a_id = a.id)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

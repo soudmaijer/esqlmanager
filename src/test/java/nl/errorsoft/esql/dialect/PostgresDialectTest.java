@@ -27,4 +27,12 @@ class PostgresDialectTest extends DialectContractTest {
 		profile.setServerType(new ServerType(ServerType.POSTGRES));
 		return profile;
 	}
+
+	@org.junit.jupiter.api.Test
+	void writesTheExplainStatements() {
+		Dialect dialect = profile().getServerType().getDialect();
+		org.junit.jupiter.api.Assertions.assertTrue(dialect.supports(Dialect.Feature.EXPLAIN));
+		org.junit.jupiter.api.Assertions.assertEquals("EXPLAIN (FORMAT JSON) SELECT 1", dialect.explainSql(" SELECT 1 ", false));
+		org.junit.jupiter.api.Assertions.assertEquals("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) SELECT 1", dialect.explainSql("SELECT 1", true));
+	}
 }

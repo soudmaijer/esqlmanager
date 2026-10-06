@@ -195,11 +195,16 @@ public class PostgresDialect extends AbstractDialect {
 		return new PostgresUserAdmin(this);
 	}
 
+	@Override
+	public String explainSql(String statement, boolean analyze) {
+		return (analyze ? "EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) " : "EXPLAIN (FORMAT JSON) ") + statement.strip();
+	}
+
 	public boolean supports(Feature feature) {
 		return feature == Feature.DESIGNER || feature == Feature.PROCESS_LIST || feature == Feature.SERVER_STATUS || feature == Feature.USER_MANAGER
 			|| feature == Feature.CREATE_DATABASE || feature == Feature.CREATE_TABLE || feature == Feature.INDEXES || feature == Feature.IMPORT
 			|| feature == Feature.EXPORT
-			|| feature == Feature.FOREIGN_KEYS || feature == Feature.SCHEMAS;
+			|| feature == Feature.FOREIGN_KEYS || feature == Feature.SCHEMAS || feature == Feature.EXPLAIN;
 	}
 
 	/** The profile's database list is a filter, so the first entry is where we connect to. */

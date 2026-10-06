@@ -22,6 +22,11 @@ public class QueryService {
 		return repository.execute(sql);
 	}
 
+	/** The plan of one statement; with {@code analyze} the server runs it, and its changes stay. */
+	public QueryPlan explain(String statement, boolean analyze) throws Exception {
+		return repository.explain(statement, analyze);
+	}
+
 	/** Makes unqualified names of the statements resolve to the schema of the database, on servers with schemas. */
 	public void useSchema(String database, String schema) throws Exception {
 		repository.switchDatabase(database);

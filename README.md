@@ -36,6 +36,7 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Run selection or the statement at the caret, run all statements of a script | yes | yes | yes | yes |
 | Query results in tabs, one per statement, with time, database, rows and duration | yes | yes | yes | yes |
 | Auto completion of keywords, tables and columns (aliases resolved) | yes | yes | yes | yes |
+| Explain and explain analyze in a plan viewer: tree of steps, rows, cost, time, the hottest steps and hints | yes | yes | no | no |
 | Create a database, with character set and collation (MySQL) or owner and encoding (PostgreSQL) | yes | yes | not verified | no |
 | Drop a database | yes | yes | not verified | no |
 | Create a table | yes | yes | no | no |

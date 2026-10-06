@@ -21,6 +21,9 @@ import nl.errorsoft.esql.database.DatabaseService;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.query.ExecutionResult;
+import nl.errorsoft.esql.query.QueryPlan;
+import nl.errorsoft.esql.query.plan.Plan;
+import nl.errorsoft.esql.query.plan.PlanParser;
 import nl.errorsoft.esql.query.QueryService;
 import nl.errorsoft.esql.query.SchemaNames;
 import nl.errorsoft.esql.table.Table;
@@ -62,6 +65,13 @@ public class QueryController implements SchemaNames {
 		}
 	}
 
+	/**
+	 * The plan of one statement as the server gave it ({@code raw}) and parsed ({@code plan}, null when its shape is unknown), with when it was asked, on
+	 * which database and how long it took; {@code analyzed} when the statement was run.
+	 */
+	public record ExplainResult(String sql, QueryPlan raw, Plan plan, boolean analyzed, LocalTime ranAt, String database, long millis) {
+	}
+
 	public QueryController(ConnectionWindowController connectionWindowController) {
 		this.connectionWindowController = connectionWindowController;
 	}
@@ -69,6 +79,11 @@ public class QueryController implements SchemaNames {
 	/** Whether the server has schemas, so the tab offers a schema next to the database. */
 	public boolean hasSchemas() {
 		return dialect().supports(Dialect.Feature.SCHEMAS);
+	}
+
+	/** Whether the server can show the plan of a statement, so the tab offers Explain and Explain analyze. */
+	public boolean supportsExplain() {
+		return dialect().supports(Dialect.Feature.EXPLAIN);
 	}
 
 	/** What the server calls a database, for the label of the picker. */
@@ -262,6 +277,53 @@ public class QueryController implements SchemaNames {
 		String summary = summary(statements.size(), results.size(), millisSince(start));
 		SwingUtilities.invokeLater(() -> connectionWindowController.setStatusDetail(parent, summary));
 		return new RunResult(results, true);
+	}
+
+	/**
+	 * Asks the server for the plan of one statement on a virtual thread, in the database and schema of the tab; with {@code analyze} the statement runs.
+	 * {@code done} gets the plan on the event thread, a failure is reported and {@code done} gets null.
+	 */
+	public void explain(String sql, boolean analyze, Component parent, Consumer<ExplainResult> done) {
+		String action = analyze ? "Explain analyze" : "Explain";
+		connectionWindowController.setStatusDetail(parent, (analyze ? "Analyzing" : "Explaining") + " statement...");
+		Thread.ofVirtual().name("explain").start(() -> {
+			try (var context = connectionWindowController.logContext()) {
+				ExplainResult result = null;
+				String status = "";
+				try {
+					QueryService queries = connectionWindowController.getContext().queries();
+					// The connection is shared with the tree and other tabs, which may have moved it to another database or schema.
+					if (chosenSchema != null) {
+						queries.useSchema(database, chosenSchema);
+					}
+					long started = System.nanoTime();
+					LocalTime ranAt = LocalTime.now().withNano(0);
+					QueryPlan plan = queries.explain(sql, analyze);
+					long millis = millisSince(started);
+					result = new ExplainResult(sql.strip(), plan, parse(plan), analyze, ranAt, currentDatabase(), millis);
+					log.info("{}: plan of {} line(s) in {} ms", action, plan.rows().size(), millis);
+				} catch (Exception e) {
+					status = action + " failed: " + firstLine(sql);
+					report(parent, action + " (" + firstLine(sql) + ")", e);
+				}
+				ExplainResult outcome = result;
+				String shown = status;
+				SwingUtilities.invokeLater(() -> {
+					connectionWindowController.setStatusDetail(parent, shown);
+					done.accept(outcome);
+				});
+			}
+		});
+	}
+
+	private static Plan parse(QueryPlan raw) {
+		try {
+			return PlanParser.parse(raw.text());
+		} catch (RuntimeException e) {
+			// A plan of a shape the parser does not know is still shown as text.
+			log.warn("The plan could not be read: {}", e.getMessage());
+			return null;
+		}
 	}
 
 	/**

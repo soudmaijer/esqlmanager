@@ -27,7 +27,9 @@ public interface Dialect {
 	enum Feature {
 		DESIGNER, USER_MANAGER, CREATE_DATABASE, CREATE_TABLE, INDEXES, IMPORT, EXPORT, PROCESS_LIST, SERVER_STATUS, FOREIGN_KEYS,
 		/** A database holds schemas, which hold the tables: the tree shows server, databases, schemas, tables. */
-		SCHEMAS
+		SCHEMAS,
+		/** The query tab shows the plan of a statement ({@link Dialect#explainSql}), also with the statement run (analyze). */
+		EXPLAIN
 	}
 
 	int getType();
@@ -219,6 +221,12 @@ public interface Dialect {
 	 * is but goes through {@code DatabaseConnection.useDatabase}, so the application knows the database in use.
 	 */
 	String databaseSwitchTarget(String statement);
+
+	/**
+	 * The statement that returns the plan of a statement as rows of text; with {@code analyze} the server runs the statement and adds what it measured,
+	 * so its changes stay. Only for a dialect with {@link Feature#EXPLAIN}.
+	 */
+	String explainSql(String statement, boolean analyze);
 
 	/** A query with the schema (null for the current one) and the table name as parameters, returning the auto numbered columns that need {@link #afterDataLoadSql}; null when none do. */
 	String autoNumberedColumnsSql();

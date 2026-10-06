@@ -57,6 +57,7 @@ import nl.errorsoft.esql.importer.ImportService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import nl.errorsoft.esql.query.plan.PlanParser;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
@@ -1136,6 +1137,29 @@ abstract class DialectContractTest {
 		assertThrows(EsqlException.class,
 			() -> dialect.addForeignKeySql(TableName.of("a"), new TableForeignKey("fk", List.of("b"), "c", List.of("d"), "CASCADE; DROP TABLE a", "")));
 		assertFalse(dialect.addForeignKeySql(TableName.of("a"), new TableForeignKey("fk", List.of("b"), "c", List.of("d"), "", null)).get(0).contains("ON "));
+	}
+
+	@Test
+	void explainShowsThePlanAndAnalyzeRunsTheStatement() throws Exception {
+		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.EXPLAIN), "The server has no explain");
+		String name = "plan_" + System.nanoTime();
+		createTable(name, "");
+		var queries = new ConnectionContext(connection).queries();
+		String table = dialect.quote(TableName.of(name));
+
+		var plan = PlanParser.parse(queries.explain("SELECT * FROM " + table + " WHERE name = 'x'", false).text());
+		assertFalse(plan.analyzed());
+		assertTrue(plan.root().flatten().anyMatch(node -> name.equals(node.relation())), plan.toString());
+
+		var analyzed = PlanParser.parse(queries.explain("SELECT * FROM " + table, true).text());
+		assertTrue(analyzed.analyzed());
+		assertTrue(analyzed.executionTime() != null, analyzed.toString());
+
+		// Analyze runs the statement and the row it inserts stays. MySQL measures (and runs) queries only: its plan of an INSERT has no times.
+		var insert = queries.explain("INSERT INTO " + table + " (name) VALUES ('planned')", true);
+		int planned = PlanParser.parse(insert.text()).analyzed() ? 1 : 0;
+		assertEquals(planned, queries.update("DELETE FROM " + table + " WHERE name = 'planned'"), insert.text());
+		service().dropTable(table(name));
 	}
 
 	private void createTable(String name, String comment) throws Exception {

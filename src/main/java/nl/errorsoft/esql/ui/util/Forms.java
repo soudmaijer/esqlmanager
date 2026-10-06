@@ -34,6 +34,12 @@ public final class Forms {
 		return red != null ? red : new Color(0xc62828);
 	}
 
+	/** The colour of a warning (a hot step of a query plan, a hint marker): the theme's yellow, or a plain amber when the look and feel has none. */
+	public static Color warningColor() {
+		Color yellow = UIManager.getColor("Actions.Yellow");
+		return yellow != null ? yellow : new Color(0xe0a000);
+	}
+
 	/** The colour of a message that something worked: the theme's green, or a plain green when the look and feel has none. */
 	public static Color successColor() {
 		Color green = UIManager.getColor("Actions.Green");

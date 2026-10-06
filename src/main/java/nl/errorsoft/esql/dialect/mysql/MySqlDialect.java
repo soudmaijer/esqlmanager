@@ -62,6 +62,15 @@ public class MySqlDialect extends AbstractDialect {
 	}
 
 	/** Everything but schemas: a MySQL schema is a database. */
+	/**
+	 * The plan as JSON; analyzed it is the tree text of EXPLAIN ANALYZE (MySQL 8.0.18 or later, an older server reports the syntax error), which runs
+	 * queries only.
+	 */
+	@Override
+	public String explainSql(String statement, boolean analyze) {
+		return (analyze ? "EXPLAIN ANALYZE " : "EXPLAIN FORMAT=JSON ") + statement.strip();
+	}
+
 	public boolean supports(Feature feature) {
 		return feature != Feature.SCHEMAS;
 	}

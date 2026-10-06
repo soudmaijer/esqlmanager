@@ -33,6 +33,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.database.Database;
+import nl.errorsoft.esql.query.QueryPlan;
 import nl.errorsoft.esql.query.SqlScript;
 import nl.errorsoft.esql.query.control.QueryController;
 import nl.errorsoft.esql.table.ui.TableDataTab;
@@ -66,6 +67,9 @@ public class QueryTab extends JPanel {
 	private final JTabbedPane results = new JTabbedPane();
 	private final JButton runSelectionButton;
 	private final JButton runAllButton;
+	/** Explain and Explain analyze, hidden on servers without {@code Feature.EXPLAIN}. */
+	private final JButton explainButton;
+	private final JButton analyzeButton;
 	/** Set while statements run on their thread; another run waits until they are done. */
 	private boolean running;
 	/** Set while the database or schema is changed on its thread. */
@@ -101,8 +105,17 @@ public class QueryTab extends JPanel {
 		toolbar.addSeparator();
 		runSelectionButton = button(images, "imgRunSelection", "Run selection, or the statement at the caret (" + MENU_KEY + "+Enter)", e -> runSelection());
 		runAllButton = button(images, "imgRunAll", "Run all statements (" + MENU_KEY + "+Shift+Enter)", e -> runAll());
+		explainButton = button(images, "imgExplain", "Explain the plan of the selection, or the statement at the caret (" + MENU_KEY + "+E)",
+			e -> explain(false));
+		analyzeButton = button(images, "imgExplainAnalyze", "Explain analyze: run the statement and show its plan with the measured times",
+			e -> explain(true));
 		toolbar.add(runSelectionButton);
 		toolbar.add(runAllButton);
+		if (controller.supportsExplain()) {
+			toolbar.add(explainButton);
+			toolbar.add(analyzeButton);
+			bind(KeyStroke.getKeyStroke(KeyEvent.VK_E, MENU), "explain", () -> explain(false));
+		}
 		toolbar.addSeparator();
 		toolbar.add(new JLabel(" " + capitalized(controller.databaseTerm()) + ": "));
 		databases = new JComboBox<>(databaseList.toArray(new Database[0]));
@@ -215,6 +228,41 @@ public class QueryTab extends JPanel {
 		}
 	}
 
+	/**
+	 * Shows the plan of the selection or the statement at the caret in a result tab. Analyze runs the statement, so anything but a query is confirmed
+	 * first.
+	 */
+	private void explain(boolean analyze) {
+		if (running || switching) {
+			return;
+		}
+		String selection = editor.getSelectedText();
+		List<SqlScript.Statement> statements = selection != null && !selection.isBlank()
+			? SqlScript.split(selection)
+			: SqlScript.statementAt(editor.getText(), editor.getCaretPosition()).map(List::of).orElse(List.of());
+
+		if (statements.isEmpty()) {
+			return;
+		}
+		if (statements.size() > 1) {
+			Dialogs.warn(this, "Explain", "Explain shows the plan of one statement. Select one statement, or put the caret in it.");
+			return;
+		}
+		String sql = statements.getFirst().sql();
+		if (analyze && !QueryPlan.isReadOnly(sql)
+			&& !Dialogs.confirmDestructive(this, "Explain analyze", "Analyze runs this statement and its changes stay. Run it?", "Run and analyze")) {
+			return;
+		}
+		setRunning(true);
+		controller.explain(sql, analyze, this, result -> {
+			setRunning(false);
+			if (result != null) {
+				showPlan(result);
+			}
+			editor.requestFocusInWindow();
+		});
+	}
+
 	private void runAll() {
 		run(SqlScript.split(editor.getText()));
 	}
@@ -251,6 +299,8 @@ public class QueryTab extends JPanel {
 		String running = idle ? null : "Wait for the running statements.";
 		ToolbarButtons.setAvailable(runSelectionButton, running);
 		ToolbarButtons.setAvailable(runAllButton, running);
+		ToolbarButtons.setAvailable(explainButton, running);
+		ToolbarButtons.setAvailable(analyzeButton, running);
 		databases.setEnabled(idle);
 		schemas.setEnabled(idle);
 	}
@@ -270,10 +320,20 @@ public class QueryTab extends JPanel {
 		tab.add(view, BorderLayout.CENTER);
 		tab.add(details, BorderLayout.SOUTH);
 
+		addResult(tabTitle(statement.sql()), tab, statement.sql());
+	}
+
+	/** The plan in a result tab: the plan viewer, and the plan as text. */
+	private void showPlan(QueryController.ExplainResult explained) {
+		addResult((explained.analyzed() ? "Analyze: " : "Explain: ") + tabTitle(explained.sql()), new PlanView(explained), explained.sql());
+	}
+
+	/** Puts a result in front, dropping the oldest past {@link #MAX_RESULTS}, and shows the results below the editor. */
+	private void addResult(String title, JComponent tab, String sql) {
 		if (results.getTabCount() >= MAX_RESULTS) {
 			results.removeTabAt(0);
 		}
-		results.addTab(tabTitle(statement.sql()), null, tab, tooltip(statement.sql()));
+		results.addTab(title, null, tab, tooltip(sql));
 		results.setSelectedComponent(tab);
 
 		if (split.getBottomComponent() != results) {

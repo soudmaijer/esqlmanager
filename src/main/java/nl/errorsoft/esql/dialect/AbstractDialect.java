@@ -60,6 +60,10 @@ public abstract class AbstractDialect implements Dialect {
 		return "CREATE SCHEMA IF NOT EXISTS " + quote(schema);
 	}
 
+	public String explainSql(String statement, boolean analyze) {
+		throw new EsqlException("This server has no explain in eSQLManager.");
+	}
+
 	public String useSchemaSql(String schema) {
 		return null;
 	}

@@ -1,6 +1,16 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Explain and explain analyze in the query tab
+
+- Explain (Cmd/Ctrl+E) and Explain analyze next to Run show the plan of the selection or the statement at the caret
+  on PostgreSQL and MySQL 8. The plan opens in a result tab as a tree of steps with the estimated and actual rows,
+  loops, cost, time and each step's share of the total as a bar; the steps that take the most are marked in yellow,
+  the selected step's table, index, conditions, buffers and estimate error are shown beside it, and a Text tab has the
+  plan as the server gave it with Copy plan. Markers point out a large sequential or full table scan, an estimate off
+  by more than 10 times, a sort or hash that used the disk and a nested loop that repeats many times.
+- Explain analyze runs the statement; anything other than a query is confirmed first because its changes stay.
+
 06-10-2026: Clear the output
 
 - The eraser button right of the output tabs, Clear in the log's context menu and Cmd+K (Ctrl+K) in the log empty
