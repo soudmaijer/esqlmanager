@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: A macOS download
+
+- A GitHub Actions workflow builds the dmg for Apple silicon when a tag like v1.0.0 is pushed and attaches it to a
+  GitHub release (a tag with a dash, such as v1.0.0-test, makes a draft prerelease). The app is not signed; the
+  README explains how to open it.
+
 06-10-2026: A license
 
 - A LICENSE file: eSQLManager is free to use, also commercially; copying, forking, modifying, rebuilding it (also

@@ -182,6 +182,10 @@ erDiagram
     products ||--o{ order_lines : "fk_order_lines_product_id"
 ```
 
+## Download
+
+Releases for macOS (Apple silicon, a dmg with its own Java runtime) are on https://github.com/sourcelabs-nl/esqlmanager/releases. The app is not signed: right click it in Applications and choose Open the first time, or run `xattr -dr com.apple.quarantine /Applications/eSQLManager.app`.
+
 ## Requirements
 
 - Java 25
