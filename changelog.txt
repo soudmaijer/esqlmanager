@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Explain from a result tab
+
+- Every result tab of a query has Explain and Explain analyze buttons next to the pencil. They explain the
+  statement that produced that result, in the schema it ran in; the plan replaces the one that result showed
+  before instead of opening another tab.
+
 06-10-2026: Designer models know their server
 
 - A model remembers whether it is designed for MySQL or PostgreSQL (saved in the .edm file, now version 0.3; older

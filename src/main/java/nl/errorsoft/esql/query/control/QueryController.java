@@ -59,9 +59,21 @@ public class QueryController implements SchemaNames {
 	}
 
 	/** The rows of one statement, with what is shown below them: when it ran, on which database, how many rows and how long it took. */
-	public record StatementResult(String sql, QueryResult result, LocalTime ranAt, String database, long millis) {
+	public record StatementResult(String sql, QueryResult result, LocalTime ranAt, RanOn on, long millis) {
+		/** The database, with the schema when the tab had one chosen ("shop.public"). */
+		public String database() {
+			return on.label();
+		}
+
 		public int rowCount() {
 			return result.table().getRowCount();
+		}
+	}
+
+	/** Where a statement ran: the database and the schema chosen in the tab (null when none). */
+	public record RanOn(String database, String schema) {
+		String label() {
+			return schema == null ? database : database + "." + schema;
 		}
 	}
 
@@ -259,7 +271,7 @@ public class QueryController implements SchemaNames {
 				switch (queries.execute(sql)) {
 					case ExecutionResult.Rows rows -> {
 						long millis = millisSince(started);
-						StatementResult result = new StatementResult(sql.strip(), rows.result(), ranAt, currentDatabase(), millis);
+						StatementResult result = new StatementResult(sql.strip(), rows.result(), ranAt, ranOn(), millis);
 						results.add(result);
 						log.info("{}: {} row(s) in {} ms", which, result.rowCount(), millis);
 					}
@@ -284,6 +296,16 @@ public class QueryController implements SchemaNames {
 	 * {@code done} gets the plan on the event thread, a failure is reported and {@code done} gets null.
 	 */
 	public void explain(String sql, boolean analyze, Component parent, Consumer<ExplainResult> done) {
+		explain(sql, analyze, ranOn(), parent, done);
+	}
+
+	/** Where statements run now: the database of the tab and its chosen schema. */
+	public RanOn ranOn() {
+		return new RanOn(database, chosenSchema);
+	}
+
+	/** Explains a statement in the schema it ran in; the database must be the one the tab uses ({@link #ranOn()}). */
+	public void explain(String sql, boolean analyze, RanOn on, Component parent, Consumer<ExplainResult> done) {
 		String action = analyze ? "Explain analyze" : "Explain";
 		connectionWindowController.setStatusDetail(parent, (analyze ? "Analyzing" : "Explaining") + " statement...");
 		Thread.ofVirtual().name("explain").start(() -> {
@@ -293,14 +315,14 @@ public class QueryController implements SchemaNames {
 				try {
 					QueryService queries = connectionWindowController.getContext().queries();
 					// The connection is shared with the tree and other tabs, which may have moved it to another database or schema.
-					if (chosenSchema != null) {
-						queries.useSchema(database, chosenSchema);
+					if (on.schema() != null) {
+						queries.useSchema(database, on.schema());
 					}
 					long started = System.nanoTime();
 					LocalTime ranAt = LocalTime.now().withNano(0);
 					QueryPlan plan = queries.explain(sql, analyze);
 					long millis = millisSince(started);
-					result = new ExplainResult(sql.strip(), plan, parse(plan), analyze, ranAt, currentDatabase(), millis);
+					result = new ExplainResult(sql.strip(), plan, parse(plan), analyze, ranAt, on.label(), millis);
 					log.info("{}: plan of {} line(s) in {} ms", action, plan.rows().size(), millis);
 				} catch (Exception e) {
 					status = action + " failed: " + firstLine(sql);
@@ -336,11 +358,6 @@ public class QueryController implements SchemaNames {
 
 	private static void report(Component parent, String action, Exception e) {
 		SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(parent, action, e));
-	}
-
-	private String currentDatabase() {
-		String schema = chosenSchema;
-		return schema == null ? database : database + "." + schema;
 	}
 
 	private static Map<String, Table> byName(List<Table> list) {

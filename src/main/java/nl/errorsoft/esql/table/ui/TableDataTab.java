@@ -48,6 +48,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 	private JComponent navigationBar;
 	private JToolBar rowToolbar;
+	/** Buttons a feature added to the toolbar; they stay visible whatever the rows allow. */
+	private final java.util.Set<Component> addedButtons = new java.util.HashSet<>();
 	private JButton firstButton;
 	private JButton prevButton;
 	private JButton runButton;
@@ -269,11 +271,22 @@ public class TableDataTab extends JPanel implements ActionListener {
 		this.editable = editable;
 
 		for (Component button : rowToolbar.getComponents()) {
-			if (button != editValueButton) {
+			if (button != editValueButton && !addedButtons.contains(button)) {
 				button.setVisible(editable);
 			}
 		}
 		refreshUpdateButtons();
+	}
+
+	/** Adds buttons of the feature that shows this view (Explain on a query result) after a separator, at the end of the toolbar. */
+	public void addToolbarButtons(JButton... buttons) {
+		rowToolbar.addSeparator();
+		ToolbarButtons.style(buttons);
+
+		for (JButton button : buttons) {
+			rowToolbar.add(button);
+			addedButtons.add(button);
+		}
 	}
 
 	/** The change the update buttons would write: the text of the value editor, else the cell edited in the grid, else a new row. */

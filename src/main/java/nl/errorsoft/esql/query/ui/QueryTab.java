@@ -11,7 +11,9 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -61,6 +63,8 @@ public class QueryTab extends JPanel {
 	private final JSplitPane split;
 	private final AutoCompletion completion;
 	private static final int MAX_RESULTS = 20;
+	/** Client property of a plan tab opened from a result tab: that result tab. */
+	private static final String PLAN_OF = "esql.planOf";
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 	private final JLabel noResult = new JLabel("Run a statement to see its result here", JLabel.CENTER);
@@ -70,6 +74,8 @@ public class QueryTab extends JPanel {
 	/** Explain and Explain analyze, hidden on servers without {@code Feature.EXPLAIN}. */
 	private final JButton explainButton;
 	private final JButton analyzeButton;
+	/** The Explain buttons of the open result tabs, by result tab. */
+	private final Map<JComponent, ResultExplain> resultExplains = new HashMap<>();
 	/** Set while statements run on their thread; another run waits until they are done. */
 	private boolean running;
 	/** Set while the database or schema is changed on its thread. */
@@ -249,8 +255,7 @@ public class QueryTab extends JPanel {
 			return;
 		}
 		String sql = statements.getFirst().sql();
-		if (analyze && !QueryPlan.isReadOnly(sql)
-			&& !Dialogs.confirmDestructive(this, "Explain analyze", "Analyze runs this statement and its changes stay. Run it?", "Run and analyze")) {
+		if (analyze && !confirmAnalyze(sql)) {
 			return;
 		}
 		setRunning(true);
@@ -260,6 +265,26 @@ public class QueryTab extends JPanel {
 				showPlan(result);
 			}
 			editor.requestFocusInWindow();
+		});
+	}
+
+	/** Analyze runs the statement: anything but a query is confirmed first. */
+	private boolean confirmAnalyze(String sql) {
+		return QueryPlan.isReadOnly(sql)
+			|| Dialogs.confirmDestructive(this, "Explain analyze", "Analyze runs this statement and its changes stay. Run it?", "Run and analyze");
+	}
+
+	/** Explains the statement of a result tab where it ran; its plan takes the place of the plan this result showed before. */
+	private void explainResult(QueryController.StatementResult statement, JComponent resultTab, boolean analyze) {
+		if (running || switching || (analyze && !confirmAnalyze(statement.sql()))) {
+			return;
+		}
+		setRunning(true);
+		controller.explain(statement.sql(), analyze, statement.on(), this, result -> {
+			setRunning(false);
+			if (result != null) {
+				showPlan(result, resultTab);
+			}
 		});
 	}
 
@@ -301,6 +326,7 @@ public class QueryTab extends JPanel {
 		ToolbarButtons.setAvailable(runAllButton, running);
 		ToolbarButtons.setAvailable(explainButton, running);
 		ToolbarButtons.setAvailable(analyzeButton, running);
+		resultExplains.values().forEach(explain -> explain.update(running));
 		databases.setEnabled(idle);
 		schemas.setEnabled(idle);
 	}
@@ -319,18 +345,69 @@ public class QueryTab extends JPanel {
 		JPanel tab = new JPanel(new BorderLayout());
 		tab.add(view, BorderLayout.CENTER);
 		tab.add(details, BorderLayout.SOUTH);
+		if (controller.supportsExplain()) {
+			ResultExplain explain = new ResultExplain(statement, tab);
+			view.addToolbarButtons(explain.explain, explain.analyze);
+			resultExplains.put(tab, explain);
+			explain.update(running || switching ? "Wait for the running statements." : null);
+		}
 
 		addResult(tabTitle(statement.sql()), tab, statement.sql());
 	}
 
 	/** The plan in a result tab: the plan viewer, and the plan as text. */
 	private void showPlan(QueryController.ExplainResult explained) {
-		addResult((explained.analyzed() ? "Analyze: " : "Explain: ") + tabTitle(explained.sql()), new PlanView(explained), explained.sql());
+		showPlan(explained, null);
+	}
+
+	/** The plan of a result tab replaces the plan that result showed before, if that tab is still open. */
+	private void showPlan(QueryController.ExplainResult explained, JComponent source) {
+		String title = (explained.analyzed() ? "Analyze: " : "Explain: ") + tabTitle(explained.sql());
+		PlanView view = new PlanView(explained);
+		view.putClientProperty(PLAN_OF, source);
+
+		for (int i = 0; source != null && i < results.getTabCount(); i++) {
+			if (results.getComponentAt(i) instanceof PlanView old && old.getClientProperty(PLAN_OF) == source) {
+				results.setComponentAt(i, view);
+				results.setTitleAt(i, title);
+				results.setToolTipTextAt(i, tooltip(explained.sql()));
+				results.setSelectedIndex(i);
+				return;
+			}
+		}
+		addResult(title, view, explained.sql());
+	}
+
+	/** The Explain and Explain analyze buttons in the toolbar of one result tab. */
+	private final class ResultExplain {
+		private final QueryController.StatementResult statement;
+		private final JButton explain;
+		private final JButton analyze;
+
+		ResultExplain(QueryController.StatementResult statement, JComponent resultTab) {
+			this.statement = statement;
+			ImageLoader images = ApplicationContext.get().imageLoader();
+			explain = button(images, "imgExplain", "Explain the plan of this statement", e -> explainResult(statement, resultTab, false));
+			analyze = button(images, "imgExplainAnalyze", "Explain analyze: run this statement again and show its plan with the measured times",
+				e -> explainResult(statement, resultTab, true));
+		}
+
+		/** Available when nothing runs and the tab is on the database the result ran on; {@code busy} says what is running. */
+		void update(String busy) {
+			String missing = busy != null
+				? busy
+				: statement.on().database().equals(controller.ranOn().database())
+					? null
+					: "This result ran on " + statement.on().database() + ", choose it in the tab first.";
+			ToolbarButtons.setAvailable(explain, missing);
+			ToolbarButtons.setAvailable(analyze, missing);
+		}
 	}
 
 	/** Puts a result in front, dropping the oldest past {@link #MAX_RESULTS}, and shows the results below the editor. */
 	private void addResult(String title, JComponent tab, String sql) {
 		if (results.getTabCount() >= MAX_RESULTS) {
+			forget(results.getComponentAt(0));
 			results.removeTabAt(0);
 		}
 		results.addTab(title, null, tab, tooltip(sql));
@@ -344,6 +421,7 @@ public class QueryTab extends JPanel {
 	}
 
 	private void closeResult(int index) {
+		forget(results.getComponentAt(index));
 		results.removeTabAt(index);
 
 		if (results.getTabCount() == 0) {
@@ -351,6 +429,10 @@ public class QueryTab extends JPanel {
 			split.setBottomComponent(noResult);
 			split.setDividerLocation(divider);
 		}
+	}
+
+	private void forget(java.awt.Component tab) {
+		resultExplains.remove(tab);
 	}
 
 	/** The statement on one line, shortened to fit on a tab. */
