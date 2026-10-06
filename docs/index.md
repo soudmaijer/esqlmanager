@@ -1,12 +1,12 @@
 # eSQLManager help
 
-eSQLManager is a database manager for MySQL and PostgreSQL. SQL Server and Oracle can be browsed. Every connection opens in its own window: the database tree on the left, tabs with table data and queries on the right, and the output panel with the log at the bottom.
+eSQLManager is a database manager for MySQL and PostgreSQL. SQL Server and Oracle can be browsed. All connections share one window: the explorer with every connection and saved profile on the left, a tab per table, query, editor and designer on the right, and one output panel with the log of all connections across the bottom.
 
-![The connection window with the products table of a PostgreSQL database](screenshot.png)
+![The main window with the products table of a PostgreSQL database](screenshot.png)
 
 ## Pages
 
-* [Getting started](getting-started.md): connection profiles, the connection window and the status bars.
+* [Getting started](getting-started.md): connection profiles, the explorer, the work tabs and the status bars.
 * [Tables and columns](tables-and-columns.md): browsing, editing data, creating and changing tables, indexes, export and import.
 * [SQL query](query.md): the query tab, shortcuts and completion.
 * [Database designer](designer.md): drawing a model, foreign keys, opening an existing database, PlantUML and Mermaid export.

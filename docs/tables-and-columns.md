@@ -4,11 +4,11 @@
 
 ## Viewing data
 
-Double click a table in the tree (or choose Open in its context menu) to show its rows. The data is shown a page at a time; the paging buttons are in the bar below the tabs. Click a column header to sort. Paging orders by the primary key, so rows keep their place after an update.
+Double click a table in the tree (or choose Open in its context menu) to show its rows. The data is shown a page at a time; the paging buttons are in the bar at the bottom of the tab. Click a column header to sort. Paging orders by the primary key, so rows keep their place after an update.
 
 ## Editing data
 
-* Click a cell and type to change it, then press **Update changes** in the toolbar. An empty cell is stored as `NULL` and shown as a dimmed *NULL*, so it differs from the text "null".
+* Click a cell and type to change it, then press **Update changes** in the toolbar at the top of the table data. An empty cell is stored as `NULL` and shown as a dimmed *NULL*, so it differs from the text "null".
 * **Insert new row** adds an empty row to fill in, **Delete row** removes the selected rows after asking.
 * Binary columns (blobs) can be uploaded from a file and saved to a file.
 
@@ -16,7 +16,7 @@ A row can only be changed or deleted when it can be identified, by its primary k
 
 ## Tables
 
-* **Create table** (toolbar, or the context menu of a database) asks for a name and the columns: type, length, default, not null, auto increment, a comment per column (MySQL and PostgreSQL), and primary key, unique and index flags. **Show SQL** at the bottom of the tab shows the statements that Save will run and keeps them up to date while you type.
+* **Create table** (explorer toolbar, or the context menu of a database) asks for a name and the columns: type, length, default, not null, auto increment, a comment per column (MySQL and PostgreSQL), and primary key, unique and index flags. **Show SQL** at the bottom of the tab shows the statements that Save will run and keeps them up to date while you type.
 * **Edit table** renames a table and changes its comment and, on MySQL, its storage engine. Show SQL lists the statements for the changes made so far.
 * **Rename table** and **Duplicate table** are in the context menu of a table. Duplicate copies the structure (columns, defaults, indexes) to a new table next to it and, when you tick "Copy the data too", the rows; the auto numbering of the copy continues after the copied rows. The new name must not exist yet.
 * **Properties** (context menu of a table or a database) shows a read-only summary: for a table its name, database, schema, engine or type, comment, number of rows and columns and its size on disk; for a database its character set and collation (MySQL) or owner and encoding (PostgreSQL) and its number of tables.
@@ -30,7 +30,7 @@ These three open as a tab of the connection window, one per table; opening one a
 
 ## Columns
 
-Add field, Edit field and Drop field are in the toolbar and in the context menu of a table or column.
+Add field, Edit field and Drop field are in the explorer toolbar and in the context menu of a table or column.
 
 ## Export and import
 
@@ -45,5 +45,5 @@ Add field, Edit field and Drop field are in the toolbar and in the context menu 
 
 ## Users and server
 
-* **Users** (server context menu or toolbar) manages accounts, passwords and privileges per server, database and table. On PostgreSQL accounts are roles.
+* **Users** (connection context menu or explorer toolbar) manages accounts, passwords and privileges per server, database and table. On PostgreSQL accounts are roles.
 * **Process list** shows the connections to the server (its own included) with their running queries, and can end one. **Pause** stops the refreshing, **Hide idle** leaves out the connections that run nothing, and the interval can be 1, 2, 5 or 10 seconds. Double click a row (or Show query) opens the full statement with SQL colouring and a Copy button. **Show status** and **Show variables** list the server's status values and settings.

@@ -26,23 +26,25 @@ The **Databases and schemas** tab is available after a successful test. It lists
 
 Profiles are saved in `conf/profiles.xml`. A saved password is stored there in plain text, so only save one on a machine you trust, or turn Save password off.
 
-Several connections can be open at the same time. Each connection window, and each designer, has a tab at the top of eSQLManager with the logo of its server and its title; click a tab to bring that window to the front, or use Window > Next window and Previous window (Cmd/Ctrl+Shift+] and [) or pick it from the Window menu. The cross on a tab (or a middle click) closes the window: a connection asks "Disconnect from ...?", a designer asks to save its model.
+Several connections can be open at the same time. They all appear in the explorer on the left, each under the name of its profile, so two connections to the same server as the same user are told apart. Saved profiles that are not connected are listed below them in grey: double click one (or choose Connect in its context menu) to connect, Edit connection opens the profile dialog on it. When there are no connections and no saved profiles yet, the explorer shows a **New connection...** button that opens the connection dialog.
 
-## The connection window
+## The main window
 
-* **Tree** on the left: the server, its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Double click a database to list its tables, double click a table to open its data. Right click any node for its context menu, which only lists what the server supports:
-  * server: Create database, New query, Users, Process list, Show status, Show variables, Reload databases;
+* **Explorer** on the left: every connection with its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Selecting a database, schema or table loads what is below it in the background. A column shows its type in grey after its name (`id  integer`, `name  varchar(100)`), a key icon for the primary key and a link icon for a foreign key; hover over it for not null, default and auto increment. Double click a database to list its tables, double click a table to open its data. Right click any node for its context menu, which only lists what the server supports:
+  * connection: Create database, New query, Users, Process list, Show status, Show variables, Reload databases, Disconnect;
+  * saved profile: Connect, Edit connection;
   * database: Open, Create table, Open in designer, Export, Import, Drop database, Properties, Reload tables (PostgreSQL: Create schema and Reload schemas);
   * schema (PostgreSQL): New query, Create table, Open in designer, Export, Import, Rename schema, Drop schema, Reload tables;
   * table: Open, Edit table, Indexes, Add field, Rename table, Duplicate table, Export, the maintenance commands, Empty table, Drop table, Properties, Reload columns;
   * column: Add field, Edit field, Drop field.
-* **Tabs** on the right: the table list or the table data in the first tab, query tabs ("Query", "Query 2", ...). Every tab has a close button; the tab in front has a darker background and a coloured underline.
-* **Toolbar**: create and drop a table, add and delete a field, insert, update and delete a row, run an SQL query, open the database in the designer, the user manager and refresh the tree. Buttons are enabled when they apply to what is selected.
-* **Output panel** at the bottom: the log of the connection, with the server version and driver and every executed statement.
+* The **explorer toolbar** reloads the databases, opens a query, the user manager and the designer, creates and drops a table and adds and drops a field, for the connection of the selected node. Buttons are enabled when they apply to what is selected.
+* **Work tabs** on the right: every table list, table data, query ("Query", "Query 2", ...), table editor, indexes, designer and the help is a tab of its own with the logo of its server. When two tabs have the same title, the profile name of the connection is added: "orders (local pg)". Click a tab to bring it to the front, or use Window > Next window and Previous window (Cmd/Ctrl+Shift+] and [); the Window menu lists the open tabs grouped by connection. The cross on a tab (or a middle click) closes it; an editor with changes asks first, a designer asks to save its model.
+* The table data has a **toolbar at its top** to insert, update and delete rows.
+* **Output panel** at the bottom, across the whole width: one log for all connections, with the server version and driver and every executed statement. A line written for a connection starts with its profile name in brackets, such as `[local pg]`.
 
-Closing the window asks "Disconnect from ...?" first.
+**Disconnect** (toolbar, Options menu, or the context menu of a connection) first asks each editor of the connection with unsaved changes, then "Disconnect from <profile>? N tabs will close.". The tabs of the connection close; its designers stay open, and Generate then asks for another open connection to the same kind of server.
 
 ## Status bars
 
-* The bar below the tabs shows the message of the tab in front: on the table data how many rows were loaded and how long it took, on a query tab the outcome of its last run. A tab without a message of its own, such as a fresh query tab, leaves it empty. While the table data is in front, the paging buttons are in the same bar. What happens in the tree (schemas listed, a model opened in the designer) is in the output panel.
-* The status bar of the application shows a light for the state of the active connection and, on the right, its server and account.
+* The bar at the bottom of a tab shows its last message: on the table data how many rows were loaded and how long it took, on a query tab the outcome of its last run. A tab without a message of its own, such as a fresh query tab, leaves it empty. On the table data the paging buttons are in the same bar. What happens in the explorer (tables listed, a model opened in the designer) is in the output panel.
+* The status bar of the application shows a light for the state and, on the right, the server and account of the connection of the tab in front or of the node selected in the explorer.

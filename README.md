@@ -21,9 +21,9 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 | Saved connection profiles with auto-connect, duplicate, optional saved password | yes | yes | yes | yes |
 | Test connection from the profile dialog | yes | yes | yes | yes |
 | Choose the databases and schemas a profile shows (checkbox tree in the profile dialog) | yes | yes | yes | no |
-| Several connections open at once, one tab per window | yes | yes | yes | yes |
+| Several connections open at once in one explorer, a tab per table, query, editor and designer, one output log | yes | yes | yes | yes |
 | JDBC driver configuration | yes | yes | yes | yes |
-| Browse databases, tables, views and columns in a tree | yes | yes | yes | yes |
+| Browse databases, tables, views and columns (with their types) in one explorer for all connections | yes | yes | yes | yes |
 | Schemas in the tree (server > databases > schemas > tables), create, rename and drop a schema | no | yes | no | no |
 | Row count per table | yes | yes | yes | yes |
 | View table data, paged | yes | yes | yes | yes |
@@ -73,7 +73,7 @@ Each database has its own dialect (`nl.errorsoft.esql.dialect`) that decides how
 
 The SQL query opens as a tab of the connection window ("Query", "Query 2", ...). Every statement that returns rows gets its own result tab below the editor, named after the statement (hover for the full text), with when it ran, on which database, the row count and the time taken; the newest is in front and at most 20 are kept. The bar below the tabs shows the message of the tab in front (a query's outcome, the rows loaded on the table data) and is empty for a tab without one, such as a fresh query tab. The tab in front has a darker background and a coloured underline. Shortcuts in the editor: Cmd+Enter (Ctrl+Enter on Windows and Linux) runs the selection or the statement at the caret, Cmd+Shift+Enter runs all statements in order and stops at the first error; Ctrl+Space, Cmd+Space and Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) open the completion, typing a period after a table or alias opens its columns. macOS gives Cmd+Space to Spotlight; turn that shortcut off in System Settings > Keyboard > Keyboard Shortcuts > Spotlight to use it for completion.
 
-Right click a server, database, table or column in the tree for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export, Import and Properties on a database, Edit, Indexes, Rename, Duplicate, Properties and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
+The explorer on the left holds every open connection, named after its profile, and the saved profiles in grey (double click to connect). Every view opens as a tab on the right, the output panel across the bottom logs all connections with the profile name in front of each line. Disconnecting closes the tabs of that connection and keeps its designers open. Right click a connection, database, table or column in the explorer for its context menu. It only lists what the server supports: Users, Process list, Status and Variables on the server, Open in designer, Export, Import and Properties on a database, Edit, Indexes, Rename, Duplicate, Properties and the maintenance commands (Optimize and Analyze, plus Check and Repair on MySQL) on a table.
 
 Export, import and the transfer of a binary cell run in the background with a progress window that has a Cancel button. The export window can wrap the script in a transaction, write views, several rows per `INSERT`, another encoding and gzip (a name ending in `.gz`); the import window can continue after errors and list the failed statements, or run everything in one transaction that is rolled back on an error or cancel.
 

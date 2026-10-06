@@ -145,9 +145,13 @@ This is the naming standard. New and renamed classes must follow it. Existing cl
 | `Repository` | The only place that runs SQL |
 | `Controller` | Turns a user action into service calls and shows the outcome (replaces the old `CC` suffix) |
 | `Window` | Desktop window, frame or internal frame (replaces `UI`) |
-| `Tab` | Content of a tab in the connection window |
+| `Tab` | Content of a work view (a `WorkFrame` with a window tab) of a connection |
+| `View` | Interface a controller uses to show its results, implemented by the UI (`ConnectionView`, implemented by `WorkFrames`) |
+| `Branch` | The subtree of one connection in the explorer tree (`ConnectionBranch`) |
+| `Frame` | An internal frame that wraps one work view (`WorkFrame`), plural for its per-connection registry (`WorkFrames`) |
+| `Node` | User object of a tree node that is not a domain object (`ConnectionNode`, `ProfileNode`) |
 | `Dialog` | Anything that is a `JDialog` (replaces `UI` and `Form` suffixes and bare names such as `Generate`, `Properties`, `Processlist`) |
-| `Panel` | Composed Swing component inside a window, tab or dialog (replaces `View` / `Form`) |
+| `Panel` | Composed Swing component inside a window, tab or dialog (replaces `View` / `Form` as the suffix of a Swing component) |
 | `Renderer`, `CellEditor` | Swing renderers and editors |
 | `Painter` | Draws a shape on a canvas with `Graphics2D` (not a cell renderer), such as `ConnectorPainter` |
 | `Card` | An object drawn on the designer canvas (`TableCard`, `DatabaseCard`, `NoteCard`, base `ModelCard`) |
@@ -210,7 +214,9 @@ Known layer and naming problems that are not fixed yet. Do not report them again
 - `connection.ConnectionProfile` and `connection.DatabaseDriver` mix domain data with reading and writing their XML files. `ProfileXml` maps one `<profile>` element, but the file IO is still in `ConnectionProfile`; a `DriverXml` does not exist yet.
 - Some controllers use Swing types beyond `Dialogs`/`SwingUtilities`: `connection.control.ConnectionProfileController` (`JPasswordField`), `server.control.ProcessListController` (`JFrame`), and `exporter.control.ExportController` and `importer.control.ImportController` (`javax.swing.tree` nodes for the tree of their window).
 - Controllers that build the Swing view they drive (A1, cheap to move only with the view's own constructor arguments): `table.control.TableController`, `IndexesController` and `TableEditorController` create their tabs (`TableDataTab`, `IndexesTab`, `TableEditorTab`) and `showEditorTab` them, `database.control.DatabaseController`, `ExportController` and `ImportController` create `DatabaseTree`, `TableListTab` and `ImportExportProgressDialog`, and `app.control.MainController` creates `MainWindow`, `SplashWindow`, `SettingsDialog` and `DesignerWindow`. The tabs and windows take their controller in the constructor, so the window cannot build them from data yet.
-- `database.DatabaseListService` owns a scratch `DatabaseConnection` of its own (the only service that refers to `jdbc.DatabaseConnection`) and is created by the profile controller, not by `ConnectionContext` (it runs before a connection window exists).
+- `database.DatabaseListService` owns a scratch `DatabaseConnection` of its own (the only service that refers to `jdbc.DatabaseConnection`) and is created by the profile controller, not by `ConnectionContext` (it runs before the connection is opened).
+- `connection.control.ConnectionWindowController` is the per-connection controller; it lost its window, the name is rename debt (`ConnectionController`).
+- `connection.ui.WorkFrames` implements `ConnectionView` but is a registry, not a Swing component; `database.ui.DatabaseTree` and `ConnectionBranch` keep the old tree API used by the export and import windows.
 - `ProcessListDialog`, `UserManagerDialog` and `GenerateDialog` extend `JDialog` directly instead of `ui.dialog.FormDialog`.
 - `designer.ui.dialog.ObjectNames` holds Swing-free name rules but works on the canvas cards, so it stays in `ui.dialog` instead of the feature package.
 - `designer.ui.dialog.ModelPropertiesPanel`, `DatabasePropertiesPanel` and `TablePropertiesPanel` are panels in `ui.dialog` because only `DesignerPropertiesDialog` uses them.

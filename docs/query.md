@@ -2,7 +2,7 @@
 
 [Back to the help index](index.md)
 
-New query (in the context menu of the server or a database) or **Run SQL query** in the toolbar opens a query tab: "Query", "Query 2" and so on. The tab starts on the database selected in the tree, or on the database the connection uses when nothing is selected. Each tab has its own editor and result, and can be closed with its close button.
+New query (in the context menu of a connection or a database) or **New query** in the explorer toolbar opens a query tab: "Query", "Query 2" and so on. The tab starts on the database selected in the explorer, or on the database the connection uses when nothing is selected. Each tab has its own editor and result, and can be closed with its close button.
 
 The editor highlights SQL, shows line numbers and has undo; its font size is set in Settings > Preferences. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files. On PostgreSQL a schema picker sits next to the database: plain table names resolve to the chosen schema (it sets the `search_path`), write `schema.table` for the others. The result line shows the database and schema a statement ran on.
 

@@ -66,13 +66,15 @@ JOptionPane.showConfirmDialog(window, "Are you sure?");
 - A tree menu item not coming from `TreeMenu.itemsFor(node, dialect)`.
 - An editor (create or edit table, indexes, a similar work area) that is a dialog or separate window instead of a tab implementing `ui.component.EditorTab` (`confirmClose()`, `removeTab` after a successful save).
 - Esc closing a tab. Esc (`EscapeToClose`) is for dialogs only.
-- A feature opening a separate top level window. Work windows are internal frames on the desktop.
+- A feature opening a separate top level window. Work views of a connection are `connection.ui.WorkFrame`s opened through its `ConnectionView` (`WorkFrames`), shown as tabs above the desktop of the main window; designers and help are internal frames there too.
+- A tree action that is not wired in `ExplorerPanel.perform` to a `ConnectionWindowController` method of the connection the node belongs to (`TreeSelection.connection`).
 
 ## Rule U7: Event thread
 
 **Flag:**
 - Swing components touched from a virtual or background thread without `SwingUtilities.invokeLater`.
-- Blocking work (JDBC, file IO) on the event thread.
+- Blocking work (JDBC, file IO) on the event thread. A controller runs it through `ConnectionWindowController.inBackground`, also the loads triggered by selecting a node in the explorer.
+- A thread doing a connection's work without `ConnectionWindowController.logContext()` (its log lines lose the connection name in the output panel).
 
 ```java
 // Good

@@ -1,6 +1,21 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: One explorer for all connections
+
+- The connection windows are gone: the explorer on the left lists every open connection (named after its profile)
+  and the saved profiles in grey (double click connects). Every table list, table data, query, editor, indexes,
+  designer and the help is a tab of its own with the logo of its server; tabs with the same title get the profile
+  name behind it. The Window menu groups the tabs by connection.
+- The explorer shows the type of each column in grey, a link icon for foreign keys and a tooltip with not null,
+  default and auto increment. Selecting a database, schema or table loads it in the background.
+- Insert, update and delete row are in a toolbar at the top of the table data.
+- One output panel across the full width of the window logs all connections; lines of a connection start with its
+  profile name in brackets.
+- Disconnect asks the editors with changes first, then "Disconnect from <profile>? N tabs will close.". Designers
+  stay open without their connection; Generate then asks for an open connection to the same kind of server.
+- Without connections or profiles the explorer shows a New connection button.
+
 06-10-2026: Review fixes
 
 - Export switches to the database of each exported object before it reads it, so exporting two databases, or a
