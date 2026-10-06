@@ -9,6 +9,12 @@ import nl.errorsoft.esql.connection.control.DatabaseDriverController;
 import nl.errorsoft.esql.exporter.control.ExportController;
 import nl.errorsoft.esql.importer.control.ImportController;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.swing.JInternalFrame;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +24,7 @@ import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.BuildInfo;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.ui.util.EscapeToClose;
-import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.connection.ui.WorkFrame;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.settings.ui.dialog.SettingsDialog;
 import nl.errorsoft.esql.app.ui.SplashWindow;
@@ -31,6 +37,7 @@ public class MainController {
 
 	private BuildInfo buildInfo;
 	private MainWindow mainWindow;
+	private final List<ConnectionWindowController> connections = new ArrayList<>(); // Open connections, in the order they were opened
 
 	public MainController() {
 		// Both must happen before the first window or icon exists: macOS reads its desktop properties only once.
@@ -49,6 +56,7 @@ public class MainController {
 		log.info("Working directory: {}", System.getProperty("user.dir"));
 		// Show splash.
 		showSplashScreen(3000);
+		refreshProfiles();
 		mainWindow.showConnectionState();
 	}
 
@@ -71,22 +79,79 @@ public class MainController {
 		new SplashWindow(this, mainWindow, time);
 	}
 
-	public void showConnectionWindow(ConnectionWindow connectionWindow) {
-		mainWindow.addConnectionWindow(connectionWindow);
+	/** A connection was opened: it is listed in the explorer instead of its saved profile. */
+	public void addConnection(ConnectionWindowController connection) {
+		connections.add(connection);
+		refreshProfiles();
+		showConnectionState();
 	}
 
-	public void removeConnectionWindow(ConnectionWindow connectionWindow) {
-		mainWindow.removeConnectionWindow(connectionWindow);
+	public void removeConnection(ConnectionWindowController connection) {
+		connections.remove(connection);
+		refreshProfiles();
+		showConnectionState();
+	}
+
+	public int connectionCount() {
+		return connections.size();
+	}
+
+	/** The connection of the window in front (a work window or a designer), else of the node selected in the explorer; null when there is none. */
+	public ConnectionWindowController activeConnection() {
+		JInternalFrame frame = mainWindow.getSelectedFrame();
+		if (frame instanceof WorkFrame work) {
+			return work.getConnection();
+		}
+		if (frame instanceof DesignerWindow designer && designer.getConnection() != null) {
+			return designer.getConnection();
+		}
+		ConnectionWindowController selected = mainWindow.getExplorer().selectedConnection();
+		if (selected != null) {
+			return selected;
+		}
+		return connections.isEmpty() ? null : connections.getLast();
+	}
+
+	/** Lists the saved profiles that are not connected in the explorer, in grey. */
+	public void refreshProfiles() {
+		ConnectionProfile[] saved;
+		try {
+			saved = new ConnectionProfile().getProfiles();
+		} catch (Exception e) {
+			// The profile dialog reports a profiles.xml that cannot be read; the explorer then shows the connections only.
+			log.warn("The saved profiles cannot be listed: {}", e.getMessage());
+			saved = new ConnectionProfile[0];
+		}
+		List<String> connected = connections.stream().map(c -> c.getConnectionProfile().getName()).toList();
+		mainWindow.getExplorer()
+			.showProfiles(Arrays.stream(saved).filter(profile -> connected.stream().noneMatch(name -> name.equalsIgnoreCase(profile.getName()))).toList());
 	}
 
 	public void openConnectionWindow(ConnectionProfile profile) {
-		// Connect and start window.
 		new ConnectionWindowController(this, profile);
+	}
+
+	/** Connects a saved profile, asking for its password or driver first when needed. */
+	public void connect(ConnectionProfile profile) {
+		new ConnectionProfileController(this).connect(profile);
+	}
+
+	/** Disconnects the active connection, after asking. */
+	public void disconnect() {
+		ConnectionWindowController connection = activeConnection();
+		if (connection != null) {
+			connection.disconnect();
+		}
 	}
 
 	public void showDriverDialog() {
 		DatabaseDriverController driverController = new DatabaseDriverController(this);
 		driverController.showDialog(mainWindow);
+	}
+
+	/** The profile dialog with a profile selected, to edit it. */
+	public void showConnectionProfileDialog(String profileName) {
+		new ConnectionProfileController(this).showDialog(mainWindow, profileName);
 	}
 
 	public void showConnectionProfileDialog() {
@@ -99,23 +164,23 @@ public class MainController {
 	}
 
 	public void showImportDialog() {
-		if (mainWindow.getConnectionWindowCount() > 0) {
-			ImportController importController = new ImportController(this);
-			importController.startImport(mainWindow.getConnectionWindow().getController());
+		ConnectionWindowController connection = activeConnection();
+		if (connection != null) {
+			new ImportController(this).startImport(connection);
 		}
 	}
 
 	public void showExportDialog() {
-		if (mainWindow.getConnectionWindowCount() > 0) {
-			ExportController exportController = new ExportController(this);
-			exportController.startExport(mainWindow.getConnectionWindow().getController());
+		ConnectionWindowController connection = activeConnection();
+		if (connection != null) {
+			new ExportController(this).startExport(connection);
 		}
 	}
 
 	public void openDesigner() {
-		if (mainWindow.getConnectionWindowCount() > 0
-			&& mainWindow.getConnectionWindow().getController().requireFeature(Dialect.Feature.DESIGNER, "The designer")) {
-			new DesignerWindow(mainWindow, mainWindow.getConnectionWindow());
+		ConnectionWindowController connection = activeConnection();
+		if (connection != null && connection.requireFeature(Dialect.Feature.DESIGNER, "The designer")) {
+			new DesignerWindow(mainWindow, connection);
 		}
 	}
 

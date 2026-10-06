@@ -8,7 +8,7 @@ import nl.errorsoft.esql.table.Table;
 import nl.errorsoft.esql.table.TableColumn;
 
 /**
- * What an action finds in the node selected in the tree of the connection window. Every method accepts null (nothing selected yet, or the tree has
+ * What an action finds in the node selected in the explorer. Every method accepts null (nothing selected yet, or the tree has
  * just been loaded) and then returns null, so that the caller can ask the user to select something first.
  */
 public final class TreeSelection {

@@ -126,7 +126,7 @@ public final class TreeMenu {
 		return tidy(items);
 	}
 
-	/** What the server itself offers: on the server node of a connection window and on the node of a connection. */
+	/** What the server itself offers: on the server node of a dialog's tree and on the node of a connection. */
 	private static void addServerItems(List<Item> items, Dialect dialect) {
 		addIf(items, dialect.supports(Feature.CREATE_DATABASE), Item.CREATE_DATABASE);
 		items.add(Item.NEW_QUERY);

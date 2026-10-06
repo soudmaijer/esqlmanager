@@ -35,6 +35,17 @@ public class ConnectionProfileController {
 		profileStore = new ConnectionProfile();
 	}
 
+	/** Opens the profile dialog with the named profile selected, to edit it. */
+	public void showDialog(MainWindow mainWindow, String selectedName) {
+		try {
+			profileDialog = new ConnectionProfileDialog(mainWindow, this);
+			profileDialog.loadProfiles(profileStore.getProfiles(), selectedName);
+			profileDialog.setVisible(true);
+		} catch (Exception e) {
+			ApplicationContext.get().errors().report(mainWindow, "Load profiles", e);
+		}
+	}
+
 	public void showDialog(MainWindow mainWindow, boolean autoConnect) {
 		// Create Frame.
 		mainWindow.updateStatus("Starting profile manager...", true);
@@ -65,7 +76,7 @@ public class ConnectionProfileController {
 		}
 	}
 
-	/** Opens a connection window for the profile, after downloading its driver when the user agrees. */
+	/** Connects the profile, after downloading its driver when the user agrees. */
 	public void connect(ConnectionProfile selectedProfile) {
 		new DriverDownloadController(dialogOrMainWindow()).ensureDriver(selectedProfile.getServerType().driverSource(),
 			() -> connectWithDriver(selectedProfile),
@@ -131,6 +142,7 @@ public class ConnectionProfileController {
 			mainController.updateStatus("Adding profile...", true);
 			profileStore.addProfile(typed);
 			profileDialog.loadProfiles(profileStore.getProfiles(), typed.getName());
+			mainController.refreshProfiles();
 			mainController.showConnectionState();
 			return true;
 		} catch (Exception e) {
@@ -150,6 +162,7 @@ public class ConnectionProfileController {
 			mainController.updateStatus("Saving profile...", true);
 			profileStore.editProfile(previousName, typed);
 			profileDialog.loadProfiles(profileStore.getProfiles(), typed.getName());
+			mainController.refreshProfiles();
 			mainController.showConnectionState();
 			return true;
 		} catch (Exception e) {
@@ -164,6 +177,7 @@ public class ConnectionProfileController {
 			ConnectionProfile copy = saved.copyAs(profileStore.uniqueCopyName(saved.getName()));
 			profileStore.addProfile(copy);
 			profileDialog.loadProfiles(profileStore.getProfiles(), copy.getName());
+			mainController.refreshProfiles();
 			log.info("Profile '{}' duplicated as '{}'", saved.getName(), copy.getName());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Duplicate profile", e);
@@ -301,6 +315,7 @@ public class ConnectionProfileController {
 			mainController.updateStatus("Deleting profile...", true);
 			this.profileStore.deleteProfile(profile);
 			profileDialog.loadProfiles(this.profileStore.getProfiles(), null);
+			mainController.refreshProfiles();
 			mainController.showConnectionState();
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(profileDialog, "Delete profile", e);

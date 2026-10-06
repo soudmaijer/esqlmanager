@@ -102,7 +102,7 @@ public class DatabaseController {
 	}
 
 	/**
-	 * Reads the databases of a dialog's tree and what it needs to open at the node selected in the connection window (a database, schema or table). Database
+	 * Reads the databases of a dialog's tree and what it needs to open at the node selected in the explorer (a database, schema or table). Database
 	 * work, not for the event thread.
 	 */
 	public TreeStart treeStart(Object selected) throws Exception {
@@ -122,7 +122,7 @@ public class DatabaseController {
 		return new TreeStart(getDatabases(), children, selected);
 	}
 
-	/** Opens a dialog's tree at the node selected in the connection window, so that the dialog starts from it; on the event thread. */
+	/** Opens a dialog's tree at the node selected in the explorer, so that the dialog starts from it; on the event thread. */
 	public void selectInTree(DatabaseTree tree, TreeStart start) {
 		for (Children children : start.children()) {
 			showChildren(tree, children);

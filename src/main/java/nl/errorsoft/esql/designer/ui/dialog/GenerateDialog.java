@@ -10,7 +10,7 @@ import javax.swing.*;
 
 import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.app.ui.MainWindow;
-import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.designer.DesignedModel;
 import nl.errorsoft.esql.designer.ModelCheck;
 import nl.errorsoft.esql.designer.control.GenerateController;
@@ -32,9 +32,9 @@ public class GenerateDialog extends JDialog {
 	/** True while checking or generating, the dialog cannot be closed then. */
 	private boolean busy;
 
-	public GenerateDialog(MainWindow mainWindow, ConnectionWindow connectionWindow, Model model) {
+	public GenerateDialog(MainWindow mainWindow, ConnectionWindowController connection, Model model) {
 		super((JFrame) mainWindow, "Analyze / generate model", true);
-		this.controller = new GenerateController(connectionWindow.getController());
+		this.controller = new GenerateController(connection);
 		this.snapshot = controller.snapshot(model);
 
 		initComponents();

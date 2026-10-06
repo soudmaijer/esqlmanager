@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.ui.component;
 
 /**
- * A tab of the connection window that edits something (a table, its indexes). The window asks it before the tab is closed, so unsaved work is not lost
+ * A work window of a connection that edits something (a table, its indexes). The window asks it before the tab is closed, so unsaved work is not lost
  * silently.
  */
 public interface EditorTab {

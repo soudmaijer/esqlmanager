@@ -21,12 +21,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * The tab bar at the top of the main window with one tab per work window (connection windows and designers). The windows are internal frames on the
+ * The tab bar at the top of the main window with one tab per work window (table data, queries, editors, designers, help). The windows are internal frames on the
  * desktop, always maximized and without a title bar: the tab shows their icon and title, selecting a tab brings its frame to the front, and a frame that
  * becomes active selects its tab. The close cross (or a middle click) asks the frame to close the way its own close action does; the tab goes when the
- * window is removed.
+ * window is removed. When two tabs have the same title, the tabs of windows of a connection name it: "orders (postgres@localhost)".
  */
 public class WindowTabsPanel extends JPanel {
+	/** The client property of a frame with the title of its connection, such as {@code postgres@localhost}. */
+	public static final String CONNECTION_TITLE = "WindowTabsPanel.connection";
+
 	private static final Logger log = LogManager.getLogger(WindowTabsPanel.class);
 
 	private final JDesktopPane desktop;
@@ -77,6 +80,7 @@ public class WindowTabsPanel extends JPanel {
 			}
 		});
 		setVisible(true);
+		updateTitles();
 		tabs.setSelectedIndex(frames.size() - 1);
 		showFrame(frame);
 	}
@@ -91,6 +95,7 @@ public class WindowTabsPanel extends JPanel {
 		desktop.getDesktopManager().closeFrame(frame);
 		frame.dispose();
 		setVisible(!frames.isEmpty());
+		updateTitles();
 		showFrame(selectedFrame());
 	}
 
@@ -127,8 +132,20 @@ public class WindowTabsPanel extends JPanel {
 	private void updateTab(JInternalFrame frame) {
 		int index = frames.indexOf(frame);
 		if (index >= 0) {
-			tabs.setTitleAt(index, frame.getTitle());
 			tabs.setIconAt(index, frame.getFrameIcon());
+		}
+		updateTitles();
+	}
+
+	/** The title of each tab, with the connection behind it when another tab has the same title. */
+	private void updateTitles() {
+		for (int i = 0; i < frames.size(); i++) {
+			JInternalFrame frame = frames.get(i);
+			String title = frame.getTitle();
+			Object connection = frame.getClientProperty(CONNECTION_TITLE);
+			boolean shared = frames.stream().filter(other -> other.getTitle().equals(title)).count() > 1;
+			tabs.setTitleAt(i, shared && connection != null ? title + " (" + connection + ")" : title);
+			tabs.setToolTipTextAt(i, connection != null ? title + " (" + connection + ")" : null);
 		}
 	}
 

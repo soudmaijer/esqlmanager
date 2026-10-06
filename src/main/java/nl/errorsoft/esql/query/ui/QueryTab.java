@@ -41,7 +41,7 @@ import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
 import nl.errorsoft.esql.ui.util.FileChoosers;
 
 /**
- * A query tab of the connection window: the SQL editor with completion on top and below it a tab for every statement that returned rows, the newest in
+ * A query window of a connection: the SQL editor with completion on top and below it a tab for every statement that returned rows, the newest in
  * front. A result tab is named after its statement (the full text is its tooltip) and shows when it ran, on which database, the rows and the time taken.
  */
 public class QueryTab extends JPanel {

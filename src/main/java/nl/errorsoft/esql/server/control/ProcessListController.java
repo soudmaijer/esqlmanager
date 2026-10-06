@@ -18,7 +18,7 @@ import nl.errorsoft.esql.server.ui.dialog.ProcessListDialog;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 /**
- * Shows the process list of a server and refreshes it every few seconds. The list runs on a connection of its own, so a long query in the connection window
+ * Shows the process list of a server and refreshes it every few seconds. The list runs on a connection of its own, so a long query in a query window
  * does not hold it up.
  */
 public class ProcessListController {

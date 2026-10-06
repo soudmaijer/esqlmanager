@@ -10,7 +10,8 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.control.MainController;
-import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
+import nl.errorsoft.esql.connection.ui.ExplorerPanel;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.ui.editor.EditorTheme;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
@@ -78,6 +79,8 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	// Containers etc.
 	private JSplitPane split;
+	private JSplitPane explorerSplit; // The explorer left, the work windows and the output right
+	private ExplorerPanel explorer;
 	private JScrollPane outputScroll;
 	private RSyntaxTextArea outputText;
 	private JDesktopPane desktop;
@@ -130,6 +133,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		// Show rest
 		split.setDividerLocation(0.85);
+		explorerSplit.setDividerLocation(280);
 	}
 
 	public void initComponents() {
@@ -222,9 +226,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		/*
 		 * Toolbar
 		 */
-		toolbar = new JToolBar();
-		toolbar.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
-		toolbar.setFloatable(false);
+		toolbar = ToolbarButtons.toolbar();
 		connectButton = new JButton(imageLoader.getIcon("imgConnect"));
 		connectButton.setEnabled(true);
 		connectButton.setToolTipText("Connect");
@@ -238,8 +240,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		helpButton = new JButton(imageLoader.getIcon("imgHelp"));
 		helpButton.setToolTipText("Help");
 		helpButton.getAccessibleContext().setAccessibleName("Help");
-		JSeparator buttonsSeparator = new JSeparator(SwingConstants.VERTICAL);
-		buttonsSeparator.setPreferredSize(new Dimension(6, 22));
+		JSeparator buttonsSeparator = ToolbarButtons.separator();
 		toolbar.add(buttonsSeparator);
 		toolbar.add(helpButton);
 
@@ -296,7 +297,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		desktop = new JDesktopPane();
 		desktop.setBackground(UIManager.getColor("Desktop.background"));
 		windowTabs = new WindowTabsPanel(desktop);
-		// The window tabs share the row with the toolbar buttons: tabs fill the width, the buttons sit at the right end behind a thin line.
+		// The window tabs share the row with the toolbar buttons above the desktop: tabs fill the width, the buttons sit at the right end behind a thin line.
 		JPanel topRow = new JPanel(new BorderLayout());
 		JPanel toolbarEnd = new JPanel(new BorderLayout());
 		toolbarEnd.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 0));
@@ -304,8 +305,8 @@ public class MainWindow extends JFrame implements ActionListener {
 		toolbarEnd.add(toolbar, BorderLayout.CENTER);
 		topRow.add(windowTabs, BorderLayout.CENTER);
 		topRow.add(toolbarEnd, BorderLayout.EAST);
-		this.getContentPane().add(topRow, BorderLayout.NORTH);
 		JPanel workArea = new JPanel(new BorderLayout());
+		workArea.add(topRow, BorderLayout.NORTH);
 		workArea.add(desktop, BorderLayout.CENTER);
 
 		//ScrollPane for tree.
@@ -323,7 +324,14 @@ public class MainWindow extends JFrame implements ActionListener {
 		// Extra window height goes to the desktop, the output panel keeps its height unless the divider is moved.
 		split.setResizeWeight(1.0);
 		outputPanel.setMinimumSize(new Dimension(0, 60));
-		getContentPane().add(split);
+
+		explorer = new ExplorerPanel(mainController);
+		explorer.setMinimumSize(new Dimension(160, 0));
+		explorerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, explorer, split);
+		explorerSplit.setContinuousLayout(true);
+		// Extra window width goes to the work windows, the explorer keeps its width.
+		explorerSplit.setResizeWeight(0);
+		getContentPane().add(explorerSplit);
 
 		/*
 		 *	ActionListeners
@@ -380,21 +388,22 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 	}
 
-	/** The resting state: green and connected while a connection window is open, red when there is none. */
+	/** The resting state: green and connected while a connection is open, red when there is none. */
 	public void showConnectionState() {
 		if (!SwingUtilities.isEventDispatchThread()) {
 			SwingUtilities.invokeLater(this::showConnectionState);
 			return;
 		}
 
-		boolean connected = getConnectionWindowCount() > 0;
+		boolean connected = mainController.connectionCount() > 0;
 		updateStatus(connected ? "Connected" : NO_CONNECTION, !connected);
 		updateMenus();
 	}
 
-	/** The items that work on a connection are enabled while a connection window is open. */
+	/** The items that work on a connection are enabled while a connection is open. */
 	private void updateMenus() {
-		boolean connected = getConnectionWindowCount() > 0;
+		boolean connected = mainController.connectionCount() > 0;
+		disconnectButton.setEnabled(connected);
 		for (JMenuItem item : new JMenuItem[]{disconnectItem, importFromFileItem, exportToFileItem, designerItem}) {
 			item.setEnabled(connected);
 		}
@@ -445,10 +454,22 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 	}
 
-	public void addConnectionWindow(ConnectionWindow connectionWindow) {
-		disconnectButton.setEnabled(true);
-		windowTabs.addWindow(connectionWindow);
-		updateMenus();
+	/** The tree of every connection and the saved profiles, on the left. */
+	public ExplorerPanel getExplorer() {
+		return explorer;
+	}
+
+	/** Shows a work window of a connection on the desktop with a tab of its own, in front. */
+	public void addWorkFrame(JInternalFrame frame) {
+		windowTabs.addWindow(frame);
+	}
+
+	public void removeWorkFrame(JInternalFrame frame) {
+		windowTabs.removeWindow(frame);
+	}
+
+	public void selectWorkFrame(JInternalFrame frame) {
+		windowTabs.select(frame);
 	}
 
 	/** Shows the help in a tab of its own, or brings it to the front when it is open. */
@@ -474,40 +495,16 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	/**
-	 * Closes the designers opened from a connection window, each asking to save its model first.
+	 * Closes the designers opened from a connection, each asking to save its model first.
 	 * @return false when the user cancelled one of them
 	 */
-	public boolean closeDesigners(ConnectionWindow connectionWindow) {
+	public boolean closeDesigners(ConnectionWindowController connection) {
 		for (JInternalFrame frame : windowTabs.getFrames()) {
-			if (frame instanceof DesignerWindow designer && designer.getConnectionWindow() == connectionWindow && !designer.close()) {
+			if (frame instanceof DesignerWindow designer && designer.getConnection() == connection && !designer.close()) {
 				return false;
 			}
 		}
 		return true;
-	}
-
-	/** The connection window in front, or the one the designer in front belongs to. */
-	public ConnectionWindow getConnectionWindow() {
-		return switch (windowTabs.selectedFrame()) {
-			case ConnectionWindow connectionWindow -> connectionWindow;
-			case DesignerWindow designer -> designer.getConnectionWindow();
-			case null, default -> null;
-		};
-	}
-
-	public int getConnectionWindowCount() {
-		return (int) windowTabs.getFrames().stream().filter(ConnectionWindow.class::isInstance).count();
-	}
-
-	public void removeConnectionWindow(ConnectionWindow connectionWindow) {
-		windowTabs.removeWindow(connectionWindow);
-
-		if (getConnectionWindowCount() == 0) {
-			disconnectButton.setEnabled(false);
-			mainController.showConnectionProfileDialog();
-		}
-
-		showConnectionState();
 	}
 
 	public void actionPerformed(java.awt.event.ActionEvent event) {
@@ -521,10 +518,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		} else if (object == settingsItem || object == preferencesButton) {
 			mainController.showSettingsDialog();
 		} else if (object == disconnectItem || object == disconnectButton) {
-			ConnectionWindow connectionWindow = getConnectionWindow();
-			if (connectionWindow != null) {
-				connectionWindow.closeWindow(true);
-			}
+			mainController.disconnect();
 		} else if (object == aboutItem) {
 			new AboutDialog(this, mainController.getAppName(), mainController.getAppVersion(), mainController.getAppCommit(),
 				() -> mainController.showSplashScreen(0)).showDialog();
@@ -533,21 +527,15 @@ public class MainWindow extends JFrame implements ActionListener {
 		}
 		// Import sql file.
 		else if (object == importFromFileItem) {
-			if (getConnectionWindowCount() > 0) {
-				mainController.showImportDialog();
-			}
+			mainController.showImportDialog();
 		}
 		// Export sql file.
 		else if (object == exportToFileItem) {
-			if (getConnectionWindowCount() > 0) {
-				mainController.showExportDialog();
-			}
+			mainController.showExportDialog();
 		}
 		// Start designer
 		else if (object == designerItem) {
-			if (getConnectionWindowCount() > 0) {
-				mainController.openDesigner();
-			}
+			mainController.openDesigner();
 		}
 	}
 

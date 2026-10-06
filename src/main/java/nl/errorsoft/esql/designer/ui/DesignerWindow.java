@@ -5,7 +5,7 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.app.ui.MainWindow;
-import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
@@ -28,7 +28,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-/** The model designer, an internal frame on the desktop of the main window next to the connection windows. */
+/** The model designer, an internal frame on the desktop of the main window next to the work windows of the connections. */
 public class DesignerWindow extends JInternalFrame {
 	private JMenuBar menu;
 	private static final Logger log = LogManager.getLogger(DesignerWindow.class);
@@ -56,17 +56,17 @@ public class DesignerWindow extends JInternalFrame {
 	private DesignerPropertiesDialog properties;
 
 	private MainWindow mainWindow;
-	private ConnectionWindow connectionWindow;
+	private ConnectionWindowController connection;
 
-	public DesignerWindow(MainWindow mainWindow, ConnectionWindow connectionWindow) {
-		this(mainWindow, connectionWindow, null);
+	public DesignerWindow(MainWindow mainWindow, ConnectionWindowController connection) {
+		this(mainWindow, connection, null);
 	}
 
 	/**
 	 * Opens the designer.
 	 * @param model a model to show, such as one read from an existing database, which is then arranged automatically; null for a new model.
 	 */
-	public DesignerWindow(MainWindow mainWindow, ConnectionWindow connectionWindow, Model model) {
+	public DesignerWindow(MainWindow mainWindow, ConnectionWindowController connection, Model model) {
 		super("eSQLDesigner", false, true);
 		this.setFrameIcon(ApplicationContext.get().imageLoader().getIcon("imgDesigner"));
 		this.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
@@ -77,7 +77,7 @@ public class DesignerWindow extends JInternalFrame {
 		});
 
 		this.mainWindow = mainWindow;
-		this.connectionWindow = connectionWindow;
+		this.connection = connection;
 
 		canvas = new DesignerCanvas(new DesignerCanvasController(this));
 
@@ -160,9 +160,9 @@ public class DesignerWindow extends JInternalFrame {
 
 		buildMenu();
 
-		canvas.setShowTableTypes(connectionWindow.getController().getConnectionProfile().getServerType().getDialect().getTableTypes().length > 0);
+		canvas.setShowTableTypes(connection.getConnectionProfile().getServerType().getDialect().getTableTypes().length > 0);
 
-		properties = new DesignerPropertiesDialog(mainWindow, connectionWindow.getController().getConnectionProfile().getServerType());
+		properties = new DesignerPropertiesDialog(mainWindow, connection.getConnectionProfile().getServerType());
 
 		if (model != null) {
 			this.setSize(1024, 720);
@@ -175,9 +175,9 @@ public class DesignerWindow extends JInternalFrame {
 		mainWindow.addDesignerWindow(this);
 	}
 
-	/** The connection window the designer was opened from; generating the model runs on its connection. */
-	public ConnectionWindow getConnectionWindow() {
-		return connectionWindow;
+	/** The connection the designer was opened from; generating the model runs on it. */
+	public ConnectionWindowController getConnection() {
+		return connection;
 	}
 
 	/**
@@ -221,7 +221,11 @@ public class DesignerWindow extends JInternalFrame {
 	}
 
 	public void generate() {
-		new GenerateDialog(mainWindow, connectionWindow, canvas.getModel());
+		if (connection == null) {
+			Dialogs.info(this, "Generate model", "The designer has no connection. Open it again from a connected database to generate the model.");
+			return;
+		}
+		new GenerateDialog(mainWindow, connection, canvas.getModel());
 	}
 
 	public void showProperties(Object src) {
