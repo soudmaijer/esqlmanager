@@ -2,7 +2,9 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.ui.dialog.AboutDialog;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.help.ui.HelpWindow;
+import nl.errorsoft.esql.ui.util.Browsers;
 import nl.errorsoft.esql.ui.util.ToolbarButtons;
 
 import nl.errorsoft.esql.ui.dialog.Dialogs;
@@ -212,7 +214,13 @@ public class MainWindow extends JFrame implements ActionListener {
 		helpMenu = new JMenu("Help");
 		aboutItem = new JMenuItem("About...");
 		helpItem = new JMenuItem("eSQLManager Help");
+		JMenuItem logFolderItem = new JMenuItem("Open log folder");
+		logFolderItem.setMnemonic('L');
+		logFolderItem.setToolTipText("The log file " + DataDirectory.LOG_FILE + " has the details of every error");
+		logFolderItem.addActionListener(e -> openLogFolder());
 		helpMenu.add(helpItem);
+		helpMenu.add(logFolderItem);
+		helpMenu.addSeparator();
 		helpMenu.add(aboutItem);
 		helpMenu.setMnemonic('H');
 		helpItem.setMnemonic('H');
@@ -452,6 +460,14 @@ public class MainWindow extends JFrame implements ActionListener {
 	}
 
 	/** Shows the help in a tab of its own, or brings it to the front when it is open. */
+	private void openLogFolder() {
+		try {
+			Browsers.openFolder(DataDirectory.logs());
+		} catch (RuntimeException e) {
+			ApplicationContext.get().errors().report(this, "Open log folder", e);
+		}
+	}
+
 	public void showHelp() {
 		if (helpWindow == null) {
 			helpWindow = new HelpWindow(() -> {

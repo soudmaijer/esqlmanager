@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.error;
 
+import nl.errorsoft.esql.app.DataDirectory;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 
 import java.awt.Component;
@@ -12,7 +13,8 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * The one way errors reach the user. Services and repositories throw, controllers and windows catch and call {@link #report}.
- * It logs the error once and shows a message. An {@link EsqlException} is expected and logged without a stack trace.
+ * It logs the error once and shows a message. An {@link EsqlException} is expected and logged without a stack trace; the stack trace of anything else
+ * goes to the log file only ({@link DataDirectory#logs()}).
  */
 public class ErrorHandler {
 	private static final Logger log = LogManager.getLogger(ErrorHandler.class);
@@ -37,11 +39,7 @@ public class ErrorHandler {
 	 * @param action what was being done, in words a user knows ("Drop table")
 	 */
 	public void report(Component parent, String action, Throwable error) {
-		if (error instanceof EsqlException) {
-			log.warn("{}: {}", action, error.getMessage());
-		} else {
-			log.error("{} failed", action, error);
-		}
+		log(action, error);
 
 		String message = message(action, error);
 		status.accept("Error...");
@@ -52,6 +50,18 @@ public class ErrorHandler {
 			show.run();
 		} else {
 			SwingUtilities.invokeLater(show);
+		}
+	}
+
+	/**
+	 * Logs the error once. A problem the user can fix is one line with its message. An unexpected one is one line in the output panel and the terminal, whose
+	 * layouts leave stack traces out, and the stack trace goes with it to the log file.
+	 */
+	static void log(String action, Throwable error) {
+		if (error instanceof EsqlException) {
+			log.warn("{}: {}", action, error.getMessage());
+		} else {
+			log.error("{} (details in {})", message(action, error), DataDirectory.LOG_FILE, error);
 		}
 	}
 

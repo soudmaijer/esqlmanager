@@ -19,6 +19,12 @@ public final class DataDirectory {
 
 	public static final String DRIVERS_PROPERTY = "esql.drivers";
 
+	/** Points the log folder elsewhere; read by {@code log4j2.xml} as well, which must agree with {@link #logs()}. */
+	public static final String LOGS_PROPERTY = "esql.logs";
+
+	/** The name of the log file in {@link #logs()}, which keeps stack traces and everything else in full. */
+	public static final String LOG_FILE = "esqlmanager.log";
+
 	private static File root;
 
 	private DataDirectory() {
@@ -36,6 +42,12 @@ public final class DataDirectory {
 	public static Path drivers() {
 		String drivers = System.getProperty(DRIVERS_PROPERTY);
 		return drivers != null ? Path.of(drivers) : Path.of(System.getProperty("user.home"), ".esqlmanager", "drivers");
+	}
+
+	/** Where the log file is written: {@code ~/.esqlmanager/logs}, also in development; the system property {@value #LOGS_PROPERTY} points elsewhere. */
+	public static Path logs() {
+		String logs = System.getProperty(LOGS_PROPERTY);
+		return logs != null ? Path.of(logs) : Path.of(System.getProperty("user.home"), ".esqlmanager", "logs");
 	}
 
 	/** Resolved on first use, so that a folder that cannot be prepared is an {@link EsqlException} of the action that needs it, not a failed class load. */

@@ -1,15 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="warn">
+  <Properties>
+    <!-- The folder of the log file: system property esql.logs (tests use target/logs), else ~/.esqlmanager/logs (DataDirectory.logs). -->
+    <Property name="logs">${sys:esql.logs:-${sys:user.home}/.esqlmanager/logs}</Property>
+  </Properties>
   <Appenders>
+    <!-- The terminal gets one line per event: a stack trace only goes to the log file. -->
     <Console name="Console" target="SYSTEM_ERR">
-      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %c{1} - %notEmpty{[%X{connection}] }%msg%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %c{1} - %notEmpty{[%X{connection}] }%msg%n" alwaysWriteExceptions="false"/>
     </Console>
+    <!-- Everything in full, stack traces included. A new file each day or at 10 MB, the last 5 are kept. -->
+    <RollingFile name="File" fileName="${logs}/esqlmanager.log" filePattern="${logs}/esqlmanager-%d{yyyy-MM-dd}-%i.log" createOnDemand="true">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%t] %c - %notEmpty{[%X{connection}] }%msg%n%throwable"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="10 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="5">
+        <Delete basePath="${logs}" maxDepth="1">
+          <IfFileName glob="esqlmanager-*.log"/>
+          <IfAccumulatedFileCount exceeds="5"/>
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingFile>
   </Appenders>
   <Loggers>
     <!-- Executed queries are logged at debug level. Set to info to hide them. -->
     <Logger name="nl.errorsoft.esql.jdbc" level="debug"/>
     <Root level="info">
       <AppenderRef ref="Console"/>
+      <AppenderRef ref="File"/>
     </Root>
   </Loggers>
 </Configuration>

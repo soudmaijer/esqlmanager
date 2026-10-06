@@ -94,6 +94,10 @@
         <configuration>
           <!-- The code reads conf/ from the working directory, the same as when the application runs. -->
           <workingDirectory>${project.basedir}/runtime</workingDirectory>
+          <!-- The log file of a test run stays in target/, not in the user's ~/.esqlmanager. -->
+          <systemPropertyVariables>
+            <esql.logs>${project.build.directory}/logs</esql.logs>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
       <plugin>

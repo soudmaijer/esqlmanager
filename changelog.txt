@@ -1,6 +1,13 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Stack traces in a log file
+
+- Everything that is logged, with the full stack trace of an unexpected error, is written to esqlmanager.log in
+  ~/.esqlmanager/logs (a new file each day or at 10 MB, five old files kept). The output panel and the terminal
+  show such an error as one line, "Unexpected error: <cause> (details in esqlmanager.log)", without a stack trace.
+  Help > Open log folder opens the folder.
+
 06-10-2026: One status line per query result
 
 - The bar below a query tab no longer repeats "Query returned n row(s)": the line on the result tab already says

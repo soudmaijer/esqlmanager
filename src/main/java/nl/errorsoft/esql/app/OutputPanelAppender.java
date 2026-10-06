@@ -31,14 +31,21 @@ public class OutputPanelAppender extends AbstractAppender {
 		mainWindow.getOutput().print(event.getContextData().getValue(CONNECTION), new String(getLayout().toByteArray(event), StandardCharsets.UTF_8));
 	}
 
+	/** One line per event: a stack trace is left out, it is in the log file. */
+	public static Layout<? extends Serializable> layout(Configuration config) {
+		return PatternLayout.newBuilder()
+			.setPattern("%d{HH:mm:ss} %-5level %msg%n")
+			.setAlwaysWriteExceptions(false)
+			.setCharset(StandardCharsets.UTF_8)
+			.setConfiguration(config)
+			.build();
+	}
+
 	/** Attaches the output panel to the root logger. */
 	public static void install(MainWindow mainWindow) {
 		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
-		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n")
-			.setCharset(StandardCharsets.UTF_8)
-			.setConfiguration(config).build();
-		Appender appender = new OutputPanelAppender(layout, mainWindow);
+		Appender appender = new OutputPanelAppender(layout(config), mainWindow);
 
 		appender.start();
 		config.addAppender(appender);

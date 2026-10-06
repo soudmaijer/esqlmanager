@@ -46,3 +46,7 @@ The application reads and writes its configuration in `conf/`:
 | `settings.xml` | Preferences: appearance, editor font size, default folder and default file encoding |
 | `driver.xml` | JDBC driver class, URL and own driver jar per server type |
 | `datatypes.xml` | Column types per server type |
+
+## Log file
+
+Everything the application logs, with the full details of every error, is written to `esqlmanager.log` in `~/.esqlmanager/logs` (on Windows `C:\Users\<name>\.esqlmanager\logs`). The output panel shows an unexpected error as one line ending in "(details in esqlmanager.log)". **Help > Open log folder** opens the folder. A new file is started each day or at 10 MB, and the last five old files are kept.
