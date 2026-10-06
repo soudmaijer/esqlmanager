@@ -50,10 +50,10 @@ public class DesignerService {
 				continue;
 			}
 
-			List<ColumnDefinition> columns = repository.loadColumns(schema, table.getName());
+			List<ColumnDefinition> columns = repository.loadColumns(database, schema, table.getName());
 			markIndexes(table, columns);
 			List<DesignedForeignKey> keys = new ArrayList<>();
-			for (DesignedForeignKey key : repository.loadForeignKeys(schema, table.getName())) {
+			for (DesignedForeignKey key : repository.loadForeignKeys(database, schema, table.getName())) {
 				// A key on a table in another schema or database can't be drawn in this model.
 				if (names.contains(key.referencedTable())) {
 					keys.add(key);

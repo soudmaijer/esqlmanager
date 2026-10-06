@@ -30,7 +30,7 @@ public class GenerateController {
 		connectionWindowController.getContext().designer().generate(model.databases(), step);
 	}
 
-	/** Shows the databases again in the tree of the connection window, after a generation. */
+	/** Shows the databases again in the tree of the connection window after a generation; they are listed in the background. */
 	public void reloadTree() {
 		connectionWindowController.showDatabaseTree();
 	}

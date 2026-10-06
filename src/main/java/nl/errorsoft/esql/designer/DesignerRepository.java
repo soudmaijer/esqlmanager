@@ -43,8 +43,13 @@ public class DesignerRepository extends AbstractRepository {
 		return Arrays.asList(dialect().getTableTypes());
 	}
 
-	/** The columns of a table of the active database in their order, with the primary key columns marked. */
-	public List<ColumnDefinition> loadColumns(String schema, String table) throws SQLException {
+	/**
+	 * The columns of a table of the database in their order, with the primary key columns marked.
+	 * @param schema the schema of the table, null for the current one.
+	 */
+	public List<ColumnDefinition> loadColumns(Database database, String schema, String table) throws SQLException {
+		// The connection is shared with the query tabs, which may have moved it to another database meanwhile.
+		useDatabase(database.getName());
 		DatabaseMetaData metaData = connection.getConnection().getMetaData();
 		List<ColumnDefinition> columns = new ArrayList<>();
 
@@ -65,10 +70,11 @@ public class DesignerRepository extends AbstractRepository {
 	}
 
 	/**
-	 * The foreign keys a table of the active database has on other tables of the same schema (and database), the columns of a composite key in key
+	 * The foreign keys a table of the database has on other tables of the same schema (and database), the columns of a composite key in key
 	 * order. A key on a table elsewhere is left out, even when a table of this schema has the same name.
 	 */
-	public List<DesignedForeignKey> loadForeignKeys(String schema, String table) throws SQLException {
+	public List<DesignedForeignKey> loadForeignKeys(Database database, String schema, String table) throws SQLException {
+		useDatabase(database.getName());
 		Map<String, TreeMap<Integer, ColumnPair>> pairs = new LinkedHashMap<>();
 		Map<String, KeyDetail> details = new LinkedHashMap<>();
 		String catalog = connection.getConnection().getCatalog();

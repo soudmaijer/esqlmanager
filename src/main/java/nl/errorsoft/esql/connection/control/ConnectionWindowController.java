@@ -203,16 +203,10 @@ public class ConnectionWindowController {
 		connectionWindow.dispose();
 	}
 
+	/** Lists the databases again in the background and shows them in the tree. */
 	public void showDatabaseTree() {
-		try {
-			// Load databases into JTree.
-			mainController.updateStatus("Loading databases...", true);
-			DatabaseController databaseController = new DatabaseController(this);
-			connectionWindow.showDatabaseTree(databaseController.getDatabaseTree());
-			mainController.showConnectionState();
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load databases", e);
-		}
+		DatabaseController databaseController = new DatabaseController(this);
+		inBackground("Load databases", "Loading databases...", databaseController::getDatabases, this::showDatabaseTree);
 	}
 
 	/** Shows the databases listed on another thread in the tree, on the event thread. */

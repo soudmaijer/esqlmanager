@@ -13,6 +13,8 @@ eSQLManager changelog
   cannot be deleted and reports it; the rows deleted before it leave the grid.
 - The export and import windows read the databases before they open and load the schemas and tables of a node in
   the background. When reading fails the window does not open, instead of opening without a tree.
+- Reloading the databases of the tree (also after Generate in the designer) lists them in the background, and Open
+  in designer switches to the database before it reads the columns and foreign keys of each table.
 - Export looks up the columns of a table with _ and % escaped, so a table such as a_b no longer gets the columns of axb.
 
 05-10-2026: Packaging starts from a clean slate
