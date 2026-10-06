@@ -150,7 +150,7 @@ public class SplashWindow extends JWindow {
 				g2.setColor(MUTED);
 				g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
 				g2.drawString("Version " + info.version() + "  ·  commit " + info.commit(), x, logoY + 86);
-				g2.drawString("MySQL and PostgreSQL database manager", x, logoY + 108);
+				g2.drawString("SQL database manager", x, logoY + 108);
 
 				// The bottom line: what happens (or how to close) on the left, the copyright on the right.
 				g2.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
