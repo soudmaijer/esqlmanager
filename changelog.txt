@@ -1,6 +1,15 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Designer models know their server
+
+- A model remembers whether it is designed for MySQL or PostgreSQL (saved in the .edm file, now version 0.3; older
+  files still open and take the server of the first connection they are generated on). Generate only uses a
+  connection to that kind of server and says so when none is open.
+- A foreign key between tables of two different database cards is refused in the dialog ("A foreign key can only
+  link tables of the same database.") instead of being left out when the model is generated.
+- The database card, its menus and messages take the server's word for a database from the model.
+
 06-10-2026: A new splash
 
 - The splash shows the application logo, sharp on high resolution screens, on a dark background with the name,

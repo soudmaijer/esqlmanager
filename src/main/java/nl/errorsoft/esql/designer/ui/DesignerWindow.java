@@ -10,6 +10,7 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.designer.control.DesignerCanvasController;
 import nl.errorsoft.esql.designer.export.DiagramExporter;
 import nl.errorsoft.esql.designer.export.DiagramModel;
+import nl.errorsoft.esql.designer.ModelTarget;
 import nl.errorsoft.esql.designer.model.Model;
 import nl.errorsoft.esql.designer.ui.dialog.GenerateDialog;
 import nl.errorsoft.esql.designer.ui.ModelFileFilter;
@@ -83,6 +84,7 @@ public class DesignerWindow extends JInternalFrame {
 		this.serverType = connection.getConnectionProfile().getServerType();
 
 		canvas = new DesignerCanvas(new DesignerCanvasController(this));
+		canvas.setServerType(serverType);
 
 		JScrollPane canvasScroll = new JScrollPane(canvas);
 
@@ -228,29 +230,47 @@ public class DesignerWindow extends JInternalFrame {
 		this.getContentPane().add(canvas.getToolbar(), BorderLayout.NORTH);
 	}
 
-	/** Generates the model on its connection; a designer whose connection closed asks for an open connection to the same kind of server first. */
+	/**
+	 * Generates the model on a connection to the server it is designed for: the designer's own connection when that is the right kind, else one the
+	 * user chooses. A model without a server (an older file) takes the server of the connection it is generated on.
+	 */
 	public void generate() {
-		if (connection == null) {
-			connection = chooseConnection();
-			if (connection == null) {
-				return;
-			}
+		Model model = canvas.getModel();
+		ServerType wanted = model.getServerType() != null ? model.getServerType() : serverType;
+		ConnectionWindowController target = connection != null && ModelTarget.refusal(wanted, connection.getConnectionProfile().getServerType()) == null
+			? connection
+			: chooseConnection(wanted);
+		if (target == null) {
+			return;
 		}
-		new GenerateDialog(mainWindow, connection, canvas.getModel());
+		String refusal = ModelTarget.refusal(model.getServerType(), target.getConnectionProfile().getServerType());
+		if (refusal != null) {
+			Dialogs.warn(this, "Generate model", refusal);
+			return;
+		}
+		if (model.getServerType() == null) {
+			canvas.setServerType(target.getConnectionProfile().getServerType());
+		}
+		if (connection == null) {
+			connection = target;
+		}
+		new GenerateDialog(mainWindow, target, model);
 	}
 
-	/** One of the open connections to a server of the model's type, chosen by the user; null when there is none or the user cancelled. */
-	private ConnectionWindowController chooseConnection() {
-		java.util.List<ConnectionWindowController> candidates = mainWindow.openConnections().stream()
-			.filter(open -> open.getConnectionProfile().getServerType().getType() == serverType.getType()).toList();
+	/** One of the open connections to a server of this type, chosen by the user; null when there is none or the user cancelled. */
+	private ConnectionWindowController chooseConnection(ServerType wanted) {
+		java.util.List<ConnectionWindowController> candidates = mainWindow.openConnections()
+			.stream()
+			.filter(open -> ModelTarget.refusal(wanted, open.getConnectionProfile().getServerType()) == null)
+			.toList();
 		if (candidates.isEmpty()) {
-			Dialogs.info(this, "Generate model", "The designer has no connection. Connect to a " + serverType.getDescription()
-				+ " server first, the model is generated there.");
+			Dialogs.info(this, "Generate model", "The model is designed for " + wanted.getDescription() + " and no connection to a " + wanted.getDescription()
+				+ " server is open. Connect to one first, the model is generated there.");
 			return null;
 		}
 		JComboBox<String> choice = new JComboBox<>(candidates.stream().map(ConnectionWindowController::getTitle).toArray(String[]::new));
 		JPanel form = new JPanel(new BorderLayout(0, 6));
-		form.add(new JLabel("Generate the model on the connection:"), BorderLayout.NORTH);
+		form.add(new JLabel("Generate the model on the " + wanted.getDescription() + " connection:"), BorderLayout.NORTH);
 		form.add(choice, BorderLayout.CENTER);
 		return Dialogs.form(this, "Generate model", form, "Choose", choice, () -> null) ? candidates.get(choice.getSelectedIndex()) : null;
 	}

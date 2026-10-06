@@ -341,9 +341,31 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.addTableButton.setEnabled(true);
 	}
 
+	/** The server new models are designed for; a model opened from a file keeps its own (or none). */
+	private nl.errorsoft.esql.connection.ServerType serverType;
+
+	/** Sets the server of the designer: new models are made for it, and the current one when it has none yet. */
+	public void setServerType(nl.errorsoft.esql.connection.ServerType serverType) {
+		this.serverType = serverType;
+		if (model.getServerType() == null) {
+			model.setServerType(serverType);
+		}
+		updateTerms();
+	}
+
+	/** The menu and toolbar labels take the model's word for a database. */
+	private void updateTerms() {
+		String term = model.term();
+		create_database.setText("Add " + term);
+		addDatabaseButton.setToolTipText("Add " + term);
+		exportButton.setToolTipText("Generate model in " + term);
+	}
+
 	public void resetModel() {
 		Model model = new Model("New model");
+		model.setServerType(serverType);
 		this.model = model;
+		updateTerms();
 		this.removeAll();
 		this.repaint();
 	}
@@ -378,7 +400,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		return switch (selected.get(0)) {
 			case TableCard table when !model.foreignKeysOf(table).isEmpty() -> "Delete table '" + table.getName() + "' and its foreign keys from the model?";
 			case TableCard table -> "Delete table '" + table.getName() + "' from the model?";
-			case DatabaseCard database -> "Delete database '" + database.getName() + "' from the model?";
+			case DatabaseCard database -> "Delete " + model.term() + " '" + database.getName() + "' from the model?";
 			default -> "Delete this note from the model?";
 		};
 	}
@@ -586,6 +608,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		this.removeAll();
 
 		this.model = model;
+		updateTerms();
 
 		for (int i = 0; i < model.getObjects().size(); i++) {
 			ModelCard card = (ModelCard) model.getObjects().get(i);
@@ -789,7 +812,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == create_database || e.getSource() == addDatabaseButton) {
-			this.createDatabaseCard("New database");
+			this.createDatabaseCard("New " + model.term());
 		} else if (e.getSource() == create_table || e.getSource() == addTableButton) {
 			this.createTableCard("New table");
 		} else if (e.getSource() == create_comment || e.getSource() == addCommentButton) {
@@ -852,7 +875,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 
 	JPopupMenu canvasMenu(Point point) {
 		JPopupMenu menu = new JPopupMenu();
-		menu.add(item("Add database", "add_database", () -> placeAt(model.createDatabaseCard("New database"), point)));
+		menu.add(item("Add " + model.term(), "add_database", () -> placeAt(model.createDatabaseCard("New " + model.term()), point)));
 		menu.add(item("Add table", "add_table", () -> placeAt(model.createTableCard("New table"), point)));
 		menu.add(item("Add note", "add_comment", () -> placeAt(model.createNoteCard("New note"), point)));
 		menu.addSeparator();
@@ -879,7 +902,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 		menu.add(item("Add foreign key...", "linkimg", () -> addForeignKey(table, firstColumnOf(table), null, null)));
 
 		List<ModelCard> linked = linkedObjects(table);
-		JMenu link = new JMenu("Link to database");
+		JMenu link = new JMenu("Link to " + model.term());
 		for (Object object : model.getObjects()) {
 			if (object instanceof DatabaseCard database && !linked.contains(database)) {
 				link.add(item(database.getName(), null, () -> {
@@ -898,7 +921,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	JPopupMenu databaseMenu(DatabaseCard database) {
 		JPopupMenu menu = new JPopupMenu();
 		menu.add(item("Properties...", "des_properties", this::showProperties));
-		menu.add(item("Add table to this database", "add_table", () -> {
+		menu.add(item("Add table to this " + model.term(), "add_table", () -> {
 			TableCard table = model.createTableCard("New table");
 			model.addReference(database, table);
 			Rectangle card = database.cardBounds();

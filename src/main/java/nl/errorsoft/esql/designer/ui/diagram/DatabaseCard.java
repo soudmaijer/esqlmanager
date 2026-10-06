@@ -13,6 +13,8 @@ public class DatabaseCard extends ModelCard {
 
 	private String name = "";
 	private String description = "";
+	/** What the server of the model calls this ("database"), from {@code Model.term()}. */
+	private String term = "database";
 
 	public DatabaseCard(String name, int identifier) {
 		this.name = name;
@@ -52,7 +54,7 @@ public class DatabaseCard extends ModelCard {
 		g2.drawString(name, textX, top + bold.getAscent());
 		g2.setColor(DesignerTheme.muted());
 		g2.setFont(DesignerTheme.small());
-		g2.drawString("database", textX, top + bold.getHeight() + small.getAscent());
+		g2.drawString(term, textX, top + bold.getHeight() + small.getAscent());
 
 		g2.setColor(isSelected() ? DesignerTheme.accent() : DesignerTheme.border());
 		g2.setStroke(new BasicStroke(isSelected() ? 2f : 1f));
@@ -60,9 +62,15 @@ public class DatabaseCard extends ModelCard {
 		g2.dispose();
 	}
 
+	public void setTerm(String term) {
+		this.term = term;
+		reviewSize();
+		repaint();
+	}
+
 	public void reviewSize() {
 		int width = HEIGHT - 12 + 16
-			+ Math.max(getFontMetrics(DesignerTheme.bold()).stringWidth(name), getFontMetrics(DesignerTheme.small()).stringWidth("database"))
+			+ Math.max(getFontMetrics(DesignerTheme.bold()).stringWidth(name), getFontMetrics(DesignerTheme.small()).stringWidth(term))
 			+ 22;
 		setCardSize(width, HEIGHT);
 	}

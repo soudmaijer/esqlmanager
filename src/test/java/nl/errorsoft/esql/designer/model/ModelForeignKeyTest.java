@@ -45,6 +45,30 @@ class ModelForeignKeyTest {
 	}
 
 	@Test
+	void tablesOfDifferentDatabasesCannotBeLinked() {
+		model.addReference(model.createDatabaseCard("shop"), orders);
+		model.addReference(model.createDatabaseCard("crm"), customers);
+
+		EsqlException e = assertThrows(EsqlException.class, () -> key(List.of("customer_id"), List.of("id"), "").validate(model));
+		assertEquals("A foreign key can only link tables of the same database.", e.getMessage());
+	}
+
+	@Test
+	void tablesOfTheSameDatabaseOrOfNoneCanBeLinked() {
+		assertDoesNotThrow(() -> key(List.of("customer_id"), List.of("id"), "").validate(model));
+		var shop = model.createDatabaseCard("shop");
+		model.addReference(shop, orders);
+		model.addReference(shop, customers);
+		assertDoesNotThrow(() -> key(List.of("customer_id"), List.of("id"), "").validate(model));
+	}
+
+	@Test
+	void theModelTakesTheWordOfItsServer() {
+		model.setServerType(new nl.errorsoft.esql.connection.ServerType(nl.errorsoft.esql.connection.ServerType.POSTGRES));
+		assertEquals("database", model.term());
+	}
+
+	@Test
 	void defaultNameIsTableAndColumn() {
 		assertEquals("fk_orders_customer_id", ModelForeignKey.defaultName(orders, "customer_id"));
 	}

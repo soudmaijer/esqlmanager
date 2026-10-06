@@ -18,10 +18,12 @@ import org.w3c.dom.Element;
 
 /**
  * Reads and writes a designer model as an .edm file. {@link XmlFiles} escapes the values, so names with {@code < & "} survive a round trip.
- * Version 0.1 files (written before foreign keys existed) still load; new files are written as {@value #VERSION}.
+ * New files are written as {@value #VERSION}, with the server type the model is designed for ({@code <servertype>}, the number of
+ * {@code ServerType}, empty when unknown). Version 0.1 (before foreign keys) and 0.2 (before the server type) still load, with an unknown server.
  */
 final class ModelXml {
-	static final String VERSION = "0.2";
+	static final String VERSION = "0.3";
+	private static final java.util.Set<String> READABLE = java.util.Set.of("0.1", "0.2", VERSION);
 
 	private ModelXml() {
 	}
@@ -40,6 +42,7 @@ final class ModelXml {
 		Element root = document.getDocumentElement();
 		add(root, "version", VERSION);
 		add(root, "name", model.getName());
+		add(root, "servertype", model.getServerType() == null ? "" : model.getServerType().getType());
 		add(root, "comment", model.getComment());
 		add(root, "identifier_offset", model.getIdentifier());
 		add(root, "author", model.getAuthor());
@@ -155,11 +158,14 @@ final class ModelXml {
 		Element root = XmlFiles.read(file.toPath()).getDocumentElement();
 		String version = text(root, "version", "");
 
-		if (!version.equals("0.1") && !version.equals(VERSION)) {
-			throw new EsqlException("The model file has version '" + version + "', only 0.1 and " + VERSION + " can be opened.");
+		if (!READABLE.contains(version)) {
+			throw new EsqlException("The model file has version '" + version + "', only 0.1, 0.2 and " + VERSION + " can be opened.");
 		}
 
 		Model model = new Model(text(root, "name", "Model"));
+		int serverType = number(root, "servertype", -1);
+		// An unknown number (a server this version does not know) is treated as no server: generation then asks for a connection of any kind.
+		model.setServerType(nl.errorsoft.esql.connection.ServerType.isKnown(serverType) ? new nl.errorsoft.esql.connection.ServerType(serverType) : null);
 		model.setAuthor(text(root, "author", ""));
 		model.setComment(text(root, "comment", ""));
 

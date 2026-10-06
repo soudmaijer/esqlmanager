@@ -28,7 +28,7 @@ Delete removes the selected connector, or else the selected cards, after asking 
 ## Foreign keys
 
 * Drag from the icon of a column onto a column of another table, use "Add foreign key..." in a table's context menu, or the Foreign keys tab of its properties. Changes in that tab reach the model when the properties are saved; Cancel discards them.
-* The dialog takes one or more column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions. It checks that the columns exist and their types fit.
+* The dialog takes one or more column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions. It checks that the columns exist and their types fit, and refuses a key between tables of two different database cards: "A foreign key can only link tables of the same database." Tables linked to no database card count as one database.
 * A foreign key is drawn from column to column, with a crow's foot at the many side and a double bar at the referenced table. Double click a line to edit it, select it and press Delete to remove it.
 * On MySQL foreign keys need InnoDB tables.
 
@@ -39,7 +39,9 @@ Delete removes the selected connector, or else the selected cards, after asking 
 ## Saving and generating
 
 * File > Save model writes the model to an `.edm` file, Open model reads it back.
-* Generating a model creates its databases, tables and foreign keys on the server. Tables and keys that exist are skipped, so a model can be generated again after adding to it.
+* A model remembers the kind of server it is designed for (MySQL, PostgreSQL): a new model takes the server of the connection the designer was opened from, "Open in designer" that of the database it reads. It is saved in the `.edm` file; a model saved by an older version has none and takes the server of the first connection it is generated on.
+* Generating a model creates its databases, tables and foreign keys on the server. Tables and keys that exist are skipped, so a model can be generated again after adding to it. A model is only generated on a connection to its own kind of server: the designer's connection when it matches, otherwise Generate asks which open connection of that kind to use, and says so when there is none.
+* Each database card is a database on the server, also on PostgreSQL: generating creates the database when it is missing and the tables in its current schema (normally `public`). The menus and messages take the server's word for it from the model.
 
 ## PlantUML and Mermaid
 

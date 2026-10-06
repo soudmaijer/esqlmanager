@@ -26,6 +26,21 @@ public record ModelForeignKey(TableCard from, List<String> fromColumns, TableCar
 	}
 
 	/**
+	 * As {@link #validate()}, and the two tables must be in the same database of the model: a table linked to database cards shares at least one with
+	 * the other (tables linked to none are created in the same database). Generation does not create a key across databases.
+	 * @throws EsqlException describing the first problem.
+	 */
+	public void validate(Model model) {
+		validate();
+		List<nl.errorsoft.esql.designer.ui.diagram.DatabaseCard> fromDatabases = model.databasesOf(from);
+		List<nl.errorsoft.esql.designer.ui.diagram.DatabaseCard> toDatabases = model.databasesOf(to);
+		boolean same = fromDatabases.isEmpty() && toDatabases.isEmpty() || fromDatabases.stream().anyMatch(toDatabases::contains);
+		if (!same) {
+			throw new EsqlException("A foreign key can only link tables of the same " + model.term() + ".");
+		}
+	}
+
+	/**
 	 * Checks that the key can be created: a name, at least one column pair, columns that exist, types that fit together and allowed actions.
 	 * @throws EsqlException describing the first problem.
 	 */

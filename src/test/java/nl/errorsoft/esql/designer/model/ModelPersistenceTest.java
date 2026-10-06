@@ -111,8 +111,29 @@ class ModelPersistenceTest {
 	}
 
 	@Test
-	void newFilesAreVersionTwo() {
-		assertTrue(new Model("m").getModelXML().contains("<version>0.2</version>"));
+	void newFilesAreVersionThree() {
+		assertTrue(new Model("m").getModelXML().contains("<version>0.3</version>"));
+	}
+
+	@Test
+	void theServerTypeSurvivesARoundTrip(@TempDir Path dir) throws Exception {
+		Model model = new Model("pg");
+		model.setServerType(new nl.errorsoft.esql.connection.ServerType(nl.errorsoft.esql.connection.ServerType.POSTGRES));
+		DatabaseCard database = model.createDatabaseCard("shop");
+		File file = dir.resolve("pg.edm").toFile();
+		model.saveModel(file);
+
+		Model loaded = new Model("x").loadModel(file);
+		assertEquals(nl.errorsoft.esql.connection.ServerType.POSTGRES, loaded.getServerType().getType());
+		assertEquals(database.getName(), loaded.getObjects().getFirst() instanceof DatabaseCard card ? card.getName() : null);
+	}
+
+	@Test
+	void aVersionTwoFileHasNoServerType(@TempDir Path dir) throws Exception {
+		Path file = dir.resolve("old.edm");
+		Files.writeString(file, "<model><version>0.2</version><name>old</name></model>", StandardCharsets.UTF_8);
+
+		assertEquals(null, new Model("x").loadModel(file.toFile()).getServerType());
 	}
 
 	@Test
@@ -120,6 +141,7 @@ class ModelPersistenceTest {
 		Model model = new Model("x").loadModel(new File(getClass().getResource("/designer/shop-0.1.edm").toURI()));
 
 		assertEquals("Shop", model.getName());
+		assertEquals(null, model.getServerType());
 		assertEquals(5, model.getIdentifier());
 		TableCard customer = (TableCard) model.getObjectByIdentifier(2);
 		assertEquals("customer", customer.getName());

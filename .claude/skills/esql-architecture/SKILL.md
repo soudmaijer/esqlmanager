@@ -221,5 +221,4 @@ Known layer and naming problems that are not fixed yet. Do not report them again
 - `designer.ui.dialog.ObjectNames` holds Swing-free name rules but works on the canvas cards, so it stays in `ui.dialog` instead of the feature package.
 - `designer.ui.dialog.ModelPropertiesPanel`, `DatabasePropertiesPanel` and `TablePropertiesPanel` are panels in `ui.dialog` because only `DesignerPropertiesDialog` uses them.
 - `blob.ui.TransferProgress` is the window interface the controller drives; it is not a `Listener` because it also opens the window.
-- `app.ui.CreditsPanel` extends `java.awt.Canvas` (an AWT widget).
 - `error.ErrorHandler` shows the error dialog itself (Swing by design): it is the one place that turns a failure into a message, called from controllers and windows.

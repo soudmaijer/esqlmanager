@@ -908,6 +908,7 @@ public class ConnectionWindowController {
 			mainController.updateStatus("Reading database structure...", true);
 			DesignedDatabase designed = schema != null ? getContext().designer().reverseEngineer(schema) : getContext().designer().reverseEngineer(database);
 			Model model = ModelFactory.fromDatabase(designed, session.getConnectionProfile().getServerType().getDataTypes());
+			model.setServerType(session.getConnectionProfile().getServerType());
 			setStatusDetail((schema != null ? database.getName() + "." + schema.getName() : database.getName()) + ": " + designed.tables().size()
 				+ " table(s) opened in the designer");
 			mainController.showConnectionState();

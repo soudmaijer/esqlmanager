@@ -46,10 +46,12 @@ public class ForeignKeyDialog extends FormDialog {
 	private String suggestedName;
 	private ModelForeignKey result;
 	private ModelForeignKey candidate;
+	private final Model model;
 
 	private ForeignKeyDialog(Window owner, Model model, ModelForeignKey initial) {
 		super(owner, initial.name().isEmpty() ? "Add foreign key" : "Edit foreign key", true);
 		this.from = initial.from();
+		this.model = model;
 
 		for (Object object : model.getObjects()) {
 			if (object instanceof TableCard table) {
@@ -158,7 +160,7 @@ public class ForeignKeyDialog extends FormDialog {
 		ModelForeignKey key = new ModelForeignKey(from, fromColumns, selectedTable(), toColumns, name.getText().trim(), text(onDelete.getSelectedItem()),
 			text(onUpdate.getSelectedItem()));
 		try {
-			key.validate();
+			key.validate(model);
 			candidate = key;
 			return null;
 		} catch (EsqlException e) {

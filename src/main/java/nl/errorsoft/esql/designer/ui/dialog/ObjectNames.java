@@ -19,11 +19,11 @@ public final class ObjectNames {
 	/** A database needs a name that no other database of the model has (ignoring case). */
 	public static String databaseProblem(Model model, DatabaseCard self, String name) {
 		if (name == null || name.isBlank()) {
-			return "The database needs a name.";
+			return "The " + model.term() + " needs a name.";
 		}
 		for (ModelCard object : model.getObjects()) {
 			if (object instanceof DatabaseCard other && other != self && other.getName().equalsIgnoreCase(name.trim())) {
-				return "The model has a database named '" + name.trim() + "' already.";
+				return "The model has a " + model.term() + " named '" + name.trim() + "' already.";
 			}
 		}
 		return null;
@@ -42,7 +42,7 @@ public final class ObjectNames {
 		for (ModelCard object : model.getObjects()) {
 			if (object instanceof TableCard other && other != self && other.getName().equalsIgnoreCase(name.trim()) && shareDatabase(databases,
 				databasesOf(model, other))) {
-				return "The model has a table named '" + name.trim() + "' in the same database already.";
+				return "The model has a table named '" + name.trim() + "' in the same " + model.term() + " already.";
 			}
 		}
 		return null;

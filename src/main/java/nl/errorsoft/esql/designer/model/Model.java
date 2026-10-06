@@ -25,9 +25,35 @@ public class Model implements MouseListener, MouseMotionListener {
 	private boolean locked = false;
 	private int identifier = 1;
 	private File file = null;
+	/** The server the model is designed for, null when unknown (files written before 0.3): generation then adopts the connection's. */
+	private nl.errorsoft.esql.connection.ServerType serverType;
 
 	public Model(String name) {
 		this.name = name;
+	}
+
+	public nl.errorsoft.esql.connection.ServerType getServerType() {
+		return serverType;
+	}
+
+	/** Sets the server the model is designed for; its database cards take the server's word for a database. */
+	public void setServerType(nl.errorsoft.esql.connection.ServerType serverType) {
+		this.serverType = serverType;
+		for (ModelCard card : cards) {
+			if (card instanceof DatabaseCard database) {
+				database.setTerm(term());
+			}
+		}
+	}
+
+	/** What a database card is on the model's server ({@code Dialect.databaseTerm()}), "database" while the server is unknown. */
+	public String term() {
+		return serverType == null ? "database" : serverType.getDialect().databaseTerm();
+	}
+
+	/** The database cards a table is linked to. */
+	public List<DatabaseCard> databasesOf(TableCard table) {
+		return getReferences(table).stream().filter(DatabaseCard.class::isInstance).map(DatabaseCard.class::cast).toList();
 	}
 
 	public String getName() {
@@ -48,6 +74,7 @@ public class Model implements MouseListener, MouseMotionListener {
 
 	public DatabaseCard createDatabaseCard(String name) {
 		DatabaseCard database = new DatabaseCard(name, identifier);
+		database.setTerm(term());
 		identifier++;
 		database.addMouseListener(this);
 		database.addMouseMotionListener(this);
