@@ -6,7 +6,6 @@ import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.app.ApplicationContext;
 
 import nl.errorsoft.esql.ui.table.ColumnWidths;
-import nl.errorsoft.esql.ui.util.ExtensionFileFilter;
 import nl.errorsoft.esql.ui.table.SortHeaderListener;
 import nl.errorsoft.esql.ui.table.HeaderRenderer;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
@@ -25,7 +24,6 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumnModel;
-import javax.swing.undo.UndoManager;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,8 +40,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private JScrollPane dataScroll;
 	private JSplitPane split;
 	private JTextArea editorTextArea;
-	private JTextArea cellData; // Contains cell data.
-	private JScrollPane cellScroll; // ScrollPane for cellData textArea
+	/** The value of one cell, below the grid while it is open. */
+	private CellValueEditor valueEditor;
 
 	private JComponent navigationBar;
 	private JToolBar rowToolbar;
@@ -52,8 +50,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 	private JButton runButton;
 	private JButton nextButton;
 	private JButton lastButton;
-	private JButton saveDataButton;
-	private JButton addDataButton;
 
 	private JTextField skipField;
 	private JTextField showField;
@@ -61,17 +57,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 	/** Whether the rows can be written back: a table, not a query result or the server status. */
 	private boolean editable = false;
 	private JButton updateButton;
-
-	// CellDataEditor toolbar.
-	private JPanel cellEditorPanel;
-	private JButton updateRowDataButton;
-	private JButton saveCellDataButton;
-	private JButton closeCellDataButton;
-	private UndoManager undoManager;
+	private JButton editValueButton;
 	private SortHeaderListener headerListener;
-	private TableCell editingCell;
-	private int editingRow;
-	private int editingCol;
 
 	public TableDataTab(TableController tableController) {
 		this.tableController = tableController;
@@ -88,7 +75,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 					TableCell tableCell = (TableCell) dataTable.getValueAt(dataTable.getSelectedRow(), dataTable.getSelectedColumn());
 					TableCell[] rowData = new TableCell[columnCount];
-					java.util.Vector<?> dataVector = sortableModel.getDataVector();
 					Object newData = dataTable.getCellEditor().getCellEditorValue();
 
 					for (int i = 0; i < columnCount; i++) {
@@ -115,7 +101,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 			}
 			public boolean isCellEditable(int row, int column) {
 				TableCell tableCell = (TableCell) dataTable.getValueAt(row, column);
-				return editable && tableCell.getTableColumn().isWritable();
+				return editable && tableCell.getTableColumn().isWritable() && !tableCell.getTableColumn().isBinary();
 			}
 		};
 		dataTable.setAutoCreateColumnsFromModel(false);
@@ -133,36 +119,29 @@ public class TableDataTab extends JPanel implements ActionListener {
 		});
 		dataTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 1) {
-					if (dataTable.getSelectedColumn() > -1 && dataTable.getSelectedRow() > -1) {
-						nl.errorsoft.esql.table.TableColumn clickedColumn = ((nl.errorsoft.esql.table.TableColumn) (dataTable.getTableHeader().getColumnModel()
-							.getColumn(dataTable.getSelectedColumn()).getHeaderValue()));
-
-						if (clickedColumn.isBinary()) {
-							enableBinaryDataEditor();
-						} else {
-							Object clickedValue = dataTable.getValueAt(dataTable.getSelectedRow(), dataTable.getSelectedColumn());
-
-							if (clickedValue instanceof TableCell data) {
-								if (!data.isNewRow()) {
-									enabledCellDataEditor();
-								}
-							}
-						}
-					}
+				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+					openValueEditor();
 				}
+			}
+
+			public void mousePressed(MouseEvent e) {
+				showPopup(e);
+			}
+
+			public void mouseReleased(MouseEvent e) {
+				showPopup(e);
+			}
+		});
+		// F2 opens the value editor instead of editing in the grid; typing still edits in the grid.
+		dataTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "editValue");
+		dataTable.getActionMap().put("editValue", new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				openValueEditor();
 			}
 		});
 		dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		dataTable.setShowGrid(true);
 		dataTable.setGridColor(UIManager.getColor("Table.gridColor"));
-		dataTable.addFocusListener(new FocusAdapter() {
-			public void focusLost(FocusEvent e) {
-				if (e.getOppositeComponent() != null && e.getOppositeComponent() instanceof JTextField) {
-					disableCellDataEditor();
-				}
-			}
-		});
 		dataScroll = new JScrollPane(dataTable);
 
 		editorTextArea = new JTextArea();
@@ -174,7 +153,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 		dataTable.setCellEditor(multiLineEditor);
 		// The update buttons follow what is pending: text typed in the grid, another row or cell selected, an edit started or stopped.
 		editorTextArea.getDocument().addDocumentListener(onChange(this::refreshUpdateButtons));
-		dataTable.getSelectionModel().addListSelectionListener(e -> refreshUpdateButtons());
+		dataTable.getSelectionModel().addListSelectionListener(e -> selectionChanged());
+		dataTable.getColumnModel().getSelectionModel().addListSelectionListener(e -> selectionChanged());
 		dataTable.addPropertyChangeListener("tableCellEditor", e -> refreshUpdateButtons());
 
 		JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -200,9 +180,6 @@ public class TableDataTab extends JPanel implements ActionListener {
 		buttonPanel.add(nextButton);
 		buttonPanel.add(lastButton);
 
-		/*
-		 * Info panel
-		 */
 		skipField = new JTextField("0");
 		skipField.setPreferredSize(new Dimension(40, 20));
 		showField = new JTextField("50");
@@ -216,15 +193,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 		rowsLabel = new JLabel("Total: 0");
 		infoPanel.add(rowsLabel);
 
-		/*
-		 * Add panels to toolbar
-		 */
 		toolbar.add(buttonPanel);
 		toolbar.add(infoPanel);
-
-		/*
-		 * Add toolbar to panel
-		 */
 
 		split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		split.setTopComponent(dataScroll);
@@ -233,60 +203,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 		this.add(rowToolbar, BorderLayout.NORTH);
 		navigationBar = toolbar;
 
-		// Create TextArea for row data.
-		cellData = new JTextArea();
-		cellData.setLineWrap(false);
-		cellData.setWrapStyleWord(true);
-		// One undo history for the editor, cleared whenever another cell is shown in it.
-		undoManager = new UndoManager();
-		cellData.getDocument().addUndoableEditListener(e -> undoManager.addEdit(e.getEdit()));
-		cellData.getDocument().addDocumentListener(onChange(this::refreshUpdateButtons));
-		int menu = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
-		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menu), "undo", () -> {
-			if (undoManager.canUndo()) {
-				undoManager.undo();
-			}
-		});
-		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Y, menu), "redo", () -> {
-			if (undoManager.canRedo()) {
-				undoManager.redo();
-			}
-		});
-		bindUndo(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menu | InputEvent.SHIFT_DOWN_MASK), "redo", () -> {
-			if (undoManager.canRedo()) {
-				undoManager.redo();
-			}
-		});
-		cellScroll = new JScrollPane(cellData, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-		// Add to splitpane
-		cellEditorPanel = new JPanel();
-		cellEditorPanel.setLayout(new BorderLayout());
-
-		ImageLoader images = ApplicationContext.get().imageLoader();
-		updateRowDataButton = new JButton(images.getIcon("imgUpdateRow"));
-		updateRowDataButton.setToolTipText("Update changes");
-		updateRowDataButton.addActionListener(this);
-
-		saveCellDataButton = new JButton(images.getIcon("imgSave"));
-		saveCellDataButton.setToolTipText("Save data to file");
-		saveCellDataButton.addActionListener(this);
-
-		closeCellDataButton = new JButton(images.getIcon("imgClose"));
-		closeCellDataButton.setToolTipText("Close the cell editor");
-		closeCellDataButton.addActionListener(this);
-
-		JToolBar cellToolbar = new JToolBar();
-		cellToolbar.setFloatable(false);
-
-		cellToolbar.add(saveCellDataButton);
-		cellToolbar.add(closeCellDataButton);
-		cellToolbar.add(updateRowDataButton);
-
-		cellScroll.getViewport().add(cellData);
-
-		cellEditorPanel.add(cellToolbar, BorderLayout.NORTH);
-		cellEditorPanel.add(cellScroll, BorderLayout.CENTER);
+		valueEditor = new CellValueEditor(new CellValueEditor.Actions(this::applyValue, this::closeValueEditor, () -> transferBlob(true),
+			() -> transferBlob(false), this::refreshUpdateButtons));
 		setRowEditing(false);
 	}
 
@@ -306,9 +224,49 @@ public class TableDataTab extends JPanel implements ActionListener {
 		};
 	}
 
-	/** The change the update buttons would write: the text of the cell editor below the grid, else the cell edited in the grid, else a new row. */
+	/** Insert, delete and save rows, at the top of the view; only a table (not a query result or the server status) can be edited. */
+	private JToolBar rowToolbar(ImageLoader icons) {
+		JToolBar bar = new JToolBar();
+		bar.setFloatable(false);
+		JButton insert = new JButton(icons.getIcon("imgNewRow"));
+		insert.setToolTipText("Insert new row");
+		insert.addActionListener(e -> insertNewRow());
+		JButton delete = new JButton(icons.getIcon("imgDeleteRow"));
+		delete.setToolTipText("Delete row");
+		delete.addActionListener(e -> deleteSelectedRows());
+		JButton update = new JButton(icons.getIcon("imgUpdateRow"));
+		update.setToolTipText("Update changes");
+		update.addActionListener(e -> updateChanges());
+		updateButton = update;
+		editValueButton = new JButton(icons.getIcon("imgEditValue"));
+		editValueButton.setToolTipText("Edit value (F2)");
+		editValueButton.addActionListener(e -> openValueEditor());
+		editValueButton.setEnabled(false);
+		bar.add(insert);
+		bar.add(delete);
+		bar.add(update);
+		bar.addSeparator();
+		bar.add(editValueButton);
+		nl.errorsoft.esql.ui.util.ToolbarButtons.style(insert, delete, update, editValueButton);
+		bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")));
+		return bar;
+	}
+
+	/** Enables the row buttons for a table, disables them for rows that cannot be written back (query results, server status, variables). */
+	public void setRowEditing(boolean editable) {
+		this.editable = editable;
+
+		for (Component button : rowToolbar.getComponents()) {
+			if (button != editValueButton) {
+				button.setEnabled(editable);
+			}
+		}
+		refreshUpdateButtons();
+	}
+
+	/** The change the update buttons would write: the text of the value editor, else the cell edited in the grid, else a new row. */
 	private PendingChange pendingChange() {
-		if (cellEditorVisible() && cellEditorChanged()) {
+		if (valueEditorVisible() && valueEditor.isChanged()) {
 			return PendingChange.CELL;
 		}
 		TableCell gridCell = null;
@@ -324,122 +282,171 @@ public class TableDataTab extends JPanel implements ActionListener {
 		return PendingChange.of(editable, newRow, gridCell, gridText);
 	}
 
-	private boolean cellEditorVisible() {
-		return split.getBottomComponent() == cellEditorPanel && editingCell != null;
-	}
-
-	private boolean cellEditorChanged() {
-		return PendingChange.of(editable && editingCell.getTableColumn().isWritable(), false, editingCell, cellData.getText()) == PendingChange.CELL;
+	private boolean valueEditorVisible() {
+		return valueEditor != null && split.getBottomComponent() == valueEditor;
 	}
 
 	/** Enables "Update changes" only when something would be written. */
 	private void refreshUpdateButtons() {
-		if (updateButton == null || updateRowDataButton == null) {
+		if (updateButton == null || valueEditor == null) {
 			return; // still being built
 		}
 		updateButton.setEnabled(pendingChange() != PendingChange.NONE);
-		updateRowDataButton.setEnabled(cellEditorVisible() && cellEditorChanged());
 	}
 
-	/** Insert, delete and save rows, at the top of the view; only a table (not a query result or the server status) can be edited. */
-	private JToolBar rowToolbar(ImageLoader icons) {
-		JToolBar bar = new JToolBar();
-		bar.setFloatable(false);
-		JButton insert = new JButton(icons.getIcon("imgNewRow"));
-		insert.setToolTipText("Insert new row");
-		insert.addActionListener(e -> insertNewRow());
-		JButton delete = new JButton(icons.getIcon("imgDeleteRow"));
-		delete.setToolTipText("Delete row");
-		delete.addActionListener(e -> deleteSelectedRows());
-		JButton update = new JButton(icons.getIcon("imgUpdateRow"));
-		update.setToolTipText("Update changes");
-		update.addActionListener(e -> updateChanges());
-		updateButton = update;
-		bar.add(insert);
-		bar.add(delete);
-		bar.add(update);
-		nl.errorsoft.esql.ui.util.ToolbarButtons.style(insert, delete, update);
-		bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")));
-		return bar;
-	}
-
-	/** Enables the row buttons for a table, disables them for rows that cannot be written back (server status, variables). */
-	public void setRowEditing(boolean editable) {
-		this.editable = editable;
-
-		for (Component button : rowToolbar.getComponents()) {
-			button.setEnabled(editable);
-		}
-		refreshUpdateButtons();
-	}
-
-	/** Writes what is pending: the text of the cell editor below the grid, or else the cell edited in the grid and a new row. */
+	/** Writes what is pending: the text of the value editor, or else the cell edited in the grid and a new row. */
 	private void updateChanges() {
-		if (cellEditorVisible() && cellEditorChanged()) {
-			writeCellEditor();
+		if (valueEditorVisible() && valueEditor.isChanged()) {
+			applyValue(valueEditor.textArea().getText());
 		} else {
 			saveSelectedRow();
 		}
 	}
 
-	private void bindUndo(KeyStroke key, String name, Runnable action) {
-		cellData.getInputMap(JComponent.WHEN_FOCUSED).put(key, name);
-		cellData.getActionMap().put(name, new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				action.run();
-			}
-		});
+	private void showPopup(MouseEvent e) {
+		if (!e.isPopupTrigger()) {
+			return;
+		}
+		int row = dataTable.rowAtPoint(e.getPoint());
+		int column = dataTable.columnAtPoint(e.getPoint());
+
+		if (row < 0 || column < 0) {
+			return;
+		}
+		dataTable.changeSelection(row, column, false, false);
+		JPopupMenu menu = new JPopupMenu();
+		JMenuItem edit = Forms.mnemonic(new JMenuItem(), "&Edit value...");
+		edit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
+		edit.addActionListener(a -> openValueEditor());
+		menu.add(edit);
+		menu.show(dataTable, e.getX(), e.getY());
 	}
 
-	/** Keeps a button at its own width in a column that stretches. */
-	private static JPanel left(JButton button) {
-		JPanel flowPanel = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-		flowPanel.add(button);
-		return flowPanel;
-	}
+	/** Another cell selected: the open value editor follows it unless it holds changes, and the buttons follow what is pending. */
+	private void selectionChanged() {
+		TableCell selected = selectedCell();
 
-	public void enableBinaryDataEditor() {
-		saveDataButton = Forms.button("&Download...");
-		JLabel saveDataLabel = Forms.label("Save the cell data to a file:", saveDataButton);
-		addDataButton = Forms.button("&Upload...");
-		JLabel addDataLabel = Forms.label("Load a file into the cell:", addDataButton);
-
-		JPanel binaryOptionsPanel = new Forms.Grid().row(addDataLabel, left(addDataButton)).row(saveDataLabel, left(saveDataButton)).panel();
-		Forms.titled(binaryOptionsPanel, "Binary data options");
-		JPanel binaryPanel = Forms.padded(new JPanel(new BorderLayout()));
-		binaryPanel.add(binaryOptionsPanel, BorderLayout.NORTH);
-
-		saveDataButton.addActionListener(this);
-		addDataButton.addActionListener(this);
-
-		split.setBottomComponent(binaryPanel);
-		split.setDividerLocation(split.getHeight() - 140);
-
-	}
-
-	public void enabledCellDataEditor() {
-		// Enable textarea
-		editingRow = dataTable.getSelectedRow();
-		editingCol = dataTable.getSelectedColumn();
-		editingCell = (TableCell) dataTable.getModel().getValueAt(editingRow, editingCol);
-
-		cellData.setEnabled(true);
-		cellData.setText(editingCell.getEditText());
-		undoManager.discardAllEdits();
-
-		cellData.setEditable(editable && editingCell.getTableColumn().isWritable());
-		split.setBottomComponent(cellEditorPanel);
+		if (editValueButton != null) {
+			editValueButton.setEnabled(selected != null);
+		}
+		if (valueEditorVisible() && selected != null && selected != valueEditor.getCell() && !valueEditor.isChanged()) {
+			valueEditor.showCell(selected, readOnlyReason(selected));
+		}
 		refreshUpdateButtons();
-		split.setDividerLocation(0.70);
-		cellData.setCaretPosition(0);
+	}
 
+	private TableCell selectedCell() {
+		int row = dataTable.getSelectedRow();
+		int column = dataTable.getSelectedColumn();
+		return row < 0 || column < 0 ? null : (TableCell) dataTable.getValueAt(row, column);
+	}
+
+	/** Null when the value of the cell can be written, else the hint saying why not. */
+	private String readOnlyReason(TableCell cell) {
+		if (!editable) {
+			return "Read only: this view is not written back.";
+		} else if (cell.getTableColumn() != null && !cell.getTableColumn().isWritable()) {
+			return "Read only: this column cannot be changed.";
+		}
+		return null;
+	}
+
+	/** Opens the value editor below the grid on the selected cell; an edit in the grid is cancelled. */
+	public void openValueEditor() {
+		TableCell cell = selectedCell();
+
+		if (cell == null) {
+			return;
+		}
+		if (dataTable.getEditingRow() >= 0) {
+			dataTable.getCellEditor().cancelCellEditing();
+		}
+		valueEditor.showCell(cell, readOnlyReason(cell));
+
+		if (split.getBottomComponent() != valueEditor) {
+			split.setBottomComponent(valueEditor);
+			split.setDividerLocation(0.55);
+		}
+		valueEditor.textArea().requestFocusInWindow();
+		refreshUpdateButtons();
 		SwingUtilities.invokeLater(() -> dataTable.scrollRectToVisible(dataTable.getCellRect(dataTable.getSelectedRow(), 0, true)));
 	}
 
-	public void disableCellDataEditor() {
+	public void closeValueEditor() {
 		split.setBottomComponent(null);
 		refreshUpdateButtons();
+	}
+
+	/** The value editor, for a harness. */
+	CellValueEditor valueEditor() {
+		return valueEditor;
+	}
+
+	/** The grid, for a harness. */
+	JTable grid() {
+		return dataTable;
+	}
+
+	/** Whether "Update changes" is enabled, for a test or harness. */
+	boolean isUpdateEnabled() {
+		return updateButton.isEnabled();
+	}
+
+	/** The row of the grid that holds a cell, -1 when it is gone (another page was loaded). */
+	private int rowOf(TableCell cell) {
+		for (int row = 0; row < dataTable.getRowCount(); row++) {
+			for (int column = 0; column < dataTable.getColumnCount(); column++) {
+				if (dataTable.getValueAt(row, column) == cell) {
+					return row;
+				}
+			}
+		}
+		return -1;
+	}
+
+	private TableCell[] rowCells(int row) {
+		TableCell[] cells = new TableCell[dataTable.getColumnCount()];
+
+		for (int i = 0; i < cells.length; i++) {
+			cells[i] = (TableCell) dataTable.getValueAt(row, i);
+		}
+		return cells;
+	}
+
+	/** Writes the text of the value editor into its cell (empty is NULL); a cell of a new row only keeps it until the row is inserted. */
+	private void applyValue(String text) {
+		TableCell cell = valueEditor.getCell();
+		int row = rowOf(cell);
+
+		if (row < 0) {
+			return;
+		}
+		if (cell.isNewRow()) {
+			cell.setEditedText(text);
+			sortableModel.fireTableRowsUpdated(row, row);
+			valueEditor.showText();
+			return;
+		}
+		changeCell(rowCells(row), cell, text, () -> {
+			cell.setEditedText(text);
+			sortableModel.fireTableRowsUpdated(row, row);
+			valueEditor.showText();
+		});
+	}
+
+	/** Upload into or download from the binary cell in the value editor, through the blob transfer dialogs. */
+	private void transferBlob(boolean upload) {
+		TableCell cell = valueEditor.getCell();
+		int row = rowOf(cell);
+
+		if (row < 0) {
+			return;
+		}
+		if (upload) {
+			tableController.showUploadFileDialog(table, rowCells(row), cell);
+		} else {
+			tableController.showDownloadFileDialog(table, rowCells(row), cell);
+		}
 	}
 
 	/** Writes the cell in the background, the grid is disabled meanwhile; {@code saved} runs on the event thread when the server took it. */
@@ -453,7 +460,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 
 	public void insertNewRow() {
 		if (!inserting) {
-			this.disableCellDataEditor();
+			this.closeValueEditor();
 			inserting = true;
 			int columnCount = dataTable.getColumnCount();
 			java.util.Vector<Object> newData = new java.util.Vector<>();
@@ -498,7 +505,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	public void deleteSelectedRows() {
-		this.disableCellDataEditor();
+		this.closeValueEditor();
 		int[] selectedRows = dataTable.getSelectedRows();
 
 		if (selectedRows == null || selectedRows.length == 0) {
@@ -552,6 +559,8 @@ public class TableDataTab extends JPanel implements ActionListener {
 	public void loadData(Table table, nl.errorsoft.esql.table.TableColumn[] columns, TableCell[][] cells) {
 		this.table = table;
 		showRecordCount();
+		// The cell in the value editor belongs to the previous page.
+		closeValueEditor();
 
 		sortableModel = new SortableTableModel();
 		columnModel = new DefaultTableColumnModel();
@@ -572,10 +581,12 @@ public class TableDataTab extends JPanel implements ActionListener {
 		dataTable.getTableHeader().addMouseListener(headerListener);
 		sortableModel.setDataVector(cells, columns);
 		dataTable.setColumnModel(columnModel);
+		// A new column model has its own selection model.
+		columnModel.getSelectionModel().addListSelectionListener(e -> selectionChanged());
 		dataTable.setModel(sortableModel);
 		ColumnWidths.fitToContent(dataTable);
 		dataScroll.getViewport().revalidate();
-		refreshUpdateButtons();
+		selectionChanged();
 	}
 
 	/** The paging buttons with skip, show and total. The window shows them in its own status bar, next to what the connection did last. */
@@ -586,104 +597,39 @@ public class TableDataTab extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 
-		if (source == updateRowDataButton) {
-			writeCellEditor();
-		} else if (source == closeCellDataButton) {
-			this.disableCellDataEditor();
-		} else if (source == saveCellDataButton) {
-			JFileChooser chooser = new JFileChooser();
-			chooser.addChoosableFileFilter(new ExtensionFileFilter("text file", new String[]{".txt"}));
-			chooser.setAcceptAllFileFilterUsed(false);
-			chooser.setDialogTitle("Save cell data...");
-
-			if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-				java.nio.file.Path target = nl.errorsoft.esql.ui.util.FileChoosers.withExtension(chooser.getSelectedFile(), ".txt").toPath();
-				String text = cellData.getText() + System.lineSeparator();
-				// The file is written off the event thread, a failure is reported on it.
-				Thread.ofVirtual().name("save-cell-data").start(() -> {
-					try {
-						java.nio.file.Files.writeString(target, text);
-					} catch (Exception err) {
-						SwingUtilities.invokeLater(() -> ApplicationContext.get().errors().report(this, "Save cell data", err));
-					}
-				});
-			}
-		} else if (source == saveDataButton) {
-			int row = dataTable.getSelectedRow();
-			TableCell[] rowData = new TableCell[dataTable.getColumnCount()];
-
-			for (int i = 0; i < dataTable.getColumnCount(); i++) {
-				rowData[i] = (TableCell) dataTable.getValueAt(row, i);
-			}
-
-			tableController.showDownloadFileDialog(this.table, rowData, (TableCell) dataTable.getValueAt(row, dataTable.getSelectedColumn()));
-		} else if (source == addDataButton) {
-			int row = dataTable.getSelectedRow();
-			TableCell[] rowData = new TableCell[dataTable.getColumnCount()];
-
-			for (int i = 0; i < dataTable.getColumnCount(); i++) {
-				rowData[i] = (TableCell) dataTable.getValueAt(row, i);
-			}
-
-			tableController.showUploadFileDialog(this.table, rowData, (TableCell) dataTable.getValueAt(row, dataTable.getSelectedColumn()));
-		} else {
-			try {
-				skip = Integer.parseInt(this.skipField.getText());
-				show = Integer.parseInt(this.showField.getText());
-			} catch (Exception ex) {
-				Dialogs.error(this, "Show data", "Enter a number in Skip and Show.");
-				return;
-			}
-
-			try {
-				int rows = table.getRowCount();
-				Paging page = new Paging(skip, show);
-
-				if (source == firstButton) {
-					page = page.first();
-				} else if (source == prevButton) {
-					page = page.previous();
-				} else if (source == runButton) {
-					page = page.clamped(rows);
-				} else if (source == nextButton) {
-					page = page.next(rows);
-				} else if (source == lastButton) {
-					page = page.last(rows);
-				}
-				skip = page.skip();
-
-				skipField.setText(Integer.toString(skip));
-				showField.setText(Integer.toString(show));
-
-				tableController.showTableData(table, skip, show);
-				inserting = false;
-			} catch (Exception ex) {
-				ApplicationContext.get().errors().report(this, "Show data", ex);
-			}
-		}
-	}
-
-	/** Writes the text of the cell editor below the grid into its cell; a cell of a new row only keeps it until the row is inserted. */
-	private void writeCellEditor() {
-		TableCell cell = editingCell;
-		String text = cellData.getText();
-		int row = editingRow;
-
-		if (cell.isNewRow()) {
-			cell.setEditedText(text);
-			sortableModel.fireTableRowsUpdated(row, row);
-			refreshUpdateButtons();
+		try {
+			skip = Integer.parseInt(this.skipField.getText());
+			show = Integer.parseInt(this.showField.getText());
+		} catch (Exception ex) {
+			Dialogs.error(this, "Show data", "Enter a number in Skip and Show.");
 			return;
 		}
-		TableCell[] rowData = new TableCell[dataTable.getColumnCount()];
 
-		for (int i = 0; i < dataTable.getColumnCount(); i++) {
-			rowData[i] = (TableCell) dataTable.getValueAt(row, i);
+		try {
+			int rows = table.getRowCount();
+			Paging page = new Paging(skip, show);
+
+			if (source == firstButton) {
+				page = page.first();
+			} else if (source == prevButton) {
+				page = page.previous();
+			} else if (source == runButton) {
+				page = page.clamped(rows);
+			} else if (source == nextButton) {
+				page = page.next(rows);
+			} else if (source == lastButton) {
+				page = page.last(rows);
+			}
+			skip = page.skip();
+
+			skipField.setText(Integer.toString(skip));
+			showField.setText(Integer.toString(show));
+
+			tableController.showTableData(table, skip, show);
+			inserting = false;
+		} catch (Exception ex) {
+			ApplicationContext.get().errors().report(this, "Show data", ex);
 		}
-		changeCell(rowData, cell, text, () -> {
-			cell.setEditedText(text);
-			sortableModel.fireTableRowsUpdated(row, row);
-		});
 	}
 
 	public void refreshData() {
@@ -701,7 +647,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 			// Called after a row was added: the new row is at the end, so the last page is shown.
 			skip = new Paging(skip, show).last(rows).skip();
 
-			this.disableCellDataEditor();
+			this.closeValueEditor();
 			inserting = false;
 			tableController.showTableData(table, skip, show);
 

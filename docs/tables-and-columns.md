@@ -8,9 +8,11 @@ Double click a table in the tree (or choose Open in its context menu) to show it
 
 ## Editing data
 
-* Click a cell and type to change it, then press **Update changes** in the toolbar at the top of the table data. An empty cell is stored as `NULL` and shown as a dimmed *NULL*, so it differs from the text "null".
-* **Insert new row** adds an empty row to fill in, **Delete row** removes the selected rows after asking.
-* Binary columns (blobs) can be uploaded from a file and saved to a file.
+* Click a cell and type to change it; leaving the cell writes it. An empty cell is stored as `NULL` and shown as a dimmed *NULL*, so it differs from the text "null".
+* **Update changes** in the toolbar at the top of the table data is enabled only when something is waiting to be written: a cell being edited with a different text, a changed value in the value editor, or a new row.
+* **Insert new row** adds an empty row to fill in (Update changes inserts it), **Delete row** removes the selected rows after asking.
+* **Edit value** (the pencil, F2, a double click or **Edit value...** in the context menu of a cell) opens the value editor below the grid. It colours JSON, XML and SQL, guessed from the value; **Format** pretty prints JSON and XML, **Wrap lines** wraps long lines, **Set NULL** empties the value, **Load from file...** and **Save to file...** read and write a text file. **Apply** writes the value and **Revert** goes back to it; both are enabled only when the text differs from the cell. While the editor has no changes it follows the selected cell. Query results and the server status open it read only.
+* A binary column (blob) is not shown as text: the value editor has **Upload...** to load a file into the cell and **Download...** to save it to a file.
 
 A row can only be changed or deleted when it can be identified, by its primary key or else by all its values.
 

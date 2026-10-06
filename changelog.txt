@@ -1,6 +1,15 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Value editor for a cell
+
+- The text panel below the table data is replaced by a value editor, opened with F2, a double click, the pencil in
+  the toolbar or "Edit value..." in the context menu of a cell. It colours JSON, XML and SQL, pretty prints JSON and
+  XML (Format), wraps lines on request, sets NULL, loads from and saves to a file, and has Apply and Revert that are
+  enabled only when the text differs from the cell. It follows the selected cell while it has no changes.
+- Query results and the server status show the value read only, with a hint. A binary column shows Upload and
+  Download instead of text.
+
 06-10-2026: Update changes only when something changed
 
 - The "Update changes" buttons of the table data view are enabled only when there is something to write: a cell

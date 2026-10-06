@@ -57,6 +57,7 @@ public final class ApplicationContext {
 			images.addIcon("imgNewRow", "row-add", 16, false);
 			images.addIcon("imgUpdateRow", "update-row", 16, false);
 			images.addIcon("imgDeleteRow", "row-drop", 16, false);
+			images.addIcon("imgEditValue", "pencil", 16, false);
 			images.addIcon("imgAddField", "field-add", 16, false);
 			images.addIcon("imgDeleteField", "field-drop", 16, false);
 			images.addIcon("imgSave", "save", 16, false);
