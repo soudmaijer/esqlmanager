@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JInternalFrame;
+import javax.swing.SwingUtilities;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,10 +55,10 @@ public class MainController {
 		log.info("{} starting on Java {} ({}), {} {}", getTitle(), System.getProperty("java.version"), System.getProperty("java.vendor"),
 			System.getProperty("os.name"), System.getProperty("os.arch"));
 		log.info("Working directory: {}", System.getProperty("user.dir"));
-		// Show splash.
-		showSplashScreen(3000);
 		refreshProfiles();
 		mainWindow.showConnectionState();
+		// After the main window has been shown and laid out, so the splash comes up over it, not behind or before it.
+		SwingUtilities.invokeLater(() -> showSplashScreen(3000));
 	}
 
 	public void splashReady() {
@@ -76,7 +77,7 @@ public class MainController {
 	 */
 	public void showSplashScreen(int time) {
 		// Show a new Splash screen UI.
-		new SplashWindow(this, mainWindow, time);
+		new SplashWindow(mainWindow, new SplashWindow.Info(getAppName(), getAppVersion(), getAppCommit()), time, this::splashReady);
 	}
 
 	/** A connection was opened: it is listed in the explorer instead of its saved profile. */

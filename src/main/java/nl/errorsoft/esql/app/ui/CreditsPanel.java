@@ -1,48 +1,44 @@
 package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.DataDirectory;
-import java.awt.*;
-import java.io.BufferedReader;
+
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.List;
+
+import javax.swing.JComponent;
 import javax.swing.Timer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CreditsPanel extends Canvas {
+/** The credits scrolling up over the splash artwork, behind a translucent white panel. Painted by Swing in {@code paintComponent}. */
+public class CreditsPanel extends JComponent {
 	private static final Logger log = LogManager.getLogger(CreditsPanel.class);
 	// The colours of the splash artwork the credits scroll over.
 	private static final Color BORDER = new Color(0x5B5150);
 	private static final Color HEADING = new Color(0xA24811);
 	private static final Color TEXT = new Color(0x000000);
+	private static final int LINE = 11;
 	/** Moves the credits up a pixel at a time, on the event thread. */
 	private final Timer scroller = new Timer(45, e -> scroll());
-	private CreditObject root;
-	private CreditObject current;
-
-	private Image buffer = null;
-	private int y_offset = 0;
-
-	private int nodes = 0;
-
-	private Image background;
+	private final Font bold = new Font("Arial", Font.BOLD, 11);
+	private final Font plain = new Font("Arial", Font.PLAIN, 11);
+	private List<String> lines = List.of();
+	/** Where the first line is, from the top; starts below the panel. */
+	private int offset = -1;
 
 	public CreditsPanel() {
+		setOpaque(false);
 		try {
-			try (BufferedReader fin = Files.newBufferedReader(DataDirectory.file("credits.txt").toPath(), StandardCharsets.UTF_8)) {
-				String in = fin.readLine();
-				root = new CreditObject(in);
-				current = root;
-				nodes++;
-				while ((in = fin.readLine()) != null) {
-					nodes++;
-					CreditObject nextCredit = new CreditObject(in);
-					current.next = nextCredit;
-					current = nextCredit;
-				}
-			}
-
+			lines = Files.readAllLines(DataDirectory.file("credits.txt").toPath(), StandardCharsets.UTF_8);
 			scroller.start();
 		} catch (Exception e) {
 			// Without credits the panel stays empty, the splash and the About window still work.
@@ -50,90 +46,55 @@ public class CreditsPanel extends Canvas {
 		}
 	}
 
-	public void update(Graphics g) {
-		paint(g);
-	}
-
-	public void paint(Graphics g) {
-		if (buffer == null) {
-			buffer = createImage((int) this.getSize().getWidth(), (int) this.getSize().getHeight());
-			y_offset = (int) this.getSize().getHeight();
-		}
-
-		Graphics2D g2 = (Graphics2D) buffer.getGraphics();
+	@Override
+	protected void paintComponent(Graphics g) {
+		Graphics2D g2 = (Graphics2D) g.create();
 		try {
-			drawCredits(g2);
+			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			if (offset < 0) {
+				offset = getHeight();
+			}
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, 0, getWidth(), getHeight());
+			g2.setComposite(AlphaComposite.SrcOver);
+			g2.setColor(BORDER);
+			g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+			g2.clipRect(1, 1, getWidth() - 2, getHeight() - 2);
+
+			FontMetrics boldMetrics = g2.getFontMetrics(bold);
+			FontMetrics plainMetrics = g2.getFontMetrics(plain);
+			for (int count = 0; count < lines.size(); count++) {
+				String text = lines.get(count);
+				if (text.equals("-")) {
+					g2.setColor(BORDER);
+					g2.drawLine(10, offset + count * LINE + 7, getWidth() - 10, offset + count * LINE + 7);
+				} else {
+					boolean heading = text.startsWith("<h>");
+					text = heading ? text.substring(3) : text;
+					g2.setColor(heading ? HEADING : TEXT);
+					g2.setFont(heading ? bold : plain);
+					int width = (heading ? boldMetrics : plainMetrics).stringWidth(text);
+					g2.drawString(text, (getWidth() - width) / 2, offset + (count + 1) * LINE);
+				}
+			}
 		} finally {
 			g2.dispose();
 		}
-
-		g.drawImage(buffer, 0, 0, this);
 	}
 
-	private void drawCredits(Graphics2D g2) {
-		Composite old = g2.getComposite();
-		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) 0.8));
-		g2.setColor(Color.WHITE);
-		g2.fillRect(0, 0, (int) this.getSize().getWidth(), (int) this.getSize().getHeight());
-
-		g2.setComposite(old);
-
-		g2.setColor(BORDER);
-		g2.drawRect(0, 0, (int) this.getSize().getWidth() - 1, (int) this.getSize().getHeight() - 1);
-
-		g2.setColor(Color.black);
-
-		Font fb = new Font("Arial", Font.BOLD, 11);
-		Font fp = new Font("Arial", Font.PLAIN, 11);
-
-		FontMetrics fmb = this.getFontMetrics(fb);
-		FontMetrics fmp = this.getFontMetrics(fp);
-
-		current = root;
-		int count = 0;
-		while (current != null) {
-			if (!current.text.equalsIgnoreCase("-")) {
-				int width;
-				String text = current.text;
-				if (current.text.startsWith("<h>")) {
-					text = text.substring(3, text.length());
-					width = fmb.stringWidth(text);
-					g2.setColor(HEADING);
-					g2.setFont(fb);
-				} else {
-					width = fmp.stringWidth(text);
-					g2.setColor(TEXT);
-					g2.setFont(fp);
-				}
-				g2.drawString(text, (((int) this.getSize().getWidth()) - width) / 2, y_offset + ((count + 1) * 11));
-			} else {
-				g2.setColor(BORDER);
-				g2.drawLine(10, y_offset + (count * 11) + 7, (int) this.getSize().getWidth() - 10, y_offset + (count * 11) + 7);
-			}
-			current = current.next;
-			count++;
-		}
-	}
-
-	public void switchoff() {
+	public void switchOff() {
 		scroller.stop();
 	}
 
 	private void scroll() {
-		y_offset--;
-		repaint();
-
-		if (y_offset + nodes * 11 < 0) {
-			y_offset = (int) this.getSize().getHeight();
+		if (offset < 0) {
+			return;
 		}
-	}
-}
-
-class CreditObject {
-	String text;
-	CreditObject next = null;
-
-	public CreditObject(String text) {
-		this.text = text;
+		offset--;
+		if (offset + lines.size() * LINE < 0) {
+			offset = getHeight();
+		}
+		repaint();
 	}
 }

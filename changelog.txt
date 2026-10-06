@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: The splash no longer comes up empty
+
+- The splash sometimes showed an empty window at start up. It is now painted the Swing way, created on the event
+  thread after the main window is shown, and stays the full three seconds from the moment it is visible. The credits
+  in About scroll over the artwork with a translucent background again.
+
 06-10-2026: A quick double right click no longer opens a table
 
 - Only a double click with the left button opens a table or toggles a node; two quick right clicks (or Ctrl+click on

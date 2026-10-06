@@ -9,6 +9,7 @@ public class Main {
 	}
 
 	static void runApplication(String[] args) {
-		new MainController();
+		// Swing is only touched on the event thread, the start up included.
+		javax.swing.SwingUtilities.invokeLater(MainController::new);
 	}
 }
