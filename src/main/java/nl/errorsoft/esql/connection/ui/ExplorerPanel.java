@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.connection.ui;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -120,7 +122,7 @@ public class ExplorerPanel extends JPanel {
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && !e.isPopupTrigger()) {
+				if (MouseClicks.isDoubleClick(e)) {
 					doubleClicked(e);
 				}
 			}

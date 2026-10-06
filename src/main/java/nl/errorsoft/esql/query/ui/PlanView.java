@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.query.ui;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -30,6 +32,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -114,7 +117,7 @@ class PlanView extends JPanel {
 					return;
 				}
 				int arrowEnd = table.getCellRect(row, column, false).x + (model.row(row).depth() + 1) * INDENT + 4;
-				if (e.getClickCount() == 2 || e.getX() < arrowEnd) {
+				if (MouseClicks.isDoubleClick(e) || (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1 && e.getX() < arrowEnd)) {
 					PlanNode node = model.row(row).node();
 					model.toggle(row);
 					for (int i = 0; i < model.getRowCount(); i++) {

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import nl.errorsoft.esql.ui.util.Forms;
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 
@@ -121,7 +123,7 @@ public class TableDataTab extends JPanel implements ActionListener {
 		});
 		dataTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+				if (MouseClicks.isDoubleClick(e)) {
 					openValueEditor();
 				}
 			}

@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.designer.ui.diagram;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import nl.errorsoft.esql.designer.ui.dialog.ForeignKeyDialog;
 
 import java.awt.BasicStroke;
@@ -983,7 +985,7 @@ public class DesignerCanvas extends JLayeredPane implements MouseListener, Mouse
 	}
 
 	public void mouseClicked(MouseEvent e) {
-		if (e.getSource() == this && e.getClickCount() == 2 && !e.isMetaDown()) {
+		if (e.getSource() == this && MouseClicks.isDoubleClick(e) && !e.isMetaDown()) {
 			editForeignKey(connectorAt(e.getPoint()));
 		}
 	}

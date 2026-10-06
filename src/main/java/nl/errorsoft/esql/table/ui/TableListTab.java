@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -72,7 +74,7 @@ public class TableListTab extends JPanel {
 		table.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && table.rowAtPoint(e.getPoint()) >= 0) {
+				if (MouseClicks.isDoubleClick(e) && table.rowAtPoint(e.getPoint()) >= 0) {
 					perform(Item.OPEN_TABLE);
 				}
 			}

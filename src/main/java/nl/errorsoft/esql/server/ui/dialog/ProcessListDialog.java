@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.server.ui.dialog;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
@@ -74,7 +76,7 @@ public class ProcessListDialog extends JDialog {
 		processTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && processTable.getSelectedRow() > -1) {
+				if (MouseClicks.isDoubleClick(e) && processTable.getSelectedRow() > -1) {
 					showSelectedQuery();
 				}
 			}

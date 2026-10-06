@@ -1,5 +1,7 @@
 package nl.errorsoft.esql.table.ui;
 
+import nl.errorsoft.esql.ui.util.MouseClicks;
+
 import nl.errorsoft.esql.ui.dialog.Dialogs;
 import nl.errorsoft.esql.table.TableColumn;
 import nl.errorsoft.esql.table.TableIndex;
@@ -208,7 +210,7 @@ public class IndexesTab extends JPanel implements EditorTab {
 		return new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && from.locationToIndex(e.getPoint()) > -1) {
+				if (MouseClicks.isDoubleClick(e) && from.locationToIndex(e.getPoint()) > -1) {
 					moveSelected(from, to);
 				}
 			}
