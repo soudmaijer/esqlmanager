@@ -102,7 +102,7 @@ public class QueryTab extends JPanel {
 		toolbar.add(runSelectionButton);
 		toolbar.add(runAllButton);
 		toolbar.addSeparator();
-		toolbar.add(new JLabel(" Database: "));
+		toolbar.add(new JLabel(" " + capitalized(controller.databaseTerm()) + ": "));
 		databases = new JComboBox<>(databaseList.toArray(new Database[0]));
 		databases.setMaximumSize(new Dimension(200, databases.getPreferredSize().height));
 
@@ -113,7 +113,7 @@ public class QueryTab extends JPanel {
 
 		if (controller.hasSchemas()) {
 			String term = controller.schemaTerm();
-			toolbar.add(new JLabel(" " + Character.toUpperCase(term.charAt(0)) + term.substring(1) + ": "));
+			toolbar.add(new JLabel(" " + capitalized(term) + ": "));
 			schemas.setMaximumSize(new Dimension(200, schemas.getPreferredSize().height));
 			schemas.setPrototypeDisplayValue("information_schema");
 			schemas.setToolTipText("Unqualified table names resolve to this " + term);
@@ -334,5 +334,9 @@ public class QueryTab extends JPanel {
 		chooser.setAcceptAllFileFilterUsed(false);
 		chooser.setDialogTitle(title);
 		return chooser;
+	}
+
+	private static String capitalized(String term) {
+		return Character.toUpperCase(term.charAt(0)) + term.substring(1);
 	}
 }

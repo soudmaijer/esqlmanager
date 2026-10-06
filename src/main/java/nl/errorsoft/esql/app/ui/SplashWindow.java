@@ -74,17 +74,21 @@ public class SplashWindow extends javax.swing.JWindow implements MouseListener {
 
 	public void paint(Graphics g) {
 		java.util.Calendar cal = java.util.Calendar.getInstance();
-		Graphics2D g1 = (Graphics2D) this.getGraphics();
-		g1.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g1.drawImage(splash, 0, 0, this);
-		g1.setColor(Color.black);
-		g1.setFont(new Font("Arial", Font.BOLD, 12));
-		g1.drawString(mainController.getAppName(), 17, 196);
-		g1.setFont(new Font("Arial", Font.PLAIN, 11));
-		g1.drawString("Version " + mainController.getAppVersion(), 17, 212);
-		g1.drawString("Commit " + mainController.getAppCommit(), 17, 227);
-		g1.drawString("http://www.errorsoft.nl", 274, 212);
-		g1.drawString("© Copyright Errorsoft 2002-" + cal.get(java.util.Calendar.YEAR), 230, 227);
+		Graphics2D g1 = (Graphics2D) g.create();
+		try {
+			g1.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g1.drawImage(splash, 0, 0, this);
+			g1.setColor(Color.black);
+			g1.setFont(new Font("Arial", Font.BOLD, 12));
+			g1.drawString(mainController.getAppName(), 17, 196);
+			g1.setFont(new Font("Arial", Font.PLAIN, 11));
+			g1.drawString("Version " + mainController.getAppVersion(), 17, 212);
+			g1.drawString("Commit " + mainController.getAppCommit(), 17, 227);
+			g1.drawString("http://www.errorsoft.nl", 274, 212);
+			g1.drawString("© Copyright Errorsoft 2002-" + cal.get(java.util.Calendar.YEAR), 230, 227);
+		} finally {
+			g1.dispose();
+		}
 	}
 
 	public void update(Graphics g) {

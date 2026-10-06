@@ -2,7 +2,9 @@ package nl.errorsoft.esql.app.ui;
 
 import nl.errorsoft.esql.app.DataDirectory;
 import java.awt.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import javax.swing.Timer;
 
 import org.apache.logging.log4j.LogManager;
@@ -28,7 +30,7 @@ public class CreditsPanel extends Canvas {
 
 	public CreditsPanel() {
 		try {
-			try (BufferedReader fin = new BufferedReader(new FileReader(DataDirectory.file("credits.txt")))) {
+			try (BufferedReader fin = Files.newBufferedReader(DataDirectory.file("credits.txt").toPath(), StandardCharsets.UTF_8)) {
 				String in = fin.readLine();
 				root = new CreditObject(in);
 				current = root;
@@ -59,6 +61,16 @@ public class CreditsPanel extends Canvas {
 		}
 
 		Graphics2D g2 = (Graphics2D) buffer.getGraphics();
+		try {
+			drawCredits(g2);
+		} finally {
+			g2.dispose();
+		}
+
+		g.drawImage(buffer, 0, 0, this);
+	}
+
+	private void drawCredits(Graphics2D g2) {
 		Composite old = g2.getComposite();
 		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) 0.8));
 		g2.setColor(Color.WHITE);
@@ -101,9 +113,6 @@ public class CreditsPanel extends Canvas {
 			current = current.next;
 			count++;
 		}
-
-		g = this.getGraphics();
-		g.drawImage(buffer, 0, 0, this);
 	}
 
 	public void switchoff() {

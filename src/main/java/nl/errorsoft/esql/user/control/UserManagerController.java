@@ -28,7 +28,7 @@ public class UserManagerController {
 				return;
 			}
 
-			mainWindow.updateStatus("Starting usermanager...", true);
+			mainWindow.updateStatus("Opening the user manager...", true);
 			UserManagerDialog dialog = new UserManagerDialog(mainWindow, this);
 			mainWindow.showConnectionState();
 			dialog.setVisible(true);

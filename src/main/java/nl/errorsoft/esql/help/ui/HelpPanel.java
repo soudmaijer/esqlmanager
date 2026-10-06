@@ -1,5 +1,6 @@
 package nl.errorsoft.esql.help.ui;
 
+import nl.errorsoft.esql.app.ApplicationContext;
 import nl.errorsoft.esql.help.HelpPages;
 import nl.errorsoft.esql.ui.util.Browsers;
 
@@ -56,7 +57,7 @@ public class HelpPanel extends JEditorPane {
 			setDocument(document);
 			setCaretPosition(0);
 		} catch (IOException | javax.swing.text.BadLocationException | RuntimeException e) {
-			log.warn("The help page {} could not be shown: {}", name, e.getMessage());
+			ApplicationContext.get().errors().report(this, "Show help page", e);
 		}
 	}
 

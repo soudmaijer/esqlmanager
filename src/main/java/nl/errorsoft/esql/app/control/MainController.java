@@ -95,7 +95,7 @@ public class MainController {
 	}
 
 	public void showSettingsDialog() {
-		SettingsDialog settingsDialog = new SettingsDialog(this, mainWindow);
+		new SettingsDialog(mainWindow);
 	}
 
 	public void showImportDialog() {

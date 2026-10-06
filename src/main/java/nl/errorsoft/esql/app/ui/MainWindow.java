@@ -147,24 +147,35 @@ public class MainWindow extends JFrame implements ActionListener {
 		optionsMenu.add(disconnectItem);
 		optionsMenu.addSeparator();
 		optionsMenu.add(exitItem);
+		optionsMenu.setMnemonic('O');
+		connectItem.setMnemonic('C');
+		disconnectItem.setMnemonic('D');
+		exitItem.setMnemonic('x');
 		menubar.add(optionsMenu);
 
 		settingsMenu = new JMenu("Settings");
 		settingsItem = new JMenuItem("Preferences...");
-		jdbcItem = new JMenuItem("JDBC Driver settings...");
+		jdbcItem = new JMenuItem("JDBC driver settings...");
 		jdbcItem.addActionListener(this);
 		settingsMenu.add(settingsItem);
 		settingsMenu.add(jdbcItem);
+		settingsMenu.setMnemonic('S');
+		settingsItem.setMnemonic('P');
+		jdbcItem.setMnemonic('J');
 		menubar.add(settingsMenu);
 
 		importExportMenu = new JMenu("Tools");
 		importFromFileItem = new JMenuItem("Import data...");
 		exportToFileItem = new JMenuItem("Export data...");
-		designerItem = new JMenuItem("Database Designer");
+		designerItem = new JMenuItem("Database designer");
 		importExportMenu.add(importFromFileItem);
 		importExportMenu.add(exportToFileItem);
 		importExportMenu.addSeparator();
 		importExportMenu.add(designerItem);
+		importExportMenu.setMnemonic('T');
+		importFromFileItem.setMnemonic('I');
+		exportToFileItem.setMnemonic('E');
+		designerItem.setMnemonic('D');
 		menubar.add(importExportMenu);
 
 		// The open windows are listed when the menu opens, below next and previous.
@@ -174,6 +185,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		nextWindowItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_CLOSE_BRACKET, menuKey | KeyEvent.SHIFT_DOWN_MASK));
 		previousWindowItem = new JMenuItem("Previous window");
 		previousWindowItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, menuKey | KeyEvent.SHIFT_DOWN_MASK));
+		windowMenu.setMnemonic('W');
+		nextWindowItem.setMnemonic('N');
+		previousWindowItem.setMnemonic('P');
 		windowMenu.addMenuListener(new javax.swing.event.MenuListener() {
 			@Override
 			public void menuSelected(javax.swing.event.MenuEvent e) {
@@ -198,6 +212,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		helpItem = new JMenuItem("eSQLManager Help");
 		helpMenu.add(helpItem);
 		helpMenu.add(aboutItem);
+		helpMenu.setMnemonic('H');
+		helpItem.setMnemonic('H');
+		aboutItem.setMnemonic('A');
 		menubar.add(helpMenu);
 
 		setJMenuBar(menubar);

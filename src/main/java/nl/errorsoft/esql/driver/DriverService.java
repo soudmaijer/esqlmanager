@@ -83,7 +83,7 @@ public class DriverService {
 			case OWN_JAR -> {
 				Path jar = Path.of(source.ownJar());
 				if (!Files.isRegularFile(jar)) {
-					throw new EsqlException("The driver jar " + jar + " does not exist. Choose another one in Settings > JDBC Driver settings.");
+					throw new EsqlException("The driver jar " + jar + " does not exist. Choose another one in Settings > JDBC driver settings.");
 				}
 				return loadFromJar(jar, source.className(), path -> path);
 			}
@@ -95,7 +95,7 @@ public class DriverService {
 			}
 			default -> {
 				String name = source.artifact() != null ? "The " + source.artifact().name() + " driver" : "The driver " + source.className();
-				throw new EsqlException(name + " is not installed. Download it in Settings > JDBC Driver settings.");
+				throw new EsqlException(name + " is not installed. Download it in Settings > JDBC driver settings.");
 			}
 		}
 	}
@@ -176,7 +176,7 @@ public class DriverService {
 				Files.deleteIfExists(copy);
 				Files.deleteIfExists(jar);
 				throw new EsqlException("The " + artifact.name() + " driver in " + jar
-					+ " does not have the expected SHA-256 checksum and was deleted. Download it again in Settings > JDBC Driver settings.");
+					+ " does not have the expected SHA-256 checksum and was deleted. Download it again in Settings > JDBC driver settings.");
 			}
 			return copy;
 		} catch (IOException e) {

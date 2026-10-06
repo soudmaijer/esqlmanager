@@ -1,8 +1,9 @@
 package nl.errorsoft.esql.app;
 
+import nl.errorsoft.esql.error.EsqlException;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -18,14 +19,14 @@ public final class DataDirectory {
 
 	public static final String DRIVERS_PROPERTY = "esql.drivers";
 
-	private static final File ROOT = locate();
+	private static File root;
 
 	private DataDirectory() {
 	}
 
 	/** The file for a path relative to the runtime directory, such as {@code conf/profiles.xml}. */
 	public static File file(String relativePath) {
-		return new File(ROOT, relativePath);
+		return new File(root(), relativePath);
 	}
 
 	/**
@@ -35,6 +36,14 @@ public final class DataDirectory {
 	public static Path drivers() {
 		String drivers = System.getProperty(DRIVERS_PROPERTY);
 		return drivers != null ? Path.of(drivers) : Path.of(System.getProperty("user.home"), ".esqlmanager", "drivers");
+	}
+
+	/** Resolved on first use, so that a folder that cannot be prepared is an {@link EsqlException} of the action that needs it, not a failed class load. */
+	private static synchronized File root() {
+		if (root == null) {
+			root = locate();
+		}
+		return root;
 	}
 
 	private static File locate() {
@@ -58,7 +67,7 @@ public final class DataDirectory {
 				}
 			}
 		} catch (IOException e) {
-			throw new UncheckedIOException("Cannot prepare " + to, e);
+			throw new EsqlException("Cannot prepare the data folder " + to + ": " + e.getMessage(), e);
 		}
 	}
 }

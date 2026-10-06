@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.errorsoft.esql.connection.ConnectionProfile;
@@ -289,7 +290,7 @@ public abstract class AbstractDialect implements Dialect {
 		return List.of();
 	}
 
-	public String createDatabaseSql(String database, java.util.Map<String, String> options) {
+	public String createDatabaseSql(String database, Map<String, String> options) {
 		StringBuilder sql = new StringBuilder("CREATE DATABASE ").append(quote(database));
 
 		for (DatabaseOption option : createDatabaseOptions()) {

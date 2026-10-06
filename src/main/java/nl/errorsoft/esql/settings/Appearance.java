@@ -6,6 +6,8 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.swing.UIManager;
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +36,7 @@ public enum Appearance {
 		try {
 			return valueOf(name.trim().toUpperCase());
 		} catch (RuntimeException e) {
+			// A missing or unknown name in settings.xml is not a problem, the system appearance is the default.
 			return SYSTEM;
 		}
 	}
@@ -92,8 +95,11 @@ public enum Appearance {
 
 		try {
 			Process process = new ProcessBuilder("defaults", "read", "-g", "AppleInterfaceStyle").redirectErrorStream(true).start();
-			return new String(process.getInputStream().readAllBytes()).trim().equalsIgnoreCase("Dark");
+			try (InputStream output = process.getInputStream()) {
+				return new String(output.readAllBytes(), StandardCharsets.UTF_8).trim().equalsIgnoreCase("Dark");
+			}
 		} catch (IOException e) {
+			// No defaults command or no answer: the light theme is the fallback.
 			return false;
 		}
 	}

@@ -1,6 +1,7 @@
 package nl.errorsoft.esql.app;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
@@ -24,14 +25,15 @@ public class OutputPanelAppender extends AbstractAppender {
 	}
 
 	public void append(LogEvent event) {
-		mainWindow.print(new String(getLayout().toByteArray(event)));
+		mainWindow.print(new String(getLayout().toByteArray(event), StandardCharsets.UTF_8));
 	}
 
 	/** Attaches the output panel to the root logger. */
 	public static void install(MainWindow mainWindow) {
 		LoggerContext context = (LoggerContext) LogManager.getContext(false);
 		Configuration config = context.getConfiguration();
-		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n").setConfiguration(config).build();
+		Layout<? extends Serializable> layout = PatternLayout.newBuilder().setPattern("%d{HH:mm:ss} %-5level %msg%n").setCharset(StandardCharsets.UTF_8)
+			.setConfiguration(config).build();
 		Appender appender = new OutputPanelAppender(layout, mainWindow);
 
 		appender.start();

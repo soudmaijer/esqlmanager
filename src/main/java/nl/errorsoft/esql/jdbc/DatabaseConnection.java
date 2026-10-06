@@ -6,8 +6,12 @@ import nl.errorsoft.esql.connection.ConnectionProfile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.*;
-import java.io.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
 
 public class DatabaseConnection implements AutoCloseable {
 	private String serverDescription = "";
@@ -46,7 +50,7 @@ public class DatabaseConnection implements AutoCloseable {
 	}
 
 	// Connect to given database, an empty name connects to the profile's default.
-	public void connect(ConnectionProfile profile, String database) throws Exception, SQLException {
+	public void connect(ConnectionProfile profile, String database) throws SQLException {
 		this.profile = profile;
 		this.database = profile.getServerType().getDialect().getConnectionDatabase(profile, database);
 		this.schema = null;
@@ -57,7 +61,7 @@ public class DatabaseConnection implements AutoCloseable {
 		}
 
 		log.info("Connecting to {} as {}", url, profile.getUsername());
-		java.util.Properties credentials = new java.util.Properties();
+		Properties credentials = new Properties();
 		if (profile.getUsername() != null) {
 			credentials.setProperty("user", profile.getUsername());
 		}
@@ -99,13 +103,7 @@ public class DatabaseConnection implements AutoCloseable {
 			return;
 		}
 
-		try {
-			connect(profile, database);
-		} catch (SQLException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new SQLException(e.getMessage(), e);
-		}
+		connect(profile, database);
 	}
 
 	// The schema tables are looked up in, null when the server type has none.
@@ -132,7 +130,7 @@ public class DatabaseConnection implements AutoCloseable {
 	}
 
 	// Execute a query.
-	public java.sql.ResultSet executeQuery(String query) throws java.sql.SQLException {
+	public ResultSet executeQuery(String query) throws SQLException {
 		log.debug("Query: {}", query);
 		Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
@@ -146,19 +144,20 @@ public class DatabaseConnection implements AutoCloseable {
 		}
 	}
 
-	public int executeUpdate(String query) throws java.sql.SQLException {
+	public int executeUpdate(String query) throws SQLException {
+		log.debug("Update: {}", query);
 		try (Statement statement = connection.createStatement()) {
 			int i = statement.executeUpdate(query);
-			log.debug("Update: {} [{} row(s) updated]", query, i);
+			log.debug("Update: {} row(s) updated", i);
 			return i;
 		}
 	}
 
 	// Runs a statement whose result, if any, is not needed.
-	public void execute(String query) throws java.sql.SQLException {
+	public void execute(String query) throws SQLException {
+		log.debug("Execute: {}", query);
 		try (Statement statement = connection.createStatement()) {
 			statement.execute(query);
-			log.debug("Execute: {}", query);
 		}
 	}
 

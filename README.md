@@ -85,7 +85,7 @@ Known gaps with schemas: the user manager grants table privileges without a sche
 
 ## Database designer
 
-The designer (Tools > Database Designer) opens as a window on the desktop of eSQLManager, with a tab of its own next to the connection windows, one per model. It draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
+The designer (Tools > Database designer) opens as a window on the desktop of eSQLManager, with a tab of its own next to the connection windows, one per model. It draws a model of databases, tables and notes and generates it on the server. Tables are cards with an icon per column (key for the primary key, link for a foreign key column), in the colours of the light or dark theme. Right click the canvas to add a database, table or note at that spot, select all, arrange or toggle the grid; right click a card or a connector for what applies to it.
 
 * Drag from the icon of a column onto a column of another table to create a foreign key, or use "Add foreign key..." in the table's context menu or the Foreign Keys tab of its properties. The dialog takes several column pairs, a name (default `fk_<table>_<column>`) and the ON DELETE and ON UPDATE actions.
 * Foreign keys are drawn from column to column with a crow's foot at the many side. Double click a line to edit it, select it and press Delete to remove it.
@@ -195,7 +195,7 @@ Everything the application reads and writes at runtime lives in `runtime/`:
 
 ### JDBC drivers
 
-The PostgreSQL (BSD-2-Clause) and SQL Server (MIT) drivers are bundled. The MySQL driver (Connector/J, GPLv2 with the Universal FOSS Exception) and the Oracle driver (ojdbc11, Oracle Free Use Terms and Conditions) are not: the first connection to such a server asks to download the driver from Maven Central into `~/.esqlmanager/drivers` (also when running from source). The version and SHA-256 of each driver are pinned in `driver.DriverArtifact`; a file that does not match is deleted. Settings > JDBC Driver settings shows the status per driver, has a Download button and accepts a driver jar of your own.
+The PostgreSQL (BSD-2-Clause) and SQL Server (MIT) drivers are bundled. The MySQL driver (Connector/J, GPLv2 with the Universal FOSS Exception) and the Oracle driver (ojdbc11, Oracle Free Use Terms and Conditions) are not: the first connection to such a server asks to download the driver from Maven Central into `~/.esqlmanager/drivers` (also when running from source). The version and SHA-256 of each driver are pinned in `driver.DriverArtifact`; a file that does not match is deleted. Settings > JDBC driver settings shows the status per driver, has a Download button and accepts a driver jar of your own.
 
 Profiles are normally created in the connection dialog, which lists the saved profiles at the left (add, remove and duplicate with the buttons above the list) and shows the selected one at the right. When you choose a server type the default port and user name are filled in (MySQL 3306 / `root`, PostgreSQL 5432 / `postgres`, SQL Server 1433 / `sa`, Oracle 1521 / `system`).
 

@@ -69,6 +69,11 @@ public class QueryController implements SchemaNames {
 		return dialect().supports(Dialect.Feature.SCHEMAS);
 	}
 
+	/** What the server calls a database, for the label of the picker. */
+	public String databaseTerm() {
+		return dialect().databaseTerm();
+	}
+
 	/** What the server calls a schema, for the label of the picker. */
 	public String schemaTerm() {
 		return dialect().schemaTerm();
@@ -120,7 +125,7 @@ public class QueryController implements SchemaNames {
 		tables = Map.of();
 		schemaNames = List.of();
 		columns.clear();
-		connectionWindowController.inBackground("Change database", "Changing database...", () -> {
+		connectionWindowController.inBackground("Change " + databaseTerm(), "Changing " + databaseTerm() + "...", () -> {
 			connectionWindowController.getContext().databases().use(database);
 			return database.getName();
 		}, name -> {
@@ -225,7 +230,7 @@ public class QueryController implements SchemaNames {
 						results.add(last);
 						log.info("{}: {} row(s) in {} ms", which, last.rowCount(), millis);
 					}
-					case ExecutionResult.DatabaseChanged changed -> log.info("{}: database changed to {}", which, changed.database());
+					case ExecutionResult.DatabaseChanged changed -> log.info("{}: {} changed to {}", which, databaseTerm(), changed.database());
 					case ExecutionResult.Updated updated -> log.info("{}: {} row(s) affected in {} ms", which, updated.count(), millisSince(started));
 				}
 			} catch (Exception e) {
