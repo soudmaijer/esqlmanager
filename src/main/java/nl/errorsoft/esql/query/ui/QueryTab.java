@@ -66,6 +66,8 @@ public class QueryTab extends JPanel {
 	private final JButton runAllButton;
 	/** Set while statements run on their thread; another run waits until they are done. */
 	private boolean running;
+	/** Set while the database or schema is changed on its thread. */
+	private boolean switching;
 
 	public QueryTab(QueryController controller, List<Database> databaseList, Database selected) {
 		super(new BorderLayout());
@@ -166,9 +168,11 @@ public class QueryTab extends JPanel {
 		});
 	}
 
+	/** Switches the connection off the event thread; the pickers and run buttons wait until it is done. */
 	private void useSelectedDatabase() {
 		if (databases.getSelectedItem() instanceof Database database) {
-			controller.use(database);
+			setSwitching(true);
+			controller.use(database, () -> setSwitching(false));
 		}
 	}
 
@@ -189,7 +193,8 @@ public class QueryTab extends JPanel {
 
 	private void useSelectedSchema() {
 		if (!fillingSchemas && schemas.getSelectedItem() instanceof String schema) {
-			controller.useSchema(schema);
+			setSwitching(true);
+			controller.useSchema(schema, () -> setSwitching(false));
 		}
 	}
 
@@ -210,7 +215,7 @@ public class QueryTab extends JPanel {
 
 	/** Runs the statements off the event thread; the run buttons are disabled until they are done. */
 	private void run(List<SqlScript.Statement> statements) {
-		if (statements.isEmpty() || running) {
+		if (statements.isEmpty() || running || switching) {
 			return;
 		}
 
@@ -226,8 +231,21 @@ public class QueryTab extends JPanel {
 
 	private void setRunning(boolean running) {
 		this.running = running;
-		runSelectionButton.setEnabled(!running);
-		runAllButton.setEnabled(!running);
+		updateControls();
+	}
+
+	private void setSwitching(boolean switching) {
+		this.switching = switching;
+		updateControls();
+	}
+
+	/** Nothing runs or switches while statements run or the database or schema is being changed. */
+	private void updateControls() {
+		boolean idle = !running && !switching;
+		runSelectionButton.setEnabled(idle);
+		runAllButton.setEnabled(idle);
+		databases.setEnabled(idle);
+		schemas.setEnabled(idle);
 	}
 
 	/** Whether statements are running, for a check from a test or harness. */

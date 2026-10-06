@@ -30,7 +30,8 @@ import nl.errorsoft.esql.table.QueryResult;
 
 /**
  * The controller of one query tab: runs the statements of the editor and gives the completion the names of the current database (of all its schemas). The names are loaded
- * once per tab, the tables in the background when the database is chosen, the columns of a table the first time they are asked for.
+ * once per tab in the background: the tables when the database is chosen, the columns of a table the first time they are asked for (the completion
+ * offers none until they arrive).
  */
 public class QueryController implements SchemaNames {
 	private static final Logger log = LogManager.getLogger(QueryController.class);
@@ -110,20 +111,25 @@ public class QueryController implements SchemaNames {
 		return databases.isEmpty() ? null : databases.getFirst();
 	}
 
-	/** Makes the database the current one and loads its table names for the completion, off the event thread. */
-	public void use(Database database) {
-		try {
-			connectionWindowController.getContext().databases().use(database);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindowController.getMainWindow(), "Change database", e);
-			return;
-		}
-
-		this.database = database.getName();
+	/**
+	 * Makes the database the current one off the event thread (on PostgreSQL that connects again), then loads its table names for the completion.
+	 * {@code always} runs on the event thread when the switch is done or failed.
+	 */
+	public void use(Database database, Runnable always) {
 		chosenSchema = null;
 		tables = Map.of();
 		schemaNames = List.of();
 		columns.clear();
+		connectionWindowController.inBackground("Change database", "Changing database...", () -> {
+			connectionWindowController.getContext().databases().use(database);
+			return database.getName();
+		}, name -> {
+			this.database = name;
+			loadTables(database);
+		}, always);
+	}
+
+	private void loadTables(Database database) {
 		Thread.ofVirtual().name("completion-tables").start(() -> {
 			try {
 				DatabaseService service = connectionWindowController.getContext().databases();
@@ -150,16 +156,16 @@ public class QueryController implements SchemaNames {
 		});
 	}
 
-	/** Makes unqualified names resolve to the schema, for the statements and the completion. */
-	public void useSchema(String schema) {
-		try {
-			connectionWindowController.getContext().queries().useSchema(database, schema);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindowController.getMainWindow(), "Change " + schemaTerm(), e);
-			return;
-		}
-		chosenSchema = schema;
-		currentSchema = schema.toLowerCase();
+	/** Makes unqualified names resolve to the schema, for the statements and the completion, off the event thread; then {@code always} on it. */
+	public void useSchema(String schema, Runnable always) {
+		String in = database;
+		connectionWindowController.inBackground("Change " + schemaTerm(), "Changing " + schemaTerm() + "...", () -> {
+			connectionWindowController.getContext().queries().useSchema(in, schema);
+			return schema;
+		}, chosen -> {
+			chosenSchema = chosen;
+			currentSchema = chosen.toLowerCase();
+		}, always);
 	}
 
 	/** The controller of the grid a result is shown in, so that its rows can be edited like the rows of a table. */
@@ -288,18 +294,32 @@ public class QueryController implements SchemaNames {
 			return List.of();
 		}
 
-		return columns.computeIfAbsent(table.qualifiedName().toString().toLowerCase(), key -> {
+		String key = table.qualifiedName().toString().toLowerCase();
+		List<String> known = columns.get(key);
+
+		if (known == null && columns.putIfAbsent(key, List.of()) == null) {
+			loadColumns(table, key);
+		}
+		// Until the columns arrive the completion offers none, the next completion has them.
+		return known == null ? List.of() : known;
+	}
+
+	/** Loads the columns of a table off the event thread; a result for a database that is no longer chosen is dropped. */
+	private void loadColumns(Table table, String key) {
+		Map<String, Map<String, Table>> loadedFor = tables;
+		Thread.ofVirtual().name("completion-columns").start(() -> {
 			try {
 				List<String> names = new ArrayList<>();
 
 				for (TableColumn column : connectionWindowController.getContext().tables().loadColumns(table)) {
 					names.add(column.getName());
 				}
-				return names;
+				if (tables == loadedFor) {
+					columns.put(key, List.copyOf(names));
+				}
 			} catch (Exception e) {
 				// Completion offers no columns for this table, the editor keeps working.
 				log.warn("Could not load the columns of {} for completion: {}", table.getName(), e.getMessage());
-				return List.of();
 			}
 		});
 	}

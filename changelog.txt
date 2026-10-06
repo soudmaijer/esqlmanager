@@ -5,6 +5,9 @@ eSQLManager changelog
 
 - Export switches to the database of each exported object before it reads it, so exporting two databases, or a
   table after a query tab moved the connection, no longer reads the rows of the wrong database.
+- The query tab changes database and schema in the background (PostgreSQL connects again for a database), with the
+  pickers and run buttons disabled meanwhile, and the completion loads the columns of a table in the background; the
+  window no longer freezes on a slow server.
 - Export looks up the columns of a table with _ and % escaped, so a table such as a_b no longer gets the columns of axb.
 
 05-10-2026: Packaging starts from a clean slate

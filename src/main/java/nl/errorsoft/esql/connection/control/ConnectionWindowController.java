@@ -146,6 +146,15 @@ public class ConnectionWindowController {
 	 * thread. A failure of either is reported once as the action, with this connection window as the parent.
 	 */
 	public <T> void inBackground(String action, String status, Work<T> work, Outcome<T> done) {
+		inBackground(action, status, work, done, () -> {
+		});
+	}
+
+	/**
+	 * As {@link #inBackground(String, String, Work, Outcome)}, and runs {@code always} on the event thread afterwards, also after a failure: to enable again
+	 * the controls that were disabled while the work ran.
+	 */
+	public <T> void inBackground(String action, String status, Work<T> work, Outcome<T> done, Runnable always) {
 		mainController.updateStatus(status, true);
 		Thread.ofVirtual().name(action).start(() -> {
 			try {
@@ -156,12 +165,18 @@ public class ConnectionWindowController {
 						done.accept(result);
 					} catch (Exception e) {
 						ApplicationContext.get().errors().report(connectionWindow, action, e);
+					} finally {
+						always.run();
 					}
 				});
 			} catch (Exception e) {
 				SwingUtilities.invokeLater(() -> {
 					mainController.showConnectionState();
-					ApplicationContext.get().errors().report(connectionWindow, action, e);
+					try {
+						ApplicationContext.get().errors().report(connectionWindow, action, e);
+					} finally {
+						always.run();
+					}
 				});
 			}
 		});
@@ -700,12 +715,10 @@ public class ConnectionWindowController {
 
 	/** Opens a new query tab on the database selected in the tree; without a selection on the database the connection uses. */
 	public void startQueryTab() {
-		try {
-			QueryController controller = new QueryController(this);
-			connectionWindow.showQueryTab(new QueryTab(controller, controller.databases(), connectionWindow.getDatabase()));
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Run query", e);
-		}
+		QueryController controller = new QueryController(this);
+		Database selected = connectionWindow.getDatabase();
+		inBackground("Open query", "Listing databases...", controller::databases,
+			databases -> connectionWindow.showQueryTab(new QueryTab(controller, databases, selected)));
 	}
 
 	public void showColumnPropertiesDialog(boolean add, boolean edit) {
