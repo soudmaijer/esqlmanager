@@ -46,6 +46,31 @@ class ConnectionBranchTest {
 		assertEquals(List.of("shop"), mysqlBranch.databaseNames());
 		assertEquals("orders", leaf(postgres.getChildAt(0).getChildAt(0).getChildAt(0)));
 		assertEquals("customers", leaf(mysql.getChildAt(0).getChildAt(0)));
+	}
+
+	@Test
+	void aLoadInOneConnectionKeepsTheSelectionInTheOther() {
+		Database pgShop = new Database("shop");
+		Database myShop = new Database("shop");
+		postgresBranch.loadDatabases(List.of(pgShop));
+		mysqlBranch.loadDatabases(List.of(myShop));
+		postgresBranch.selectDatabase(pgShop);
+
+		mysqlBranch.loadTables(myShop, List.of(table(myShop, "customers")));
+
+		assertSame(postgres.getChildAt(0), tree.getSelectionPath().getLastPathComponent());
+	}
+
+	@Test
+	void reloadingTheSelectedTableKeepsItSelected() {
+		Database shop = new Database("shop");
+		Table orders = table(shop, "orders");
+		mysqlBranch.loadDatabases(List.of(shop));
+		mysqlBranch.loadTables(shop, List.of(orders));
+		mysqlBranch.selectTable(orders);
+
+		mysqlBranch.loadTables(shop, List.of(orders, table(shop, "customers")));
+
 		assertSame(mysql.getChildAt(0), tree.getSelectionPath().getLastPathComponent());
 	}
 

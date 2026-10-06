@@ -40,6 +40,7 @@ public class ConnectionBranch {
 		root.removeAllChildren();
 		databases.forEach(db -> root.add(new DefaultMutableTreeNode(db)));
 		model().nodeStructureChanged(root);
+		tree.expandPath(new TreePath(root.getPath()));
 	}
 
 	/** The names of the databases in the branch. */
@@ -106,14 +107,23 @@ public class ConnectionBranch {
 		tree.setSelectionPath(new TreePath(node.getPath()));
 	}
 
+	/**
+	 * Shows the new children of a node and expands it. The selection only moves when it was on the node or below it (the user asked for this load): a
+	 * load that finishes in the background must not take the selection away from another node or another connection.
+	 */
 	private void replaceChildren(DefaultMutableTreeNode node, List<?> children) {
+		TreePath path = new TreePath(node.getPath());
+		TreePath selected = tree.getSelectionPath();
+		boolean selectionInside = selected != null && path.isDescendant(selected);
+
 		node.removeAllChildren();
 		children.forEach(child -> node.add(new DefaultMutableTreeNode(child)));
 		model().reload(node);
-		TreePath path = new TreePath(node.getPath());
-		tree.scrollPathToVisible(path);
 		tree.expandPath(path);
-		tree.setSelectionPath(path);
+		if (selectionInside) {
+			tree.setSelectionPath(path);
+			tree.scrollPathToVisible(path);
+		}
 	}
 
 	private void remove(DefaultMutableTreeNode parent, DefaultMutableTreeNode node) {
