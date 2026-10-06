@@ -61,6 +61,12 @@ public class TableCell {
 		}
 	}
 
+	/** Whether writing this editor text would change the cell: an empty text means NULL, as in {@link #setEditedText}. */
+	public boolean isChangedBy(String text) {
+		String wanted = text == null || text.isEmpty() ? null : text;
+		return nullData ? wanted != null : !getData().equals(wanted);
+	}
+
 	public boolean isNull() {
 		return nullData;
 	}
