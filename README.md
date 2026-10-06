@@ -2,11 +2,25 @@
 
 A graphical database manager written in Java Swing. It started in 2002 as a graduation project and has since been brought up to date: it builds with Maven, runs on Java 25 and talks to current database servers.
 
-![eSQLManager showing the products table of a PostgreSQL database](docs/screenshot.png)
+## Main features
 
-![The model designer with a shop database and its tables](docs/designer.png)
+* **One explorer for all connections.** Every open connection, and every saved profile in grey, is one tree: server, databases, schemas, tables and columns with their types, key and foreign key icons. Tables, queries, editors and designers open as tabs next to it, and each connection has its own output tab with the statements it ran.
+* **Query editor with completion.** SQL highlighting, completion of keywords, tables and columns (aliases are resolved), run the statement at the caret or a whole script, one result tab per statement with time, rows and duration.
+* **Explain plans with hot spots.** Explain and Explain analyze show the plan as a tree with rows, cost, time and the share of the total, mark the slowest steps and where the estimate was far off, from the editor or from any result tab.
+* **Model designer.** Draw a model of databases, tables and foreign keys and generate it on the server, or open an existing database to get its model back with an automatic layout. Export it as PlantUML or Mermaid.
+* **Cell value editor.** Edit one value in a larger editor below the grid, with highlighting and formatting for JSON, XML and SQL, load a value from or save it to a file, upload and download binary data.
+* **MySQL and PostgreSQL**, with schemas on PostgreSQL. The MySQL and Oracle drivers are downloaded on first use, checked against a pinned checksum.
+* Table maintenance, export and import of SQL scripts, user and privilege management, process list and server status, light and dark appearance.
 
-![A query tab with highlighted SQL, a result and the completion popup](docs/query.png)
+![The main window: explorer with a connection and two saved profiles, the orders table, the output of the connection](docs/screenshot.png)
+
+![A query tab with highlighted SQL, a result with Explain buttons and the completion of columns](docs/query.png)
+
+![The plan of a query, analyzed: tree of steps with time, share and warnings](docs/explain.png)
+
+![The cell value editor below the grid, with a JSON value pretty printed](docs/value-editor.png)
+
+![The model designer with a shop database, its tables and foreign keys](docs/designer.png)
 
 ## Documentation
 

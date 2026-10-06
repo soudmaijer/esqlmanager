@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Screenshots and README
+
+- All screenshots show the current window (explorer with several connections and column types, query tab with the
+  completion and the Explain buttons, plan viewer, designer, connect dialog) and a new one shows the cell value
+  editor. The README opens with the main features.
+
 06-10-2026: Quitting
 
 - Quitting with nothing open no longer asks anything. With connections or designers open it asks one plain
