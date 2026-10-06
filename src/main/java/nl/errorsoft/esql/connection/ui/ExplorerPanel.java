@@ -113,7 +113,8 @@ public class ExplorerPanel extends JPanel {
 		toolbar.add(addFieldButton);
 		toolbar.add(dropFieldButton);
 		ToolbarButtons.style(refreshButton, queryButton, usersButton, designerButton, createTableButton, dropTableButton, addFieldButton, dropFieldButton);
-		toolbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")));
+		toolbar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")),
+			toolbar.getBorder()));
 
 		refreshButton.addActionListener(e -> act(ConnectionWindowController::showDatabaseTree));
 		queryButton.addActionListener(e -> act(ConnectionWindowController::startQueryTab));

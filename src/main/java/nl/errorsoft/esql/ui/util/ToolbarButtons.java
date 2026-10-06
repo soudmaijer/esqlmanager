@@ -23,11 +23,30 @@ public final class ToolbarButtons {
 		}
 	}
 
-	/** A toolbar for these buttons, laid out the same everywhere: left aligned, 2px apart, not floatable. */
+	/**
+	 * A toolbar for these buttons, laid out the same everywhere: one row, left aligned, 2px apart, 2px padding left and right, not floatable. It never wraps
+	 * (a wrapped row would be cut off by the fixed height), buttons that do not fit are clipped at the right.
+	 */
 	public static javax.swing.JToolBar toolbar() {
 		javax.swing.JToolBar toolbar = new javax.swing.JToolBar();
-		toolbar.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 2, 0));
+		toolbar.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 2, 0) {
+			@Override
+			public void layoutContainer(java.awt.Container target) {
+				// Lay out as if there were room for every component, so nothing wraps to a second row.
+				synchronized (target.getTreeLock()) {
+					java.awt.Insets insets = target.getInsets();
+					int x = insets.left + getHgap();
+					int height = target.getHeight() - insets.top - insets.bottom;
+					for (java.awt.Component component : target.getComponents()) {
+						java.awt.Dimension size = component.getPreferredSize();
+						component.setBounds(x, insets.top + (height - size.height) / 2, size.width, size.height);
+						x += size.width + getHgap();
+					}
+				}
+			}
+		});
 		toolbar.setFloatable(false);
+		toolbar.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 2, 0, 2));
 		return toolbar;
 	}
 

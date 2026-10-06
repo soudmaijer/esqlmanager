@@ -133,7 +133,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		// Show rest
 		split.setDividerLocation(0.85);
-		explorerSplit.setDividerLocation(280);
+		explorerSplit.setDividerLocation(300);
 	}
 
 	public void initComponents() {
@@ -299,10 +299,11 @@ public class MainWindow extends JFrame implements ActionListener {
 		windowTabs = new WindowTabsPanel(desktop);
 		// The window tabs share the row with the toolbar buttons above the desktop: tabs fill the width, the buttons sit at the right end behind a thin line.
 		JPanel topRow = new JPanel(new BorderLayout());
-		JPanel toolbarEnd = new JPanel(new BorderLayout());
-		toolbarEnd.setBorder(BorderFactory.createEmptyBorder(6, 4, 6, 0));
-		toolbarEnd.add(new JSeparator(SwingConstants.VERTICAL), BorderLayout.WEST);
-		toolbarEnd.add(toolbar, BorderLayout.CENTER);
+		// The same separator and toolbar as the explorer's, centred vertically in the row of the tabs.
+		JPanel toolbarEnd = new JPanel(new GridBagLayout());
+		toolbarEnd.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+		toolbarEnd.add(ToolbarButtons.separator());
+		toolbarEnd.add(toolbar);
 		topRow.add(windowTabs, BorderLayout.CENTER);
 		topRow.add(toolbarEnd, BorderLayout.EAST);
 		JPanel workArea = new JPanel(new BorderLayout());
