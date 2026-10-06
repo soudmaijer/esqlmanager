@@ -65,8 +65,6 @@ public class MainWindow extends JFrame implements ActionListener {
 
 	// Toolbar
 	private JToolBar toolbar;
-	private JButton connectButton;
-	private JButton disconnectButton;
 
 	// Statusbar
 	private JPanel statusbar;
@@ -227,21 +225,9 @@ public class MainWindow extends JFrame implements ActionListener {
 		 * Toolbar
 		 */
 		toolbar = ToolbarButtons.toolbar();
-		connectButton = new JButton(imageLoader.getIcon("imgConnect"));
-		connectButton.setEnabled(true);
-		connectButton.setToolTipText("Connect");
-		toolbar.add(connectButton);
-
-		disconnectButton = new JButton(imageLoader.getIcon("imgDisconnect"));
-		disconnectButton.setEnabled(false);
-		disconnectButton.setToolTipText("Disconnect");
-		toolbar.add(disconnectButton);
-
 		helpButton = new JButton(imageLoader.getIcon("imgHelp"));
 		helpButton.setToolTipText("Help");
 		helpButton.getAccessibleContext().setAccessibleName("Help");
-		JSeparator buttonsSeparator = ToolbarButtons.separator();
-		toolbar.add(buttonsSeparator);
 		toolbar.add(helpButton);
 
 		preferencesButton = new JButton(imageLoader.getIcon("imgPreferences"));
@@ -249,7 +235,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		preferencesButton.getAccessibleContext().setAccessibleName("Preferences");
 		toolbar.add(preferencesButton);
 
-		ToolbarButtons.style(connectButton, disconnectButton, helpButton, preferencesButton);
+		ToolbarButtons.style(helpButton, preferencesButton);
 
 		/*
 		 *	Statusbar
@@ -358,8 +344,6 @@ public class MainWindow extends JFrame implements ActionListener {
 		aboutItem.addActionListener(this);
 
 		// Toolbar
-		connectButton.addActionListener(this);
-		disconnectButton.addActionListener(this);
 		updateMenus();
 	}
 
@@ -425,7 +409,6 @@ public class MainWindow extends JFrame implements ActionListener {
 	/** The items that work on a connection are enabled while a connection is open. */
 	private void updateMenus() {
 		boolean connected = mainController.connectionCount() > 0;
-		disconnectButton.setEnabled(connected);
 		for (JMenuItem item : new JMenuItem[]{disconnectItem, importFromFileItem, exportToFileItem, designerItem}) {
 			item.setEnabled(connected);
 		}
@@ -536,11 +519,11 @@ public class MainWindow extends JFrame implements ActionListener {
 		// Check for menu or Toolbar events.
 		if (object == exitItem) {
 			closeWindow();
-		} else if (object == connectItem || object == connectButton) {
+		} else if (object == connectItem) {
 			mainController.showConnectionProfileDialog();
 		} else if (object == settingsItem || object == preferencesButton) {
 			mainController.showSettingsDialog();
-		} else if (object == disconnectItem || object == disconnectButton) {
+		} else if (object == disconnectItem) {
 			mainController.disconnect();
 		} else if (object == aboutItem) {
 			new AboutDialog(this, mainController.getAppName(), mainController.getAppVersion(), mainController.getAppCommit(),

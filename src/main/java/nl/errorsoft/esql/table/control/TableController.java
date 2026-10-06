@@ -33,6 +33,11 @@ public class TableController {
 		blobTransferController.showUploadDialog(connectionWindowController.getMainWindow(), table, rowData, cellData);
 	}
 
+	/** Opens a query tab on the table's database with a query on its first rows. */
+	public void startQuery(Table table) {
+		connectionWindowController.startQueryTab(table);
+	}
+
 	/** Reads a page of rows; database work, not for the event thread. */
 	public TableCell[][] loadPage(Table table, int skip, int show) throws Exception {
 		return service().loadPage(table, skip, show);

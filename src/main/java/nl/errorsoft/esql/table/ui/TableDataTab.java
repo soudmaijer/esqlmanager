@@ -238,6 +238,9 @@ public class TableDataTab extends JPanel implements ActionListener {
 		update.setToolTipText("Update changes");
 		update.addActionListener(e -> updateChanges());
 		updateButton = update;
+		JButton query = new JButton(icons.getIcon("imgRunQuery"));
+		query.setToolTipText("New query on this table");
+		query.addActionListener(e -> tableController.startQuery(table));
 		editValueButton = new JButton(icons.getIcon("imgEditValue"));
 		editValueButton.setToolTipText("Edit value (F2)");
 		editValueButton.addActionListener(e -> openValueEditor());
@@ -247,7 +250,9 @@ public class TableDataTab extends JPanel implements ActionListener {
 		bar.add(update);
 		bar.addSeparator();
 		bar.add(editValueButton);
-		nl.errorsoft.esql.ui.util.ToolbarButtons.style(insert, delete, update, editValueButton);
+		bar.addSeparator();
+		bar.add(query);
+		nl.errorsoft.esql.ui.util.ToolbarButtons.style(insert, delete, update, editValueButton, query);
 		bar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")));
 		return bar;
 	}

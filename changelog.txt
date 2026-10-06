@@ -1,6 +1,15 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Connect in the explorer, double click opens a table, query on a table
+
+- The Connect button moved from the top right to the start of the explorer toolbar, in place of Reload databases
+  (still in the context menu). It connects the selected saved profile, or opens the connection dialog. The
+  Disconnect button is gone; Disconnect stays in the context menu of a connection.
+- A double click on a table in the explorer opens its data without expanding it; the arrow still shows its columns.
+- The toolbar of a table's data has "New query on this table": a query tab on the table's database and schema with
+  SELECT * FROM "schema"."table" LIMIT 100; filled in.
+
 06-10-2026: Value editor for a cell
 
 - The text panel below the table data is replaced by a value editor, opened with F2, a double click, the pencil in

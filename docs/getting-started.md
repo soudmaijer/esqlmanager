@@ -4,7 +4,7 @@
 
 ## Connecting
 
-Options > Connect (or the Connect button of the toolbar) opens the connection dialog. At the left is the list of saved profiles with three buttons above it: **+** makes a new profile (it is in the list as "New profile" until you save it), **-** removes the selected profile after asking, and the copy button duplicates it as "<name> copy" (no auto connect). Select a profile to edit it; when it has unsaved changes you are asked to save or discard them before another profile is shown. At the right are the **Name** of the profile and two tabs. The **Connection** tab holds the settings of a profile:
+Options > Connect (or the Connect button at the left of the explorer toolbar, with no saved profile selected) opens the connection dialog. At the left is the list of saved profiles with three buttons above it: **+** makes a new profile (it is in the list as "New profile" until you save it), **-** removes the selected profile after asking, and the copy button duplicates it as "<name> copy" (no auto connect). Select a profile to edit it; when it has unsaved changes you are asked to save or discard them before another profile is shown. At the right are the **Name** of the profile and two tabs. The **Connection** tab holds the settings of a profile:
 
 ![The connection dialog with a saved profile](connect.png)
 
@@ -26,11 +26,11 @@ The **Databases and schemas** tab is available after a successful test. It lists
 
 Profiles are saved in `conf/profiles.xml`. A saved password is stored there in plain text, so only save one on a machine you trust, or turn Save password off.
 
-Several connections can be open at the same time. They all appear in the explorer on the left, each under the name of its profile, so two connections to the same server as the same user are told apart. Saved profiles that are not connected are listed below them in grey: expand one with its arrow, double click it (or choose Connect in its context menu) to connect, Edit connection opens the profile dialog on it. When there are no connections and no saved profiles yet, the explorer shows a **New connection...** button that opens the connection dialog.
+Several connections can be open at the same time. They all appear in the explorer on the left, each under the name of its profile, so two connections to the same server as the same user are told apart. Saved profiles that are not connected are listed below them in grey: expand one with its arrow, double click it, press the Connect button of the explorer toolbar or choose Connect in its context menu to connect, Edit connection opens the profile dialog on it. When there are no connections and no saved profiles yet, the explorer shows a **New connection...** button that opens the connection dialog.
 
 ## The main window
 
-* **Explorer** on the left: every connection with its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Selecting a database, schema or table loads what is below it in the background. A column shows its type in grey after its name (`id  integer`, `name  varchar(100)`), a key icon for the primary key and a link icon for a foreign key; hover over it for not null, default and auto increment. Double click a database to list its tables, double click a table to open its data. Right click any node for its context menu, which only lists what the server supports:
+* **Explorer** on the left: every connection with its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Selecting a database, schema or table loads what is below it in the background. A column shows its type in grey after its name (`id  integer`, `name  varchar(100)`), a key icon for the primary key and a link icon for a foreign key; hover over it for not null, default and auto increment. Double click a database to list its tables, double click a table to open its data (its columns expand with the arrow). Disconnect is in the context menu of a connection. Right click any node for its context menu, which only lists what the server supports:
   * connection: Create database, New query, Users, Process list, Show status, Show variables, Reload databases, Disconnect;
   * saved profile: Connect, Edit connection;
   * database: Open, Create table, Open in designer, Export, Import, Drop database, Properties, Reload tables (PostgreSQL: Create schema and Reload schemas);

@@ -61,7 +61,7 @@ public class ExplorerPanel extends JPanel {
 	private static final String EMPTY = "empty";
 	private final JPanel cards = new JPanel(new java.awt.CardLayout()); // The tree, or the hint when it is empty
 
-	private final JButton refreshButton = button("pc", "Reload databases");
+	private final JButton connectButton = button("imgConnectSmall", "Connect");
 	private final JButton queryButton = button("imgRunQuery", "New query");
 	private final JButton usersButton = button("imgUserManager", "User manager");
 	private final JButton designerButton = button("imgDesigner", "Open in designer");
@@ -76,6 +76,8 @@ public class ExplorerPanel extends JPanel {
 
 		tree.setRootVisible(false);
 		tree.setShowsRootHandles(true);
+		// A double click is handled in doubleClicked: a table opens without expanding, other nodes still expand or collapse.
+		tree.setToggleClickCount(0);
 		tree.setCellRenderer(new DatabaseTreeCellRenderer(images, null));
 		ToolTipManager.sharedInstance().registerComponent(tree);
 		tree.addTreeWillExpandListener(new TreeWillExpandListener() {
@@ -121,7 +123,7 @@ public class ExplorerPanel extends JPanel {
 		});
 
 		JToolBar toolbar = ToolbarButtons.toolbar();
-		toolbar.add(refreshButton);
+		toolbar.add(connectButton);
 		toolbar.add(queryButton);
 		toolbar.add(usersButton);
 		toolbar.add(ToolbarButtons.separator());
@@ -131,11 +133,11 @@ public class ExplorerPanel extends JPanel {
 		toolbar.add(ToolbarButtons.separator());
 		toolbar.add(addFieldButton);
 		toolbar.add(dropFieldButton);
-		ToolbarButtons.style(refreshButton, queryButton, usersButton, designerButton, createTableButton, dropTableButton, addFieldButton, dropFieldButton);
+		ToolbarButtons.style(connectButton, queryButton, usersButton, designerButton, createTableButton, dropTableButton, addFieldButton, dropFieldButton);
 		toolbar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")),
 			toolbar.getBorder()));
 
-		refreshButton.addActionListener(e -> act(ConnectionWindowController::showDatabaseTree));
+		connectButton.addActionListener(e -> connectSelected());
 		queryButton.addActionListener(e -> act(ConnectionWindowController::startQueryTab));
 		usersButton.addActionListener(e -> act(ConnectionWindowController::showUserManagerDialog));
 		designerButton.addActionListener(e -> act(ConnectionWindowController::openDatabaseInDesigner));
@@ -271,7 +273,6 @@ public class ExplorerPanel extends JPanel {
 		boolean inDatabase = selected instanceof Database || selected instanceof Schema;
 		boolean onTable = selected instanceof Table || selected instanceof TableColumn;
 
-		refreshButton.setEnabled(connected);
 		queryButton.setEnabled(connected);
 		usersButton.setEnabled(connected && controller.dialect().supports(Dialect.Feature.USER_MANAGER));
 		designerButton.setEnabled(connected && inDatabase);
@@ -292,7 +293,18 @@ public class ExplorerPanel extends JPanel {
 		}
 	}
 
-	/** A double click opens a database or table in a window; the tree expands a saved profile, which connects. */
+	/** Connects the selected saved profile; with anything else selected it opens the connection dialog for a new connection. */
+	private void connectSelected() {
+		TreePath path = tree.getSelectionPath();
+		Object selected = path == null ? null : ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+		if (selected instanceof ProfileNode profile) {
+			mainController.connect(profile.profile());
+		} else {
+			mainController.showConnectionProfileDialog();
+		}
+	}
+
+	/** A double click connects a saved profile, opens a table (without expanding it) and opens a database; other nodes expand or collapse. */
 	private void doubleClicked(MouseEvent e) {
 		TreePath path = tree.getPathForLocation(e.getX(), e.getY());
 		if (path == null) {
@@ -303,11 +315,20 @@ public class ExplorerPanel extends JPanel {
 
 		switch (object) {
 			case ProfileNode profile -> mainController.connect(profile.profile());
-			case Database database when controller != null -> controller.openDatabase(database);
-			case Table table when controller != null -> controller.openTable(table);
-			default -> {
-				// Other nodes expand or collapse, as the tree does by itself.
+			case Database database when controller != null -> {
+				controller.openDatabase(database);
+				toggle(path);
 			}
+			case Table table when controller != null -> controller.openTable(table);
+			default -> toggle(path);
+		}
+	}
+
+	private void toggle(TreePath path) {
+		if (tree.isExpanded(path)) {
+			tree.collapsePath(path);
+		} else {
+			tree.expandPath(path);
 		}
 	}
 

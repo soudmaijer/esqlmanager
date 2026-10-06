@@ -45,6 +45,8 @@ public class QueryController implements SchemaNames {
 	private volatile String database = "";
 	/** The schema chosen in the tab, null until one is (and on servers without schemas). */
 	private volatile String chosenSchema;
+	/** The schema a new tab is asked to start in (a tab opened on a table), used once when the schemas are listed. */
+	private volatile String startSchema;
 	private BiConsumer<List<String>, String> schemaListener = (schemas, current) -> {
 	};
 	private final Map<String, List<String>> columns = new ConcurrentHashMap<>();
@@ -153,12 +155,27 @@ public class QueryController implements SchemaNames {
 				schemaNames = schemas.stream().map(Schema::getName).toList();
 				tables = loaded;
 				List<String> names = schemaNames;
-				SwingUtilities.invokeLater(() -> schemaListener.accept(names, current));
+				String start = startSchema;
+				startSchema = null;
+				String shown = start != null && names.contains(start) ? start : current;
+				SwingUtilities.invokeLater(() -> {
+					schemaListener.accept(names, shown);
+					if (!java.util.Objects.equals(shown, current)) {
+						useSchema(shown, () -> {
+							// The picker shows the schema already.
+						});
+					}
+				});
 			} catch (Exception e) {
 				// Completion then offers keywords only, running statements still works.
 				log.warn("Could not load the tables of {} for completion: {}", database.getName(), e.getMessage());
 			}
 		});
+	}
+
+	/** Starts the tab in this schema instead of the current one, once its database's schemas are listed. Call before the tab is built. */
+	public void startInSchema(String schema) {
+		this.startSchema = schema;
 	}
 
 	/** Makes unqualified names resolve to the schema, for the statements and the completion, off the event thread; then {@code always} on it. */

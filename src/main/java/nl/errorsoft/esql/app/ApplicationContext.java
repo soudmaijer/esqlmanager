@@ -38,6 +38,7 @@ public final class ApplicationContext {
 			images.addIcon("redLight", "check-error", 16, false);
 			images.addImage("../images/splash.gif", "esql");
 			images.addIcon("imgConnect", "connect", 20, false);
+			images.addIcon("imgConnectSmall", "connect", 16, false);
 			images.addIcon("imgDisconnect", "disconnect", 20, false);
 			images.addIcon("imgHelp", "circle-help", 20, false);
 			images.addIcon("imgHelpTab", "circle-help", 16, false);

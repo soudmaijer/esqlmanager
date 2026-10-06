@@ -704,6 +704,22 @@ public class ConnectionWindowController {
 			databases -> view.showQueryTab(new QueryTab(controller, databases, selected)));
 	}
 
+	/** Opens a new query tab on the database (and schema) of a table, with a query on its first rows. */
+	public void startQueryTab(Table table) {
+		QueryController controller = new QueryController(this);
+		if (table.getSchema() != null && hasSchemas()) {
+			controller.startInSchema(table.getSchema().getName());
+		}
+		String quoted = dialect().quote(table.qualifiedName());
+		// LIMIT only on servers that page in SQL; the others get the whole table.
+		String sql = "SELECT * FROM " + quoted + (dialect().selectPage(quoted, "", 0, 100) != null ? " LIMIT 100" : "") + ";";
+		inBackground("Open query", "Listing databases...", controller::databases, databases -> {
+			QueryTab tab = new QueryTab(controller, databases, table.getDatabase());
+			tab.getEditor().setText(sql);
+			view.showQueryTab(tab);
+		});
+	}
+
 	public void showColumnPropertiesDialog(boolean add, boolean edit) {
 		if (edit ? selectedColumn("Edit column") == null : selectedTable("Add column") == null) {
 			return;
