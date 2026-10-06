@@ -65,10 +65,6 @@ public class ExplorerPanel extends JPanel {
 	private final JButton queryButton = button("imgRunQuery", "New query");
 	private final JButton usersButton = button("imgUserManager", "User manager");
 	private final JButton designerButton = button("imgDesigner", "Open in designer");
-	private final JButton createTableButton = button("imgCreateTable", "Create table");
-	private final JButton dropTableButton = button("imgDropTable", "Drop table");
-	private final JButton addFieldButton = button("imgAddField", "Add field");
-	private final JButton dropFieldButton = button("imgDeleteField", "Drop field");
 
 	public ExplorerPanel(MainController mainController) {
 		super(new BorderLayout());
@@ -128,12 +124,7 @@ public class ExplorerPanel extends JPanel {
 		toolbar.add(usersButton);
 		toolbar.add(ToolbarButtons.separator());
 		toolbar.add(designerButton);
-		toolbar.add(createTableButton);
-		toolbar.add(dropTableButton);
-		toolbar.add(ToolbarButtons.separator());
-		toolbar.add(addFieldButton);
-		toolbar.add(dropFieldButton);
-		ToolbarButtons.style(connectButton, queryButton, usersButton, designerButton, createTableButton, dropTableButton, addFieldButton, dropFieldButton);
+		ToolbarButtons.style(connectButton, queryButton, usersButton, designerButton);
 		toolbar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")),
 			toolbar.getBorder()));
 
@@ -141,10 +132,6 @@ public class ExplorerPanel extends JPanel {
 		queryButton.addActionListener(e -> act(ConnectionWindowController::startQueryTab));
 		usersButton.addActionListener(e -> act(ConnectionWindowController::showUserManagerDialog));
 		designerButton.addActionListener(e -> act(ConnectionWindowController::openDatabaseInDesigner));
-		createTableButton.addActionListener(e -> act(ConnectionWindowController::showCreateTableTab));
-		dropTableButton.addActionListener(e -> act(this::dropTable));
-		addFieldButton.addActionListener(e -> act(c -> c.showColumnPropertiesDialog(true, false)));
-		dropFieldButton.addActionListener(e -> act(this::dropField));
 
 		JScrollPane scroll = new JScrollPane(tree);
 		scroll.setBorder(null);
@@ -271,15 +258,10 @@ public class ExplorerPanel extends JPanel {
 		Object selected = path == null ? null : ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
 		boolean connected = controller != null;
 		boolean inDatabase = selected instanceof Database || selected instanceof Schema;
-		boolean onTable = selected instanceof Table || selected instanceof TableColumn;
 
 		queryButton.setEnabled(connected);
 		usersButton.setEnabled(connected && controller.dialect().supports(Dialect.Feature.USER_MANAGER));
 		designerButton.setEnabled(connected && inDatabase);
-		createTableButton.setEnabled(connected && (inDatabase || onTable));
-		dropTableButton.setEnabled(connected && onTable);
-		addFieldButton.setEnabled(connected && onTable);
-		dropFieldButton.setEnabled(connected && selected instanceof TableColumn);
 	}
 
 	private interface Action {

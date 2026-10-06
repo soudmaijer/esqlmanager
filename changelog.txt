@@ -1,6 +1,11 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: Table and column buttons out of the explorer toolbar
+
+- The explorer toolbar no longer has Create table, Drop table, Add field and Drop field. They stay in the context
+  menus of databases, tables and columns in the tree.
+
 06-10-2026: Connect in the explorer, double click opens a table, query on a table
 
 - The Connect button moved from the top right to the start of the explorer toolbar, in place of Reload databases

@@ -19,7 +19,7 @@ A row can only be changed or deleted when it can be identified, by its primary k
 
 ## Tables
 
-* **Create table** (explorer toolbar, or the context menu of a database) asks for a name and the columns: type, length, default, not null, auto increment, a comment per column (MySQL and PostgreSQL), and primary key, unique and index flags. **Show SQL** at the bottom of the tab shows the statements that Save will run and keeps them up to date while you type.
+* **Create table** (context menu of a database) asks for a name and the columns: type, length, default, not null, auto increment, a comment per column (MySQL and PostgreSQL), and primary key, unique and index flags. **Show SQL** at the bottom of the tab shows the statements that Save will run and keeps them up to date while you type.
 * **Edit table** renames a table and changes its comment and, on MySQL, its storage engine. Show SQL lists the statements for the changes made so far.
 * **Rename table** and **Duplicate table** are in the context menu of a table. Duplicate copies the structure (columns, defaults, indexes) to a new table next to it and, when you tick "Copy the data too", the rows; the auto numbering of the copy continues after the copied rows. The new name must not exist yet.
 * **Properties** (context menu of a table or a database) shows a read-only summary: for a table its name, database, schema, engine or type, comment, number of rows and columns and its size on disk; for a database its character set and collation (MySQL) or owner and encoding (PostgreSQL) and its number of tables.
@@ -33,7 +33,7 @@ These three open as a tab of the connection window, one per table; opening one a
 
 ## Columns
 
-Add field, Edit field and Drop field are in the explorer toolbar and in the context menu of a table or column.
+Add field, Edit field and Drop field are in the context menu of a table or column.
 
 ## Export and import
 
