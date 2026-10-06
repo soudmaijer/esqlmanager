@@ -109,6 +109,8 @@ public class ExportService implements Runnable {
 	}
 
 	private void writePart(PrintWriter writer, Part part) throws Exception {
+		repository.readFrom(part.database());
+
 		if (options.createDatabase()) {
 			writer.println(repository.createDatabaseSql(part.database()) + ";\n");
 		}
@@ -137,6 +139,8 @@ public class ExportService implements Runnable {
 		for (TableName table : part.tables()) {
 			cancellation.check();
 			listener.status("Exporting " + table);
+			// The connection is shared with the query tabs, which may have moved it to another database meanwhile.
+			repository.readFrom(part.database());
 			dumpTable(writer, table);
 			tablesDone++;
 			progress(10 + 85 * tablesDone / Math.max(1, tablesTotal));
@@ -144,6 +148,7 @@ public class ExportService implements Runnable {
 
 		for (TableName view : part.views()) {
 			cancellation.check();
+			repository.readFrom(part.database());
 			dumpView(writer, view);
 		}
 

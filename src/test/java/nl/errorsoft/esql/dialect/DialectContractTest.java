@@ -900,6 +900,76 @@ abstract class DialectContractTest {
 	}
 
 	@Test
+	void exportOfTwoDatabasesReadsEachFromItsOwnDatabase(@TempDir Path dir) throws Exception {
+		var databases = new ConnectionContext(connection).databases();
+		Database first = databases.createDatabase("first_" + System.nanoTime());
+		Database second = databases.createDatabase("second_" + System.nanoTime());
+		connection.useDatabase(first.getName());
+		createTable("items", "");
+		insert(tableIn(first, "items"), "from the first", null);
+		connection.useDatabase(second.getName());
+		createTable("items", "");
+		insert(tableIn(second, "items"), "from the second", null);
+
+		File file = dir.resolve("two.sql").toFile();
+		ExportService export = new ConnectionContext(connection).newExport(
+			List.of(new ScriptTarget.OfDatabase(first), new ScriptTarget.OfDatabase(second)), file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, true));
+		runSynchronously(export::setListener, export);
+		String script = java.nio.file.Files.readString(file.toPath());
+		assertTrue(script.contains("from the first"), script);
+		assertTrue(script.contains("from the second"), script);
+		assertTrue(script.indexOf("from the first") < script.indexOf("from the second"), script);
+
+		connection.useDatabase(DATABASE);
+		databases.dropDatabase(first);
+		databases.dropDatabase(second);
+	}
+
+	@Test
+	void tableExportReadsTheTablesDatabaseWhateverTheConnectionUses(@TempDir Path dir) throws Exception {
+		String name = "moved_" + System.nanoTime();
+		createTable(name, "");
+		Table table = table(name);
+		insert(table, "kept row", null);
+		var databases = new ConnectionContext(connection).databases();
+		Database elsewhere = databases.createDatabase("elsewhere_" + System.nanoTime());
+		connection.useDatabase(elsewhere.getName());
+
+		File file = dir.resolve("table.sql").toFile();
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfTable(table)), file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, true));
+		runSynchronously(export::setListener, export);
+		assertTrue(java.nio.file.Files.readString(file.toPath()).contains("kept row"));
+
+		connection.useDatabase(DATABASE);
+		databases.dropDatabase(elsewhere);
+		service().dropTable(table);
+	}
+
+	@Test
+	void exportedStructureTakesTheColumnsOfThatTableOnly(@TempDir Path dir) throws Exception {
+		String suffix = String.valueOf(System.nanoTime());
+		String name = "esc_x_" + suffix;
+		createTable(name, "");
+		// An unescaped _ in the metadata pattern would match this table too.
+		ColumnDefinition extra = new ColumnDefinition("unexpected_column");
+		extra.type = INTEGER;
+		for (String statement : dialect.createTableSql(TableName.of("escaxa" + suffix), List.of(extra), null, "")) {
+			connection.executeUpdate(statement);
+		}
+
+		File file = dir.resolve("structure.sql").toFile();
+		ExportService export = new ConnectionContext(connection).newExport(List.of(new ScriptTarget.OfTable(table(name))), file.getAbsolutePath(),
+			new ExportOptions(true, true, false, true, false));
+		runSynchronously(export::setListener, export);
+		assertFalse(java.nio.file.Files.readString(file.toPath()).contains("unexpected_column"));
+
+		service().dropTable(table(name));
+		service().dropTable(table("escaxa" + suffix));
+	}
+
+	@Test
 	void importIntoASchemaPutsUnqualifiedTablesThere(@TempDir Path dir) throws Exception {
 		Assumptions.assumeTrue(dialect.supports(Dialect.Feature.SCHEMAS), "The server has no schemas");
 		var databases = new ConnectionContext(connection).databases();
@@ -1081,6 +1151,14 @@ abstract class DialectContractTest {
 		for (String statement : dialect.createTableSql(TableName.of(name), Arrays.asList(id, title, note), engine, comment)) {
 			connection.executeUpdate(statement);
 		}
+	}
+
+	private static Table tableIn(Database database, String name) {
+		Table table = new Table(database);
+		table.setName(name);
+		table.setType("TABLE");
+		table.setComment("");
+		return table;
 	}
 
 	private TableService service() {

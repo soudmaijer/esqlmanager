@@ -73,6 +73,11 @@ public class ExportRepository extends AbstractRepository {
 		return names;
 	}
 
+	/** Moves the shared connection to the database an export reads from: listing the targets, or a query tab, may have left it elsewhere. */
+	public void readFrom(String database) throws SQLException {
+		useDatabase(database);
+	}
+
 	public String createDatabaseSql(String database) {
 		return dialect().createDatabaseSql(database);
 	}
@@ -147,14 +152,18 @@ public class ExportRepository extends AbstractRepository {
 		String schema = table.schema() == null ? connection.getSchema() : table.schema();
 		String catalog = connection.getConnection().getCatalog();
 		List<String> columns = new ArrayList<>();
+		// The metadata takes patterns: an _ or % in a name would match other tables too.
+		String name = escapePattern(table.name(), metaData);
+		String schemaPattern = schema == null ? null : escapePattern(schema, metaData);
 
-		try (ResultSet rs = metaData.getColumns(catalog, schema, table.name(), "%")) {
+		try (ResultSet rs = metaData.getColumns(catalog, schemaPattern, name, "%")) {
 			while (rs.next()) {
 				columns.add(dialect().columnDdl(rs));
 			}
 		}
 
 		Map<Integer, String> primary = new TreeMap<>();
+		// getPrimaryKeys takes plain names, not patterns.
 		try (ResultSet keys = metaData.getPrimaryKeys(catalog, schema, table.name())) {
 			while (keys.next()) {
 				primary.put(keys.getInt("KEY_SEQ"), keys.getString("COLUMN_NAME"));
@@ -162,6 +171,15 @@ public class ExportRepository extends AbstractRepository {
 		}
 
 		return dialect().createTableDdl(table, columns, new ArrayList<>(primary.values()));
+	}
+
+	private static String escapePattern(String name, DatabaseMetaData metaData) throws SQLException {
+		String escape = metaData.getSearchStringEscape();
+
+		if (escape == null || escape.isEmpty()) {
+			return name;
+		}
+		return name.replace(escape, escape + escape).replace("_", escape + "_").replace("%", escape + "%");
 	}
 
 	/**
