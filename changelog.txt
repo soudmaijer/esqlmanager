@@ -11,6 +11,8 @@ eSQLManager changelog
 - Editing a cell, saving a new row, deleting rows, saving a table in the editor tab and changing indexes run in the
   background with the grid or the Save buttons disabled meanwhile. Deleting several rows stops at the first row that
   cannot be deleted and reports it; the rows deleted before it leave the grid.
+- The export and import windows read the databases before they open and load the schemas and tables of a node in
+  the background. When reading fails the window does not open, instead of opening without a tree.
 - Export looks up the columns of a table with _ and % escaped, so a table such as a_b no longer gets the columns of axb.
 
 05-10-2026: Packaging starts from a clean slate

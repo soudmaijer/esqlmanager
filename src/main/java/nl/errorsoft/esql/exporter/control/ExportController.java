@@ -43,26 +43,24 @@ public class ExportController implements ProgressListener {
 		}
 
 		this.connectionWindowController = connectionWindowController;
-		try {
-			DatabaseController databaseController = new DatabaseController(connectionWindowController);
+		DatabaseController databaseController = new DatabaseController(connectionWindowController);
+		Object selected = connectionWindowController.selectedObject();
+		// The tree is read before the window opens, so the window never shows without one.
+		connectionWindowController.inBackground("Export data", "Listing databases...", () -> databaseController.treeStart(selected), start -> {
 			ExportSqlDialog exportDialog = new ExportSqlDialog(mainController.getMainWindow(), this);
-			exportDialog.showDatabaseTree(databaseController.getDatabaseTree());
+			exportDialog.showDatabaseTree(databaseController.databaseTree(start.databases()));
 			if (connectionWindowController.getConnectionProfile().getSelection().hasSchemaFilter()) {
 				exportDialog.showSchemaFilterNote();
 			}
-			databaseController.selectInTree(exportDialog.getDatabaseTree(), connectionWindowController.selectedObject());
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Export data", e);
-		}
+			databaseController.selectInTree(exportDialog.getDatabaseTree(), start);
+		});
 	}
 
-	/** Loads the schemas or tables of a database, or the tables of a schema, the first time it is selected. */
+	/** Loads the schemas or tables of a database, or the tables of a schema, in the background the first time it is selected. */
 	public void showChildren(ExportSqlDialog exportDialog, Object node) {
-		try {
-			new DatabaseController(connectionWindowController).loadChildren(exportDialog.getDatabaseTree(), node);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(exportDialog, "Load tables", e);
-		}
+		DatabaseController databaseController = new DatabaseController(connectionWindowController);
+		connectionWindowController.inBackground("Load tables", "Loading tables...", () -> databaseController.children(node),
+			children -> databaseController.showChildren(exportDialog.getDatabaseTree(), children));
 	}
 
 	public void exportNodesAsSQL(ExportSqlDialog exportDialog, TreePath[] selectedPaths, String file, ExportOptions options) {

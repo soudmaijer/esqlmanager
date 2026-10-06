@@ -147,6 +147,10 @@ public class ImportSqlDialog extends FormDialog {
 	}
 
 	private void run() {
+		// The controller gives the tree before the window opens; without one there is nothing to run.
+		if (databaseTree == null) {
+			return;
+		}
 		String problem = Validation.required("the file to import", file.getText());
 		showError(problem);
 		if (problem == null) {

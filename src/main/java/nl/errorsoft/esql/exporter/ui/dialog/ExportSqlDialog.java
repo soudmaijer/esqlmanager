@@ -199,6 +199,10 @@ public class ExportSqlDialog extends FormDialog {
 	}
 
 	private void export() {
+		// The controller gives the tree before the window opens; without one there is nothing to run.
+		if (databaseTree == null) {
+			return;
+		}
 		String problem = Validation.required("the file to save to", file.getText());
 		showError(problem);
 		if (problem == null) {

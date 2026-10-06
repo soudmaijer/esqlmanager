@@ -42,23 +42,21 @@ public class ImportController implements ProgressListener {
 		}
 
 		this.connectionWindowController = connectionWindowController;
-		try {
-			DatabaseController databaseController = new DatabaseController(connectionWindowController);
+		DatabaseController databaseController = new DatabaseController(connectionWindowController);
+		Object selected = connectionWindowController.selectedObject();
+		// The tree is read before the window opens, so the window never shows without one.
+		connectionWindowController.inBackground("Import data", "Listing databases...", () -> databaseController.treeStart(selected), start -> {
 			importDialog = new ImportSqlDialog(mainController.getMainWindow(), this);
-			importDialog.showDatabaseTree(databaseController.getDatabaseTree());
-			databaseController.selectInTree(importDialog.getDatabaseTree(), connectionWindowController.selectedObject());
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report("Import data", e);
-		}
+			importDialog.showDatabaseTree(databaseController.databaseTree(start.databases()));
+			databaseController.selectInTree(importDialog.getDatabaseTree(), start);
+		});
 	}
 
-	/** Loads the schemas or tables of a database, or the tables of a schema, the first time it is selected. */
+	/** Loads the schemas of a database in the background the first time it is selected. */
 	public void showChildren(ImportSqlDialog importDialog, Object node) {
-		try {
-			new DatabaseController(connectionWindowController).loadChildren(importDialog.getDatabaseTree(), node);
-		} catch (Exception e) {
-			ApplicationContext.get().errors().report(importDialog, "Load tables", e);
-		}
+		DatabaseController databaseController = new DatabaseController(connectionWindowController);
+		connectionWindowController.inBackground("Load tables", "Loading schemas...", () -> databaseController.children(node),
+			children -> databaseController.showChildren(importDialog.getDatabaseTree(), children));
 	}
 
 	public void importNodesAsSQL(ImportSqlDialog importDialog, TreePath selectedPath, String file, ImportOptions options) {
