@@ -29,6 +29,7 @@ import nl.errorsoft.esql.app.control.MainController;
 import nl.errorsoft.esql.app.ui.MainWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.connection.ConnectionSession;
+import nl.errorsoft.esql.connection.ui.ConnectionView;
 import nl.errorsoft.esql.connection.ui.ConnectionWindow;
 import nl.errorsoft.esql.server.control.ProcessListController;
 import nl.errorsoft.esql.database.control.DatabaseController;
@@ -53,6 +54,7 @@ public class ConnectionWindowController {
 	private MainController mainController;
 	private ConnectionSession session;
 	private ConnectionWindow connectionWindow;
+	private ConnectionView view;
 	private TableController tableController;
 
 	/** Opens the connection window at once and connects in the background; the tree is filled when the databases are listed. */
@@ -68,6 +70,7 @@ public class ConnectionWindowController {
 		log.info("Opening a connection window for {} on {}:{} as {}", profile.getServerType().getDescription(), profile.getHost(), profile.getPort(),
 			profile.getUsername());
 		connectionWindow = new ConnectionWindow(this, mainController.getMainWindow());
+		view = connectionWindow;
 		mainController.showConnectionWindow(connectionWindow);
 		mainController.updateStatus("Connecting...", true);
 
@@ -116,14 +119,14 @@ public class ConnectionWindowController {
 	/** A message about the table view tab (a table loaded, a table list shown), shown in the status bar while that tab is in front. */
 	public void setViewStatus(String detail) {
 		statusDetail = detail;
-		connectionWindow.setStatus(detail);
+		view.setStatus(detail);
 		showStatusInfo();
 	}
 
 	/** A message about one tab (a query tab), shown in the status bar while that tab is in front. */
 	public void setStatusDetail(java.awt.Component tab, String detail) {
 		statusDetail = detail;
-		connectionWindow.setStatus(tab, detail);
+		view.setStatus(tab, detail);
 		showStatusInfo();
 	}
 
@@ -164,7 +167,7 @@ public class ConnectionWindowController {
 					try {
 						done.accept(result);
 					} catch (Exception e) {
-						ApplicationContext.get().errors().report(connectionWindow, action, e);
+						ApplicationContext.get().errors().report(parent(), action, e);
 					} finally {
 						always.run();
 					}
@@ -173,7 +176,7 @@ public class ConnectionWindowController {
 				SwingUtilities.invokeLater(() -> {
 					mainController.showConnectionState();
 					try {
-						ApplicationContext.get().errors().report(connectionWindow, action, e);
+						ApplicationContext.get().errors().report(parent(), action, e);
 					} finally {
 						always.run();
 					}
@@ -211,21 +214,21 @@ public class ConnectionWindowController {
 
 	/** Shows the databases listed on another thread in the tree, on the event thread. */
 	private void showDatabaseTree(List<Database> databases) {
-		connectionWindow.showDatabaseTree(new DatabaseController(this).databaseTree(databases));
+		view.showDatabaseTree(new DatabaseController(this).databaseTree(databases));
 		mainController.showConnectionState();
 	}
 
 	/** Asks for the name and the options of the new database (character set, owner, ...) and creates it. */
 	public void startCreateDatabase() {
 		try {
-			CreateDatabaseDialog.Request request = CreateDatabaseDialog.ask(connectionWindow, dialect().databaseTerm(), dialect().createDatabaseOptions(),
-				getContext().databases().createDatabaseChoices(), connectionWindow.getDatabaseTree().databaseNames());
+			CreateDatabaseDialog.Request request = CreateDatabaseDialog.ask(parent(), dialect().databaseTerm(), dialect().createDatabaseOptions(),
+				getContext().databases().createDatabaseChoices(), view.getDatabaseTree().databaseNames());
 
 			if (request != null) {
 				createDatabase(request.name(), request.options());
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Create " + dialect().databaseTerm(), e);
+			ApplicationContext.get().errors().report(parent(), "Create " + dialect().databaseTerm(), e);
 		}
 	}
 
@@ -233,11 +236,11 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Creating " + dialect().databaseTerm() + "...", true);
 			Database db = getContext().databases().createDatabase(name, options);
-			connectionWindow.getDatabaseTree().addDatabase(db);
+			view.getDatabaseTree().addDatabase(db);
 			setStatusDetail(dialect().databaseTerm() + " " + name + " created");
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Create " + dialect().databaseTerm(), e);
+			ApplicationContext.get().errors().report(parent(), "Create " + dialect().databaseTerm(), e);
 		}
 	}
 
@@ -251,12 +254,12 @@ public class ConnectionWindowController {
 			mainController.updateStatus("Deleting database...", true);
 			DatabaseController databaseController = new DatabaseController(this);
 			databaseController.dropDatabase(db);
-			connectionWindow.getDatabaseTree().deleteDatabase(db);
-			connectionWindow.removeDataTab();
+			view.getDatabaseTree().deleteDatabase(db);
+			view.removeDataTab();
 			mainController.showConnectionState();
 			this.showDatabaseTree();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Drop database", e);
+			ApplicationContext.get().errors().report(parent(), "Drop database", e);
 		}
 	}
 
@@ -270,7 +273,7 @@ public class ConnectionWindowController {
 			mainController.updateStatus("Deleting table...", true);
 			TableController tableController = new TableController(this);
 			tableController.dropTable(table);
-			connectionWindow.getDatabaseTree().deleteTable(table);
+			view.getDatabaseTree().deleteTable(table);
 			mainController.showConnectionState();
 			if (table.getSchema() != null && hasSchemas()) {
 				this.schemaSelected(table.getSchema());
@@ -278,7 +281,7 @@ public class ConnectionWindowController {
 				this.databaseSelected(table.getDatabase());
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Drop table", e);
+			ApplicationContext.get().errors().report(parent(), "Drop table", e);
 		}
 	}
 
@@ -295,7 +298,7 @@ public class ConnectionWindowController {
 			reloadSelectedTable();
 			fieldPropertiesDialog.dispose();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Add table column", e);
+			ApplicationContext.get().errors().report(parent(), "Add table column", e);
 		}
 	}
 
@@ -307,7 +310,7 @@ public class ConnectionWindowController {
 			reloadSelectedTable();
 			fieldPropertiesDialog.dispose();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Edit table column", e);
+			ApplicationContext.get().errors().report(parent(), "Edit table column", e);
 		}
 	}
 
@@ -321,11 +324,11 @@ public class ConnectionWindowController {
 			mainController.updateStatus("Deleting tablecolumn...", true);
 			TableController tableController = new TableController(this);
 			tableController.dropTableColumn(column);
-			connectionWindow.getDatabaseTree().deleteTableColumn(column);
+			view.getDatabaseTree().deleteTableColumn(column);
 			mainController.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Drop column", e);
+			ApplicationContext.get().errors().report(parent(), "Drop column", e);
 		}
 	}
 
@@ -338,7 +341,7 @@ public class ConnectionWindowController {
 
 	/** Reloads the tables of the selected schema (or of the schema of the selected table), otherwise the content of the selected database. */
 	public void reloadSelectedDatabase() {
-		Schema schema = connectionWindow.getSchema();
+		Schema schema = view.getSchema();
 
 		if (schema != null && hasSchemas()) {
 			this.schemaSelected(schema);
@@ -352,36 +355,36 @@ public class ConnectionWindowController {
 
 	/** The database selected in the tree (or the one of the selected node); without one the user is asked to select it and the result is null. */
 	private Database selectedDatabase(String action) {
-		Database database = connectionWindow.getDatabase();
+		Database database = view.getDatabase();
 		if (database == null) {
-			Dialogs.warn(connectionWindow, action, "Select a " + dialect().databaseTerm() + " in the tree first.");
+			Dialogs.warn(parent(), action, "Select a " + dialect().databaseTerm() + " in the tree first.");
 		}
 		return database;
 	}
 
 	/** The table selected in the tree (or the table of the selected column); without one the user is asked to select it and the result is null. */
 	private Table selectedTable(String action) {
-		Table table = connectionWindow.getTable();
+		Table table = view.getTable();
 		if (table == null) {
-			Dialogs.warn(connectionWindow, action, "Select a table in the tree first.");
+			Dialogs.warn(parent(), action, "Select a table in the tree first.");
 		}
 		return table;
 	}
 
 	/** The column selected in the tree; without one the user is asked to select it and the result is null. */
 	private TableColumn selectedColumn(String action) {
-		TableColumn column = connectionWindow.getTableColumn();
+		TableColumn column = view.getTableColumn();
 		if (column == null) {
-			Dialogs.warn(connectionWindow, action, "Select a column in the tree first.");
+			Dialogs.warn(parent(), action, "Select a column in the tree first.");
 		}
 		return column;
 	}
 
 	/** The schema selected in the tree; without one the user is asked to select it and the result is null. */
 	private Schema selectedSchema(String action) {
-		Schema schema = connectionWindow.getSchema();
+		Schema schema = view.getSchema();
 		if (schema == null) {
-			Dialogs.warn(connectionWindow, action, "Select a " + dialect().schemaTerm() + " in the tree first.");
+			Dialogs.warn(parent(), action, "Select a " + dialect().schemaTerm() + " in the tree first.");
 		}
 		return schema;
 	}
@@ -396,7 +399,7 @@ public class ConnectionWindowController {
 	}
 
 	public void startCreateSchema() {
-		String name = Dialogs.input(connectionWindow, "Create " + dialect().schemaTerm(), "&Name:", "Create");
+		String name = Dialogs.input(parent(), "Create " + dialect().schemaTerm(), "&Name:", "Create");
 
 		if (name != null) {
 			createSchema(name);
@@ -409,7 +412,7 @@ public class ConnectionWindowController {
 		if (schema == null) {
 			return;
 		}
-		String name = Dialogs.input(connectionWindow, "Rename " + term, "&New name:", "Rename", schema.getName(),
+		String name = Dialogs.input(parent(), "Rename " + term, "&New name:", "Rename", schema.getName(),
 			value -> Validation.first(Validation.required("a name", value), value.equals(schema.getName()) ? "Enter another name." : null));
 
 		if (name == null) {
@@ -422,7 +425,7 @@ public class ConnectionWindowController {
 			databaseSelected(schema.getDatabase());
 			setStatusDetail(schema.getDatabase().getName() + ": " + term + " " + schema.getName() + " renamed to " + name);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Rename " + term, e);
+			ApplicationContext.get().errors().report(parent(), "Rename " + term, e);
 		}
 	}
 
@@ -438,7 +441,7 @@ public class ConnectionWindowController {
 			databaseSelected(database);
 			setStatusDetail(database.getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " created");
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Create " + dialect().schemaTerm(), e);
+			ApplicationContext.get().errors().report(parent(), "Create " + dialect().schemaTerm(), e);
 		}
 	}
 
@@ -451,12 +454,12 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Dropping " + dialect().schemaTerm() + "...", true);
 			new DatabaseController(this).dropSchema(schema);
-			connectionWindow.getDatabaseTree().deleteSchema(schema);
-			connectionWindow.removeDataTab();
+			view.getDatabaseTree().deleteSchema(schema);
+			view.removeDataTab();
 			setStatusDetail(schema.getDatabase().getName() + ": " + dialect().schemaTerm() + " " + schema.getName() + " dropped");
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Drop " + dialect().schemaTerm(), e);
+			ApplicationContext.get().errors().report(parent(), "Drop " + dialect().schemaTerm(), e);
 		}
 	}
 
@@ -483,7 +486,7 @@ public class ConnectionWindowController {
 		if (table == null) {
 			return;
 		}
-		String name = Dialogs.input(connectionWindow, "Rename table", "&New name:", "Rename", table.getName(), value -> tableNameProblem(table, value));
+		String name = Dialogs.input(parent(), "Rename table", "&New name:", "Rename", table.getName(), value -> tableNameProblem(table, value));
 
 		if (name == null) {
 			return;
@@ -497,7 +500,7 @@ public class ConnectionWindowController {
 			setStatusDetail("Table " + oldName + " renamed to " + name);
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Rename table", e);
+			ApplicationContext.get().errors().report(parent(), "Rename table", e);
 		}
 	}
 
@@ -506,7 +509,7 @@ public class ConnectionWindowController {
 		if (table == null) {
 			return;
 		}
-		DuplicateTableDialog.Request request = DuplicateTableDialog.ask(connectionWindow, table.getName() + "_copy", value -> tableNameProblem(table, value));
+		DuplicateTableDialog.Request request = DuplicateTableDialog.ask(parent(), table.getName() + "_copy", value -> tableNameProblem(table, value));
 
 		if (request == null) {
 			return;
@@ -519,7 +522,7 @@ public class ConnectionWindowController {
 			setStatusDetail("Table " + table.getName() + " duplicated as " + copy.getName() + (request.withData() ? " with its data" : ""));
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Duplicate table", e);
+			ApplicationContext.get().errors().report(parent(), "Duplicate table", e);
 		}
 	}
 
@@ -532,7 +535,7 @@ public class ConnectionWindowController {
 				showDatabaseProperties(database);
 			}
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Properties", e);
+			ApplicationContext.get().errors().report(parent(), "Properties", e);
 		}
 	}
 
@@ -551,7 +554,7 @@ public class ConnectionWindowController {
 		if (info.sizeBytes() != null) {
 			properties.put("Size", ByteSize.format(info.sizeBytes()));
 		}
-		PropertiesDialog.show(connectionWindow, "Properties of " + info.name(), properties);
+		PropertiesDialog.show(parent(), "Properties of " + info.name(), properties);
 	}
 
 	private void showDatabaseProperties(Database database) throws Exception {
@@ -560,7 +563,7 @@ public class ConnectionWindowController {
 		properties.put("Name", info.name());
 		properties.putAll(info.details());
 		properties.put("Tables", String.valueOf(info.tableCount()));
-		PropertiesDialog.show(connectionWindow, "Properties of " + info.name(), properties);
+		PropertiesDialog.show(parent(), "Properties of " + info.name(), properties);
 	}
 
 	private static String capitalized(String word) {
@@ -583,7 +586,7 @@ public class ConnectionWindowController {
 			mainController.showConnectionState();
 			reloadSelectedTable();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Empty table", e);
+			ApplicationContext.get().errors().report(parent(), "Empty table", e);
 		}
 	}
 
@@ -601,12 +604,12 @@ public class ConnectionWindowController {
 
 			DatabaseController databaseController = new DatabaseController(this);
 			java.util.List<Table> tables = databaseController.getTables(database);
-			connectionWindow.getDatabaseTree().loadTables(database, tables);
-			connectionWindow.databaseSelected();
+			view.getDatabaseTree().loadTables(database, tables);
+			view.databaseSelected();
 			setStatusDetail(database.getName() + ": " + tables.size() + " table(s)");
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load tables", e);
+			ApplicationContext.get().errors().report(parent(), "Load tables", e);
 		}
 	}
 
@@ -617,12 +620,12 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Loading " + schemas + "...", true);
 			java.util.List<Schema> list = new DatabaseController(this).getSchemas(database);
-			connectionWindow.getDatabaseTree().loadSchemas(database, list);
-			connectionWindow.databaseSelected();
+			view.getDatabaseTree().loadSchemas(database, list);
+			view.databaseSelected();
 			setStatusDetail(database.getName() + ": " + list.size() + " " + dialect().schemaTerm() + "(s)");
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load " + schemas, e);
+			ApplicationContext.get().errors().report(parent(), "Load " + schemas, e);
 		}
 	}
 
@@ -631,12 +634,12 @@ public class ConnectionWindowController {
 		try {
 			mainController.updateStatus("Loading tables...", true);
 			java.util.List<Table> tables = new DatabaseController(this).getTables(schema);
-			connectionWindow.getDatabaseTree().loadTables(schema, tables);
-			connectionWindow.databaseSelected();
+			view.getDatabaseTree().loadTables(schema, tables);
+			view.databaseSelected();
 			setStatusDetail(schema.getDatabase().getName() + "." + schema.getName() + ": " + tables.size() + " table(s)");
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load tables", e);
+			ApplicationContext.get().errors().report(parent(), "Load tables", e);
 		}
 	}
 
@@ -652,11 +655,11 @@ public class ConnectionWindowController {
 
 			DatabaseController databaseController = new DatabaseController(this);
 			java.util.List<Table> tables = databaseController.getTables(database);
-			connectionWindow.showTableListTab(database.getName(), databaseController.getTableListTab(tables));
+			view.showTableListTab(database.getName(), databaseController.getTableListTab(tables));
 			setViewStatus(database.getName() + ": " + tables.size() + " table(s)");
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Open database", e);
+			ApplicationContext.get().errors().report(parent(), "Open database", e);
 		}
 	}
 
@@ -668,20 +671,20 @@ public class ConnectionWindowController {
 			if (addTreeColumns) {
 				mainController.updateStatus("Fetching table columns...", true);
 				TableColumn[] fields = new TableController(this).getColumns(table);
-				connectionWindow.getDatabaseTree().loadTableColumns(table, fields);
+				view.getDatabaseTree().loadTableColumns(table, fields);
 			}
 
-			connectionWindow.tableSelected();
+			view.tableSelected();
 			mainController.showConnectionState();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load table", e);
+			ApplicationContext.get().errors().report(parent(), "Load table", e);
 		}
 	}
 
 	/** Shows columns loaded in the background under the table in the tree, on the event thread. */
 	public void showTableColumns(Table table, TableColumn[] columns) {
-		connectionWindow.getDatabaseTree().loadTableColumns(table, columns);
-		connectionWindow.tableSelected();
+		view.getDatabaseTree().loadTableColumns(table, columns);
+		view.tableSelected();
 	}
 
 	/** Double click on a table: opens its data in a tab and puts that tab in front. */
@@ -694,11 +697,11 @@ public class ConnectionWindowController {
 	}
 
 	public void fieldSelected() {
-		connectionWindow.fieldSelected();
+		view.fieldSelected();
 	}
 
 	public void rootSelected() {
-		connectionWindow.rootSelected();
+		view.rootSelected();
 	}
 
 	public void insertNewRow() {
@@ -716,9 +719,9 @@ public class ConnectionWindowController {
 	/** Opens a new query tab on the database selected in the tree; without a selection on the database the connection uses. */
 	public void startQueryTab() {
 		QueryController controller = new QueryController(this);
-		Database selected = connectionWindow.getDatabase();
+		Database selected = view.getDatabase();
 		inBackground("Open query", "Listing databases...", controller::databases,
-			databases -> connectionWindow.showQueryTab(new QueryTab(controller, databases, selected)));
+			databases -> view.showQueryTab(new QueryTab(controller, databases, selected)));
 	}
 
 	public void showColumnPropertiesDialog(boolean add, boolean edit) {
@@ -728,12 +731,12 @@ public class ConnectionWindowController {
 
 		try {
 			mainController.updateStatus("Starting field properties interface...", true);
-			ColumnPropertiesDialog fieldPropertiesDialog = new ColumnPropertiesDialog(mainController.getMainWindow(), this, connectionWindow.getTableColumn(),
+			ColumnPropertiesDialog fieldPropertiesDialog = new ColumnPropertiesDialog(mainController.getMainWindow(), this, view.getTableColumn(),
 				add, edit);
 			mainController.showConnectionState();
 			fieldPropertiesDialog.setVisible(true);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load columns", e);
+			ApplicationContext.get().errors().report(parent(), "Load columns", e);
 		}
 	}
 
@@ -741,7 +744,7 @@ public class ConnectionWindowController {
 	 * @description: Let the tree generate its own events.
 	 */
 	public void selectTableInTree(Table table) {
-		connectionWindow.getDatabaseTree().selectTableInTree(table);
+		view.getDatabaseTree().selectTableInTree(table);
 	}
 
 	/** Loads the first page of the table in the background and shows it in the view tab. */
@@ -754,7 +757,7 @@ public class ConnectionWindowController {
 
 		inBackground("Load table data", "Loading table data...", () -> controller.loadPage(table, 0, 50), rows -> {
 			tableController = controller;
-			connectionWindow.showTableDataTab(place + " : " + table.getName(), controller.newTableDataTab(table, rows));
+			view.showTableDataTab(place + " : " + table.getName(), controller.newTableDataTab(table, rows));
 			setViewStatus(place + "." + table.getName() + ": " + table.getRowCount() + " row(s), loaded in " + millisSince(start) + " ms");
 		});
 	}
@@ -773,7 +776,7 @@ public class ConnectionWindowController {
 			IndexesController indexesController = new IndexesController(this, table);
 			indexesController.showTab();
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Load indexes", e);
+			ApplicationContext.get().errors().report(parent(), "Load indexes", e);
 		}
 	}
 
@@ -807,7 +810,7 @@ public class ConnectionWindowController {
 			return true;
 		}
 
-		Dialogs.info(connectionWindow, description,
+		Dialogs.info(parent(), description,
 			description + " is not available for " + session.getConnectionProfile().getServerType().getDescription() + ".");
 		return false;
 	}
@@ -819,9 +822,9 @@ public class ConnectionWindowController {
 		}
 
 		try {
-			new TableEditorController(this).startCreateTable(database, hasSchemas() ? connectionWindow.getSchema() : null);
+			new TableEditorController(this).startCreateTable(database, hasSchemas() ? view.getSchema() : null);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Create table", e);
+			ApplicationContext.get().errors().report(parent(), "Create table", e);
 		}
 	}
 
@@ -847,7 +850,7 @@ public class ConnectionWindowController {
 			new DesignerWindow(mainController.getMainWindow(), connectionWindow, model);
 		} catch (Exception e) {
 			mainController.showConnectionState();
-			ApplicationContext.get().errors().report(connectionWindow, "Open in designer", e);
+			ApplicationContext.get().errors().report(parent(), "Open in designer", e);
 		}
 	}
 
@@ -860,7 +863,7 @@ public class ConnectionWindowController {
 		try {
 			new TableEditorController(this).startEditTable(table.getDatabase(), table);
 		} catch (Exception e) {
-			ApplicationContext.get().errors().report(connectionWindow, "Modify table", e);
+			ApplicationContext.get().errors().report(parent(), "Modify table", e);
 		}
 	}
 
@@ -868,14 +871,19 @@ public class ConnectionWindowController {
 		return session.getConnectionProfile().getUsername() + "@" + session.getConnectionProfile().getHost();
 	}
 
-	/** The connection window, the parent of messages and the owner of the tabs. */
 	/** What is selected in the tree (a database, schema, table, ...), null when nothing is. */
 	public Object selectedObject() {
-		return connectionWindow.selectedObject();
+		return view.selectedObject();
 	}
 
-	public ConnectionWindow getWindow() {
-		return connectionWindow;
+	/** Where this connection shows its tree, tabs and messages. */
+	public ConnectionView getView() {
+		return view;
+	}
+
+	/** The parent of the messages and dialogs of this connection. */
+	private java.awt.Component parent() {
+		return view.dialogParent();
 	}
 
 	public MainWindow getMainWindow() {
@@ -909,7 +917,7 @@ public class ConnectionWindowController {
 			}
 
 			TableController tableController = new TableController(this);
-			connectionWindow.showTableDataTab("Server status", tableController.showServerStatus());
+			view.showTableDataTab("Server status", tableController.showServerStatus());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Show server status", e);
 		}
@@ -921,7 +929,7 @@ public class ConnectionWindowController {
 			}
 
 			TableController tableController = new TableController(this);
-			connectionWindow.showTableDataTab("Server variables", tableController.showServerVariables());
+			view.showTableDataTab("Server variables", tableController.showServerVariables());
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report("Show server variables", e);
 		}
@@ -957,6 +965,6 @@ public class ConnectionWindowController {
 
 		TableController controller = new TableController(this);
 		inBackground(action, action + "...", () -> maintenance.run(controller, table),
-			report -> Dialogs.info(connectionWindow, action + ": " + table.getName(), report));
+			report -> Dialogs.info(parent(), action + ": " + table.getName(), report));
 	}
 }

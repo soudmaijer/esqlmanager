@@ -26,7 +26,7 @@ public class IndexesController {
 		String key = "indexes:" + table.getDatabase().getName() + "." + table.getName();
 
 		if (!connectionWindowController.requireFeature(Dialect.Feature.INDEXES, "The index manager")
-			|| connectionWindowController.getWindow().selectEditorTab(key)) {
+			|| connectionWindowController.getView().selectEditorTab(key)) {
 			return;
 		}
 
@@ -36,18 +36,18 @@ public class IndexesController {
 			return service().loadIndexes(table);
 		}, indexes -> {
 			// Opened twice while loading: the first tab stays.
-			if (connectionWindowController.getWindow().selectEditorTab(key)) {
+			if (connectionWindowController.getView().selectEditorTab(key)) {
 				return;
 			}
 			indexesTab = new IndexesTab(this, title, connectionWindowController.dialect().indexTypes());
 			indexesTab.loadIndexes(table.getIndexes());
-			connectionWindowController.getWindow().showEditorTab(key, title, indexesTab);
+			connectionWindowController.getView().showEditorTab(key, title, indexesTab);
 		});
 	}
 
 	/** Close: closes the tab, asking first when something has not been saved. */
 	public void close() {
-		connectionWindowController.getWindow().closeTab(indexesTab);
+		connectionWindowController.getView().closeTab(indexesTab);
 	}
 
 	public void addIndex(TableIndex index, TableColumn[] columns, String type) {

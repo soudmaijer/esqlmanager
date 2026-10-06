@@ -38,7 +38,7 @@ import javax.swing.event.InternalFrameEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-public class ConnectionWindow extends JInternalFrame implements ActionListener, MouseListener {
+public class ConnectionWindow extends JInternalFrame implements ConnectionView, ActionListener, MouseListener {
 	// Components.
 	private nl.errorsoft.esql.connection.control.ConnectionWindowController connectionWindowController;
 	private ImageLoader imgLoader;
@@ -493,6 +493,11 @@ public class ConnectionWindow extends JInternalFrame implements ActionListener, 
 
 	public String toString() {
 		return this.getTitle();
+	}
+
+	@Override
+	public Component dialogParent() {
+		return this;
 	}
 
 	/******************************************************************

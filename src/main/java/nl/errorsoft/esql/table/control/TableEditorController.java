@@ -1,7 +1,7 @@
 package nl.errorsoft.esql.table.control;
 
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
-import nl.errorsoft.esql.connection.ui.ConnectionWindow;
+import nl.errorsoft.esql.connection.ui.ConnectionView;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
 import nl.errorsoft.esql.dialect.Dialect;
@@ -29,14 +29,14 @@ public class TableEditorController {
 	/** @param schema the schema to create the table in, null for the current one. */
 	public void startCreateTable(Database database, Schema schema) {
 		this.schema = schema;
-		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(NEW_TABLE)) {
+		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || view().selectEditorTab(NEW_TABLE)) {
 			return;
 		}
 
 		connectionWindowController.inBackground("Create table", "Listing databases...", this::databases, databases -> {
 			// Opened twice while loading: the first tab stays.
-			if (!window().selectEditorTab(NEW_TABLE)) {
-				window().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditorTab(this, NEW_TABLE, databases, database, null));
+			if (!view().selectEditorTab(NEW_TABLE)) {
+				view().showEditorTab(NEW_TABLE, NEW_TABLE, new TableEditorTab(this, NEW_TABLE, databases, database, null));
 			}
 		});
 	}
@@ -45,7 +45,7 @@ public class TableEditorController {
 	public void startEditTable(Database database, Table table) {
 		String key = "edit:" + table.getDatabase().getName() + "." + table.getName();
 
-		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || window().selectEditorTab(key)) {
+		if (!connectionWindowController.requireFeature(Dialect.Feature.CREATE_TABLE, "Creating and modifying tables") || view().selectEditorTab(key)) {
 			return;
 		}
 
@@ -57,8 +57,8 @@ public class TableEditorController {
 			return databases();
 		}, databases -> {
 			// Opened twice while loading: the first tab stays.
-			if (!window().selectEditorTab(key)) {
-				window().showEditorTab(key, title, new TableEditorTab(this, title, databases, database, table));
+			if (!view().selectEditorTab(key)) {
+				view().showEditorTab(key, title, new TableEditorTab(this, title, databases, database, table));
 			}
 		});
 	}
@@ -122,11 +122,11 @@ public class TableEditorController {
 
 	public void createTable(TableDefinition definition, TableEditorTab editor) {
 		if (definition.name().trim().length() == 0) {
-			Dialogs.error(window(), "Create table", "Enter a table name.");
+			Dialogs.error(view().dialogParent(), "Create table", "Enter a table name.");
 			return;
 		}
 		if (definition.columns().isEmpty()) {
-			Dialogs.error(window(), "Create table", "Add at least one column.");
+			Dialogs.error(view().dialogParent(), "Create table", "Add at least one column.");
 			return;
 		}
 		TableDefinition target = inTargetSchema(definition);
@@ -135,7 +135,7 @@ public class TableEditorController {
 			connectionWindowController.getContext().tables().createTable(target);
 			return target;
 		}, created -> {
-			window().removeTab(editor);
+			view().removeTab(editor);
 			connectionWindowController.reloadSelectedDatabase();
 		}, () -> editor.setSaving(false));
 	}
@@ -145,15 +145,15 @@ public class TableEditorController {
 		connectionWindowController.inBackground("Modify table", "Saving table...", () -> {
 			connectionWindowController.getContext().tables().modifyTable(table, tableName, tableType, tableComment);
 			return table;
-		}, modified -> window().removeTab(editor), () -> editor.setSaving(false));
+		}, modified -> view().removeTab(editor), () -> editor.setSaving(false));
 	}
 
 	/** Cancel: closes the tab, asking first when something changed. */
 	public void cancel(TableEditorTab editor) {
-		window().closeTab(editor);
+		view().closeTab(editor);
 	}
 
-	private ConnectionWindow window() {
-		return connectionWindowController.getWindow();
+	private ConnectionView view() {
+		return connectionWindowController.getView();
 	}
 }
