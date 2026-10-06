@@ -1,6 +1,12 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: New query in the Tools menu
+
+- Tools > New query (Ctrl/Cmd+T) opens a query tab like the explorer button. Both, and the context menus, offer it only
+  when a database, or a schema, table or column inside one, is selected; not on a connection, a saved profile or
+  without a selection.
+
 06-10-2026: Table and column buttons out of the explorer toolbar
 
 - The explorer toolbar no longer has Create table, Drop table, Add field and Drop field. They stay in the context

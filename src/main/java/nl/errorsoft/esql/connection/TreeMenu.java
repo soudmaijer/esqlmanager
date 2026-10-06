@@ -129,7 +129,6 @@ public final class TreeMenu {
 	/** What the server itself offers: on the server node of a dialog's tree and on the node of a connection. */
 	private static void addServerItems(List<Item> items, Dialect dialect) {
 		addIf(items, dialect.supports(Feature.CREATE_DATABASE), Item.CREATE_DATABASE);
-		items.add(Item.NEW_QUERY);
 		items.add(Item.SEPARATOR);
 		addIf(items, dialect.supports(Feature.USER_MANAGER), Item.USERS);
 		addIf(items, dialect.supports(Feature.PROCESS_LIST), Item.PROCESS_LIST);

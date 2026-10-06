@@ -1,8 +1,10 @@
 package nl.errorsoft.esql.connection;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -46,6 +48,19 @@ class TreeSelectionTest {
 		ConnectionNode connection = new ConnectionNode(new ConnectionProfile(), "postgres@localhost");
 		assertSame(connection, TreeSelection.connection(List.of("root", connection, database, schema, table, column)));
 		assertSame(connection, TreeSelection.connection(List.of("root", connection)));
+	}
+
+	@Test
+	void aQueryNeedsADatabaseOrSomethingInsideOneOfAConnection() {
+		ConnectionNode connection = new ConnectionNode(new ConnectionProfile(), "postgres@localhost");
+		assertTrue(TreeSelection.inDatabase(List.of("root", connection, database)));
+		assertTrue(TreeSelection.inDatabase(List.of("root", connection, database, schema)));
+		assertTrue(TreeSelection.inDatabase(List.of("root", connection, database, schema, table)));
+		assertTrue(TreeSelection.inDatabase(List.of("root", connection, database, schema, table, column)));
+		assertFalse(TreeSelection.inDatabase(List.of("root", connection)));
+		assertFalse(TreeSelection.inDatabase(List.of("root", new ProfileNode(new ConnectionProfile()))));
+		assertFalse(TreeSelection.inDatabase(List.of()));
+		assertFalse(TreeSelection.inDatabase(null));
 	}
 
 	@Test

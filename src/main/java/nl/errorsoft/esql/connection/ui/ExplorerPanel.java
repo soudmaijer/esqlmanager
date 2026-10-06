@@ -61,6 +61,7 @@ public class ExplorerPanel extends JPanel {
 	private static final String EMPTY = "empty";
 	private final JPanel cards = new JPanel(new java.awt.CardLayout()); // The tree, or the hint when it is empty
 
+	private final List<Runnable> selectionListeners = new ArrayList<>();
 	private final JButton connectButton = button("imgConnectSmall", "Connect");
 	private final JButton queryButton = button("imgRunQuery", "New query");
 	private final JButton usersButton = button("imgUserManager", "User manager");
@@ -129,7 +130,7 @@ public class ExplorerPanel extends JPanel {
 			toolbar.getBorder()));
 
 		connectButton.addActionListener(e -> connectSelected());
-		queryButton.addActionListener(e -> act(ConnectionWindowController::startQueryTab));
+		queryButton.addActionListener(e -> startQuery());
 		usersButton.addActionListener(e -> act(ConnectionWindowController::showUserManagerDialog));
 		designerButton.addActionListener(e -> act(ConnectionWindowController::openDatabaseInDesigner));
 
@@ -209,6 +210,7 @@ public class ExplorerPanel extends JPanel {
 			model.insertNodeInto(node, root, root.getChildCount());
 		}
 		showTreeOrHint();
+		updateButtons();
 	}
 
 	/** The selected node when it belongs to this connection (the connection node itself or a node below it), else null. */
@@ -259,9 +261,28 @@ public class ExplorerPanel extends JPanel {
 		boolean connected = controller != null;
 		boolean inDatabase = selected instanceof Database || selected instanceof Schema;
 
-		queryButton.setEnabled(connected);
+		queryButton.setEnabled(canStartQuery());
 		usersButton.setEnabled(connected && controller.dialect().supports(Dialect.Feature.USER_MANAGER));
 		designerButton.setEnabled(connected && inDatabase);
+		selectionListeners.forEach(Runnable::run);
+	}
+
+	/** New query needs a database or something inside one (schema, table, column) of an open connection. */
+	public boolean canStartQuery() {
+		TreePath path = tree.getSelectionPath();
+		return path != null && TreeSelection.inDatabase(userObjects(path));
+	}
+
+	/** Opens a query tab on the selected database, the same as the toolbar button. */
+	public void startQuery() {
+		if (canStartQuery()) {
+			act(ConnectionWindowController::startQueryTab);
+		}
+	}
+
+	/** Called whenever what the toolbar offers may have changed: the selection, or a connection that opens or closes. */
+	public void addStateListener(Runnable listener) {
+		selectionListeners.add(listener);
 	}
 
 	private interface Action {

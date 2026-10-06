@@ -56,6 +56,7 @@ public class MainWindow extends JFrame implements ActionListener {
 	private JMenuItem importFromFileItem;
 	private JMenuItem exportToFileItem;
 	private JMenuItem designerItem;
+	private JMenuItem newQueryItem;
 
 	private JMenu windowMenu;
 	private JMenuItem nextWindowItem;
@@ -170,6 +171,11 @@ public class MainWindow extends JFrame implements ActionListener {
 		importFromFileItem = new JMenuItem("Import data...");
 		exportToFileItem = new JMenuItem("Export data...");
 		designerItem = new JMenuItem("Database designer");
+		newQueryItem = new JMenuItem("New query");
+		newQueryItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		newQueryItem.setMnemonic('N');
+		importExportMenu.add(newQueryItem);
+		importExportMenu.addSeparator();
 		importExportMenu.add(importFromFileItem);
 		importExportMenu.add(exportToFileItem);
 		importExportMenu.addSeparator();
@@ -304,6 +310,7 @@ public class MainWindow extends JFrame implements ActionListener {
 
 		explorer = new ExplorerPanel(mainController);
 		explorer.setMinimumSize(new Dimension(160, 0));
+		explorer.addStateListener(this::updateMenus);
 		explorerSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, explorer, workArea);
 		explorerSplit.setContinuousLayout(true);
 		// Extra window width goes to the work windows, the explorer keeps its width.
@@ -340,6 +347,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		exportToFileItem.addActionListener(this);
 		importFromFileItem.addActionListener(this);
 		designerItem.addActionListener(this);
+		newQueryItem.addActionListener(e -> explorer.startQuery());
 
 		aboutItem.addActionListener(this);
 
@@ -412,6 +420,7 @@ public class MainWindow extends JFrame implements ActionListener {
 		for (JMenuItem item : new JMenuItem[]{disconnectItem, importFromFileItem, exportToFileItem, designerItem}) {
 			item.setEnabled(connected);
 		}
+		newQueryItem.setEnabled(explorer != null && explorer.canStartQuery());
 	}
 
 	public void updateStatus(final String message, final boolean red) {

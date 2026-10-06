@@ -66,4 +66,17 @@ public final class TreeSelection {
 		}
 		return null;
 	}
+
+	/**
+	 * Whether the selected node is a database or lies inside one (schema, table, column) of an open connection. False for the connection
+	 * node itself, a saved profile and nothing selected.
+	 *
+	 * @param path the objects of the nodes from the root of the tree to the selected node, or null
+	 */
+	public static boolean inDatabase(List<?> path) {
+		if (connection(path) == null || path.isEmpty()) {
+			return false;
+		}
+		return database(path.getLast()) != null;
+	}
 }

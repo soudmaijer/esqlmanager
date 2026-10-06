@@ -31,13 +31,13 @@ Several connections can be open at the same time. They all appear in the explore
 ## The main window
 
 * **Explorer** on the left: every connection with its databases, their tables and the columns of each table. On PostgreSQL a database holds schemas, which hold the tables. Selecting a database, schema or table loads what is below it in the background. A column shows its type in grey after its name (`id  integer`, `name  varchar(100)`), a key icon for the primary key and a link icon for a foreign key; hover over it for not null, default and auto increment. Double click a database to list its tables, double click a table to open its data (its columns expand with the arrow). Disconnect is in the context menu of a connection. Right click any node for its context menu, which only lists what the server supports:
-  * connection: Create database, New query, Users, Process list, Show status, Show variables, Reload databases, Disconnect;
+  * connection: Create database, Users, Process list, Show status, Show variables, Reload databases, Disconnect;
   * saved profile: Connect, Edit connection;
-  * database: Open, Create table, Open in designer, Export, Import, Drop database, Properties, Reload tables (PostgreSQL: Create schema and Reload schemas);
+  * database: Open, New query, Create table, Open in designer, Export, Import, Drop database, Properties, Reload tables (PostgreSQL: Create schema and Reload schemas);
   * schema (PostgreSQL): New query, Create table, Open in designer, Export, Import, Rename schema, Drop schema, Reload tables;
   * table: Open, Edit table, Indexes, Add field, Rename table, Duplicate table, Export, the maintenance commands, Empty table, Drop table, Properties, Reload columns;
   * column: Add field, Edit field, Drop field.
-* The **explorer toolbar** reloads the databases, opens a query, the user manager and the designer for the connection of the selected node. Buttons are enabled when they apply to what is selected. Creating and dropping tables and columns is in the context menus of the tree.
+* The **explorer toolbar** reloads the databases, opens a query (also Tools > New query, Ctrl/Cmd+T), the user manager and the designer for the connection of the selected node. Buttons are enabled when they apply to what is selected. Creating and dropping tables and columns is in the context menus of the tree.
 * **Work tabs** on the right: every table list, table data, query ("Query", "Query 2", ...), table editor, indexes, designer and the help is a tab of its own with the logo of its server. When two tabs have the same title, the profile name of the connection is added: "orders (local pg)". Click a tab to bring it to the front, or use Window > Next window and Previous window (Cmd/Ctrl+Shift+] and [); the Window menu lists the open tabs grouped by connection. The cross on a tab (or a middle click) closes it; an editor with changes asks first, a designer asks to save its model.
 * The table data has a **toolbar at its top** to insert, update and delete rows.
 * **Output panel** at the bottom, across the whole width: one log for all connections, with the server version and driver and every executed statement. A line written for a connection starts with its profile name in brackets, such as `[local pg]`.

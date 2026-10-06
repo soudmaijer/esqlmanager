@@ -34,7 +34,7 @@ class TreeMenuTest {
 
 	@Test
 	void browsingOnlyServerHasNoDdlOrServerTools() {
-		assertEquals(List.of(Item.NEW_QUERY, Item.SEPARATOR, Item.RELOAD_DATABASES), TreeMenu.itemsFor(Node.SERVER, SQL_SERVER));
+		assertEquals(List.of(Item.RELOAD_DATABASES), TreeMenu.itemsFor(Node.SERVER, SQL_SERVER));
 		assertEquals(List.of(Item.RELOAD_COLUMNS), TreeMenu.itemsFor(Node.COLUMN, SQL_SERVER));
 		assertEquals(List.of(Item.OPEN_TABLE, Item.SEPARATOR, Item.EMPTY_TABLE, Item.DROP_TABLE, Item.SEPARATOR, Item.RELOAD_COLUMNS),
 			TreeMenu.itemsFor(Node.TABLE, SQL_SERVER));
@@ -42,7 +42,7 @@ class TreeMenuTest {
 
 	@Test
 	void serverMenuOfAFullDialect() {
-		assertEquals(List.of(Item.CREATE_DATABASE, Item.NEW_QUERY, Item.SEPARATOR, Item.USERS, Item.PROCESS_LIST, Item.SERVER_STATUS, Item.SERVER_VARIABLES,
+		assertEquals(List.of(Item.CREATE_DATABASE, Item.SEPARATOR, Item.USERS, Item.PROCESS_LIST, Item.SERVER_STATUS, Item.SERVER_VARIABLES,
 			Item.SEPARATOR, Item.EXPORT, Item.IMPORT, Item.SEPARATOR, Item.RELOAD_DATABASES), TreeMenu.itemsFor(Node.SERVER, POSTGRES));
 	}
 

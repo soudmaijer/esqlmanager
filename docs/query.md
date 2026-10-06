@@ -2,7 +2,7 @@
 
 [Back to the help index](index.md)
 
-New query (in the context menu of a connection or a database) or **New query** in the explorer toolbar opens a query tab: "Query", "Query 2" and so on. The tab starts on the database selected in the explorer, or on the database the connection uses when nothing is selected. Each tab has its own editor and result, and can be closed with its close button.
+**New query** (Tools > New query, Ctrl/Cmd+T, the explorer toolbar, or the context menu of a database or schema) opens a query tab: "Query", "Query 2" and so on. The command is enabled when a database, or a schema, table or column inside one, is selected in the explorer, and the tab starts on that database. Each tab has its own editor and result, and can be closed with its close button.
 
 The editor highlights SQL, shows line numbers and has undo; its font size is set in Settings > Preferences. The toolbar of the tab chooses the database the statements run against, and opens and saves `.sql` files. On PostgreSQL a schema picker sits next to the database: plain table names resolve to the chosen schema (it sets the `search_path`), write `schema.table` for the others. The result line shows the database and schema a statement ran on.
 
