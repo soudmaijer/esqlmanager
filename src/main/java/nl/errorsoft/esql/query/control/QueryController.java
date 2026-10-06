@@ -72,8 +72,8 @@ public class QueryController implements SchemaNames {
 
 	/** Where a statement ran: the database and the schema chosen in the tab (null when none). */
 	public record RanOn(String database, String schema) {
-		String label() {
-			return schema == null ? database : database + "." + schema;
+		public String label() {
+			return nl.errorsoft.esql.app.StatusContext.where(database, schema);
 		}
 	}
 
@@ -160,6 +160,7 @@ public class QueryController implements SchemaNames {
 		}, name -> {
 			this.database = name;
 			loadTables(database);
+			connectionWindowController.showStatusInfo();
 		}, always);
 	}
 
@@ -187,6 +188,7 @@ public class QueryController implements SchemaNames {
 				String shown = start != null && names.contains(start) ? start : current;
 				SwingUtilities.invokeLater(() -> {
 					schemaListener.accept(names, shown);
+					connectionWindowController.showStatusInfo();
 					if (!java.util.Objects.equals(shown, current)) {
 						useSchema(shown, () -> {
 							// The picker shows the schema already.
@@ -214,6 +216,7 @@ public class QueryController implements SchemaNames {
 		}, chosen -> {
 			chosenSchema = chosen;
 			currentSchema = chosen.toLowerCase();
+			connectionWindowController.showStatusInfo();
 		}, always);
 	}
 
@@ -297,6 +300,12 @@ public class QueryController implements SchemaNames {
 	 */
 	public void explain(String sql, boolean analyze, Component parent, Consumer<ExplainResult> done) {
 		explain(sql, analyze, ranOn(), parent, done);
+	}
+
+	/** The database and the schema unqualified names resolve to (the chosen one, else the current one), for the status bar. */
+	public String where() {
+		String schema = chosenSchema != null ? chosenSchema : currentSchema;
+		return nl.errorsoft.esql.app.StatusContext.where(database, schema);
 	}
 
 	/** Where statements run now: the database of the tab and its chosen schema. */

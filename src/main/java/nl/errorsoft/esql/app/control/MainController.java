@@ -23,6 +23,9 @@ import nl.errorsoft.esql.dialect.Dialect;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.connection.ConnectionProfile;
 import nl.errorsoft.esql.app.BuildInfo;
+import nl.errorsoft.esql.app.StatusContext;
+import nl.errorsoft.esql.connection.ProfileNode;
+import nl.errorsoft.esql.connection.TreeSelection;
 import nl.errorsoft.esql.settings.Appearance;
 import nl.errorsoft.esql.ui.util.EscapeToClose;
 import nl.errorsoft.esql.connection.ui.WorkFrame;
@@ -38,6 +41,7 @@ public class MainController {
 
 	private BuildInfo buildInfo;
 	private MainWindow mainWindow;
+	private final StatusContext statusContext = new StatusContext();
 	private final List<ConnectionWindowController> connections = new ArrayList<>(); // Open connections, in the order they were opened
 
 	public MainController() {
@@ -56,7 +60,7 @@ public class MainController {
 			System.getProperty("os.name"), System.getProperty("os.arch"));
 		log.info("Working directory: {}", System.getProperty("user.dir"));
 		refreshProfiles();
-		mainWindow.showConnectionState();
+		showConnectionState();
 		// After the main window has been shown and laid out, so the splash comes up over it, not behind or before it.
 		SwingUtilities.invokeLater(() -> showSplashScreen(3000));
 	}
@@ -104,18 +108,14 @@ public class MainController {
 		return connections.size();
 	}
 
-	/** The connection of the window in front (a work window or a designer), else of the node selected in the explorer; null when there is none. */
+	/** The connection of the window or explorer node the user touched last; the last opened one when that has none, null without connections. */
 	public ConnectionWindowController activeConnection() {
-		JInternalFrame frame = mainWindow.getSelectedFrame();
-		if (frame instanceof WorkFrame work) {
-			return work.getConnection();
-		}
-		if (frame instanceof DesignerWindow designer && designer.getConnection() != null) {
-			return designer.getConnection();
-		}
-		ConnectionWindowController selected = mainWindow.getExplorer().selectedConnection();
-		if (selected != null) {
-			return selected;
+		ConnectionWindowController touched = statusContext.pick(source -> {
+			Current current = current(source);
+			return current == null ? null : current.connection();
+		});
+		if (touched != null) {
+			return touched;
 		}
 		return connections.isEmpty() ? null : connections.getLast();
 	}
@@ -192,8 +192,59 @@ public class MainController {
 		}
 	}
 
+	/** The user touched a window or the explorer: the status bar describes that from now on. */
+	public void contextTouched(StatusContext.Source source) {
+		statusContext.touched(source);
+		showConnectionState();
+	}
+
+	/** What the status bar describes: a connection (or a saved profile) and, for a window or node of a database, where. */
+	private record Current(ConnectionWindowController connection, String profileName, String where) {
+	}
+
+	private Current current(StatusContext.Source source) {
+		if (source == StatusContext.Source.WORK) {
+			return switch (mainWindow.getSelectedFrame()) {
+				case WorkFrame work -> new Current(work.getConnection(), null, work.where());
+				case DesignerWindow designer when designer.getConnection() != null -> new Current(designer.getConnection(), null, "");
+				case null, default -> null;
+			};
+		}
+		var explorer = mainWindow.getExplorer();
+		Object selected = explorer.selectedObject();
+
+		if (selected instanceof ProfileNode profile) {
+			return new Current(null, profile.profile().getName(), "");
+		}
+		ConnectionWindowController connection = explorer.selectedConnection();
+		if (connection == null) {
+			return null;
+		}
+		var schema = TreeSelection.schema(selected);
+		var database = TreeSelection.database(selected);
+		return new Current(connection, null, StatusContext.where(database == null ? null : database.getName(), schema == null ? null : schema.getName()));
+	}
+
+	/**
+	 * Shows the resting state of the status bar for the window or explorer node the user touched last: the state of its connection on the left, the server,
+	 * account and database on the right. Without any of them "No connection".
+	 */
 	public void showConnectionState() {
-		mainWindow.showConnectionState();
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(this::showConnectionState);
+			return;
+		}
+		Current current = statusContext.pick(this::current);
+
+		if (current == null) {
+			mainWindow.showConnectionState("No connection", true, "");
+		} else if (current.connection() == null) {
+			mainWindow.showConnectionState("Not connected", true, "");
+		} else if (current.connection().isConnected()) {
+			mainWindow.showConnectionState("Connected", false, current.connection().statusInfo(current.where()));
+		} else {
+			mainWindow.showConnectionState("Connecting...", true, "");
+		}
 	}
 
 	public void updateStatus(String message, boolean red) {

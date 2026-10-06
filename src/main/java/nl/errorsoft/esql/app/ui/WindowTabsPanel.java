@@ -35,6 +35,8 @@ public class WindowTabsPanel extends JPanel {
 	private final JDesktopPane desktop;
 	private final JTabbedPane tabs = new JTabbedPane();
 	private final List<JInternalFrame> frames = new ArrayList<>();
+	private Runnable onSelected = () -> {
+	};
 
 	public WindowTabsPanel(JDesktopPane desktop) {
 		super(new BorderLayout());
@@ -44,7 +46,10 @@ public class WindowTabsPanel extends JPanel {
 		tabs.putClientProperty("JTabbedPane.tabCloseToolTipText", "Close");
 		tabs.putClientProperty("JTabbedPane.tabCloseCallback", (BiConsumer<JTabbedPane, Integer>) (pane, index) -> close(frames.get(index)));
 		tabs.putClientProperty("JTabbedPane.showContentSeparator", false);
-		tabs.addChangeListener(e -> showFrame(selectedFrame()));
+		tabs.addChangeListener(e -> {
+			showFrame(selectedFrame());
+			onSelected.run();
+		});
 		add(tabs, BorderLayout.CENTER);
 		setVisible(false);
 	}
@@ -97,6 +102,12 @@ public class WindowTabsPanel extends JPanel {
 		setVisible(!frames.isEmpty());
 		updateTitles();
 		showFrame(selectedFrame());
+		onSelected.run();
+	}
+
+	/** Told when another window comes to the front, or the front one is closed. */
+	public void setOnSelected(Runnable onSelected) {
+		this.onSelected = onSelected;
 	}
 
 	/** The open windows, in the order of their tabs. */

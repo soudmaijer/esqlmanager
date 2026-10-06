@@ -167,6 +167,11 @@ public class QueryTab extends JPanel {
 		useSelectedDatabase();
 	}
 
+	/** The database, and schema, the tab works in, for the status bar. */
+	public String where() {
+		return controller.where();
+	}
+
 	public RSyntaxTextArea getEditor() {
 		return editor;
 	}

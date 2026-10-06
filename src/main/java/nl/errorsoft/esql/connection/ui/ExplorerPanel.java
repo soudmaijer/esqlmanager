@@ -37,6 +37,7 @@ import nl.errorsoft.esql.connection.NodeLoads;
 import nl.errorsoft.esql.connection.ProfileNode;
 import nl.errorsoft.esql.connection.TreeMenu;
 import nl.errorsoft.esql.connection.TreeSelection;
+import nl.errorsoft.esql.app.StatusContext;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.database.Database;
 import nl.errorsoft.esql.database.Schema;
@@ -106,6 +107,12 @@ public class ExplorerPanel extends JPanel {
 			ConnectionWindowController controller = selectedConnection();
 			if (e.isAddedPath() && controller != null) {
 				controller.activate();
+			}
+			// A selection the user made (the tree has the focus) is the context of the status bar; one made by the application only refreshes it.
+			if (tree.hasFocus()) {
+				mainController.contextTouched(StatusContext.Source.EXPLORER);
+			} else {
+				mainController.showConnectionState();
 			}
 		});
 		tree.addMouseListener(new MouseAdapter() {
@@ -238,6 +245,12 @@ public class ExplorerPanel extends JPanel {
 			return null;
 		}
 		return ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
+	}
+
+	/** The object of the selected node (a profile, database, schema, table, ...), null when nothing is selected. */
+	public Object selectedObject() {
+		TreePath path = tree.getSelectionPath();
+		return path == null ? null : ((DefaultMutableTreeNode) path.getLastPathComponent()).getUserObject();
 	}
 
 	/** The connection of the selected node, null when nothing or a saved profile is selected. */

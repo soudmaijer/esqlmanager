@@ -279,6 +279,11 @@ public class TableDataTab extends JPanel implements ActionListener {
 	}
 
 	/** Adds buttons of the feature that shows this view (Explain on a query result) after a separator, at the end of the toolbar. */
+	/** The table shown, null for data that belongs to none. */
+	public Table getTable() {
+		return table;
+	}
+
 	public void addToolbarButtons(JButton... buttons) {
 		rowToolbar.addSeparator();
 		ToolbarButtons.style(buttons);

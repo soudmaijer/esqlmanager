@@ -19,6 +19,9 @@ import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.app.StatusContext;
+import nl.errorsoft.esql.query.ui.QueryTab;
+import nl.errorsoft.esql.table.ui.TableDataTab;
 import nl.errorsoft.esql.app.ui.WindowTabsPanel;
 import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 
@@ -82,6 +85,16 @@ public class WorkFrame extends JInternalFrame {
 
 	public ConnectionWindowController getConnection() {
 		return connection;
+	}
+
+	/** Where the view works, for the status bar: the database and schema of a query or a table; empty for other views. */
+	public String where() {
+		return switch (view) {
+			case QueryTab query -> query.where();
+			case TableDataTab data when data.getTable() != null && data.getTable().getDatabase() != null -> StatusContext.where(
+				data.getTable().getDatabase().getName(), data.getTable().getSchema() == null ? null : data.getTable().getSchema().getName());
+			case null, default -> "";
+		};
 	}
 
 	/** What the view is found again by, such as the table it shows. */

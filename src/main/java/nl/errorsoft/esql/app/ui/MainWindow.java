@@ -16,6 +16,7 @@ import nl.errorsoft.esql.connection.control.ConnectionWindowController;
 import nl.errorsoft.esql.connection.ui.ExplorerPanel;
 import nl.errorsoft.esql.designer.ui.DesignerWindow;
 import nl.errorsoft.esql.ui.icon.ImageLoader;
+import nl.errorsoft.esql.app.StatusContext;
 import nl.errorsoft.esql.ui.icon.StatusLight;
 
 import org.apache.logging.log4j.LogManager;
@@ -312,6 +313,19 @@ public class MainWindow extends JFrame implements ActionListener {
 		outputPanel.setMinimumSize(new Dimension(0, 60));
 		getContentPane().add(split);
 
+		// The status bar describes the window in front or the explorer node, whichever the user touched last: a window that comes to the front, or the
+		// focus moving into the work area or the explorer.
+		windowTabs.setOnSelected(() -> mainController.contextTouched(StatusContext.Source.WORK));
+		java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("permanentFocusOwner", e -> {
+			if (e.getNewValue() instanceof java.awt.Component owner) {
+				if (SwingUtilities.isDescendingFrom(owner, explorer)) {
+					mainController.contextTouched(StatusContext.Source.EXPLORER);
+				} else if (SwingUtilities.isDescendingFrom(owner, desktop)) {
+					mainController.contextTouched(StatusContext.Source.WORK);
+				}
+			}
+		});
+
 		/*
 		 *	ActionListeners
 		 */
@@ -386,15 +400,10 @@ public class MainWindow extends JFrame implements ActionListener {
 		return connection == null ? "" : connection.toString();
 	}
 
-	/** The resting state: green and connected while a connection is open, red when there is none. */
-	public void showConnectionState() {
-		if (!SwingUtilities.isEventDispatchThread()) {
-			SwingUtilities.invokeLater(this::showConnectionState);
-			return;
-		}
-
-		boolean connected = mainController.connectionCount() > 0;
-		updateStatus(connected ? "Connected" : NO_CONNECTION, !connected);
+	/** The resting state of the status bar, decided by the controller: the state of a connection on the left, what it is looking at on the right. */
+	public void showConnectionState(String message, boolean red, String info) {
+		updateStatus(message, red);
+		setStatusInfo(info);
 		updateMenus();
 	}
 

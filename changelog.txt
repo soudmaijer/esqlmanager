@@ -1,6 +1,13 @@
 eSQLManager changelog
 ---------------------
 
+06-10-2026: A status bar that follows you
+
+- The status bar at the bottom describes the window in front or the node selected in the explorer, whichever you
+  touched last: the state of that connection on the left (Connected, Connecting..., Not connected for a saved
+  profile), the server, account and the database (and schema) on the right. It no longer shows the details of the
+  connection that loaded something last.
+
 06-10-2026: Explain from a result tab
 
 - Every result tab of a query has Explain and Explain analyze buttons next to the pencil. They explain the

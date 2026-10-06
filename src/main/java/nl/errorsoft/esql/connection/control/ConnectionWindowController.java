@@ -11,6 +11,7 @@ import nl.errorsoft.esql.table.control.TableController;
 import nl.errorsoft.esql.table.ui.dialog.ColumnPropertiesDialog;
 
 import nl.errorsoft.esql.app.ApplicationContext;
+import nl.errorsoft.esql.app.StatusContext;
 
 import nl.errorsoft.esql.connection.ConnectionContext;
 
@@ -64,6 +65,8 @@ public class ConnectionWindowController {
 	private ConnectionSession session;
 	private ConnectionNode node;
 	private WorkFrames view;
+	/** Set once the connection is made and its databases are listed. */
+	private volatile boolean connected;
 
 	/** Adds the connection to the explorer at once and connects in the background; its branch is filled when the databases are listed. */
 	public ConnectionWindowController(MainController mainController, nl.errorsoft.esql.connection.ConnectionProfile profile) {
@@ -91,6 +94,7 @@ public class ConnectionWindowController {
 				SwingUtilities.invokeLater(() -> mainController.updateStatus("Loading databases...", true));
 				List<Database> databases = getContext().databases().getDatabases();
 				SwingUtilities.invokeLater(() -> {
+					connected = true;
 					showDatabaseTree(databases);
 					setStatusDetail("");
 				});
@@ -121,21 +125,27 @@ public class ConnectionWindowController {
 	public void activate() {
 		ThreadContext.put(LOG_CONNECTION, session.getConnectionProfile().getName());
 		mainController.getMainWindow().getOutput().showConnection(getTitle());
-		showStatusInfo();
 	}
 
-	/** Shows the server and account of this connection in the status bar of the application. */
-	public void showStatusInfo() {
-		String info = "";
+	/** Whether the connection is made and its databases are listed, for the status bar. */
+	public boolean isConnected() {
+		return connected;
+	}
 
+	/** The server, the account and {@code where} (database and schema, may be empty) of this connection, for the right of the status bar. */
+	public String statusInfo(String where) {
 		try {
-			info = getDatabaseConnection().getServerDescription() + "  |  " + session.getConnectionProfile().getUsername() + "@"
-				+ session.getConnectionProfile().getHost() + ":" + session.getConnectionProfile().getPort();
+			return StatusContext.info(getDatabaseConnection().getServerDescription(), session.getConnectionProfile().getUsername() + "@"
+				+ session.getConnectionProfile().getHost() + ":" + session.getConnectionProfile().getPort(), where);
 		} catch (Exception e) {
 			// Not connected (yet), there is nothing to show.
+			return "";
 		}
+	}
 
-		mainController.setStatusInfo(info);
+	/** Something this connection shows changed (a database or schema, a message): the status bar is described again. */
+	public void showStatusInfo() {
+		mainController.showConnectionState();
 	}
 
 	/** What the connection did in the tree (schemas listed, a schema created) belongs to no tab, it goes to the output panel only. */

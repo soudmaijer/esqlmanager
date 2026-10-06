@@ -30,7 +30,7 @@ public class UserManagerController {
 
 			mainWindow.updateStatus("Opening the user manager...", true);
 			UserManagerDialog dialog = new UserManagerDialog(mainWindow, this);
-			mainWindow.showConnectionState();
+			connectionWindowController.showStatusInfo();
 			dialog.setVisible(true);
 		} catch (Exception e) {
 			ApplicationContext.get().errors().report(mainWindow, "Open user manager", e);
