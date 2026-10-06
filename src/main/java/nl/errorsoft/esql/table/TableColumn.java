@@ -19,6 +19,8 @@ public class TableColumn {
 	private int type;
 	private int indexPosition;
 	private String comment = "";
+	private boolean generated;
+	private String references;
 
 	public TableColumn(Table table) {
 		this.table = table;
@@ -168,5 +170,37 @@ public class TableColumn {
 
 	public int getIndexPosition() {
 		return indexPosition;
+	}
+
+	/** The type as the tree shows it after the name: {@code integer}, {@code varchar(100)}. */
+	public String getTypeLabel() {
+		String type = nativeTypeName == null ? "" : nativeTypeName;
+		String length = getLength();
+		return length.isEmpty() ? type : type + "(" + length + ")";
+	}
+
+	/**
+	 * Whether the server generates the value (the metadata's IS_AUTOINCREMENT). Only shown in the tree; editing a column keeps using
+	 * {@link #isAutoIncrement()}.
+	 */
+	public boolean isGenerated() {
+		return generated;
+	}
+
+	public void setGenerated(boolean generated) {
+		this.generated = generated;
+	}
+
+	/** The column a foreign key on this column points to, as {@code table.column}; null when it has none. */
+	public String getReferences() {
+		return references;
+	}
+
+	public void setReferences(String references) {
+		this.references = references;
+	}
+
+	public boolean isForeignKey() {
+		return references != null;
 	}
 }

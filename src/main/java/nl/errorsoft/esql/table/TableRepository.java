@@ -40,6 +40,7 @@ public class TableRepository extends AbstractRepository {
 				column.setNullable(rs.getBoolean("NULLABLE"));
 				column.setDefault(rs.getString("COLUMN_DEF"));
 				column.setComment(rs.getString("REMARKS"));
+				column.setGenerated("YES".equalsIgnoreCase(rs.getString("IS_AUTOINCREMENT")));
 				columns.add(column);
 			}
 		}
@@ -49,6 +50,17 @@ public class TableRepository extends AbstractRepository {
 				for (TableColumn column : columns) {
 					if (column.getName().equalsIgnoreCase(rs.getString("COLUMN_NAME"))) {
 						column.setPrimary(true);
+						break;
+					}
+				}
+			}
+		}
+
+		try (ResultSet rs = metaData.getImportedKeys(connection.getConnection().getCatalog(), schemaOf(table), table.getName())) {
+			while (rs.next()) {
+				for (TableColumn column : columns) {
+					if (column.getName().equalsIgnoreCase(rs.getString("FKCOLUMN_NAME"))) {
+						column.setReferences(rs.getString("PKTABLE_NAME") + "." + rs.getString("PKCOLUMN_NAME"));
 						break;
 					}
 				}

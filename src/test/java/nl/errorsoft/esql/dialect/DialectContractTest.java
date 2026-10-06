@@ -636,6 +636,9 @@ abstract class DialectContractTest {
 			assertEquals("id", rs.getString("PKCOLUMN_NAME"));
 		}
 		assertEquals(List.of("fk_child_parent"), service().foreignKeyNames(childTable));
+		TableColumn[] columns = service().loadColumns(childTable);
+		assertEquals(parent + ".id", columns[1].getReferences());
+		assertFalse(columns[0].isForeignKey());
 		assertThrows(SQLException.class, () -> connection.executeUpdate("INSERT INTO " + dialect.quote(child) + " VALUES (1, 999)"));
 
 		service().dropForeignKey(childTable, "fk_child_parent");

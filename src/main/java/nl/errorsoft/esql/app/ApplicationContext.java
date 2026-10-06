@@ -98,6 +98,8 @@ public final class ApplicationContext {
 			images.addIcon("keyimg", "key", 16, false);
 			images.addIcon("keyimgsel", "key", 16, true);
 			images.addIcon("linkimg", "link", 16, false);
+			images.addIcon("fkimg", "foreign-key", 16, false);
+			images.addIcon("fkimgsel", "foreign-key", 16, true);
 			images.addIcon("imgHasIndex", "index", 16, false);
 			images.addIcon("imgHasIndexSel", "index", 16, true);
 			images.addIcon("rt_select_20x20", "server", 20, false);
